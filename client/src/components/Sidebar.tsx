@@ -1,0 +1,257 @@
+import { Link, useLocation } from "wouter";
+import { SYSTEMS, type SystemId, GAMES } from "@/data/library";
+import type { GameCollectionWithItems, UploadedRom } from "@shared/schema";
+import { Wordmark } from "@/components/Logo";
+import { useIntegration } from "@/lib/integration";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Heart,
+  Clock,
+  LayoutGrid,
+  Settings as SettingsIcon,
+  Power,
+  Tv,
+  Wifi,
+  WifiOff,
+  Moon,
+  Folder,
+} from "lucide-react";
+
+export type Filter = SystemId | `collection:${number}`;
+
+interface SidebarProps {
+  active: Filter;
+  onSelect: (id: Filter) => void;
+  /** When true, never hidden on mobile — used inside the mobile sheet. */
+  alwaysVisible?: boolean;
+}
+
+export function Sidebar({ active, onSelect, alwaysVisible = false }: SidebarProps) {
+  const { pc } = useIntegration();
+  const [location] = useLocation();
+  const onSettingsRoute = location.startsWith("/settings");
+  const { data: uploadedRoms = [] } = useQuery<UploadedRom[]>({
+    queryKey: ["/api/roms"],
+  });
+  const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({
+    queryKey: ["/api/collections"],
+  });
+
+  const favCount = GAMES.filter((g) => g.favorite).length + uploadedRoms.filter((r) => r.favorite).length;
+  const recentCount =
+    GAMES.filter((g) => g.lastPlayed && g.lastPlayed > 0).length +
+    uploadedRoms.filter((r) => r.lastPlayed && r.lastPlayed > 0).length;
+  const allCount = GAMES.length + uploadedRoms.length;
+  const systemCounts = Object.fromEntries(
+    SYSTEMS.map((system) => [
+      system.id,
+      GAMES.filter((g) => g.system === system.id).length +
+        uploadedRoms.filter((r) => r.system === system.id).length,
+    ]),
+  ) as Record<string, number>;
+
+  return (
+    <aside
+      className={`${alwaysVisible ? "flex" : "hidden lg:flex"} flex-col w-full lg:w-64 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground h-full`}
+      data-testid="nav-sidebar"
+    >
+      <div className="px-5 py-5 border-b border-sidebar-border">
+        <Link
+          href="/"
+          className="block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          data-testid="link-home"
+        >
+          <Wordmark />
+        </Link>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <Group label="Library">
+          <NavItem
+            icon={<Heart className="size-4" />}
+            label="Favorites"
+            count={favCount}
+            selected={!onSettingsRoute && active === "favorites"}
+            onClick={() => onSelect("favorites")}
+            testId="nav-favorites"
+          />
+          <NavItem
+            icon={<Clock className="size-4" />}
+            label="Recently Played"
+            count={recentCount}
+            selected={!onSettingsRoute && active === "recent"}
+            onClick={() => onSelect("recent")}
+            testId="nav-recent"
+          />
+          <NavItem
+            icon={<LayoutGrid className="size-4" />}
+            label="All Games"
+            count={allCount}
+            selected={!onSettingsRoute && active === "all"}
+            onClick={() => onSelect("all")}
+            testId="nav-all"
+          />
+        </Group>
+
+        <Group label="Systems">
+          {SYSTEMS.map((s) => (
+            <NavItem
+              key={s.id}
+              icon={
+                <span
+                  className="inline-block size-3.5 rounded-sm shrink-0"
+                  style={{
+                    background: `linear-gradient(135deg, hsl(${s.art[0]}), hsl(${s.art[1]}))`,
+                  }}
+                />
+              }
+              label={s.shortName}
+              count={systemCounts[s.id] ?? 0}
+              selected={!onSettingsRoute && active === s.id}
+              onClick={() => onSelect(s.id)}
+              testId={`nav-system-${s.id}`}
+            />
+          ))}
+        </Group>
+
+        {collections.length > 0 ? (
+          <Group label="Collections">
+            {collections.map((collection) => (
+              <NavItem
+                key={collection.id}
+                icon={<Folder className="size-4" />}
+                label={collection.name}
+                count={collection.romIds.length}
+                selected={!onSettingsRoute && active === `collection:${collection.id}`}
+                onClick={() => onSelect(`collection:${collection.id}`)}
+                testId={`nav-collection-${collection.id}`}
+              />
+            ))}
+          </Group>
+        ) : null}
+      </nav>
+
+      <div className="px-3 pb-3 border-t border-sidebar-border pt-3 space-y-2">
+        <Link
+          href="/settings"
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium hover-elevate active-elevate-2 ${
+            onSettingsRoute ? "bg-sidebar-accent text-foreground" : "text-muted-foreground"
+          }`}
+          data-testid="link-settings"
+        >
+          <SettingsIcon className="size-4" />
+          Integration & Settings
+        </Link>
+        <PcStatusPill pc={pc} />
+      </div>
+    </aside>
+  );
+}
+
+function Group({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="px-3 mb-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        {label}
+      </div>
+      <div className="space-y-0.5">{children}</div>
+    </div>
+  );
+}
+
+function NavItem({
+  icon,
+  label,
+  count,
+  selected,
+  onClick,
+  testId,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  count?: number;
+  selected: boolean;
+  onClick: () => void;
+  testId: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={testId}
+      data-state={selected ? "active" : "inactive"}
+      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium hover-elevate active-elevate-2 transition-colors ${
+        selected
+          ? "bg-sidebar-accent text-foreground border border-sidebar-accent-border"
+          : "text-muted-foreground"
+      }`}
+    >
+      <span className={selected ? "text-primary" : ""}>{icon}</span>
+      <span className="truncate flex-1 text-left">{label}</span>
+      {count !== undefined ? (
+        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+          {count.toLocaleString()}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+function PcStatusPill({
+  pc,
+}: {
+  pc: { online: boolean; state: string; hostname: string; currentApp: string | null };
+}) {
+  const tone =
+    pc.state === "online"
+      ? "text-status-online"
+      : pc.state === "starting"
+      ? "text-status-away"
+      : pc.state === "sleeping"
+      ? "text-status-away"
+      : "text-status-offline";
+
+  const Icon =
+    pc.state === "sleeping" ? Moon : pc.state === "online" ? Tv : pc.online ? Wifi : WifiOff;
+
+  return (
+    <div
+      className="flex items-center gap-2.5 px-3 py-2 rounded-md border border-sidebar-border bg-background/40"
+      data-testid="status-pc-pill"
+    >
+      <Icon className={`size-4 ${tone}`} />
+      <div className="flex-1 min-w-0">
+        <div className="font-mono text-[11px] text-foreground truncate">{pc.hostname}</div>
+        <div className="font-mono text-[10px] text-muted-foreground truncate">
+          {labelForState(pc.state)}
+          {pc.currentApp ? ` · ${pc.currentApp}` : ""}
+        </div>
+      </div>
+      <span
+        className={`size-1.5 rounded-full ${
+          pc.state === "online"
+            ? "bg-status-online"
+            : pc.state === "starting" || pc.state === "sleeping"
+            ? "bg-status-away"
+            : "bg-status-offline"
+        }`}
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+function labelForState(s: string) {
+  switch (s) {
+    case "online":
+      return "Online";
+    case "starting":
+      return "Booting";
+    case "sleeping":
+      return "Sleeping";
+    case "offline":
+      return "Offline";
+    default:
+      return s;
+  }
+}

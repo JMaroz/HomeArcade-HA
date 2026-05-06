@@ -1,0 +1,552 @@
+import { useMemo, useState } from "react";
+import { Sidebar, type Filter } from "@/components/Sidebar";
+import { MobileTopBar } from "@/components/MobileNav";
+import { RightPanel } from "@/components/RightPanel";
+import { GameCard } from "@/components/GameCard";
+import { GameDetailDialog } from "@/components/GameDetailDialog";
+import { SystemTile } from "@/components/GameArt";
+import { GAMES, SYSTEMS, type Game, type SystemId, uploadedRomToGame } from "@/data/library";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { useIntegration } from "@/lib/integration";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import type { GameCollectionWithItems, UploadedRom } from "@shared/schema";
+
+type Sort = "title" | "year" | "recent" | "rating";
+
+export default function Home({
+  arcadeMode,
+  onToggleArcade,
+}: {
+  arcadeMode: boolean;
+  onToggleArcade: () => void;
+}) {
+  const [filter, setFilter] = useState<Filter>("favorites");
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<Sort>("recent");
+  const [openGame, setOpenGame] = useState<Game | null>(null);
+  const [favOverrides, setFavOverrides] = useState<Record<string, boolean>>({});
+  const [ratingOverrides, setRatingOverrides] = useState<Record<string, number>>({});
+  const { pc } = useIntegration();
+  const { data: uploadedRoms = [] } = useQuery<UploadedRom[]>({
+    queryKey: ["/api/roms"],
+  });
+  const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({
+    queryKey: ["/api/collections"],
+  });
+  const rateUploadedRom = useMutation({
+    mutationFn: async ({ game, rating }: { game: Game; rating: number }) => {
+      if (!game.romId) return null;
+      const res = await apiRequest("PATCH", `/api/roms/${game.romId}/rating`, { rating });
+      return (await res.json()) as UploadedRom;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
+    },
+  });
+  const favoriteUploadedRom = useMutation({
+    mutationFn: async ({ game, favorite }: { game: Game; favorite: boolean }) => {
+      if (!game.romId) return null;
+      const res = await apiRequest("PATCH", `/api/roms/${game.romId}/favorite`, { favorite });
+      return (await res.json()) as UploadedRom;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
+    },
+  });
+  const createCollection = useMutation({
+    mutationFn: async (name: string) => {
+      const res = await apiRequest("POST", "/api/collections", { name });
+      return (await res.json()) as GameCollectionWithItems;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+    },
+  });
+  const toggleCollectionItem = useMutation({
+    mutationFn: async ({
+      collectionId,
+      romId,
+      selected,
+    }: {
+      collectionId: number;
+      romId: number;
+      selected: boolean;
+    }) => {
+      const method = selected ? "PUT" : "DELETE";
+      const res = await apiRequest(method, `/api/collections/${collectionId}/roms/${romId}`);
+      return (await res.json()) as GameCollectionWithItems;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+    },
+  });
+
+  const games = useMemo<Game[]>(() => {
+    const uploadedGames = uploadedRoms.map(uploadedRomToGame);
+    return [...uploadedGames, ...GAMES].map((g) => ({
+      ...g,
+      favorite: favOverrides[g.id] !== undefined ? favOverrides[g.id] : !!g.favorite,
+      rating: ratingOverrides[g.id] !== undefined ? ratingOverrides[g.id] : g.rating,
+    }));
+  }, [favOverrides, ratingOverrides, uploadedRoms]);
+
+  const filtered = useMemo(() => {
+    let list = games;
+    if (filter.startsWith("collection:")) {
+      const collectionId = Number(filter.replace("collection:", ""));
+      const collection = collections.find((item) => item.id === collectionId);
+      const romIds = new Set(collection?.romIds ?? []);
+      list = list.filter((g) => g.romId && romIds.has(g.romId));
+    } else if (filter === "favorites") {
+      list = list.filter((g) => g.favorite);
+    } else if (filter === "recent") {
+      list = list.filter((g) => g.lastPlayed && g.lastPlayed > 0);
+    } else if (filter !== "all") {
+      list = list.filter((g) => g.system === (filter as SystemId));
+    }
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      list = list.filter(
+        (g) =>
+          g.title.toLowerCase().includes(q) ||
+          g.genre.toLowerCase().includes(q) ||
+          g.system.toLowerCase().includes(q),
+      );
+    }
+    list = [...list].sort((a, b) => {
+      switch (sort) {
+        case "title":
+          return a.title.localeCompare(b.title);
+        case "year":
+          return a.year - b.year;
+        case "rating":
+          return b.rating - a.rating;
+        case "recent":
+        default:
+          return (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0);
+      }
+    });
+    return list;
+  }, [collections, games, filter, query, sort]);
+
+  const recentlyPlayed = useMemo(
+    () =>
+      [...games]
+        .filter((g) => g.lastPlayed)
+        .sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))
+        .slice(0, 6),
+    [games],
+  );
+
+  const favorites = useMemo(() => games.filter((g) => g.favorite), [games]);
+  const systemCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        SYSTEMS.map((system) => [
+          system.id,
+          games.filter((game) => game.system === system.id).length,
+        ]),
+      ) as Record<string, number>,
+    [games],
+  );
+  const visibleRecentlyPlayed = useMemo(
+    () =>
+      filter === "favorites"
+        ? recentlyPlayed.filter((g) => g.favorite)
+        : recentlyPlayed,
+    [filter, recentlyPlayed],
+  );
+
+  const heading = useMemo(() => {
+    if (filter.startsWith("collection:")) {
+      const collectionId = Number(filter.replace("collection:", ""));
+      return collections.find((collection) => collection.id === collectionId)?.name ?? "Collection";
+    }
+    if (filter === "favorites") return "Favorites";
+    if (filter === "recent") return "Recently Played";
+    if (filter === "all") return "All Games";
+    return SYSTEMS.find((s) => s.id === filter)?.name ?? "Games";
+  }, [collections, filter]);
+
+  const showHero = filter === "favorites" && !query;
+
+  const toggleFav = (g: Game) => {
+    const favorite = !g.favorite;
+    setFavOverrides((prev) => ({ ...prev, [g.id]: favorite }));
+    setOpenGame((cur) => (cur && cur.id === g.id ? { ...cur, favorite } : cur));
+    if (g.romId) {
+      favoriteUploadedRom.mutate({ game: g, favorite });
+    }
+  };
+
+  const rateGame = (g: Game, rating: number) => {
+    setRatingOverrides((prev) => ({ ...prev, [g.id]: rating }));
+    setOpenGame((cur) => (cur && cur.id === g.id ? { ...cur, rating } : cur));
+    if (g.romId) {
+      rateUploadedRom.mutate({ game: g, rating });
+    }
+  };
+
+  const handleCreateCollection = () => {
+    const name = window.prompt("Name this collection", "RPGs");
+    const trimmed = name?.trim();
+    if (!trimmed) return;
+    createCollection.mutate(trimmed);
+  };
+
+  const handleToggleCollection = (collectionId: number, game: Game, selected: boolean) => {
+    if (!game.romId) return;
+    toggleCollectionItem.mutate({ collectionId, romId: game.romId, selected });
+  };
+
+  return (
+    <div className="flex h-full">
+      <Sidebar active={filter} onSelect={setFilter} />
+
+      <main className="flex-1 min-w-0 flex flex-col" data-testid="main-content">
+        <MobileTopBar active={filter} onSelect={setFilter} />
+
+        {/* Header */}
+        <div className="px-5 sm:px-8 pt-6 sm:pt-8 pb-4 border-b border-border">
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+            <div>
+              <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                Library
+              </div>
+              <h1
+                className="font-display text-xl sm:text-2xl font-bold leading-tight mt-1"
+                data-testid="text-heading"
+              >
+                {heading}
+              </h1>
+            </div>
+            <div className="ml-auto flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-72">
+                <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search title, genre, system…"
+                  className="pl-9 font-mono text-sm"
+                  data-testid="input-search"
+                  aria-label="Search games"
+                />
+              </div>
+              <SortMenu sort={sort} setSort={setSort} />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {/* Hero — Continue Playing */}
+          {showHero && pc.online && recentlyPlayed[0] ? (
+            <ContinueHero
+              game={recentlyPlayed[0]}
+              onOpen={setOpenGame}
+            />
+          ) : null}
+
+          {/* Systems strip */}
+          {filter === "favorites" || filter === "all" ? (
+            <section className="px-5 sm:px-8 pt-5 pb-1">
+              <SectionHeading
+                title="Browse Systems"
+                action={null}
+              />
+              <div
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"
+                data-testid="grid-systems"
+              >
+                {SYSTEMS.map((s) => {
+                  const count = systemCounts[s.id] ?? 0;
+                  return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setFilter(s.id)}
+                    className="group relative aspect-[16/10] rounded-lg overflow-hidden border border-card-border hover-elevate active-elevate-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    data-testid={`tile-system-${s.id}`}
+                  >
+                    <SystemTile system={s} />
+                    <div className="absolute inset-x-0 bottom-0 px-3 py-1.5 bg-gradient-to-t from-black/75 to-transparent flex items-end justify-between">
+                      <div className="font-mono text-[11px] text-white tabular-nums">
+                        {count.toLocaleString()}
+                        <span className="text-white/60 ml-1">title{count === 1 ? "" : "s"}</span>
+                      </div>
+                      <ChevronRight className="size-3.5 text-white/70 group-hover:text-white transition" />
+                    </div>
+                  </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          {/* Recently Played strip — only on Favorites/All view, not when filtering by recent itself */}
+          {(filter === "favorites" || filter === "all") &&
+          visibleRecentlyPlayed.length > 0 &&
+          !query ? (
+            <section className="px-5 sm:px-8 pt-5 pb-1">
+              <SectionHeading
+                title={filter === "favorites" ? "Recently Played Favorites" : "Recently Played"}
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setFilter("recent")}
+                    className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                    data-testid="button-see-all-recent"
+                  >
+                    See all <ChevronRight className="inline size-3" />
+                  </button>
+                }
+              />
+              <Grid games={visibleRecentlyPlayed} onOpen={setOpenGame} onToggleFav={toggleFav} />
+            </section>
+          ) : null}
+
+          {/* Main grid */}
+          <section className="px-5 sm:px-8 pt-5 pb-8">
+            <SectionHeading
+              title={
+                filter === "favorites"
+                  ? "Your Favorites"
+                  : filter === "all"
+                  ? "All Games"
+                  : filter === "recent"
+                  ? "Recently Played"
+                  : filter.startsWith("collection:")
+                  ? "Collection Games"
+                  : `${SYSTEMS.find((s) => s.id === filter)?.shortName} Library`
+              }
+              action={
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCreateCollection}
+                    className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                    data-testid="button-create-collection"
+                  >
+                    New collection
+                  </button>
+                  <span
+                    className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground"
+                    data-testid="text-result-count"
+                  >
+                    {filtered.length} title{filtered.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+              }
+            />
+            {filtered.length === 0 ? (
+              <EmptyState query={query} filter={filter} onResetFilter={() => setFilter("all")} />
+            ) : (
+              <Grid games={filtered} onOpen={setOpenGame} onToggleFav={toggleFav} />
+            )}
+          </section>
+
+          <footer className="px-5 sm:px-8 py-6 border-t border-border">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-muted-foreground">
+              <span>
+                {favorites.length} favorited · {games.length} uploaded title{games.length === 1 ? "" : "s"}
+              </span>
+              <span>
+                Cabinet Bridge prototype · v0.1 ·{" "}
+                <a className="underline-offset-2 hover:underline" href="#/settings">
+                  configure HA endpoints →
+                </a>
+              </span>
+            </div>
+          </footer>
+        </div>
+      </main>
+
+      <RightPanel arcadeMode={arcadeMode} onToggleArcade={onToggleArcade} />
+
+      <GameDetailDialog
+        game={openGame}
+        onClose={() => setOpenGame(null)}
+        onToggleFav={(g) => {
+          toggleFav(g);
+        }}
+        onRate={rateGame}
+        collections={collections}
+        onCreateCollection={handleCreateCollection}
+        onToggleCollection={handleToggleCollection}
+      />
+    </div>
+  );
+}
+
+function Grid({
+  games,
+  onOpen,
+  onToggleFav,
+}: {
+  games: Game[];
+  onOpen: (g: Game) => void;
+  onToggleFav: (g: Game) => void;
+}) {
+  return (
+    <div
+      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4"
+      data-testid="grid-games"
+    >
+      {games.map((g) => (
+        <GameCard key={g.id} game={g} onOpen={onOpen} onToggleFav={onToggleFav} />
+      ))}
+    </div>
+  );
+}
+
+function SectionHeading({
+  title,
+  action,
+}: {
+  title: string;
+  action: React.ReactNode | null;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-3">
+      <h2 className="font-display text-base sm:text-lg font-semibold tracking-tight">
+        {title}
+      </h2>
+      {action}
+    </div>
+  );
+}
+
+function SortMenu({ sort, setSort }: { sort: Sort; setSort: (s: Sort) => void }) {
+  const options: { id: Sort; label: string }[] = [
+    { id: "recent", label: "Recent" },
+    { id: "title", label: "A–Z" },
+    { id: "year", label: "Year" },
+    { id: "rating", label: "Rating" },
+  ];
+  return (
+    <div
+      className="hidden sm:flex items-center gap-1 rounded-md border border-border bg-background/40 p-1"
+      data-testid="group-sort"
+      role="radiogroup"
+      aria-label="Sort games"
+    >
+      <SlidersHorizontal className="size-3.5 text-muted-foreground ml-1.5 mr-0.5" />
+      {options.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          role="radio"
+          aria-checked={sort === o.id}
+          onClick={() => setSort(o.id)}
+          className={`px-2.5 py-1 rounded font-mono text-[11px] uppercase tracking-wider hover-elevate ${
+            sort === o.id ? "bg-secondary text-foreground" : "text-muted-foreground"
+          }`}
+          data-testid={`button-sort-${o.id}`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({
+  query,
+  filter,
+  onResetFilter,
+}: {
+  query: string;
+  filter: Filter;
+  onResetFilter: () => void;
+}) {
+  return (
+    <div
+      className="rounded-lg border border-dashed border-border bg-card/40 px-6 py-16 text-center"
+      data-testid="state-empty"
+    >
+      <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        No matches
+      </div>
+      <p className="mt-2 font-display text-base text-foreground">
+        {query
+          ? `No games match “${query}”.`
+          : filter === "favorites"
+          ? "You have no favorites yet."
+          : "No games in this view."}
+      </p>
+      <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
+        Add favorites by tapping the heart on any game card, or browse all titles.
+      </p>
+      <Button variant="outline" className="mt-4" onClick={onResetFilter} data-testid="button-empty-reset">
+        Browse all games
+      </Button>
+    </div>
+  );
+}
+
+function ContinueHero({
+  game,
+  onOpen,
+}: {
+  game: Game;
+  onOpen: (g: Game) => void;
+}) {
+  const { dispatch } = useIntegration();
+  const launch = () =>
+    dispatch({
+      actionId: `launch_game:${game.id}`,
+      label: `Launch ${game.title}`,
+      endpoint: `/api/webhook/cabinet_launch_${game.slug}`,
+    });
+
+  return (
+    <section className="px-5 sm:px-8 pt-5">
+      <div
+        className="relative rounded-xl overflow-hidden border border-card-border min-h-[168px] sm:min-h-[188px]"
+        data-testid="hero-continue"
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(120deg, hsl(${game.art[0]}) 0%, hsl(${game.art[1]}) 60%, hsl(${game.art[2]}) 100%)`,
+          }}
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.7)_0%,rgba(0,0,0,0.4)_50%,rgba(0,0,0,0.1)_100%)]" />
+        <div className="relative p-5 sm:p-7 flex flex-col gap-2.5 max-w-xl">
+          <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/80">
+            Continue Playing
+          </div>
+          <h2 className="font-display text-xl sm:text-2xl font-bold text-white leading-tight">
+            {game.title}
+          </h2>
+          <p className="text-sm text-white/80 max-w-sm">
+            Pick up where you left off — Cabinet Bridge will tell Home Assistant to
+            wake the PC if needed and launch the emulator on your TV.
+          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            <Button
+              size="lg"
+              onClick={() => void launch()}
+              className="font-mono uppercase tracking-wider ring-neon"
+              data-testid="button-hero-launch"
+            >
+              Launch on Cabinet
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => onOpen(game)}
+              className="bg-black/70 border-white/35 text-white hover:bg-black/85 shadow-sm"
+              data-testid="button-hero-details"
+            >
+              Details
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
