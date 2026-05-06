@@ -151,6 +151,28 @@ export async function registerRoutes(
     res.json(updated);
   });
 
+  app.delete("/api/roms/:id", async (req, res) => {
+    const id = Number(req.params.id);
+    const deleted = await storage.deleteUploadedRom(id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Uploaded ROM not found." });
+    }
+
+    const safeRoot = `${ROM_ROOT}${path.sep}`;
+    const resolved = path.resolve(deleted.filePath);
+    let fileRemoved = false;
+    if (resolved.startsWith(safeRoot)) {
+      try {
+        await fs.unlink(resolved);
+        fileRemoved = true;
+      } catch {
+        fileRemoved = false;
+      }
+    }
+
+    res.json({ deleted: true, id: deleted.id, fileRemoved });
+  });
+
   app.get("/api/collections", async (_req, res) => {
     const collections = await storage.listCollections();
     res.json(collections);

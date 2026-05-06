@@ -9,7 +9,7 @@ import { useIntegration } from "@/lib/integration";
 import { QUICK_ACTIONS, SYSTEMS, formatRomSize } from "@/data/library";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
-import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Upload, FileArchive } from "lucide-react";
+import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Upload, FileArchive, Trash2 } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { UploadedRom } from "@shared/schema";
 
@@ -368,6 +368,18 @@ function RomUploadSection() {
       await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
     },
   });
+  const deleteRom = useMutation({
+    mutationFn: async (rom: UploadedRom) => {
+      const res = await apiRequest("DELETE", `/api/roms/${rom.id}`);
+      return (await res.json()) as { deleted: boolean; id: number; fileRemoved: boolean };
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/roms"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/collections"] }),
+      ]);
+    },
+  });
 
   return (
     <Section
@@ -449,6 +461,18 @@ function RomUploadSection() {
           </div>
         ) : null}
 
+        {deleteRom.isError ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive" data-testid="error-rom-delete">
+            {(deleteRom.error as Error).message}
+          </div>
+        ) : null}
+
+        {deleteRom.isSuccess ? (
+          <div className="rounded-md border border-status-online/40 bg-status-online/10 px-3 py-2 text-xs text-status-online" data-testid="success-rom-delete">
+            ROM removed from the library. Its save metadata and collection links were cleared too.
+          </div>
+        ) : null}
+
         <Button
           onClick={() => upload.mutate()}
           disabled={files.length === 0 || upload.isPending}
@@ -480,7 +504,11 @@ function RomUploadSection() {
         ) : (
           <ul className="divide-y divide-border" data-testid="list-uploaded-roms">
             {roms.map((rom) => (
-              <li key={rom.id} className="px-3 py-2 flex items-center justify-between gap-3" data-testid={`row-rom-${rom.id}`}>
+              <li
+                key={rom.id}
+                className="px-3 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                data-testid={`row-rom-${rom.id}`}
+              >
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate">{rom.title}</div>
                   <div className="font-mono text-[11px] text-muted-foreground truncate">
@@ -490,7 +518,7 @@ function RomUploadSection() {
                     cabinet_launch_{rom.slug}
                   </div>
                 </div>
-                <div className="shrink-0 flex items-center gap-2">
+                <div className="shrink-0 flex flex-wrap items-center justify-start sm:justify-end gap-2">
                   {rom.artUrl ? (
                     <img
                       src={rom.artUrl}
@@ -508,6 +536,25 @@ function RomUploadSection() {
                     data-testid={`button-scrape-rom-${rom.id}`}
                   >
                     {rom.artUrl ? "Refresh art" : "Find art"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Delete ${rom.title}? This removes the uploaded ROM file, save metadata, and collection links.`,
+                        )
+                      ) {
+                        deleteRom.mutate(rom);
+                      }
+                    }}
+                    disabled={deleteRom.isPending}
+                    className="text-destructive hover:text-destructive"
+                    data-testid={`button-delete-rom-${rom.id}`}
+                  >
+                    <Trash2 className="size-3.5 mr-1" />
+                    Delete
                   </Button>
                 </div>
               </li>

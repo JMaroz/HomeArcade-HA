@@ -82,6 +82,7 @@ export interface IStorage {
   listUploadedRoms(): Promise<UploadedRom[]>;
   getUploadedRom(id: number): Promise<UploadedRom | undefined>;
   createUploadedRom(rom: InsertUploadedRom): Promise<UploadedRom>;
+  deleteUploadedRom(id: number): Promise<UploadedRom | undefined>;
   updateUploadedRomArt(
     id: number,
     art: Pick<InsertUploadedRom, "artUrl" | "scrapeStatus" | "scrapeMessage">,
@@ -122,6 +123,17 @@ export class DatabaseStorage implements IStorage {
 
   async createUploadedRom(rom: InsertUploadedRom): Promise<UploadedRom> {
     return db.insert(uploadedRoms).values(rom).returning().get();
+  }
+
+  async deleteUploadedRom(id: number): Promise<UploadedRom | undefined> {
+    const rom = await this.getUploadedRom(id);
+    if (!rom) return undefined;
+
+    db.delete(collectionItems).where(eq(collectionItems.romId, id)).run();
+    db.delete(romSaveSlots).where(eq(romSaveSlots.romId, id)).run();
+    db.delete(uploadedRoms).where(eq(uploadedRoms.id, id)).run();
+
+    return rom;
   }
 
   async updateUploadedRomArt(
