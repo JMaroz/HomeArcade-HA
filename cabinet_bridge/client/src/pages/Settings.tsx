@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { THEMES, type AppTheme, applyTheme } from "@/App";
 import { Sidebar } from "@/components/Sidebar";
 import { MobileTopBar } from "@/components/MobileNav";
@@ -6,15 +6,322 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIntegration } from "@/lib/integration";
 import { SYSTEMS, formatRomSize } from "@/data/library";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { filterToPath } from "@/lib/filter";
 import { Link } from "wouter";
-import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight } from "lucide-react";
+import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight, RotateCcw } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { UploadedRom, GameCollectionWithItems } from "@shared/schema";
+
+// ── Control definitions ────────────────────────────────────────────────────
+
+const DEFAULT_KEYS: Record<number, string> = {
+  0: "z", 1: "a", 2: "shift", 3: "enter",
+  4: "up arrow", 5: "down arrow", 6: "left arrow", 7: "right arrow",
+  8: "x", 9: "s", 10: "q", 11: "w",
+  12: "e", 13: "r", 14: "tab", 15: "c",
+  24: "1", 25: "2", 26: "3",
+};
+
+type ButtonDef = { index: number; label: string };
+
+const BUTTON_DEFS: Record<string, ButtonDef[]> = {
+  nes: [
+    { index: 0, label: "B" }, { index: 1, label: "A" },
+    { index: 2, label: "Select" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+  ],
+  snes: [
+    { index: 0, label: "B" }, { index: 1, label: "Y" },
+    { index: 2, label: "Select" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 8, label: "A" }, { index: 9, label: "X" },
+    { index: 10, label: "L" }, { index: 11, label: "R" },
+  ],
+  segaMD: [
+    { index: 0, label: "B" }, { index: 1, label: "A" },
+    { index: 2, label: "Mode" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 8, label: "C" }, { index: 9, label: "Y" },
+    { index: 10, label: "X" }, { index: 11, label: "Z" },
+  ],
+  n64: [
+    { index: 0, label: "B" }, { index: 1, label: "A" },
+    { index: 2, label: "Z" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 10, label: "R" }, { index: 11, label: "L" },
+  ],
+  gba: [
+    { index: 0, label: "B" }, { index: 1, label: "A (unused)" },
+    { index: 2, label: "Select" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 8, label: "A" }, { index: 10, label: "L" }, { index: 11, label: "R" },
+  ],
+  gambatte: [
+    { index: 0, label: "B" }, { index: 1, label: "A (unused)" },
+    { index: 2, label: "Select" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 8, label: "A" },
+  ],
+  psx: [
+    { index: 0, label: "Cross (✕)" }, { index: 1, label: "Square (□)" },
+    { index: 2, label: "Select" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 8, label: "Circle (○)" }, { index: 9, label: "Triangle (△)" },
+    { index: 10, label: "L1" }, { index: 11, label: "R1" },
+    { index: 12, label: "L2" }, { index: 13, label: "R2" },
+    { index: 14, label: "L3 (stick)" }, { index: 15, label: "R3 (stick)" },
+  ],
+  pcsx2: [
+    { index: 0, label: "Cross (✕)" }, { index: 1, label: "Square (□)" },
+    { index: 2, label: "Select" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 8, label: "Circle (○)" }, { index: 9, label: "Triangle (△)" },
+    { index: 10, label: "L1" }, { index: 11, label: "R1" },
+    { index: 12, label: "L2" }, { index: 13, label: "R2" },
+    { index: 14, label: "L3 (stick)" }, { index: 15, label: "R3 (stick)" },
+  ],
+  ppsspp: [
+    { index: 0, label: "Cross (✕)" }, { index: 1, label: "Square (□)" },
+    { index: 2, label: "Select" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 8, label: "Circle (○)" }, { index: 9, label: "Triangle (△)" },
+    { index: 10, label: "L" }, { index: 11, label: "R" },
+  ],
+  melonds: [
+    { index: 0, label: "B" }, { index: 1, label: "Y" },
+    { index: 2, label: "Select" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 8, label: "A" }, { index: 9, label: "X" },
+    { index: 10, label: "L" }, { index: 11, label: "R" },
+  ],
+  reicast: [
+    { index: 0, label: "B" }, { index: 1, label: "A" },
+    { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 9, label: "Y" }, { index: 10, label: "R" }, { index: 11, label: "L" },
+  ],
+  mame2003: [
+    { index: 0, label: "Button 1" }, { index: 1, label: "Button 2" },
+    { index: 2, label: "Coin" }, { index: 3, label: "Start" },
+    { index: 4, label: "Up" }, { index: 5, label: "Down" },
+    { index: 6, label: "Left" }, { index: 7, label: "Right" },
+    { index: 8, label: "Button 3" }, { index: 9, label: "Button 4" },
+    { index: 10, label: "Button 5" }, { index: 11, label: "Button 6" },
+  ],
+};
+
+const HOTKEY_DEFS: ButtonDef[] = [
+  { index: 24, label: "Quick Save" },
+  { index: 25, label: "Quick Load" },
+  { index: 26, label: "Change Save Slot" },
+];
+
+const SYSTEMS_WITH_CORES: { systemId: string; label: string; core: string }[] = [
+  { systemId: "nes",       label: "NES",            core: "nes" },
+  { systemId: "snes",      label: "SNES",           core: "snes" },
+  { systemId: "genesis",   label: "Genesis / Mega Drive", core: "segaMD" },
+  { systemId: "n64",       label: "Nintendo 64",    core: "n64" },
+  { systemId: "gb",        label: "Game Boy",       core: "gambatte" },
+  { systemId: "gbc",       label: "Game Boy Color", core: "gambatte" },
+  { systemId: "gba",       label: "Game Boy Advance", core: "gba" },
+  { systemId: "nds",       label: "Nintendo DS",    core: "melonds" },
+  { systemId: "ps1",       label: "PlayStation 1",  core: "psx" },
+  { systemId: "ps2",       label: "PlayStation 2",  core: "pcsx2" },
+  { systemId: "psp",       label: "PSP",            core: "ppsspp" },
+  { systemId: "dreamcast", label: "Dreamcast",      core: "reicast" },
+  { systemId: "arcade",    label: "Arcade (MAME)",  core: "mame2003" },
+];
+
+function formatKeyLabel(key: string): string {
+  const map: Record<string, string> = {
+    "up arrow": "↑", "down arrow": "↓", "left arrow": "←", "right arrow": "→",
+    "enter": "↩ Enter", "shift": "⇧ Shift", "tab": "⇥ Tab", "escape": "Esc",
+    "backspace": "⌫ Bksp", "space": "Space", "control": "Ctrl", "alt": "Alt",
+  };
+  return map[key.toLowerCase()] ?? key.toUpperCase();
+}
+
+function captureKeyName(e: KeyboardEvent): string {
+  const map: Record<string, string> = {
+    ArrowUp: "up arrow", ArrowDown: "down arrow", ArrowLeft: "left arrow", ArrowRight: "right arrow",
+    Enter: "enter", Shift: "shift", Tab: "tab", Escape: "escape",
+    Backspace: "backspace", " ": "space", Control: "control", Alt: "alt",
+  };
+  return map[e.key] ?? e.key.toLowerCase();
+}
+
+// ── Controls tab component ─────────────────────────────────────────────────
+
+function ControlsTab() {
+  const { config, setConfig } = useIntegration();
+  const [selectedSystem, setSelectedSystem] = useState(SYSTEMS_WITH_CORES[0].systemId);
+  const [capturing, setCapturing] = useState<number | null>(null);
+
+  const sys = SYSTEMS_WITH_CORES.find((s) => s.systemId === selectedSystem)!;
+  const core = sys.core;
+  const defs = BUTTON_DEFS[core] ?? [];
+  const saved = config.controlDefaults?.[core] ?? {};
+
+  const getKey = (index: number) => saved[index] ?? DEFAULT_KEYS[index] ?? "";
+
+  const setKey = useCallback((index: number, key: string) => {
+    const current = config.controlDefaults ?? {};
+    const coreMap = { ...(current[core] ?? {}), [index]: key };
+    setConfig({ controlDefaults: { ...current, [core]: coreMap } });
+  }, [config.controlDefaults, core, setConfig]);
+
+  const resetCore = () => {
+    const current = config.controlDefaults ?? {};
+    const next = { ...current };
+    delete next[core];
+    setConfig({ controlDefaults: next });
+  };
+
+  // Key capture listener
+  useEffect(() => {
+    if (capturing === null) return;
+    const handler = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === "Escape") { setCapturing(null); return; }
+      setKey(capturing, captureKeyName(e));
+      setCapturing(null);
+    };
+    window.addEventListener("keydown", handler, { capture: true });
+    return () => window.removeEventListener("keydown", handler, { capture: true });
+  }, [capturing, setKey]);
+
+  const hasCustom = Object.keys(saved).length > 0;
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-muted-foreground">
+        Set default keyboard bindings for each console. These apply to every game launched on that
+        system. In-game remapping (per-game profiles) is still available from the player menu.
+      </p>
+
+      {/* System selector */}
+      <div>
+        <Label className="text-sm font-medium mb-2 block">Console</Label>
+        <div className="flex flex-wrap gap-2">
+          {SYSTEMS_WITH_CORES.map((s) => {
+            const hasOverride = Object.keys(config.controlDefaults?.[s.core] ?? {}).length > 0;
+            return (
+              <button
+                key={s.systemId}
+                onClick={() => { setSelectedSystem(s.systemId); setCapturing(null); }}
+                className={`px-3 py-1.5 rounded-md border text-xs font-mono uppercase tracking-wide transition-all ${
+                  selectedSystem === s.systemId
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                {s.label}
+                {hasOverride && <span className="ml-1.5 size-1.5 inline-block rounded-full bg-primary align-middle" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bindings table */}
+      <div className="rounded-md border border-border overflow-hidden">
+        <div className="px-3 py-2 bg-secondary/40 border-b border-border flex items-center justify-between">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {sys.label} — Game buttons
+          </span>
+          {hasCustom && (
+            <button
+              onClick={resetCore}
+              className="inline-flex items-center gap-1 text-[10px] font-mono text-muted-foreground hover:text-destructive"
+            >
+              <RotateCcw className="size-3" /> Reset to defaults
+            </button>
+          )}
+        </div>
+        <div className="divide-y divide-border">
+          {defs.map(({ index, label }) => {
+            const key = getKey(index);
+            const isCapturing = capturing === index;
+            const isCustom = !!saved[index];
+            return (
+              <div key={index} className="flex items-center justify-between px-3 py-2 gap-3">
+                <span className="text-sm min-w-0 truncate">
+                  {label}
+                  {isCustom && <span className="ml-2 text-[10px] font-mono text-primary">custom</span>}
+                </span>
+                <button
+                  onClick={() => setCapturing(isCapturing ? null : index)}
+                  className={`shrink-0 min-w-[90px] rounded border px-2.5 py-1 font-mono text-[12px] text-center transition-all ${
+                    isCapturing
+                      ? "border-primary bg-primary/10 text-primary animate-pulse"
+                      : "border-border bg-background/60 text-foreground hover:border-primary/60"
+                  }`}
+                >
+                  {isCapturing ? "press a key…" : formatKeyLabel(key)}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Hotkeys */}
+      <div className="rounded-md border border-border overflow-hidden">
+        <div className="px-3 py-2 bg-secondary/40 border-b border-border">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Emulator hotkeys (shared across all systems)
+          </span>
+        </div>
+        <div className="divide-y divide-border">
+          {HOTKEY_DEFS.map(({ index, label }) => {
+            const key = getKey(index);
+            const isCapturing = capturing === index;
+            return (
+              <div key={index} className="flex items-center justify-between px-3 py-2 gap-3">
+                <span className="text-sm">{label}</span>
+                <button
+                  onClick={() => setCapturing(isCapturing ? null : index)}
+                  className={`shrink-0 min-w-[90px] rounded border px-2.5 py-1 font-mono text-[12px] text-center transition-all ${
+                    isCapturing
+                      ? "border-primary bg-primary/10 text-primary animate-pulse"
+                      : "border-border bg-background/60 text-foreground hover:border-primary/60"
+                  }`}
+                >
+                  {isCapturing ? "press a key…" : formatKeyLabel(key)}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {capturing !== null && (
+        <p className="text-xs text-muted-foreground text-center">
+          Press any key to assign — <kbd className="font-mono">Esc</kbd> to cancel
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── Main Settings page ─────────────────────────────────────────────────────
 
 export default function Settings() {
   const { config, setConfig, resetConfig, saveStatus } = useIntegration();
@@ -22,31 +329,21 @@ export default function Settings() {
   const [activeTheme, setActiveTheme] = useState<AppTheme>(
     () => (localStorage.getItem("ha-theme") as AppTheme | null) ?? "default"
   );
-  const handleTheme = (t: AppTheme) => {
-    applyTheme(t);
-    setActiveTheme(t);
-  };
+  const handleTheme = (t: AppTheme) => { applyTheme(t); setActiveTheme(t); };
+
   const [esImporting, setEsImporting] = useState(false);
   const [esResult, setEsResult] = useState<{ imported: number; skipped: number } | null>(null);
   const [esError, setEsError] = useState<string | null>(null);
   const [lbImporting, setLbImporting] = useState(false);
   const [lbResult, setLbResult] = useState<{ imported: number; skipped: number } | null>(null);
   const [lbError, setLbError] = useState<string | null>(null);
-  const { data: uploadedRoms = [] } = useQuery<UploadedRom[]>({
-    queryKey: ["/api/roms"],
-  });
-  const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({
-    queryKey: ["/api/collections"],
-  });
+
+  const { data: uploadedRoms = [] } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
+  const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({ queryKey: ["/api/collections"] });
 
   const copy = async (text: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1200);
-    } catch {
-      /* ignore */
-    }
+    try { await navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(null), 1200); }
+    catch { /* ignore */ }
   };
 
   return (
@@ -54,8 +351,7 @@ export default function Settings() {
       <Sidebar active="favorites" />
       <main className="flex-1 min-w-0 flex flex-col overflow-y-auto" data-testid="page-settings">
         <MobileTopBar active="favorites" />
-
-        <div className="px-5 sm:px-10 py-6 sm:py-10 max-w-3xl w-full mx-auto">
+        <div className="px-5 sm:px-10 py-6 sm:py-10 max-w-4xl w-full mx-auto">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground mb-4"
@@ -67,371 +363,256 @@ export default function Settings() {
           <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             Configuration
           </div>
-          <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight mt-1 mb-2">
+          <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight mt-1 mb-1">
             Settings
           </h1>
-          <p className="text-sm text-muted-foreground max-w-prose">
-            Configure HomeArcade's connection to Home Assistant, manage your ROM library,
-            and customise the look and feel of the UI.
-          </p>
 
           <div
-            className="mt-4 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
+            className="mb-5 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
             data-testid="text-settings-save-status"
           >
-            <span
-              aria-hidden="true"
-              className={`inline-block size-1.5 rounded-full ${
-                saveStatus === "saving"
-                  ? "bg-amber-400 animate-pulse"
-                  : saveStatus === "saved"
-                  ? "bg-status-online"
-                  : saveStatus === "error"
-                  ? "bg-destructive"
-                  : saveStatus === "loading"
-                  ? "bg-muted-foreground"
-                  : "bg-muted-foreground/40"
-              }`}
-            />
-            {saveStatus === "loading"
-              ? "Loading saved settings…"
-              : saveStatus === "saving"
-              ? "Saving…"
-              : saveStatus === "saved"
-              ? "Saved"
-              : saveStatus === "error"
-              ? "Save failed — retry by editing again"
+            <span aria-hidden="true" className={`inline-block size-1.5 rounded-full ${
+              saveStatus === "saving" ? "bg-amber-400 animate-pulse"
+              : saveStatus === "saved" ? "bg-status-online"
+              : saveStatus === "error" ? "bg-destructive"
+              : "bg-muted-foreground/40"
+            }`} />
+            {saveStatus === "loading" ? "Loading…"
+              : saveStatus === "saving" ? "Saving…"
+              : saveStatus === "saved" ? "Saved"
+              : saveStatus === "error" ? "Save failed"
               : "Settings sync to add-on storage"}
           </div>
 
-          {/* ── 1. Home Assistant connection ─────────────────────────────── */}
-          <Section
-            title="Home Assistant connection"
-            description="Where HomeArcade sends its requests. The base URL is only needed when Live mode is on."
-          >
-            <Field label="Home Assistant base URL" hint="e.g. https://homeassistant.local:8123 or https://ha.example.com">
-              <Input
-                type="url"
-                value={config.haBaseUrl}
-                onChange={(e) => setConfig({ haBaseUrl: e.target.value })}
-                placeholder="https://homeassistant.local:8123"
-                data-testid="input-ha-base"
-              />
-            </Field>
-            <Field
-              label="Long-lived access token (optional)"
-              hint="Only required for /api/services/* calls. Webhook endpoints under /api/webhook/* are unauthenticated by design."
-            >
-              <Input
-                type="password"
-                value={config.haToken}
-                onChange={(e) => setConfig({ haToken: e.target.value })}
-                placeholder="eyJhbGciOiJIUzI1NiIs…"
-                data-testid="input-ha-token"
-                autoComplete="off"
-              />
-            </Field>
+          <Tabs defaultValue="general">
+            <TabsList className="mb-6 flex flex-wrap h-auto gap-1">
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="library">Library</TabsTrigger>
+              <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="controls">Controls</TabsTrigger>
+              <TabsTrigger value="kiosk">Kiosk</TabsTrigger>
+              <TabsTrigger value="ha">HA Setup</TabsTrigger>
+            </TabsList>
 
-            <div className="flex items-start gap-3 rounded-md border border-border bg-background/40 p-3 mt-2">
-              <Switch
-                id="live-mode"
-                checked={config.liveMode}
-                onCheckedChange={(checked) => setConfig({ liveMode: !!checked })}
-                data-testid="switch-live-mode"
-              />
-              <div className="flex-1">
-                <Label htmlFor="live-mode" className="font-medium text-sm">
-                  Live mode
-                </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  When off, every action is logged to the Activity panel as a simulation.
-                  Turn this on once your HA webhooks are configured and the URL above is
-                  reachable from this device.
-                </p>
-              </div>
-            </div>
+            {/* ── General ──────────────────────────────────────────────── */}
+            <TabsContent value="general" className="space-y-8">
+              <Section title="Home Assistant connection" description="Where HomeArcade sends its requests. The base URL is only needed when Live mode is on.">
+                <Field label="Home Assistant base URL" hint="e.g. https://homeassistant.local:8123">
+                  <Input type="url" value={config.haBaseUrl} onChange={(e) => setConfig({ haBaseUrl: e.target.value })}
+                    placeholder="https://homeassistant.local:8123" data-testid="input-ha-base" />
+                </Field>
+                <Field label="Long-lived access token (optional)" hint="Only required for /api/services/* calls. Webhook endpoints are unauthenticated by design.">
+                  <Input type="password" value={config.haToken} onChange={(e) => setConfig({ haToken: e.target.value })}
+                    placeholder="eyJhbGciOiJIUzI1NiIs…" data-testid="input-ha-token" autoComplete="off" />
+                </Field>
+                <div className="flex items-start gap-3 rounded-md border border-border bg-background/40 p-3">
+                  <Switch id="live-mode" checked={config.liveMode} onCheckedChange={(v) => setConfig({ liveMode: !!v })} data-testid="switch-live-mode" />
+                  <div className="flex-1">
+                    <Label htmlFor="live-mode" className="font-medium text-sm">Live mode</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      When off, every action is logged as a simulation. Turn on once your HA webhooks are configured.
+                    </p>
+                  </div>
+                </div>
+                {config.liveMode && (
+                  <div className="flex items-start gap-2 rounded-md border border-chart-3/40 bg-chart-3/10 px-3 py-2 text-xs" data-testid="banner-live">
+                    <AlertTriangle className="size-4 mt-0.5 text-chart-3 shrink-0" />
+                    <span>Live mode is on — buttons will issue real <code>POST</code> requests.</span>
+                  </div>
+                )}
+              </Section>
 
-            {config.liveMode ? (
-              <div
-                className="flex items-start gap-2 rounded-md border border-chart-3/40 bg-chart-3/10 px-3 py-2 mt-2 text-xs"
-                data-testid="banner-live"
-              >
-                <AlertTriangle className="size-4 mt-0.5 text-chart-3 shrink-0" />
-                <span>
-                  Live mode is on. Buttons will issue real <code>POST</code> requests to
-                  the configured URLs. Make sure CORS is allowed on your HA reverse proxy
-                  for the host this UI is served from.
-                </span>
-              </div>
-            ) : null}
-          </Section>
+              <Section title="Appearance" description="Choose a colour theme. Saved in the browser.">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {([
+                    { id: "default",   label: "Default",   swatch: ["#f026ab", "#22d3ee", "#0f0f18"] },
+                    { id: "synthwave", label: "Synthwave",  swatch: ["#d946ef", "#06f0e0", "#0b0612"] },
+                    { id: "gameboy",   label: "Game Boy",   swatch: ["#4ade80", "#86efac", "#0f1a0a"] },
+                    { id: "oled",      label: "OLED Black", swatch: ["#ff2dba", "#06f0e0", "#000000"] },
+                  ] as { id: AppTheme; label: string; swatch: string[] }[]).map(({ id, label, swatch }) => (
+                    <button key={id} onClick={() => handleTheme(id)} data-testid={`button-theme-${id}`}
+                      className={`flex flex-col items-center gap-2 rounded-lg border p-3 text-xs font-mono transition-all ${
+                        activeTheme === id ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/50 text-muted-foreground"
+                      }`}>
+                      <div className="flex gap-1">
+                        {swatch.map((c, i) => <span key={i} className="size-5 rounded-full border border-white/10" style={{ background: c }} />)}
+                      </div>
+                      <span>{label}</span>
+                      {activeTheme === id && <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Active</span>}
+                    </button>
+                  ))}
+                </div>
+              </Section>
 
-          {/* ── 2. ScreenScraper ─────────────────────────────────────────── */}
-          <Section
-            title="ScreenScraper.fr (optional)"
-            description="When configured, HomeArcade fetches game descriptions, release years, developers, publishers, and genres automatically on upload. Register for free at screenscraper.fr."
-          >
-            <Field label="ScreenScraper user ID" hint="Your screenscraper.fr username. Leave blank to skip metadata scraping.">
-              <Input
-                type="text"
-                value={config.ssUserId ?? ""}
-                onChange={(e) => setConfig({ ssUserId: e.target.value })}
-                placeholder="your_username"
-                data-testid="input-ss-userid"
-                autoComplete="off"
-              />
-            </Field>
-            <Field label="ScreenScraper password" hint="Your screenscraper.fr password.">
-              <Input
-                type="password"
-                value={config.ssPassword ?? ""}
-                onChange={(e) => setConfig({ ssPassword: e.target.value })}
-                placeholder="••••••••"
-                data-testid="input-ss-password"
-                autoComplete="off"
-              />
-            </Field>
-          </Section>
+              <Section title="Reset" description="Clear all locally saved settings.">
+                <Button variant="outline" onClick={() => resetConfig()} data-testid="button-reset-config">Reset to defaults</Button>
+              </Section>
 
-          {/* ── 3. RetroAchievements ─────────────────────────────────────── */}
-          <Section
-            title="RetroAchievements (optional)"
-            description="Earn achievements for your classic games. Register for free at retroachievements.org. Requires a game supported by the RA database."
-          >
-            <Field label="RA Username" hint="Your retroachievements.org username.">
-              <Input
-                type="text"
-                value={config.raUsername ?? ""}
-                onChange={(e) => setConfig({ raUsername: e.target.value })}
-                placeholder="your_ra_username"
-                data-testid="input-ra-username"
-                autoComplete="off"
-              />
-            </Field>
-            <Field label="RA API Token" hint="Found under Settings → Keys on retroachievements.org.">
-              <Input
-                type="password"
-                value={config.raToken ?? ""}
-                onChange={(e) => setConfig({ raToken: e.target.value })}
-                placeholder="••••••••"
-                data-testid="input-ra-token"
-                autoComplete="off"
-              />
-            </Field>
-          </Section>
+              <Section title="Help &amp; feedback" description="Found a bug or have a feature request?">
+                <div className="flex flex-wrap gap-3">
+                  <a href="https://github.com/GlerschNersch/token/issues/new" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                    data-testid="link-report-issue">
+                    <AlertTriangle className="size-4 text-yellow-500" /> Report an issue <ExternalLink className="size-3.5 text-muted-foreground" />
+                  </a>
+                  <a href="https://github.com/GlerschNersch/token" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
+                    View on GitHub <ExternalLink className="size-3.5 text-muted-foreground" />
+                  </a>
+                </div>
+              </Section>
+            </TabsContent>
 
-          {/* ── 4. ROM library ───────────────────────────────────────────── */}
-          <RomLibrarySection />
+            {/* ── Library ──────────────────────────────────────────────── */}
+            <TabsContent value="library" className="space-y-8">
+              <RomLibrarySection />
 
-          {/* ── 5. Game launch endpoints ─────────────────────────────────── */}
-          <Section
-            title="Game launch endpoints"
-            description="HomeArcade derives a webhook URL for each uploaded ROM. Register these in Home Assistant to wire up physical buttons, automations, or voice commands."
-          >
-            <div className="rounded-md border border-border bg-background/40 overflow-hidden">
-              <table className="w-full text-sm" data-testid="table-launch-endpoints">
-                <thead className="bg-secondary/40 text-muted-foreground">
-                  <tr>
-                    <th className="text-left font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-2">
-                      Game
-                    </th>
-                    <th className="text-left font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-2">
-                      Endpoint
-                    </th>
-                    <th className="px-3 py-2 w-10" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {uploadedRoms.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="px-3 py-6 text-center text-xs text-muted-foreground">
-                        Upload ROMs to generate launch endpoints.
-                      </td>
-                    </tr>
-                  ) : uploadedRoms.map((rom) => {
-                    const ep = `/api/webhook/cabinet_launch_${rom.slug}`;
-                    return (
-                      <tr key={rom.id}>
-                        <td className="px-3 py-2 truncate max-w-[180px]">{rom.title}</td>
-                        <td className="px-3 py-2 font-mono text-[12px] text-foreground/80 break-all">
-                          POST {ep}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <button
-                            type="button"
-                            onClick={() => copy(ep, `rom-${rom.id}`)}
-                            aria-label={`Copy ${rom.title} endpoint`}
-                            data-testid={`button-copy-rom-endpoint-${rom.id}`}
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            {copied === `rom-${rom.id}` ? (
-                              <Check className="size-3.5" />
-                            ) : (
-                              <Copy className="size-3.5" />
-                            )}
-                          </button>
-                        </td>
+              <Section title="Game launch endpoints"
+                description="HomeArcade derives a webhook URL for each uploaded ROM. Register these in Home Assistant to wire up automations or voice commands.">
+                <div className="rounded-md border border-border bg-background/40 overflow-hidden">
+                  <table className="w-full text-sm" data-testid="table-launch-endpoints">
+                    <thead className="bg-secondary/40 text-muted-foreground">
+                      <tr>
+                        <th className="text-left font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-2">Game</th>
+                        <th className="text-left font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-2">Endpoint</th>
+                        <th className="px-3 py-2 w-10" />
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Register one webhook script per uploaded game in HA, or use a single dispatch
-              script that reads the slug from the payload.
-            </p>
-          </Section>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {uploadedRoms.length === 0 ? (
+                        <tr><td colSpan={3} className="px-3 py-6 text-center text-xs text-muted-foreground">Upload ROMs to generate launch endpoints.</td></tr>
+                      ) : uploadedRoms.map((rom) => {
+                        const ep = `/api/webhook/cabinet_launch_${rom.slug}`;
+                        return (
+                          <tr key={rom.id}>
+                            <td className="px-3 py-2 truncate max-w-[180px]">{rom.title}</td>
+                            <td className="px-3 py-2 font-mono text-[12px] text-foreground/80 break-all">POST {ep}</td>
+                            <td className="px-3 py-2 text-right">
+                              <button type="button" onClick={() => copy(ep, `rom-${rom.id}`)} aria-label={`Copy ${rom.title} endpoint`}
+                                data-testid={`button-copy-rom-endpoint-${rom.id}`} className="text-muted-foreground hover:text-foreground">
+                                {copied === `rom-${rom.id}` ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </Section>
 
-          {/* ── 6. Metadata import ───────────────────────────────────────── */}
-          <Section
-            title="Metadata import"
-            description="Import game metadata from an EmulationStation gamelist.xml or a LaunchBox platform XML. Games are matched by filename or title to your uploaded ROMs."
-          >
-            <div className="rounded-md border border-border bg-background/40 p-3">
-              <Label className="text-sm font-medium">EmulationStation / Batocera / RetroPie</Label>
-              <p className="text-xs text-muted-foreground mt-0.5 mb-2">Upload a gamelist.xml file.</p>
-              <input
-                type="file"
-                accept=".xml,text/xml,application/xml"
-                data-testid="input-es-xml"
-                className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-background file:text-sm file:font-mono file:uppercase file:tracking-wide file:cursor-pointer"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  setEsImporting(true);
-                  setEsResult(null);
-                  setEsError(null);
-                  try {
-                    const buf = await file.arrayBuffer();
-                    const res = await fetch("/api/import/emulationstation", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/xml" },
-                      body: buf,
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.message || "Import failed");
-                    setEsResult({ imported: data.imported, skipped: data.skipped });
-                    await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
-                  } catch (err) {
-                    setEsError(String(err));
-                  } finally {
-                    setEsImporting(false);
-                    e.target.value = "";
-                  }
-                }}
-              />
-              {esImporting && <p className="text-xs text-muted-foreground mt-2">Importing…</p>}
-              {esResult && (
-                <p className="text-xs text-status-online mt-2" data-testid="text-es-import-result">
-                  ✓ Imported {esResult.imported} game{esResult.imported !== 1 ? "s" : ""}, skipped {esResult.skipped}.
-                </p>
-              )}
-              {esError && (
-                <p className="text-xs text-destructive mt-2" data-testid="text-es-import-error">{esError}</p>
-              )}
-            </div>
+              <Section title="Metadata import"
+                description="Import game metadata from an EmulationStation gamelist.xml or a LaunchBox platform XML.">
+                <div className="rounded-md border border-border bg-background/40 p-3">
+                  <Label className="text-sm font-medium">EmulationStation / Batocera / RetroPie</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5 mb-2">Upload a gamelist.xml file.</p>
+                  <input type="file" accept=".xml,text/xml,application/xml" data-testid="input-es-xml"
+                    className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-background file:text-sm file:font-mono file:uppercase file:tracking-wide file:cursor-pointer"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]; if (!file) return;
+                      setEsImporting(true); setEsResult(null); setEsError(null);
+                      try {
+                        const res = await fetch("/api/import/emulationstation", { method: "POST", headers: { "Content-Type": "application/xml" }, body: await file.arrayBuffer() });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || "Import failed");
+                        setEsResult({ imported: data.imported, skipped: data.skipped });
+                        await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
+                      } catch (err) { setEsError(String(err)); }
+                      finally { setEsImporting(false); e.target.value = ""; }
+                    }} />
+                  {esImporting && <p className="text-xs text-muted-foreground mt-2">Importing…</p>}
+                  {esResult && <p className="text-xs text-status-online mt-2" data-testid="text-es-import-result">✓ Imported {esResult.imported} game{esResult.imported !== 1 ? "s" : ""}, skipped {esResult.skipped}.</p>}
+                  {esError && <p className="text-xs text-destructive mt-2" data-testid="text-es-import-error">{esError}</p>}
+                </div>
+                <div className="rounded-md border border-border bg-background/40 p-3">
+                  <Label className="text-sm font-medium">LaunchBox</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5 mb-2">Upload a platform XML from your LaunchBox Data/Platforms folder.</p>
+                  <input type="file" accept=".xml,text/xml,application/xml" data-testid="input-lb-xml"
+                    className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-background file:text-sm file:font-mono file:uppercase file:tracking-wide file:cursor-pointer"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]; if (!file) return;
+                      setLbImporting(true); setLbResult(null); setLbError(null);
+                      try {
+                        const res = await fetch("/api/import/launchbox", { method: "POST", headers: { "Content-Type": "application/xml" }, body: await file.arrayBuffer() });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || "Import failed");
+                        setLbResult({ imported: data.imported, skipped: data.skipped });
+                        await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
+                      } catch (err) { setLbError(String(err)); }
+                      finally { setLbImporting(false); e.target.value = ""; }
+                    }} />
+                  {lbImporting && <p className="text-xs text-muted-foreground mt-2">Importing…</p>}
+                  {lbResult && <p className="text-xs text-status-online mt-2" data-testid="text-lb-import-result">✓ Imported {lbResult.imported} game{lbResult.imported !== 1 ? "s" : ""}, skipped {lbResult.skipped}.</p>}
+                  {lbError && <p className="text-xs text-destructive mt-2" data-testid="text-lb-import-error">{lbError}</p>}
+                </div>
+              </Section>
+            </TabsContent>
 
-            <div className="rounded-md border border-border bg-background/40 p-3">
-              <Label className="text-sm font-medium">LaunchBox</Label>
-              <p className="text-xs text-muted-foreground mt-0.5 mb-2">Upload a platform XML from your LaunchBox Data/Platforms folder.</p>
-              <input
-                type="file"
-                accept=".xml,text/xml,application/xml"
-                data-testid="input-lb-xml"
-                className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-background file:text-sm file:font-mono file:uppercase file:tracking-wide file:cursor-pointer"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  setLbImporting(true);
-                  setLbResult(null);
-                  setLbError(null);
-                  try {
-                    const buf = await file.arrayBuffer();
-                    const res = await fetch("/api/import/launchbox", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/xml" },
-                      body: buf,
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.message || "Import failed");
-                    setLbResult({ imported: data.imported, skipped: data.skipped });
-                    await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
-                  } catch (err) {
-                    setLbError(String(err));
-                  } finally {
-                    setLbImporting(false);
-                    e.target.value = "";
-                  }
-                }}
-              />
-              {lbImporting && <p className="text-xs text-muted-foreground mt-2">Importing…</p>}
-              {lbResult && (
-                <p className="text-xs text-status-online mt-2" data-testid="text-lb-import-result">
-                  ✓ Imported {lbResult.imported} game{lbResult.imported !== 1 ? "s" : ""}, skipped {lbResult.skipped}.
-                </p>
-              )}
-              {lbError && (
-                <p className="text-xs text-destructive mt-2" data-testid="text-lb-import-error">{lbError}</p>
-              )}
-            </div>
-          </Section>
+            {/* ── Services ─────────────────────────────────────────────── */}
+            <TabsContent value="services" className="space-y-8">
+              <Section title="ScreenScraper.fr (optional)"
+                description="Fetches game descriptions, release years, developers, publishers, and genres on upload. Register free at screenscraper.fr.">
+                <Field label="ScreenScraper user ID" hint="Your screenscraper.fr username.">
+                  <Input type="text" value={config.ssUserId ?? ""} onChange={(e) => setConfig({ ssUserId: e.target.value })}
+                    placeholder="your_username" data-testid="input-ss-userid" autoComplete="off" />
+                </Field>
+                <Field label="ScreenScraper password" hint="Your screenscraper.fr password.">
+                  <Input type="password" value={config.ssPassword ?? ""} onChange={(e) => setConfig({ ssPassword: e.target.value })}
+                    placeholder="••••••••" data-testid="input-ss-password" autoComplete="off" />
+                </Field>
+              </Section>
 
-          {/* ── 7. Kiosk mode ────────────────────────────────────────────── */}
-          <Section
-            title="Kiosk / Arcade mode"
-            description="Lock the UI to a specific collection, hide upload and settings, and optionally require a PIN to exit. Useful for shared arcade cabinets."
-          >
-            <div className="flex items-start gap-3 rounded-md border border-border bg-background/40 p-3">
-              <Switch
-                id="kiosk-mode"
-                checked={config.kioskMode ?? false}
-                onCheckedChange={(checked) => setConfig({ kioskMode: !!checked })}
-                data-testid="switch-kiosk-mode"
-              />
-              <div className="flex-1">
-                <Label htmlFor="kiosk-mode" className="font-medium text-sm">Enable kiosk mode</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Hides upload, settings, and management UI. Refresh the page for changes to take effect.
-                </p>
-              </div>
-            </div>
-            <Field label="Exit PIN (optional)" hint="4–8 digit PIN required to leave kiosk mode. Leave blank for no PIN.">
-              <Input
-                type="password"
-                inputMode="numeric"
-                maxLength={8}
-                value={config.kioskPin ?? ""}
-                onChange={(e) => setConfig({ kioskPin: e.target.value.replace(/\D/g, "") })}
-                placeholder="e.g. 1234"
-                data-testid="input-kiosk-pin"
-                autoComplete="off"
-              />
-            </Field>
-            <Field label="Locked collection (optional)" hint="When set, kiosk mode shows only games from this collection.">
-              <select
-                value={config.kioskCollectionId ?? ""}
-                onChange={(e) => setConfig({ kioskCollectionId: e.target.value ? Number(e.target.value) : null })}
-                data-testid="select-kiosk-collection"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                <option value="">— Show all games —</option>
-                {collections.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </Field>
-          </Section>
+              <Section title="RetroAchievements (optional)"
+                description="Earn achievements for classic games. Register free at retroachievements.org.">
+                <Field label="RA Username" hint="Your retroachievements.org username.">
+                  <Input type="text" value={config.raUsername ?? ""} onChange={(e) => setConfig({ raUsername: e.target.value })}
+                    placeholder="your_ra_username" data-testid="input-ra-username" autoComplete="off" />
+                </Field>
+                <Field label="RA API Token" hint="Found under Settings → Keys on retroachievements.org.">
+                  <Input type="password" value={config.raToken ?? ""} onChange={(e) => setConfig({ raToken: e.target.value })}
+                    placeholder="••••••••" data-testid="input-ra-token" autoComplete="off" />
+                </Field>
+              </Section>
+            </TabsContent>
 
-          {/* ── 8. Now Playing sensor ─────────────────────────────────────── */}
-          <Section
-            title="Now Playing sensor"
-            description="HomeArcade exposes a live endpoint so Home Assistant can display what game is currently running."
-          >
-            <p className="text-xs text-muted-foreground">
-              Add a <code>rest</code> sensor to your <code>configuration.yaml</code> that polls the add-on:
-            </p>
-            <Code>{`rest:
+            {/* ── Controls ─────────────────────────────────────────────── */}
+            <TabsContent value="controls">
+              <ControlsTab />
+            </TabsContent>
+
+            {/* ── Kiosk ────────────────────────────────────────────────── */}
+            <TabsContent value="kiosk" className="space-y-8">
+              <Section title="Kiosk / Arcade mode"
+                description="Lock the UI to a specific collection, hide upload and settings, and optionally require a PIN to exit.">
+                <div className="flex items-start gap-3 rounded-md border border-border bg-background/40 p-3">
+                  <Switch id="kiosk-mode" checked={config.kioskMode ?? false} onCheckedChange={(v) => setConfig({ kioskMode: !!v })} data-testid="switch-kiosk-mode" />
+                  <div className="flex-1">
+                    <Label htmlFor="kiosk-mode" className="font-medium text-sm">Enable kiosk mode</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Hides upload, settings, and management UI. Refresh after changing.</p>
+                  </div>
+                </div>
+                <Field label="Exit PIN (optional)" hint="4–8 digit PIN to leave kiosk mode. Leave blank for no PIN.">
+                  <Input type="password" inputMode="numeric" maxLength={8}
+                    value={config.kioskPin ?? ""} onChange={(e) => setConfig({ kioskPin: e.target.value.replace(/\D/g, "") })}
+                    placeholder="e.g. 1234" data-testid="input-kiosk-pin" autoComplete="off" />
+                </Field>
+                <Field label="Locked collection (optional)" hint="Kiosk mode shows only games from this collection.">
+                  <select value={config.kioskCollectionId ?? ""} onChange={(e) => setConfig({ kioskCollectionId: e.target.value ? Number(e.target.value) : null })}
+                    data-testid="select-kiosk-collection"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                    <option value="">— Show all games —</option>
+                    {collections.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </Field>
+              </Section>
+            </TabsContent>
+
+            {/* ── HA Setup ─────────────────────────────────────────────── */}
+            <TabsContent value="ha" className="space-y-8">
+              <Section title="Now Playing sensor"
+                description="HomeArcade exposes a live endpoint so Home Assistant can display what's currently running.">
+                <p className="text-xs text-muted-foreground">Add a <code>rest</code> sensor to your <code>configuration.yaml</code>:</p>
+                <Code>{`rest:
   - resource: http://homeassistant.local:7860/api/now-playing
     scan_interval: 15
     sensor:
@@ -447,173 +628,70 @@ export default function Settings() {
           - playing
           - system
           - id`}</Code>
-            <p className="text-xs text-muted-foreground mt-2">
-              Optionally create an <code>input_text.homearcade_now_playing</code> helper in HA — HomeArcade
-              will update it automatically via the REST API whenever a game starts or stops.
-            </p>
-            <Code>{`input_text:
+                <p className="text-xs text-muted-foreground mt-2">
+                  Optionally create an <code>input_text.homearcade_now_playing</code> helper — HomeArcade will update it automatically.
+                </p>
+                <Code>{`input_text:
   homearcade_now_playing:
     name: HomeArcade Now Playing
     max: 100`}</Code>
-          </Section>
+              </Section>
 
-          {/* ── 9. Lovelace card ─────────────────────────────────────────── */}
-          <Section
-            title="Lovelace card"
-            description="Add HomeArcade as a card to your Home Assistant dashboard — shows now-playing status and a quick-launch shelf of recent games."
-          >
-            <ol className="space-y-4 list-none p-0 m-0">
-              <Step n={1} title="Copy the card file">
-                Download <code>homearcade-card.js</code> from the add-on and place it in your HA{" "}
-                <code>www/</code> folder (i.e. <code>/config/www/homearcade-card.js</code>).
-                <Code>{`# From a terminal on your HA host:
-wget -O /config/www/homearcade-card.js \\
+              <Section title="Lovelace card"
+                description="Add HomeArcade as a card to your HA dashboard with now-playing status and a recent games shelf.">
+                <ol className="space-y-4 list-none p-0 m-0">
+                  <Step n={1} title="Copy the card file">
+                    Place <code>homearcade-card.js</code> in your HA <code>/config/www/</code> folder.
+                    <Code>{`wget -O /config/www/homearcade-card.js \\
   http://homeassistant.local:7860/homearcade-card.js`}</Code>
-              </Step>
-              <Step n={2} title="Register the resource">
-                In HA go to <strong>Settings → Dashboards → Resources → Add</strong> and enter:
-                <Code>{`URL:  /local/homearcade-card.js
-Type: JavaScript Module`}</Code>
-              </Step>
-              <Step n={3} title="Add the card to a dashboard">
-                Edit any dashboard, choose <strong>Add Card → Manual</strong> and paste:
-                <Code>{`type: custom:homearcade-card
-title: HomeArcade
-base_url: http://homeassistant.local:7860
-max_recent: 6`}</Code>
-              </Step>
-            </ol>
-            <div className="mt-3 flex items-center gap-2">
-              <a
-                href="/homearcade-card.js"
-                download="homearcade-card.js"
-                className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline"
-                data-testid="link-download-card"
-              >
-                <ExternalLink className="size-3.5" /> Download homearcade-card.js
-              </a>
-            </div>
-          </Section>
-
-          {/* ── 10. Appearance ───────────────────────────────────────────── */}
-          <Section
-            title="Appearance"
-            description="Choose a colour theme for the HomeArcade UI. Your choice is saved in the browser."
-          >
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {(
-                [
-                  { id: "default",   label: "Default",   swatch: ["#f026ab", "#22d3ee", "#0f0f18"] },
-                  { id: "synthwave", label: "Synthwave",  swatch: ["#d946ef", "#06f0e0", "#0b0612"] },
-                  { id: "gameboy",   label: "Game Boy",   swatch: ["#4ade80", "#86efac", "#0f1a0a"] },
-                  { id: "oled",      label: "OLED Black", swatch: ["#ff2dba", "#06f0e0", "#000000"] },
-                ] as { id: AppTheme; label: string; swatch: string[] }[]
-              ).map(({ id, label, swatch }) => (
-                <button
-                  key={id}
-                  onClick={() => handleTheme(id)}
-                  data-testid={`button-theme-${id}`}
-                  className={`flex flex-col items-center gap-2 rounded-lg border p-3 text-xs font-mono transition-all ${
-                    activeTheme === id
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <div className="flex gap-1">
-                    {swatch.map((c, i) => (
-                      <span
-                        key={i}
-                        className="size-5 rounded-full border border-white/10"
-                        style={{ background: c }}
-                      />
-                    ))}
-                  </div>
-                  <span>{label}</span>
-                  {activeTheme === id && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Active</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </Section>
-
-          {/* ── 11. Reset + Help ─────────────────────────────────────────── */}
-          <Section title="Reset" description="Clear all locally saved settings.">
-            <Button
-              variant="outline"
-              onClick={() => resetConfig()}
-              data-testid="button-reset-config"
-            >
-              Reset to defaults
-            </Button>
-          </Section>
-
-          <Section title="Help &amp; feedback" description="Found a bug or have a feature request? The project is open source.">
-            <div className="flex flex-wrap gap-3">
-              <a
-                href="https://github.com/GlerschNersch/token/issues/new"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-                data-testid="link-report-issue"
-              >
-                <AlertTriangle className="size-4 text-yellow-500" />
-                Report an issue
-                <ExternalLink className="size-3.5 text-muted-foreground" />
-              </a>
-              <a
-                href="https://github.com/GlerschNersch/token"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-              >
-                View on GitHub
-                <ExternalLink className="size-3.5 text-muted-foreground" />
-              </a>
-            </div>
-          </Section>
+                  </Step>
+                  <Step n={2} title="Register the resource">
+                    Go to <strong>Settings → Dashboards → Resources → Add</strong>:
+                    <Code>{`URL:  /local/homearcade-card.js\nType: JavaScript Module`}</Code>
+                  </Step>
+                  <Step n={3} title="Add the card">
+                    <strong>Add Card → Manual</strong>:
+                    <Code>{`type: custom:homearcade-card\ntitle: HomeArcade\nbase_url: http://homeassistant.local:7860\nmax_recent: 6`}</Code>
+                  </Step>
+                </ol>
+                <div className="mt-3">
+                  <a href="/homearcade-card.js" download="homearcade-card.js"
+                    className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline" data-testid="link-download-card">
+                    <ExternalLink className="size-3.5" /> Download homearcade-card.js
+                  </a>
+                </div>
+              </Section>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
   );
 }
 
+// ── Sub-components ─────────────────────────────────────────────────────────
+
 function RomLibrarySection() {
   const { toast } = useToast();
-  const { data: roms = [] } = useQuery<UploadedRom[]>({
-    queryKey: ["/api/roms"],
-  });
+  const { data: roms = [] } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
+
   const scrape = useMutation({
     mutationFn: async (rom: UploadedRom) => {
       const res = await apiRequest("POST", `/api/roms/${rom.id}/scrape-art`);
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error((body as { message?: string }).message ?? `Server error ${res.status}`);
-      }
+      if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error((b as { message?: string }).message ?? `Error ${res.status}`); }
       return (await res.json()) as UploadedRom;
     },
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
-      if (!data.artUrl) {
-        toast({
-          title: "No art found",
-          description: "ScreenScraper couldn't match this ROM. Try renaming it to match the official title, or check your ScreenScraper credentials in Settings.",
-          variant: "destructive",
-        });
-      }
+      if (!data.artUrl) toast({ title: "No art found", description: "ScreenScraper couldn't match this ROM.", variant: "destructive" });
     },
-    onError: (err: Error) => {
-      toast({
-        title: "Art scrape failed",
-        description: err.message || "Something went wrong reaching ScreenScraper. Check your internet connection and credentials.",
-        variant: "destructive",
-      });
-    },
+    onError: (err: Error) => toast({ title: "Art scrape failed", description: err.message, variant: "destructive" }),
   });
+
   const deleteRom = useMutation({
     mutationFn: async (rom: UploadedRom) => {
       const res = await apiRequest("DELETE", `/api/roms/${rom.id}`);
-      return (await res.json()) as { deleted: boolean; id: number; fileRemoved: boolean };
+      return (await res.json()) as { deleted: boolean };
     },
     onSuccess: async () => {
       await Promise.all([
@@ -624,36 +702,22 @@ function RomLibrarySection() {
   });
 
   return (
-    <Section
-      title="ROM library"
-      description="Upload ROMs from each system's page so they're filed under the right console automatically. This panel lets you manage already-uploaded ROMs."
-    >
-      <div
-        className="rounded-md border border-border bg-card/40 p-4"
-        data-testid="rom-upload-redirect"
-      >
-        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          Where to upload
-        </div>
+    <Section title="ROM library" description="Manage uploaded ROMs. Upload new ones from each system's page.">
+      <div className="rounded-md border border-border bg-card/40 p-4" data-testid="rom-upload-redirect">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Where to upload</div>
         <p className="text-sm mt-1 max-w-prose">
-          Open a system from the sidebar — for example{" "}
-          <Link href={filterToPath("ps1")} className="text-primary hover:underline" data-testid="link-upload-ps1">PS1</Link>
-          ,{" "}
-          <Link href={filterToPath("snes")} className="text-primary hover:underline" data-testid="link-upload-snes">SNES</Link>
-          , or{" "}
+          Open a system from the sidebar —{" "}
+          <Link href={filterToPath("ps1")} className="text-primary hover:underline" data-testid="link-upload-ps1">PS1</Link>,{" "}
+          <Link href={filterToPath("snes")} className="text-primary hover:underline" data-testid="link-upload-snes">SNES</Link>, or{" "}
           <Link href={filterToPath("nes")} className="text-primary hover:underline" data-testid="link-upload-nes">NES</Link>{" "}
-          — and you'll find an "Upload ROMs" dropzone pinned to that system.
+          — and you'll find an upload dropzone there.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {SYSTEMS.map((s) => (
-            <Link
-              key={s.id}
-              href={filterToPath(s.id)}
+            <Link key={s.id} href={filterToPath(s.id)}
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-2.5 py-1 text-[11px] font-mono uppercase tracking-wider hover-elevate"
-              data-testid={`link-upload-system-${s.id}`}
-            >
-              {s.shortName}
-              <ChevronRight className="size-3" />
+              data-testid={`link-upload-system-${s.id}`}>
+              {s.shortName}<ChevronRight className="size-3" />
             </Link>
           ))}
         </div>
@@ -661,67 +725,31 @@ function RomLibrarySection() {
 
       <div className="rounded-md border border-border bg-background/40 overflow-hidden">
         <div className="px-3 py-2 border-b border-border flex items-center justify-between">
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            Uploaded library
-          </span>
-          <span className="font-mono text-[10px] text-muted-foreground" data-testid="text-uploaded-count">
-            {roms.length} ROM{roms.length === 1 ? "" : "s"}
-          </span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Uploaded library</span>
+          <span className="font-mono text-[10px] text-muted-foreground" data-testid="text-uploaded-count">{roms.length} ROM{roms.length === 1 ? "" : "s"}</span>
         </div>
         {roms.length === 0 ? (
-          <p className="px-3 py-6 text-center text-xs text-muted-foreground" data-testid="state-no-roms">
-            No uploaded ROMs yet. Open a system page like NES or PS1 to upload.
-          </p>
+          <p className="px-3 py-6 text-center text-xs text-muted-foreground" data-testid="state-no-roms">No uploaded ROMs yet.</p>
         ) : (
           <ul className="divide-y divide-border" data-testid="list-uploaded-roms">
             {roms.map((rom) => (
-              <li
-                key={rom.id}
-                className="px-3 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                data-testid={`row-rom-${rom.id}`}
-              >
+              <li key={rom.id} className="px-3 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3" data-testid={`row-rom-${rom.id}`}>
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate">{rom.title}</div>
                   <div className="font-mono text-[11px] text-muted-foreground truncate">
                     {rom.system.toUpperCase()} · {formatRomSize(rom.size)} · {rom.scrapeStatus === "matched" ? "art matched" : "no art yet"}
                   </div>
-                  <div className="font-mono text-[10px] text-muted-foreground truncate">
-                    cabinet_launch_{rom.slug}
-                  </div>
+                  <div className="font-mono text-[10px] text-muted-foreground truncate">cabinet_launch_{rom.slug}</div>
                 </div>
                 <div className="shrink-0 flex flex-wrap items-center justify-start sm:justify-end gap-2">
-                  {rom.artUrl ? (
-                    <img
-                      src={rom.artUrl}
-                      alt=""
-                      className="h-10 w-8 rounded object-cover border border-border"
-                      loading="lazy"
-                      data-testid={`img-rom-art-${rom.id}`}
-                    />
-                  ) : null}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => scrape.mutate(rom)}
-                    disabled={scrape.isPending}
-                    data-testid={`button-scrape-rom-${rom.id}`}
-                  >
+                  {rom.artUrl && <img src={rom.artUrl} alt="" className="h-10 w-8 rounded object-cover border border-border" loading="lazy" data-testid={`img-rom-art-${rom.id}`} />}
+                  <Button variant="outline" size="sm" onClick={() => scrape.mutate(rom)} disabled={scrape.isPending} data-testid={`button-scrape-rom-${rom.id}`}>
                     {rom.artUrl ? "Refresh art" : "Find art"}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (window.confirm(`Delete ${rom.title}? This removes the uploaded ROM file, save metadata, and collection links.`)) {
-                        deleteRom.mutate(rom);
-                      }
-                    }}
-                    disabled={deleteRom.isPending}
-                    className="text-destructive hover:text-destructive"
-                    data-testid={`button-delete-rom-${rom.id}`}
-                  >
-                    <Trash2 className="size-3.5 mr-1" />
-                    Delete
+                  <Button variant="outline" size="sm" disabled={deleteRom.isPending}
+                    className="text-destructive hover:text-destructive" data-testid={`button-delete-rom-${rom.id}`}
+                    onClick={() => { if (window.confirm(`Delete ${rom.title}?`)) deleteRom.mutate(rom); }}>
+                    <Trash2 className="size-3.5 mr-1" /> Delete
                   </Button>
                 </div>
               </li>
@@ -729,25 +757,15 @@ function RomLibrarySection() {
           </ul>
         )}
       </div>
-
-      {deleteRom.isError ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive" data-testid="error-rom-delete">
-          {(deleteRom.error as Error).message}
-        </div>
-      ) : null}
-
-      {deleteRom.isSuccess ? (
-        <div className="rounded-md border border-status-online/40 bg-status-online/10 px-3 py-2 text-xs text-status-online" data-testid="success-rom-delete">
-          ROM removed from the library.
-        </div>
-      ) : null}
+      {deleteRom.isError && <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">{(deleteRom.error as Error).message}</div>}
+      {deleteRom.isSuccess && <div className="rounded-md border border-status-online/40 bg-status-online/10 px-3 py-2 text-xs text-status-online">ROM removed.</div>}
     </Section>
   );
 }
 
 function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
-    <section className="mt-8 pt-6 border-t border-border first:border-t-0 first:pt-0">
+    <section>
       <h2 className="font-display text-base font-semibold tracking-tight">{title}</h2>
       <p className="text-xs text-muted-foreground mt-0.5 mb-4 max-w-prose">{description}</p>
       <div className="space-y-3">{children}</div>
@@ -759,7 +777,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   return (
     <div>
       <Label className="text-sm font-medium">{label}</Label>
-      {hint ? <p className="text-xs text-muted-foreground mt-0.5 mb-1.5">{hint}</p> : null}
+      {hint && <p className="text-xs text-muted-foreground mt-0.5 mb-1.5">{hint}</p>}
       {children}
     </div>
   );
@@ -768,14 +786,10 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <li className="flex gap-3">
-      <span className="shrink-0 size-6 rounded-full bg-arcade-gradient text-white font-mono text-[12px] font-bold flex items-center justify-center">
-        {n}
-      </span>
+      <span className="shrink-0 size-6 rounded-full bg-arcade-gradient text-white font-mono text-[12px] font-bold flex items-center justify-center">{n}</span>
       <div className="flex-1 min-w-0">
         <div className="font-display font-semibold text-sm">{title}</div>
-        <div className="text-sm text-muted-foreground mt-1 [&_code]:font-mono [&_code]:text-[12px] [&_code]:text-foreground/80">
-          {children}
-        </div>
+        <div className="text-sm text-muted-foreground mt-1 [&_code]:font-mono [&_code]:text-[12px] [&_code]:text-foreground/80">{children}</div>
       </div>
     </li>
   );

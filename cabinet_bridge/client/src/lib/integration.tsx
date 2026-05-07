@@ -52,6 +52,12 @@ export interface IntegrationConfig {
   pcCpuEntityId?: string;
   pcRamEntityId?: string;
   pcAppEntityId?: string;
+  /**
+   * Per-system default key bindings.
+   * Key: EmulatorJS core string (e.g. "psx", "snes", "nes").
+   * Value: map of button index → key name (same format as EJS_defaultControls value).
+   */
+  controlDefaults?: Record<string, Record<number, string>>;
 }
 
 export type IntegrationSaveStatus = "idle" | "loading" | "saving" | "saved" | "error";
@@ -96,6 +102,7 @@ const defaultConfig: IntegrationConfig = {
   haToken: "",
   liveMode: false,
   endpoints: {},
+  controlDefaults: {},
 };
 
 const defaultPc: PcStatus = {
@@ -142,6 +149,9 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     pcCpuEntityId: typeof source.pcCpuEntityId === "string" ? source.pcCpuEntityId : "",
     pcRamEntityId: typeof source.pcRamEntityId === "string" ? source.pcRamEntityId : "",
     pcAppEntityId: typeof source.pcAppEntityId === "string" ? source.pcAppEntityId : "",
+    controlDefaults: (source.controlDefaults && typeof source.controlDefaults === "object")
+      ? source.controlDefaults as Record<string, Record<number, string>>
+      : {},
   };
 }
 

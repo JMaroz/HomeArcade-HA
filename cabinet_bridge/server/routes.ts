@@ -271,6 +271,7 @@ export async function registerRoutes(
       romHash: rom.romHash ?? null,
       raUsername: bootstrapSettings.raUsername ?? "",
       raToken: bootstrapSettings.raToken ?? "",
+      controlDefaults: (bootstrapSettings.controlDefaults ?? {}) as Record<string, Record<number, string>>,
     }));
   });
 
@@ -2386,7 +2387,50 @@ function renderEmulatorPage({ title, returnTo, romHash }: { title: string; retur
 </html>`;
 }
 
-function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; }) {
+
+// ── EJS default controls builder ───────────────────────────────────────────
+const EJS_DEFAULT_KEYS: Record<number, string> = {
+  0: "z", 1: "a", 2: "shift", 3: "enter",
+  4: "up arrow", 5: "down arrow", 6: "left arrow", 7: "right arrow",
+  8: "x", 9: "s", 10: "q", 11: "w",
+  12: "e", 13: "r", 14: "tab", 15: "c",
+  24: "1", 25: "2", 26: "3",
+};
+const EJS_VALUE2: Record<number, string> = {
+  0: "BUTTON_1", 1: "BUTTON_4", 2: "SELECT", 3: "START",
+  4: "DPAD_UP", 5: "DPAD_DOWN", 6: "DPAD_LEFT", 7: "DPAD_RIGHT",
+  8: "BUTTON_2", 9: "BUTTON_3", 10: "LEFT_TOP_SHOULDER", 11: "RIGHT_TOP_SHOULDER",
+  12: "LEFT_BOTTOM_SHOULDER", 13: "RIGHT_BOTTOM_SHOULDER",
+  14: "LEFT_ANALOG", 15: "RIGHT_ANALOG",
+};
+
+function buildEjsControls(
+  core: string,
+  controlDefaults: Record<string, Record<number, string>>,
+): Record<number, Record<number, { value: string; value2?: string }>> {
+  const isPS = ["psx", "pcsx2", "ppsspp"].includes(core);
+  const maxBtn = isPS ? 15 : 11;
+  const custom: Record<number, string> = {};
+  // Merge numeric keys from saved config (keys may be strings after JSON round-trip)
+  for (const [k, v] of Object.entries(controlDefaults[core] ?? {})) {
+    custom[Number(k)] = v;
+  }
+  const p1: Record<number, { value: string; value2?: string }> = {};
+  for (let i = 0; i <= maxBtn; i++) {
+    const key = custom[i] ?? EJS_DEFAULT_KEYS[i];
+    if (!key) continue;
+    const entry: { value: string; value2?: string } = { value: key };
+    if (EJS_VALUE2[i]) entry.value2 = EJS_VALUE2[i];
+    p1[i] = entry;
+  }
+  // Hotkeys (shared, still respect custom overrides)
+  for (const idx of [24, 25, 26]) {
+    p1[idx] = { value: custom[idx] ?? EJS_DEFAULT_KEYS[idx] ?? String(idx - 23) };
+  }
+  return { 0: p1, 1: {}, 2: {}, 3: {} };
+}
+
+function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; }) {
   return `"use strict";
 // Diagnostic: immediately mark that this script is executing.
 // If the launch overlay stays at 0%, this script never ran.
@@ -3828,33 +3872,7 @@ window.EJS_rewindEnabled = true;
 window.EJS_rewindGranularity = 2;
 window.EJS_fastForwardSpeed = 3;
 window.EJS_controlScheme = ${JSON.stringify(core)};
-window.EJS_defaultControls = {
-  0: {
-    0: { value: "z", value2: "BUTTON_1" },
-    1: { value: "a", value2: "BUTTON_4" },
-    2: { value: "shift", value2: "SELECT" },
-    3: { value: "enter", value2: "START" },
-    4: { value: "up arrow", value2: "DPAD_UP" },
-    5: { value: "down arrow", value2: "DPAD_DOWN" },
-    6: { value: "left arrow", value2: "DPAD_LEFT" },
-    7: { value: "right arrow", value2: "DPAD_RIGHT" },
-    8: { value: "x", value2: "BUTTON_2" },
-    9: { value: "s", value2: "BUTTON_3" },
-    10: { value: "q", value2: "LEFT_TOP_SHOULDER" },
-    11: { value: "w", value2: "RIGHT_TOP_SHOULDER" },
-${["psx", "pcsx2", "ppsspp"].includes(core) ? `
-    12: { value: "e", value2: "LEFT_BOTTOM_SHOULDER" },
-    13: { value: "r", value2: "RIGHT_BOTTOM_SHOULDER" },
-    14: { value: "tab", value2: "LEFT_ANALOG" },
-    15: { value: "c", value2: "RIGHT_ANALOG" },` : ""}
-    24: { value: "1" },
-    25: { value: "2" },
-    26: { value: "3" }
-  },
-  1: {},
-  2: {},
-  3: {}
-};
+window.EJS_defaultControls = ${JSON.stringify(buildEjsControls(core, controlDefaults))};
 window.EJS_defaultOptions = {
   "save-state-location": "browser",
   "save-state-slot": 1

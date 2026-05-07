@@ -128,6 +128,8 @@ export const integrationSettingsSchema = z.object({
   pcCpuEntityId: z.string().max(256).default(""),
   pcRamEntityId: z.string().max(256).default(""),
   pcAppEntityId: z.string().max(256).default(""),
+  /** Per-core default key bindings: { [core]: { [buttonIndex]: keyName } } */
+  controlDefaults: z.record(z.string(), z.record(z.coerce.number(), z.string().max(64))).default({}),
 });
 
 export type IntegrationSettings = z.infer<typeof integrationSettingsSchema>;

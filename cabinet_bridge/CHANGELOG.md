@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.15
+
+- Feature: Settings page now uses tabs (General, Library, Services, Controls, Kiosk, HA Setup)
+- Feature: Controls tab — per-console keyboard binding editor; click any button to remap, saves globally, applied on next game launch
+- Schema: added controlDefaults to integration settings; server reads saved bindings and injects into EJS_defaultControls at launch time
+
 ## 0.3.14
 
 - Polish: Settings page cleaned up — removed duplicate RetroAchievements and EmulationStation sections, removed stale prototype language, regrouped service credentials together, cleaner section order
