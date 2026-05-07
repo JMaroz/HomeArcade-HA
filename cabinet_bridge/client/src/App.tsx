@@ -10,6 +10,7 @@ import { parseFilter, parseCollectionFilter, DEFAULT_FILTER } from "@/lib/filter
 import Home from "@/pages/Home";
 import Settings from "@/pages/Settings";
 import Player from "@/pages/Player";
+import Achievements from "@/pages/Achievements";
 import NotFound from "@/pages/not-found";
 
 function AppRouter({
@@ -47,6 +48,9 @@ function AppRouter({
       </Route>
       <Route path="/play/:id">
         {(params) => <Player id={params.id} />}
+      </Route>
+      <Route path="/achievements">
+        <Achievements />
       </Route>
       <Route component={NotFound} />
     </Switch>

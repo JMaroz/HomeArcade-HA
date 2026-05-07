@@ -198,10 +198,12 @@ export default function Home({
     [games],
   );
   const visibleRecentlyPlayed = useMemo(
-    () =>
-      filter === "favorites"
-        ? recentlyPlayed.filter((g) => g.favorite)
-        : recentlyPlayed,
+    () => {
+      if (filter === "favorites") return recentlyPlayed.filter((g) => g.favorite);
+      if (typeof filter === "string" && !["all", "recent"].includes(filter) && !filter.startsWith("collection:"))
+        return recentlyPlayed.filter((g) => g.system === filter).slice(0, 6);
+      return recentlyPlayed;
+    },
     [filter, recentlyPlayed],
   );
 
@@ -372,7 +374,7 @@ export default function Home({
           ) : null}
 
           {/* Recently Played strip — only on Favorites/All view, not when filtering by recent itself */}
-          {(filter === "favorites" || filter === "all") &&
+          {(filter === "favorites" || filter === "all" || (typeof filter === "string" && !filter.startsWith("collection:") && filter !== "recent")) &&
           visibleRecentlyPlayed.length > 0 &&
           !query ? (
             <section className="px-5 sm:px-8 pt-5 pb-1">

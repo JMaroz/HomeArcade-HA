@@ -20,7 +20,11 @@ export type SystemId =
   | "ps2"
   | "genesis"
   | "arcade"
-  | "dreamcast";
+  | "dreamcast"
+  | "gb"
+  | "gbc"
+  | "nds"
+  | "psp";
 
 export interface System {
   id: SystemId;
@@ -172,6 +176,50 @@ export const SYSTEMS: System[] = [
     mono: "DC",
     image: systemImage("dreamcast"),
   },
+  {
+    id: "gb",
+    name: "Game Boy",
+    shortName: "Game Boy",
+    era: "1989",
+    count: 1046,
+    art: ["210 20% 60%", "210 15% 45%"],
+    slug: "gb",
+    mono: "GB",
+    image: systemImage("gb"),
+  },
+  {
+    id: "gbc",
+    name: "Game Boy Color",
+    shortName: "GBC",
+    era: "1998",
+    count: 576,
+    art: ["142 72% 42%", "158 68% 34%"],
+    slug: "gbc",
+    mono: "GBC",
+    image: systemImage("gbc"),
+  },
+  {
+    id: "nds",
+    name: "Nintendo DS",
+    shortName: "NDS",
+    era: "2004",
+    count: 1694,
+    art: ["210 90% 56%", "228 80% 48%"],
+    slug: "nds",
+    mono: "NDS",
+    image: systemImage("nds"),
+  },
+  {
+    id: "psp",
+    name: "PlayStation Portable",
+    shortName: "PSP",
+    era: "2005",
+    count: 1320,
+    art: ["220 72% 52%", "240 64% 44%"],
+    slug: "psp",
+    mono: "PSP",
+    image: systemImage("psp"),
+  },
 ];
 
 export const GAMES: Game[] = [];
@@ -262,7 +310,7 @@ export function uploadedRomToGame(rom: UploadedRom): Game {
     slug: rom.slug,
     romId: rom.id,
     lastPlayed: rom.lastPlayed ?? 0,
-    minutesPlayed: rom.playCount ? rom.playCount * 5 : 0,
+    minutesPlayed: rom.minutesPlayed ?? 0,
     romHash: rom.romHash ?? null,
     favorite: rom.favorite,
   };

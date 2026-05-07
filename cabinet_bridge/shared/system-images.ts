@@ -11,7 +11,11 @@ export type SystemImageId =
   | "ps1"
   | "ps2"
   | "arcade"
-  | "dreamcast";
+  | "dreamcast"
+  | "gb"
+  | "gbc"
+  | "nds"
+  | "psp";
 
 export interface SystemImage {
   id: SystemImageId;
@@ -101,6 +105,34 @@ export const SYSTEM_IMAGES: Record<SystemImageId, SystemImage> = {
     sourceUrl:
       "https://commons.wikimedia.org/wiki/File:Dreamcast-Console-Set.jpg",
     license: "CC-BY-SA-3.0",
+  },
+  gb: {
+    id: "gb",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Nintendo-Game-Boy-FL.jpg/640px-Nintendo-Game-Boy-FL.jpg",
+    source: "Evan-Amos / Vanamo Online Game Museum",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Nintendo-Game-Boy-FL.jpg",
+    license: "Public domain",
+  },
+  gbc: {
+    id: "gbc",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Nintendo-Game-Boy-Color-FL.jpg/640px-Nintendo-Game-Boy-Color-FL.jpg",
+    source: "Evan-Amos / Vanamo Online Game Museum",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Nintendo-Game-Boy-Color-FL.jpg",
+    license: "Public domain",
+  },
+  nds: {
+    id: "nds",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Nintendo-DS-Fat-Blue.jpg/640px-Nintendo-DS-Fat-Blue.jpg",
+    source: "Evan-Amos / Vanamo Online Game Museum",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Nintendo-DS-Fat-Blue.jpg",
+    license: "Public domain",
+  },
+  psp: {
+    id: "psp",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/PSP-1000.jpg/640px-PSP-1000.jpg",
+    source: "Evan-Amos / Vanamo Online Game Museum",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:PSP-1000.jpg",
+    license: "Public domain",
   },
 };
 

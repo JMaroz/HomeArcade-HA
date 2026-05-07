@@ -30,6 +30,10 @@ const ROM_EXTENSIONS: Record<string, string[]> = {
   ps2: [".iso", ".chd", ".zip", ".7z"],
   arcade: [".zip", ".7z"],
   dreamcast: [".cdi", ".gdi", ".chd", ".zip", ".7z"],
+  gb: [".gb", ".zip", ".7z"],
+  gbc: [".gbc", ".zip", ".7z"],
+  nds: [".nds", ".zip", ".7z"],
+  psp: [".iso", ".cso", ".pbp", ".zip", ".7z"],
 };
 
 // Configurable upload ceiling. PS1/PS2 disc images frequently exceed the old
@@ -52,6 +56,11 @@ const EMULATORJS_CORES: Record<string, string> = {
   ps1: "psx",
   ps2: "pcsx2",
   arcade: "mame2003",
+  dreamcast: "reicast",
+  gb: "gambatte",
+  gbc: "gambatte",
+  nds: "melonds",
+  psp: "ppsspp",
 };
 
 const ROM_ROOT = path.resolve(dataPath("rom-storage"));
@@ -72,6 +81,10 @@ const LIBRETRO_PLAYLISTS: Record<string, string> = {
   ps1: "Sony - PlayStation",
   ps2: "Sony - PlayStation 2",
   dreamcast: "Sega - Dreamcast",
+  gb: "Nintendo - Game Boy",
+  gbc: "Nintendo - Game Boy Color",
+  nds: "Nintendo - Nintendo DS",
+  psp: "Sony - PlayStation Portable",
 };
 
 /**
@@ -610,6 +623,12 @@ export async function registerRoutes(
     }).parse(req.body);
 
     const settings = await storage.getIntegrationSettings();
+    // Accumulate real play time
+    if (event === "ended" && durationSeconds && durationSeconds > 0) {
+      const minutes = durationSeconds / 60;
+      await storage.incrementRomMinutesPlayed(id, minutes).catch(() => {});
+    }
+
     if (settings.haBaseUrl && settings.haToken) {
       const eventType = event === "started" ? "cabinet_bridge_game_started" : "cabinet_bridge_game_ended";
       const payload = {
@@ -764,6 +783,70 @@ export async function registerRoutes(
     }
   });
 
+  // ── LaunchBox XML import ───────────────────────────────────────────────────
+  app.post("/api/import/launchbox", express.raw({ limit: "50mb", type: ["text/xml", "application/xml", "application/octet-stream", "text/plain"] }), async (req, res) => {
+    try {
+      const xml = req.body.toString("utf8");
+      // LaunchBox uses <Game> elements (not wrapped in <game>)
+      const gameBlocks = [...xml.matchAll(/<Game>([\s\S]*?)<\/Game>/gi)];
+      const roms = await storage.listUploadedRoms();
+      const results: { title: string; updated: boolean; reason?: string }[] = [];
+
+      for (const block of gameBlocks) {
+        const inner = block[1];
+        const get = (tag: string) => {
+          const m = inner.match(new RegExp(`<${tag}>([\s\S]*?)<\/${tag}>`, "i"));
+          return m ? m[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').trim() : null;
+        };
+
+        const title = get("Title");
+        const appPath = get("ApplicationPath");
+        if (!title && !appPath) continue;
+
+        const baseName = appPath ? appPath.split(/[\/]/).pop()?.replace(/\..*$/, "").toLowerCase() : null;
+        const match = roms.find((r) => {
+          if (baseName && r.originalName.replace(/\..*$/, "").toLowerCase() === baseName) return true;
+          if (title && r.title.toLowerCase() === (title ?? "").toLowerCase()) return true;
+          return false;
+        });
+
+        if (!match) {
+          results.push({ title: title ?? appPath ?? "?", updated: false, reason: "no matching ROM" });
+          continue;
+        }
+
+        const meta: Record<string, unknown> = {};
+        const overview = get("Notes") ?? get("Overview");
+        const releaseDate = get("ReleaseDate");
+        const developer = get("Developer");
+        const publisher = get("Publisher");
+        const genre = get("Genre") ?? get("Genres");
+        const maxPlayers = get("MaxPlayers");
+
+        if (overview) meta.description = overview.slice(0, 2000);
+        if (releaseDate) {
+          const y = Number(releaseDate.slice(0, 4));
+          if (y >= 1970 && y <= 2030) meta.releaseYear = y;
+        }
+        if (developer) meta.developer = developer.slice(0, 256);
+        if (publisher) meta.publisher = publisher.slice(0, 256);
+        if (genre) meta.genre = genre.split(";")[0].trim().slice(0, 256);
+        if (maxPlayers) meta.players = maxPlayers.trim().slice(0, 16);
+
+        if (Object.keys(meta).length > 0) {
+          if (meta.description || meta.developer || meta.publisher || meta.genre) {
+            meta.scrapeStatus = "matched";
+          }
+          await storage.updateUploadedRomMetadata(match.id, meta as Parameters<typeof storage.updateUploadedRomMetadata>[1]);
+        }
+        results.push({ title: match.title, updated: true });
+      }
+      res.json({ imported: results.filter((r) => r.updated).length, skipped: results.filter((r) => !r.updated).length, results });
+    } catch (err) {
+      res.status(400).json({ message: String(err) });
+    }
+  });
+
   return httpServer;
 }
 
@@ -823,6 +906,11 @@ const SCREENSCRAPER_SYSTEM_IDS: Record<string, number> = {
   ps1: 57,
   ps2: 58,
   arcade: 75,
+  dreamcast: 23,
+  gb: 9,
+  gbc: 10,
+  nds: 15,
+  psp: 61,
 };
 
 interface ScreenScraperMeta {
@@ -1932,6 +2020,7 @@ function renderEmulatorPage({ title, returnTo }: { title: string; returnTo: stri
         <button type="button" id="cabinet-display-open" data-testid="button-display-settings">Display</button>
         <button type="button" id="cabinet-remap-open" data-testid="button-remap-controls">Remap Keys</button>
         <button type="button" id="cabinet-gamepad-test-open" data-testid="button-gamepad-tester">Test Pad</button>
+        <button type="button" id="cabinet-netplay-open" data-testid="button-netplay">Netplay</button>
         <button type="button" class="danger" id="cabinet-exit" data-testid="button-exit-player">Exit Game</button>
       </div>
     </nav>
@@ -1981,7 +2070,13 @@ function renderEmulatorPage({ title, returnTo }: { title: string; returnTo: stri
         </div>
         <button type="button" class="cabinet-save-close" id="cabinet-remap-close" aria-label="Close key remapping" data-testid="button-close-remap">×</button>
       </div>
-      <div id="cabinet-remap-grid" style="padding:14px 18px 18px;display:grid;grid-template-columns:1fr 1fr;gap:8px;overflow-y:auto;max-height:calc(min(86vh,720px)-94px);"></div>
+      <div style="padding:8px 18px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <select id="cabinet-remap-profile-select" style="flex:1;min-width:90px;background:#1a1a2e;border:1px solid rgba(248,250,252,0.15);border-radius:8px;color:#f8fafc;font:600 10px ui-monospace,monospace;padding:6px 8px;cursor:pointer;" aria-label="Select remap profile"></select>
+        <button type="button" id="cabinet-remap-profile-load" style="appearance:none;border:1px solid rgba(248,250,252,0.2);border-radius:8px;background:rgba(248,250,252,0.08);color:#f8fafc;cursor:pointer;font:700 9px ui-monospace,monospace;letter-spacing:0.1em;padding:6px 10px;text-transform:uppercase;">Load</button>
+        <button type="button" id="cabinet-remap-profile-save" style="appearance:none;border:1px solid rgba(99,179,100,0.4);border-radius:8px;background:rgba(99,179,100,0.12);color:#f8fafc;cursor:pointer;font:700 9px ui-monospace,monospace;letter-spacing:0.1em;padding:6px 10px;text-transform:uppercase;">Save As…</button>
+        <button type="button" id="cabinet-remap-profile-delete" style="appearance:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;background:rgba(239,68,68,0.08);color:#f8fafc;cursor:pointer;font:700 9px ui-monospace,monospace;letter-spacing:0.1em;padding:6px 10px;text-transform:uppercase;">Del</button>
+      </div>
+      <div id="cabinet-remap-grid" style="padding:14px 18px 18px;display:grid;grid-template-columns:1fr 1fr;gap:8px;overflow-y:auto;max-height:calc(min(86vh,720px)-130px);"></div>
       <div style="padding:0 18px 14px;display:flex;gap:8px;">
         <button type="button" id="cabinet-remap-reset" style="appearance:none;border:1px solid rgba(239,68,68,0.5);border-radius:12px;background:rgba(239,68,68,0.12);color:#f8fafc;cursor:pointer;font:800 9px ui-monospace,monospace;letter-spacing:0.12em;padding:10px 16px;text-transform:uppercase;">Reset to Defaults</button>
       </div>
@@ -1997,6 +2092,34 @@ function renderEmulatorPage({ title, returnTo }: { title: string; returnTo: stri
       <div id="cabinet-gamepad-tester-body" style="padding:14px 18px 18px;overflow-y:auto;max-height:calc(min(86vh,720px)-94px);">
         <p id="cabinet-gp-status" style="font:600 11px ui-monospace,monospace;color:rgba(248,250,252,0.5);letter-spacing:0.08em;margin:0 0 12px;">No controller detected yet. Press any button on your gamepad.</p>
         <div id="cabinet-gp-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    </section>
+    <section class="cabinet-save-panel" id="cabinet-netplay-panel" aria-label="Netplay" aria-hidden="true" data-testid="panel-netplay">
+      <div class="cabinet-save-panel__header">
+        <div>
+          <p class="cabinet-save-title">Netplay</p>
+          <p class="cabinet-save-subtitle">Play with a friend over the network</p>
+        </div>
+        <button type="button" class="cabinet-save-close" id="cabinet-netplay-close" aria-label="Close netplay" data-testid="button-close-netplay">×</button>
+      </div>
+      <div style="padding:18px;display:flex;flex-direction:column;gap:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <button type="button" id="cabinet-netplay-host" style="appearance:none;border:1px solid rgba(99,179,237,0.4);border-radius:12px;background:rgba(99,179,237,0.12);color:#f8fafc;cursor:pointer;font:700 10px ui-monospace,monospace;letter-spacing:0.1em;padding:14px 10px;text-transform:uppercase;" data-testid="button-netplay-host">Host Game</button>
+          <button type="button" id="cabinet-netplay-join" style="appearance:none;border:1px solid rgba(34,197,94,0.4);border-radius:12px;background:rgba(34,197,94,0.12);color:#f8fafc;cursor:pointer;font:700 10px ui-monospace,monospace;letter-spacing:0.1em;padding:14px 10px;text-transform:uppercase;" data-testid="button-netplay-join">Join Game</button>
+        </div>
+        <div id="cabinet-netplay-host-section" style="display:none;flex-direction:column;gap:8px;">
+          <div style="font:600 10px ui-monospace,monospace;color:rgba(248,250,252,0.5);letter-spacing:0.1em;text-transform:uppercase;">Your Room Code</div>
+          <div id="cabinet-netplay-room-code" style="font:800 28px ui-monospace,monospace;color:#f8fafc;letter-spacing:0.3em;text-align:center;padding:14px;background:rgba(248,250,252,0.05);border-radius:10px;border:1px solid rgba(248,250,252,0.1);cursor:pointer;user-select:all;" title="Click to copy" data-testid="text-netplay-room-code">—</div>
+          <div style="font:11px ui-monospace,monospace;color:rgba(248,250,252,0.4);text-align:center;">Share this code with your opponent</div>
+        </div>
+        <div id="cabinet-netplay-join-section" style="display:none;flex-direction:column;gap:8px;">
+          <div style="font:600 10px ui-monospace,monospace;color:rgba(248,250,252,0.5);letter-spacing:0.1em;text-transform:uppercase;">Enter Room Code</div>
+          <div style="display:flex;gap:8px;">
+            <input id="cabinet-netplay-code-input" type="text" maxlength="8" placeholder="XXXXXXXX" style="flex:1;background:rgba(248,250,252,0.06);border:1px solid rgba(248,250,252,0.15);border-radius:8px;color:#f8fafc;font:700 18px ui-monospace,monospace;letter-spacing:0.25em;padding:10px 12px;text-transform:uppercase;outline:none;" data-testid="input-netplay-code" />
+            <button type="button" id="cabinet-netplay-connect" style="appearance:none;border:1px solid rgba(34,197,94,0.4);border-radius:8px;background:rgba(34,197,94,0.12);color:#f8fafc;cursor:pointer;font:700 10px ui-monospace,monospace;letter-spacing:0.1em;padding:10px 16px;text-transform:uppercase;" data-testid="button-netplay-connect">Connect</button>
+          </div>
+        </div>
+        <div id="cabinet-netplay-status" style="font:600 11px ui-monospace,monospace;color:rgba(248,250,252,0.4);min-height:16px;" data-testid="text-netplay-status"></div>
       </div>
     </section>
     <div class="cabinet-toast" id="cabinet-toast" role="status" aria-live="polite"></div>
@@ -2826,6 +2949,67 @@ function cabinetLoadRemap() {
 function cabinetSaveRemap(mapping) {
   try { localStorage.setItem(cabinetRemapStorageKey(), JSON.stringify(mapping)); } catch (_e) {}
 }
+// ── Remap profiles ─────────────────────────────────────────────────────────
+function cabinetProfilesKey() {
+  return "cabinet_remap_profiles_" + (window.EJS_gameID || "game");
+}
+function cabinetLoadProfiles() {
+  try {
+    var raw = localStorage.getItem(cabinetProfilesKey());
+    return raw ? JSON.parse(raw) : {};
+  } catch (_e) { return {}; }
+}
+function cabinetSaveProfiles(profiles) {
+  try { localStorage.setItem(cabinetProfilesKey(), JSON.stringify(profiles)); } catch (_e) {}
+}
+function cabinetRefreshProfileSelect() {
+  var sel = document.querySelector("#cabinet-remap-profile-select");
+  if (!sel) return;
+  var profiles = cabinetLoadProfiles();
+  var names = Object.keys(profiles);
+  sel.innerHTML = names.length === 0
+    ? '<option value="">— no saved profiles —</option>'
+    : names.map(function (n) { return '<option value="' + cabinetEscapeText(n) + '">' + cabinetEscapeText(n) + '</option>'; }).join("");
+}
+function cabinetSetupRemapProfiles() {
+  var loadBtn = document.querySelector("#cabinet-remap-profile-load");
+  var saveBtn = document.querySelector("#cabinet-remap-profile-save");
+  var delBtn = document.querySelector("#cabinet-remap-profile-delete");
+  var sel = document.querySelector("#cabinet-remap-profile-select");
+  if (!loadBtn || !saveBtn || !delBtn || !sel) return;
+  cabinetRefreshProfileSelect();
+  loadBtn.addEventListener("click", function () {
+    var name = sel.value;
+    if (!name) return;
+    var profiles = cabinetLoadProfiles();
+    if (!profiles[name]) return;
+    cabinetSaveRemap(profiles[name]);
+    cabinetApplyRemap(profiles[name]);
+    cabinetRenderRemapGrid();
+    cabinetToast("Loaded profile: " + name);
+  });
+  saveBtn.addEventListener("click", function () {
+    var name = window.prompt("Profile name:", "");
+    if (!name || !name.trim()) return;
+    name = name.trim().slice(0, 32);
+    var profiles = cabinetLoadProfiles();
+    profiles[name] = cabinetLoadRemap() || {};
+    cabinetSaveProfiles(profiles);
+    cabinetRefreshProfileSelect();
+    sel.value = name;
+    cabinetToast("Saved profile: " + name);
+  });
+  delBtn.addEventListener("click", function () {
+    var name = sel.value;
+    if (!name) return;
+    var profiles = cabinetLoadProfiles();
+    delete profiles[name];
+    cabinetSaveProfiles(profiles);
+    cabinetRefreshProfileSelect();
+    cabinetToast("Deleted profile: " + name);
+  });
+}
+
 function cabinetApplyRemap(mapping) {
   if (!mapping) return;
   var emulator = window.EJS_emulator;
@@ -2849,7 +3033,7 @@ function cabinetSetRemapPanel(open) {
   var panel = document.querySelector("#cabinet-remap-panel");
   var backdrop = document.querySelector("#cabinet-menu-backdrop");
   if (!panel || !backdrop) return;
-  if (open) { cabinetSetMenuOpen(false); cabinetRenderRemapGrid(); }
+  if (open) { cabinetSetMenuOpen(false); cabinetRenderRemapGrid(); cabinetRefreshProfileSelect(); }
   panel.setAttribute("aria-hidden", open ? "false" : "true");
   panel.classList.toggle("is-open", open);
   backdrop.classList.toggle("is-open", open);
@@ -3034,9 +3218,105 @@ function cabinetSetupGamepadPanel() {
   });
 }
 
+// ── Netplay ─────────────────────────────────────────────────────────────────
+function cabinetGenerateRoomCode() {
+  var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  var code = "";
+  for (var i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+function cabinetSetupNetplay() {
+  var openBtn = document.querySelector("#cabinet-netplay-open");
+  var closeBtn = document.querySelector("#cabinet-netplay-close");
+  var panel = document.querySelector("#cabinet-netplay-panel");
+  var backdrop = document.querySelector("#cabinet-menu-backdrop");
+  var hostBtn = document.querySelector("#cabinet-netplay-host");
+  var joinBtn = document.querySelector("#cabinet-netplay-join");
+  var hostSection = document.querySelector("#cabinet-netplay-host-section");
+  var joinSection = document.querySelector("#cabinet-netplay-join-section");
+  var roomCodeEl = document.querySelector("#cabinet-netplay-room-code");
+  var codeInput = document.querySelector("#cabinet-netplay-code-input");
+  var connectBtn = document.querySelector("#cabinet-netplay-connect");
+  var statusEl = document.querySelector("#cabinet-netplay-status");
+  if (!openBtn || !panel) return;
+
+  function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
+  function showSection(which) {
+    if (hostSection) hostSection.style.display = which === "host" ? "flex" : "none";
+    if (joinSection) joinSection.style.display = which === "join" ? "flex" : "none";
+  }
+
+  openBtn.addEventListener("click", function () {
+    cabinetSetMenuOpen(false);
+    panel.setAttribute("aria-hidden", "false");
+    panel.classList.add("is-open");
+    backdrop.classList.add("is-open");
+    showSection(null);
+    setStatus("");
+  });
+
+  function closePanel() {
+    panel.setAttribute("aria-hidden", "true");
+    panel.classList.remove("is-open");
+    backdrop.classList.remove("is-open");
+  }
+  if (closeBtn) closeBtn.addEventListener("click", closePanel);
+
+  if (hostBtn) hostBtn.addEventListener("click", function () {
+    var code = cabinetGenerateRoomCode();
+    if (roomCodeEl) roomCodeEl.textContent = code;
+    showSection("host");
+    setStatus("Waiting for opponent to connect…");
+    // Wire up EmulatorJS netplay if available
+    try {
+      if (window.EJS_emulator && typeof window.EJS_emulator.startNetplay === "function") {
+        window.EJS_emulator.startNetplay(code);
+        setStatus("Room " + code + " open — share the code!");
+      } else {
+        setStatus("Room code generated. EmulatorJS netplay available once game is loaded.");
+      }
+    } catch (_e) {
+      setStatus("Room code generated — start the game first to activate netplay.");
+    }
+  });
+
+  if (roomCodeEl) roomCodeEl.addEventListener("click", function () {
+    var code = roomCodeEl.textContent || "";
+    if (code && code !== "—") {
+      navigator.clipboard.writeText(code).then(function () { cabinetToast("Room code copied!"); }).catch(function () {});
+    }
+  });
+
+  if (joinBtn) joinBtn.addEventListener("click", function () {
+    showSection("join");
+    setStatus("Enter the host's room code and press Connect.");
+    if (codeInput) codeInput.focus();
+  });
+
+  if (connectBtn) connectBtn.addEventListener("click", function () {
+    var code = (codeInput ? codeInput.value : "").trim().toUpperCase();
+    if (!code || code.length < 4) { setStatus("Please enter a valid room code."); return; }
+    setStatus("Connecting to room " + code + "…");
+    try {
+      if (window.EJS_emulator && typeof window.EJS_emulator.joinNetplay === "function") {
+        window.EJS_emulator.joinNetplay(code);
+        setStatus("Connected to room " + code + "!");
+      } else {
+        setStatus("Joining room " + code + ". Start the game first to activate netplay.");
+      }
+    } catch (_e) {
+      setStatus("Could not connect — check the room code and try again.");
+    }
+  });
+}
+
 cabinetSetupSystemMenu();
 cabinetSetupVirtualPad();
 cabinetSetupGamepadPanel();
+cabinetSetupRemapProfiles();
+cabinetSetupNetplay();
 cabinetFetchSaveSlots();
 cabinetFetchServerBackups();
 window.EJS_ready = function () {
@@ -3083,7 +3363,7 @@ window.EJS_defaultControls = {
     9: { value: "s", value2: "BUTTON_3" },
     10: { value: "q", value2: "LEFT_TOP_SHOULDER" },
     11: { value: "w", value2: "RIGHT_TOP_SHOULDER" },
-${["psx", "pcsx2"].includes(core) ? `
+${["psx", "pcsx2", "ppsspp"].includes(core) ? `
     12: { value: "e", value2: "LEFT_BOTTOM_SHOULDER" },
     13: { value: "r", value2: "RIGHT_BOTTOM_SHOULDER" },
     14: { value: "tab", value2: "LEFT_ANALOG" },

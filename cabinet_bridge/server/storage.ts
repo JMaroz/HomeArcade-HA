@@ -110,6 +110,7 @@ export interface IStorage {
   updateUploadedRomFavorite(id: number, favorite: boolean): Promise<UploadedRom | undefined>;
   markUploadedRomPlayed(id: number): Promise<UploadedRom | undefined>;
   listRomsByDiscGroup(discGroup: string): Promise<UploadedRom[]>;
+  incrementRomMinutesPlayed(id: number, minutes: number): Promise<UploadedRom | undefined>;
   updateUploadedRomMetadata(
     id: number,
     meta: Partial<Pick<InsertUploadedRom, "description" | "releaseYear" | "developer" | "publisher" | "genre" | "players" | "artUrl" | "scrapeStatus" | "scrapeMessage">>,
@@ -160,6 +161,17 @@ export class DatabaseStorage implements IStorage {
 
   async createUploadedRom(rom: InsertUploadedRom): Promise<UploadedRom> {
     return db.insert(uploadedRoms).values(rom).returning().get();
+  }
+
+  async incrementRomMinutesPlayed(id: number, minutes: number): Promise<UploadedRom | undefined> {
+    const rom = await this.getUploadedRom(id);
+    if (!rom) return undefined;
+    return db
+      .update(uploadedRoms)
+      .set({ minutesPlayed: (rom.minutesPlayed ?? 0) + Math.max(0, Math.round(minutes)) })
+      .where(eq(uploadedRoms.id, id))
+      .returning()
+      .get();
   }
 
   async updateUploadedRomMetadata(

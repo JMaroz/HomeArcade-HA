@@ -1,0 +1,37 @@
+{
+  "name": "Cabinet Bridge",
+  "short_name": "Cabinet",
+  "description": "Retro gaming frontend for Home Assistant — browse systems, manage ROMs, launch games.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "landscape-primary",
+  "theme_color": "#0d0c12",
+  "background_color": "#0d0c12",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='36' fill='%230d0c12'/><rect x='36' y='54' width='120' height='78' rx='15' fill='none' stroke='%23ec4899' stroke-width='12'/><circle cx='72' cy='93' r='10' fill='%2322d3ee'/><circle cx='120' cy='93' r='10' fill='%2322d3ee'/><rect x='60' y='144' width='72' height='12' rx='6' fill='%23ec4899'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='96' fill='%230d0c12'/><rect x='96' y='144' width='320' height='208' rx='40' fill='none' stroke='%23ec4899' stroke-width='32'/><circle cx='192' cy='248' r='26' fill='%2322d3ee'/><circle cx='320' cy='248' r='26' fill='%2322d3ee'/><rect x='160' y='384' width='192' height='32' rx='16' fill='%23ec4899'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "All Games",
+      "url": "./?filter=all",
+      "description": "Browse all uploaded games"
+    },
+    {
+      "name": "Recently Played",
+      "url": "./?filter=recent",
+      "description": "Jump back in"
+    }
+  ]
+}

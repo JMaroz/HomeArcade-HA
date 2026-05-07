@@ -12,7 +12,7 @@ import { filterToPath } from "@/lib/filter";
 import { Link } from "wouter";
 import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { UploadedRom } from "@shared/schema";
+import type { UploadedRom, GameCollectionWithItems } from "@shared/schema";
 
 export default function Settings() {
   const { config, setConfig, setEndpoint, resetConfig, saveStatus } = useIntegration();
@@ -20,11 +20,17 @@ export default function Settings() {
   const [esImporting, setEsImporting] = useState(false);
   const [esResult, setEsResult] = useState<{ imported: number; skipped: number } | null>(null);
   const [esError, setEsError] = useState<string | null>(null);
+  const [lbImporting, setLbImporting] = useState(false);
+  const [lbResult, setLbResult] = useState<{ imported: number; skipped: number } | null>(null);
+  const [lbError, setLbError] = useState<string | null>(null);
   const [esImporting, setEsImporting] = useState(false);
   const [esResult, setEsResult] = useState<{ imported: number; skipped: number } | null>(null);
   const [esError, setEsError] = useState<string | null>(null);
   const { data: uploadedRoms = [] } = useQuery<UploadedRom[]>({
     queryKey: ["/api/roms"],
+  });
+  const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({
+    queryKey: ["/api/collections"],
   });
 
   const copy = async (text: string, key: string) => {
@@ -391,8 +397,8 @@ script:
           </Section>
 
           <Section
-            title="EmulationStation / Batocera import"
-            description="Import game metadata from a gamelist.xml file. Games are matched by filename or title to your uploaded ROMs."
+            title="Metadata import — EmulationStation &amp; LaunchBox"
+            description="Import game metadata from a gamelist.xml (EmulationStation/Batocera/RetroPie) or LaunchBox Metadata.xml. Games are matched by filename or title."
           >
             <div className="rounded-md border border-border bg-background/40 p-3">
               <Label className="text-sm font-medium">Upload gamelist.xml</Label>
@@ -435,6 +441,49 @@ script:
               )}
               {esError && (
                 <p className="text-xs text-destructive mt-2" data-testid="text-es-import-error">{esError}</p>
+              )}
+            </div>
+            <div className="rounded-md border border-border bg-background/40 p-3">
+              <Label className="text-sm font-medium">Upload LaunchBox Metadata.xml</Label>
+              <p className="text-xs text-muted-foreground mt-0.5 mb-2">Select a platform XML from your LaunchBox Data/Platforms folder.</p>
+              <input
+                type="file"
+                accept=".xml,text/xml,application/xml"
+                data-testid="input-lb-xml"
+                className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-background file:text-sm file:font-mono file:uppercase file:tracking-wide file:cursor-pointer"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setLbImporting(true);
+                  setLbResult(null);
+                  setLbError(null);
+                  try {
+                    const buf = await file.arrayBuffer();
+                    const res = await fetch("/api/import/launchbox", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/xml" },
+                      body: buf,
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || "Import failed");
+                    setLbResult({ imported: data.imported, skipped: data.skipped });
+                    await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
+                  } catch (err) {
+                    setLbError(String(err));
+                  } finally {
+                    setLbImporting(false);
+                    e.target.value = "";
+                  }
+                }}
+              />
+              {lbImporting && <p className="text-xs text-muted-foreground mt-2">Importing…</p>}
+              {lbResult && (
+                <p className="text-xs text-status-online mt-2" data-testid="text-lb-import-result">
+                  ✓ Imported {lbResult.imported} game{lbResult.imported !== 1 ? "s" : ""}, skipped {lbResult.skipped}.
+                </p>
+              )}
+              {lbError && (
+                <p className="text-xs text-destructive mt-2" data-testid="text-lb-import-error">{lbError}</p>
               )}
             </div>
           </Section>
@@ -545,6 +594,19 @@ script:
                 data-testid="input-kiosk-pin"
                 autoComplete="off"
               />
+            </Field>
+            <Field label="Locked collection (optional)" hint="When set, kiosk mode shows only games from this collection.">
+              <select
+                value={config.kioskCollectionId ?? ""}
+                onChange={(e) => setConfig({ kioskCollectionId: e.target.value ? Number(e.target.value) : null })}
+                data-testid="select-kiosk-collection"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">— Show all games —</option>
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </Field>
           </Section>
 

@@ -10,6 +10,7 @@ import {
   Clock,
   LayoutGrid,
   Settings as SettingsIcon,
+  Trophy,
   Tv,
   Wifi,
   WifiOff,
@@ -142,11 +143,22 @@ export function Sidebar({ active, alwaysVisible = false, onNavigate }: SidebarPr
 
       <div className="px-3 pb-3 border-t border-sidebar-border pt-3 space-y-2">
         <Link
+          href="/achievements"
+          onClick={onNavigate}
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium hover-elevate active-elevate-2 ${
+            location.startsWith("/achievements") ? "bg-sidebar-accent text-foreground" : "text-muted-foreground"
+          } ${kioskMode ? "hidden" : ""}`}
+          data-testid="link-achievements"
+        >
+          <Trophy className="size-4" />
+          Achievements
+        </Link>
+        <Link
           href="/settings"
           onClick={onNavigate}
           className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium hover-elevate active-elevate-2 ${
             onSettingsRoute ? "bg-sidebar-accent text-foreground" : "text-muted-foreground"
-          }`}
+          } ${kioskMode ? "hidden" : ""}`}
           data-testid="link-settings"
         >
           <SettingsIcon className="size-4" />
