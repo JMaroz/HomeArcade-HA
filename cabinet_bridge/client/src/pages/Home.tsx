@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { Sidebar, type Filter } from "@/components/Sidebar";
 import { MobileTopBar } from "@/components/MobileNav";
-import { RightPanel } from "@/components/RightPanel";
 import { GameCard } from "@/components/GameCard";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { SystemTile } from "@/components/GameArt";
@@ -22,12 +21,8 @@ type Sort = "title" | "year" | "recent" | "rating" | "plays";
 
 export default function Home({
   filter,
-  arcadeMode,
-  onToggleArcade,
 }: {
   filter: Filter;
-  arcadeMode: boolean;
-  onToggleArcade: () => void;
 }) {
   const [, navigate] = useLocation();
   const goToFilter = (next: Filter) => navigate(filterToPath(next));
@@ -508,7 +503,6 @@ export default function Home({
         </div>
       </main>
 
-      <RightPanel arcadeMode={arcadeMode} onToggleArcade={onToggleArcade} />
 
       <GameDetailDialog
         game={openGame}

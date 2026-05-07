@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Switch, Route, Router } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
@@ -26,23 +26,17 @@ export function applyTheme(theme: AppTheme) {
 }
 
 function AppRouter({
-  arcadeMode,
-  onToggleArcade,
 }: {
-  arcadeMode: boolean;
-  onToggleArcade: () => void;
 }) {
   return (
     <Switch>
       <Route path="/">
-        <Home filter={DEFAULT_FILTER} arcadeMode={arcadeMode} onToggleArcade={onToggleArcade} />
+        <Home filter={DEFAULT_FILTER} />
       </Route>
       <Route path="/library/collection/:id">
         {(params) => (
           <Home
             filter={parseCollectionFilter(params.id)}
-            arcadeMode={arcadeMode}
-            onToggleArcade={onToggleArcade}
           />
         )}
       </Route>
@@ -50,8 +44,6 @@ function AppRouter({
         {(params) => (
           <Home
             filter={parseFilter(params.filter)}
-            arcadeMode={arcadeMode}
-            onToggleArcade={onToggleArcade}
           />
         )}
       </Route>
@@ -80,12 +72,6 @@ function App() {
     }
   }, []);
 
-  const [arcadeMode, setArcadeMode] = useState(false);
-  useEffect(() => {
-    document.body.classList.toggle("crt", arcadeMode);
-    return () => document.body.classList.remove("crt");
-  }, [arcadeMode]);
-
   return (
     <QueryClientProvider client={queryClient}>
       <IntegrationProvider>
@@ -94,8 +80,6 @@ function App() {
           <Router hook={useHashLocation}>
             <div className="h-dvh min-h-dvh flex flex-col">
               <AppRouter
-                arcadeMode={arcadeMode}
-                onToggleArcade={() => setArcadeMode((v) => !v)}
               />
             </div>
           </Router>
