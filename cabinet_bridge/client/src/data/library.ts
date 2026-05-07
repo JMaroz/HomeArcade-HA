@@ -79,6 +79,8 @@ export interface Game {
   minutesPlayed?: number;
   favorite?: boolean;
   playStatus?: string;
+  communityScore?: number | null;
+  wheelArtUrl?: string | null;
   createdAt?: number;
 }
 
@@ -320,6 +322,8 @@ export function uploadedRomToGame(rom: UploadedRom): Game {
     romHash: rom.romHash ?? null,
     favorite: rom.favorite,
     playStatus: rom.playStatus ?? "unset",
+    communityScore: rom.communityScore ?? null,
+    wheelArtUrl: rom.wheelArtUrl ?? null,
     createdAt: rom.createdAt,
   };
 }

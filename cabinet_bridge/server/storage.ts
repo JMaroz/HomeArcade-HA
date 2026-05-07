@@ -85,6 +85,8 @@ for (const statement of [
   "ALTER TABLE uploaded_roms ADD COLUMN rom_hash TEXT",
   "ALTER TABLE uploaded_roms ADD COLUMN minutes_played INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE uploaded_roms ADD COLUMN play_status TEXT NOT NULL DEFAULT 'unset'",
+  "ALTER TABLE uploaded_roms ADD COLUMN community_score INTEGER",
+  "ALTER TABLE uploaded_roms ADD COLUMN wheel_art_url TEXT",
 ]) {
   try {
     sqlite.exec(statement);
@@ -115,7 +117,7 @@ export interface IStorage {
   updateUploadedRomPlayStatus(id: number, status: string): Promise<UploadedRom | undefined>;
   updateUploadedRomMetadata(
     id: number,
-    meta: Partial<Pick<InsertUploadedRom, "description" | "releaseYear" | "developer" | "publisher" | "genre" | "players" | "artUrl" | "scrapeStatus" | "scrapeMessage">>,
+    meta: Partial<Pick<InsertUploadedRom, "description" | "releaseYear" | "developer" | "publisher" | "genre" | "players" | "artUrl" | "scrapeStatus" | "scrapeMessage" | "communityScore" | "wheelArtUrl">>,
   ): Promise<UploadedRom | undefined>;
   listCollections(): Promise<GameCollectionWithItems[]>;
   createCollection(collection: InsertGameCollection): Promise<GameCollection>;
@@ -178,7 +180,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateUploadedRomMetadata(
     id: number,
-    meta: Partial<Pick<InsertUploadedRom, "description" | "releaseYear" | "developer" | "publisher" | "genre" | "players" | "artUrl" | "scrapeStatus" | "scrapeMessage">>,
+    meta: Partial<Pick<InsertUploadedRom, "description" | "releaseYear" | "developer" | "publisher" | "genre" | "players" | "artUrl" | "scrapeStatus" | "scrapeMessage" | "communityScore" | "wheelArtUrl">>,
   ): Promise<UploadedRom | undefined> {
     return db
       .update(uploadedRoms)

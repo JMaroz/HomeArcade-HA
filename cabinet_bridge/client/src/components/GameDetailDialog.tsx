@@ -7,7 +7,7 @@ import { useIntegration, formatRelative } from "@/lib/integration";
 import { apiUrl } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { GameCollectionWithItems } from "@shared/schema";
-import { Heart, Play, Clock, Users, Star, Folder, Plus, AlertTriangle } from "lucide-react";
+import { Heart, Play, Clock, Users, Star, Folder, Plus } from "lucide-react";
 
 export function GameDetailDialog({
   game,
@@ -31,6 +31,7 @@ export function GameDetailDialog({
   const { dispatch } = useIntegration();
   const { toast } = useToast();
   const [launching, setLaunching] = useState(false);
+  const [wheelArtError, setWheelArtError] = useState(false);
 
   if (!game) return null;
   const system = SYSTEMS.find((s) => s.id === game.system);
@@ -72,6 +73,18 @@ export function GameDetailDialog({
     });
   };
 
+  // Community score: ScreenScraper is /20 scale; convert to /10 for display
+  const scoreDisplay = game.communityScore != null
+    ? `${(game.communityScore / 2).toFixed(1)}/10`
+    : null;
+
+  // Genre pills (comma-separated string → array)
+  const genrePills = game.genre
+    ? game.genre.split(",").map((g) => g.trim()).filter(Boolean)
+    : [];
+
+  const showWheelArt = !!game.wheelArtUrl && !wheelArtError;
+
   return (
     <Dialog open={!!game} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
@@ -79,17 +92,34 @@ export function GameDetailDialog({
         data-testid="dialog-game-detail"
       >
         <div className="grid sm:grid-cols-[200px_1fr]">
-          <div className="h-36 sm:h-auto">
+          {/* Left panel — box art + wheel logo overlay */}
+          <div className="relative h-40 sm:h-auto">
             <GameArt game={game} />
+            {showWheelArt && (
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-center pb-3 px-3 pointer-events-none">
+                <img
+                  src={game.wheelArtUrl!}
+                  alt={`${game.title} logo`}
+                  onError={() => setWheelArtError(true)}
+                  className="max-h-14 max-w-full object-contain drop-shadow-lg"
+                  style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.7))" }}
+                />
+              </div>
+            )}
           </div>
+
+          {/* Right panel */}
           <div className="p-5 sm:p-6 flex flex-col gap-4">
+            {/* Header */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                 <span>{system?.shortName}</span>
-                <span>·</span>
-                <span>{game.year}</span>
-                <span>·</span>
-                <span>{game.genre}</span>
+                {game.year > 0 && (
+                  <>
+                    <span>·</span>
+                    <span>{game.year}</span>
+                  </>
+                )}
               </div>
               <DialogTitle
                 className="font-display text-xl font-bold leading-tight"
@@ -97,7 +127,7 @@ export function GameDetailDialog({
               >
                 {game.title}
               </DialogTitle>
-              {/* Developer / publisher line */}
+              {/* Developer / publisher */}
               {(game.developer || game.publisher) && (
                 <DialogDescription className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex flex-wrap gap-x-3">
                   {game.developer && <span>{game.developer}</span>}
@@ -105,21 +135,35 @@ export function GameDetailDialog({
                   {game.publisher && <span>{game.publisher}</span>}
                 </DialogDescription>
               )}
-              {/* Description from ScreenScraper */}
+              {/* Genre pills */}
+              {genrePills.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {genrePills.map((g) => (
+                    <span
+                      key={g}
+                      className="inline-flex items-center rounded-full border border-border bg-background/70 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground"
+                    >
+                      {g}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {/* Description */}
               {game.description && (
-                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mt-1">
+                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4 pt-1">
                   {game.description}
                 </p>
               )}
             </div>
 
+            {/* Stats row */}
             <div className="grid grid-cols-4 gap-2 text-xs">
               <Stat
                 icon={<Star className="size-3.5" />}
-                label="Rating"
-                value={game.rating > 0 ? `${game.rating}/5` : "—"}
+                label="Community"
+                value={scoreDisplay ?? "—"}
               />
-              <Stat icon={<Users className="size-3.5" />} label="Players" value={game.players} />
+              <Stat icon={<Users className="size-3.5" />} label="Players" value={game.players !== "Uploaded ROM" ? (game.players || "—") : "—"} />
               <Stat
                 icon={<Clock className="size-3.5" />}
                 label="Last played"
@@ -128,12 +172,16 @@ export function GameDetailDialog({
               <Stat
                 icon={<Play className="size-3.5" />}
                 label="Play time"
-                value={(() => { const m = game.minutesPlayed ?? 0; if (!m) return "—"; const h = Math.floor(m/60); return h > 0 ? `${h}h ${m%60}m` : `${m}m`; })()}
+                value={(() => {
+                  const m = game.minutesPlayed ?? 0;
+                  if (!m) return "—";
+                  const h = Math.floor(m / 60);
+                  return h > 0 ? `${h}h ${m % 60}m` : `${m}m`;
+                })()}
               />
             </div>
 
-
-
+            {/* Your Rating */}
             <div className="rounded-md border border-border bg-background/50 p-3">
               <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
                 Your Rating
@@ -178,6 +226,7 @@ export function GameDetailDialog({
               </div>
             </div>
 
+            {/* Play Status */}
             {game.romId && onSetStatus ? (
               <div className="rounded-md border border-border bg-background/50 p-3">
                 <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
@@ -214,6 +263,7 @@ export function GameDetailDialog({
               </div>
             ) : null}
 
+            {/* Collections */}
             {game.romId ? (
               <div className="rounded-md border border-border bg-background/50 p-3">
                 <div className="flex items-center justify-between gap-2 mb-2">
@@ -260,8 +310,7 @@ export function GameDetailDialog({
               </div>
             ) : null}
 
-
-
+            {/* Action buttons */}
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <Button
                 size="lg"

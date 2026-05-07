@@ -524,6 +524,8 @@ export async function registerRoutes(
         publisher: ssMeta?.publisher ?? null,
         genre: ssMeta?.genre ?? null,
         players: ssMeta?.players ?? null,
+        communityScore: ssMeta?.communityScore ?? null,
+        wheelArtUrl: ssMeta?.wheelArtUrl ?? null,
         favorite,
         rating: 0,
         lastPlayed: 0,
@@ -607,6 +609,8 @@ export async function registerRoutes(
       publisher: ssMeta?.publisher ?? undefined,
       genre: ssMeta?.genre ?? undefined,
       players: ssMeta?.players ?? undefined,
+      communityScore: ssMeta?.communityScore ?? undefined,
+      wheelArtUrl: ssMeta?.wheelArtUrl ?? undefined,
     });
     res.json(updated);
   });
@@ -961,6 +965,8 @@ const SCREENSCRAPER_SYSTEM_IDS: Record<string, number> = {
 
 interface ScreenScraperMeta {
   artUrl: string | null;
+  wheelArtUrl: string | null;
+  communityScore: number | null;
   description: string | null;
   releaseYear: number | null;
   developer: string | null;
@@ -1038,6 +1044,7 @@ async function fetchScreenScraperMeta(
 
     // Box art: prefer "box-2D" media in us/wor region
     let artUrl: string | null = null;
+    let wheelArtUrl: string | null = null;
     const medias = jeu.medias as Array<{ type: string; region?: string; url?: string }> | undefined;
     if (Array.isArray(medias)) {
       const boxTypes = ["box-2D", "box-2D-side", "mixrbv1"];
@@ -1046,10 +1053,26 @@ async function fetchScreenScraperMeta(
         const best = candidates.find((m) => ["us", "wor", "eu"].includes(m.region ?? "")) ?? candidates[0];
         if (best?.url) { artUrl = best.url; break; }
       }
+      // Wheel art (logo PNG with transparent background)
+      const wheelTypes = ["wheel-hd", "wheel", "wheel-carbon"];
+      for (const wt of wheelTypes) {
+        const w = medias.find((m) => m.type === wt);
+        if (w?.url) { wheelArtUrl = w.url; break; }
+      }
+    }
+
+    // Community score: ScreenScraper returns note on a /20 scale
+    let communityScore: number | null = null;
+    const noteRaw = (jeu.note as { text?: string } | undefined)?.text;
+    if (noteRaw) {
+      const parsed = parseFloat(noteRaw);
+      if (!isNaN(parsed)) communityScore = parsed;
     }
 
     return {
       artUrl,
+      wheelArtUrl,
+      communityScore,
       description,
       releaseYear,
       developer,
