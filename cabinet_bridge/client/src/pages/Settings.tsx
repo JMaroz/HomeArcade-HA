@@ -226,7 +226,7 @@ function ControlsTab() {
               <button
                 key={s.systemId}
                 onClick={() => { setSelectedSystem(s.systemId); setCapturing(null); }}
-                className={`px-3 py-1.5 rounded-md border text-xs font-mono uppercase tracking-wide transition-all ${
+                className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-md border text-[10px] sm:text-xs font-mono uppercase tracking-wide transition-all ${
                   selectedSystem === s.systemId
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
@@ -261,7 +261,7 @@ function ControlsTab() {
             const isCapturing = capturing === index;
             const isCustom = !!saved[index];
             return (
-              <div key={index} className="flex items-center justify-between px-3 py-2 gap-3">
+              <div key={index} className="flex items-center justify-between px-2 sm:px-3 py-2 gap-2 sm:gap-3">
                 <span className="text-sm min-w-0 truncate">
                   {label}
                   {isCustom && <span className="ml-2 text-[10px] font-mono text-primary">custom</span>}
@@ -294,7 +294,7 @@ function ControlsTab() {
             const key = getKey(index);
             const isCapturing = capturing === index;
             return (
-              <div key={index} className="flex items-center justify-between px-3 py-2 gap-3">
+              <div key={index} className="flex items-center justify-between px-2 sm:px-3 py-2 gap-2 sm:gap-3">
                 <span className="text-sm">{label}</span>
                 <button
                   onClick={() => setCapturing(isCapturing ? null : index)}
@@ -351,7 +351,7 @@ export default function Settings() {
       <Sidebar active="favorites" />
       <main className="flex-1 min-w-0 flex flex-col overflow-y-auto" data-testid="page-settings">
         <MobileTopBar active="favorites" />
-        <div className="px-5 sm:px-10 py-6 sm:py-10 max-w-4xl w-full mx-auto">
+        <div className="px-4 sm:px-10 py-5 sm:py-10 max-w-4xl w-full mx-auto">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground mb-4"
@@ -385,13 +385,13 @@ export default function Settings() {
           </div>
 
           <Tabs defaultValue="general">
-            <TabsList className="mb-6 flex flex-wrap h-auto gap-1">
-              <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="library">Library</TabsTrigger>
-              <TabsTrigger value="services">Services</TabsTrigger>
-              <TabsTrigger value="controls">Controls</TabsTrigger>
-              <TabsTrigger value="kiosk">Kiosk</TabsTrigger>
-              <TabsTrigger value="ha">HA Setup</TabsTrigger>
+            <TabsList className="mb-6 w-full grid grid-cols-3 sm:flex sm:flex-wrap h-auto gap-1 p-1">
+              <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>
+              <TabsTrigger value="library" className="text-xs sm:text-sm">Library</TabsTrigger>
+              <TabsTrigger value="services" className="text-xs sm:text-sm">Services</TabsTrigger>
+              <TabsTrigger value="controls" className="text-xs sm:text-sm">Controls</TabsTrigger>
+              <TabsTrigger value="kiosk" className="text-xs sm:text-sm">Kiosk</TabsTrigger>
+              <TabsTrigger value="ha" className="text-xs sm:text-sm">HA Setup</TabsTrigger>
             </TabsList>
 
             {/* ── General ──────────────────────────────────────────────── */}
@@ -474,7 +474,7 @@ export default function Settings() {
                     <thead className="bg-secondary/40 text-muted-foreground">
                       <tr>
                         <th className="text-left font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-2">Game</th>
-                        <th className="text-left font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-2">Endpoint</th>
+                        <th className="hidden sm:table-cell text-left font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-2">Endpoint</th>
                         <th className="px-3 py-2 w-10" />
                       </tr>
                     </thead>
@@ -485,8 +485,11 @@ export default function Settings() {
                         const ep = `/api/webhook/cabinet_launch_${rom.slug}`;
                         return (
                           <tr key={rom.id}>
-                            <td className="px-3 py-2 truncate max-w-[180px]">{rom.title}</td>
-                            <td className="px-3 py-2 font-mono text-[12px] text-foreground/80 break-all">POST {ep}</td>
+                            <td className="px-3 py-2">
+                              <div className="truncate max-w-[180px] sm:max-w-none">{rom.title}</div>
+                              <div className="sm:hidden font-mono text-[11px] text-muted-foreground break-all mt-0.5">POST {ep}</div>
+                            </td>
+                            <td className="hidden sm:table-cell px-3 py-2 font-mono text-[12px] text-foreground/80 break-all">POST {ep}</td>
                             <td className="px-3 py-2 text-right">
                               <button type="button" onClick={() => copy(ep, `rom-${rom.id}`)} aria-label={`Copy ${rom.title} endpoint`}
                                 data-testid={`button-copy-rom-endpoint-${rom.id}`} className="text-muted-foreground hover:text-foreground">
@@ -797,7 +800,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 
 function Code({ children }: { children: string }) {
   return (
-    <pre className="mt-2 rounded-md border border-border bg-background/60 p-3 overflow-x-auto font-mono text-[11px] leading-relaxed text-foreground/90">
+    <pre className="mt-2 rounded-md border border-border bg-background/60 p-3 overflow-x-auto font-mono text-[11px] leading-relaxed text-foreground/90 max-w-full">
       <code>{children}</code>
     </pre>
   );

@@ -4,6 +4,19 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [0.3.18] — 2026-05-07
+
+### Mobile: Settings page responsive improvements
+
+- **Tab bar**: 3-column grid on mobile (two rows of three), switches to flex-wrap on sm+; tab labels shrink to `text-xs` on small screens
+- **Launch endpoints table**: on mobile the endpoint URL collapses under the game title instead of appearing as a separate column; header hides the Endpoint column heading
+- **Controls console selector**: tighter `px-2 py-1` padding and `text-[10px]` on mobile so all system buttons comfortably wrap
+- **Binding rows**: reduced horizontal padding on small screens
+- **Main content area**: `px-4` on mobile (was `px-5`) to give a touch more breathing room
+- **HA Setup code blocks**: explicit `max-w-full` so long YAML lines scroll horizontally without pushing the page layout
+
+---
+
 ## [0.3.17] — 2026-05-07
 
 ### Fix: save-state manager now shows only the logged-in user's saves
