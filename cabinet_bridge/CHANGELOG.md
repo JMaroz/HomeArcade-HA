@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.11
+
+- Fix: critical SyntaxError in bootstrap.js line 877 — `rows.join("\n")` inside a TypeScript template literal produced a literal newline character in generated JS, breaking game loading; changed to `rows.join("")`
+
 ## 0.3.10
 
 - Fix: critical SyntaxError in bootstrap.js (introduced by v0.3.9 diagnostic) — JSON.stringify inside a string literal broke game loading entirely

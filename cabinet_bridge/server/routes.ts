@@ -3263,7 +3263,7 @@ function cabinetRenderControls() {
   rows.push(section("Emulator"));
   rows.push(row("Quick Save / Load", "1 / 2"));
   rows.push(row("Rewind", "Backspace"));
-  body.innerHTML = rows.join("\n");
+  body.innerHTML = rows.join("");
 }
 function cabinetSetRewind(enabled) {
   var btn = document.querySelector("#cabinet-rewind-toggle");
