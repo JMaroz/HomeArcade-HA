@@ -132,6 +132,20 @@ export async function registerRoutes(
     res.sendFile(resolved);
   });
 
+  // Returns all discs in the same disc group as this ROM, ordered by disc number.
+  app.get("/api/roms/:id/discs", async (req, res) => {
+    const id = Number(req.params.id);
+    const rom = await storage.getUploadedRom(id);
+    if (!rom) {
+      return res.status(404).json({ message: "Uploaded ROM not found." });
+    }
+    if (!rom.discGroup) {
+      return res.json([rom]);
+    }
+    const discs = await storage.listRomsByDiscGroup(rom.discGroup);
+    res.json(discs.length > 0 ? discs : [rom]);
+  });
+
   app.get("/api/roms/:id/player", async (req, res) => {
     const id = Number(req.params.id);
     const rom = await storage.getUploadedRom(id);
@@ -169,12 +183,25 @@ export async function registerRoutes(
         .send(`document.body.textContent = ${JSON.stringify(`${rom.system.toUpperCase()} is not configured for browser play yet.`)};`);
     }
 
+    // For multi-disc games, collect all siblings so we can pass EJS_discs
+    let discs: Array<{ id: number; label: string }> = [];
+    if (rom.discGroup) {
+      const siblings = await storage.listRomsByDiscGroup(rom.discGroup);
+      if (siblings.length > 1) {
+        discs = siblings.map((s) => ({
+          id: s.id,
+          label: s.discNumber ? `Disc ${s.discNumber}` : s.title,
+        }));
+      }
+    }
+
     res.setHeader("Content-Type", "application/javascript; charset=utf-8");
     res.send(renderEmulatorBootstrap({
       core,
       title: rom.title,
       gameId: `${rom.system}-${rom.slug}`,
       romId: rom.id,
+      discs,
     }));
   });
 
@@ -357,8 +384,19 @@ export async function registerRoutes(
         });
       }
 
-      const title = titleFromFileName(originalName);
-      const baseSlug = slugify(title);
+      const rawTitle = titleFromFileName(originalName);
+
+      // Detect multi-disc indicators like "(Disc 1)", "[Disk 2]", "CD 3", etc.
+      const discMatch = rawTitle.match(
+        /\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i,
+      );
+      const discNumber = discMatch ? parseInt(discMatch[1] ?? discMatch[2], 10) : null;
+      // Strip the disc tag from the display title
+      const title = discMatch ? rawTitle.replace(discMatch[0], "").trim() : rawTitle;
+      // disc_group is "system/base-title-slug" so all discs share the same key
+      const discGroup = discMatch ? `${system}/${slugify(title)}` : null;
+
+      const baseSlug = slugify(rawTitle);
       const uniqueSuffix = Date.now().toString(36);
       const slug = `${system}_${baseSlug}_${uniqueSuffix}`;
       const safeName = `${slug}${extension}`;
@@ -385,6 +423,8 @@ export async function registerRoutes(
         rating: 0,
         lastPlayed: 0,
         playCount: 0,
+        discNumber,
+        discGroup,
         createdAt: Date.now(),
       });
 
@@ -1475,7 +1515,7 @@ function renderEmulatorPage({ title, returnTo }: { title: string; returnTo: stri
 </html>`;
 }
 
-function renderEmulatorBootstrap({ core, title, gameId, romId }: { core: string; title: string; gameId: string; romId: number }) {
+function renderEmulatorBootstrap({ core, title, gameId, romId, discs }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }> }) {
   return `"use strict";
 function cabinetToast(message) {
   var toast = document.querySelector("#cabinet-toast");
@@ -1802,17 +1842,29 @@ function cabinetQuickLoadSlot(slot) {
   if (!loaded) {
     cabinetSendInput(25, "2");
   }
-  cabinetToast("Loaded state from slot " + slot);
+  // Only confirm success if the API call didn't throw; key-input fallback is fire-and-forget
+  if (loaded) {
+    cabinetToast("Loaded slot " + slot);
+  } else {
+    cabinetToast("Loading slot " + slot + "\u2026");
+  }
 }
 function cabinetDeleteLocalSaveSlot(slot) {
   var emulator = window.EJS_emulator;
   if (emulator && emulator.gameManager && emulator.gameManager.FS) {
-    try {
-      emulator.gameManager.FS.unlink("/" + slot + "-quick.state");
-    } catch (_error) {}
-    try {
-      emulator.gameManager.FS.unlink(slot + "-quick.state");
-    } catch (_error) {}
+    var FS = emulator.gameManager.FS;
+    var gameId = window.EJS_gameID || "";
+    // EmulatorJS saves states as /{gameId}-{slot}.state in IDBFS
+    var pathsToTry = [
+      "/" + gameId + "-" + slot + ".state",
+      "/" + gameId + "-" + slot + ".state.png",
+      // Legacy / fallback paths
+      "/" + slot + "-quick.state",
+      slot + "-quick.state",
+    ];
+    for (var i = 0; i < pathsToTry.length; i++) {
+      try { FS.unlink(pathsToTry[i]); } catch (_error) {}
+    }
   }
   cabinetDeleteSaveSlotMetadata(slot).then(function () {
     cabinetToast("Deleted slot " + slot);
@@ -2027,7 +2079,9 @@ window.EJS_core = ${JSON.stringify(core)};
 window.CABINET_CORE = ${JSON.stringify(core)};
 window.EJS_gameName = ${JSON.stringify(title)};
 window.EJS_gameID = ${JSON.stringify(gameId)};
-window.EJS_gameUrl = "./file";
+${discs.length > 1
+  ? `window.EJS_discs = ${JSON.stringify(discs.map((d) => ({ fileName: `../\${d.id}/file`, label: d.label })))};`
+  : `window.EJS_gameUrl = "./file";`}
 window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
 window.EJS_startOnLoaded = true;
 window.EJS_AdUrl = "";

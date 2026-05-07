@@ -33,6 +33,8 @@ export const uploadedRoms = sqliteTable("uploaded_roms", {
   rating: integer("rating").notNull().default(0),
   lastPlayed: integer("last_played").notNull().default(0),
   playCount: integer("play_count").notNull().default(0),
+  discNumber: integer("disc_number"),
+  discGroup: text("disc_group"),
   createdAt: integer("created_at").notNull(),
 });
 
