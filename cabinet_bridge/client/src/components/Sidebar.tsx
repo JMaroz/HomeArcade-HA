@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/Logo";
 import { useQuery } from "@tanstack/react-query";
 import { filterToPath } from "@/lib/filter";
 import {
+  LayoutDashboard,
   Heart,
   Clock,
   LayoutGrid,
@@ -62,7 +63,7 @@ export function Sidebar({ active, alwaysVisible = false, onNavigate }: SidebarPr
     >
       <div className="px-5 py-5 border-b border-sidebar-border">
         <Link
-          href={filterToPath("favorites")}
+          href="/"
           onClick={onNavigate}
           className="block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent"
           data-testid="link-home"
@@ -72,6 +73,16 @@ export function Sidebar({ active, alwaysVisible = false, onNavigate }: SidebarPr
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <Group label="">
+          <NavItem
+            icon={<LayoutDashboard className="size-4" />}
+            label="Dashboard"
+            href="/"
+            selected={location === "/" && !onSettingsRoute}
+            onNavigate={onNavigate}
+            testId="nav-dashboard"
+          />
+        </Group>
         <Group label="Library">
           <NavItem
             icon={<Heart className="size-4" />}

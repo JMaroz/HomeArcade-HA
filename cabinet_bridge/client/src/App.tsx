@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationProvider } from "@/lib/integration";
 import { parseFilter, parseCollectionFilter, DEFAULT_FILTER } from "@/lib/filter";
 import Home from "@/pages/Home";
+import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
 import Player from "@/pages/Player";
 import Achievements from "@/pages/Achievements";
@@ -31,6 +32,9 @@ function AppRouter({
   return (
     <Switch>
       <Route path="/">
+        <Dashboard />
+      </Route>
+      <Route path="/library">
         <Home filter={DEFAULT_FILTER} />
       </Route>
       <Route path="/library/collection/:id">
