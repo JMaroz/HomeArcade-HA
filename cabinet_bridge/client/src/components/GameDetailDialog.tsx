@@ -37,10 +37,7 @@ export function GameDetailDialog({
       onClose();
       const returnTo = encodeURIComponent(window.location.href);
       const playerUrl = apiUrl(`/api/roms/${game.romId}/player?return=${returnTo}`);
-      const opened = window.open(playerUrl, "_blank", "noopener");
-      if (!opened) {
-        window.location.href = playerUrl;
-      }
+      window.location.href = playerUrl;
       return;
     }
     void dispatch({
