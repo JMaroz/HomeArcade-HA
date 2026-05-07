@@ -5,7 +5,12 @@ import { dataPath } from "./data-dir";
 import express from "express";
 import path from "node:path";
 import fs from "node:fs/promises";
-import { insertGameCollectionSchema, insertRomSaveSlotSchema, insertUploadedRomSchema } from "@shared/schema";
+import {
+  insertGameCollectionSchema,
+  insertRomSaveSlotSchema,
+  insertUploadedRomSchema,
+  integrationSettingsSchema,
+} from "@shared/schema";
 import {
   SYSTEM_IMAGES,
   isSystemImageId,
@@ -58,6 +63,23 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  app.get("/api/settings/integration", async (_req, res) => {
+    const settings = await storage.getIntegrationSettings();
+    res.json(settings);
+  });
+
+  const writeIntegrationSettings = async (req: any, res: any) => {
+    const parsed = integrationSettingsSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.message });
+    }
+    const saved = await storage.saveIntegrationSettings(parsed.data);
+    res.json(saved);
+  };
+
+  app.put("/api/settings/integration", writeIntegrationSettings);
+  app.patch("/api/settings/integration", writeIntegrationSettings);
+
   app.get("/api/roms", async (_req, res) => {
     const roms = await storage.listUploadedRoms();
     res.json(roms);

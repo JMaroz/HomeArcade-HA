@@ -1,17 +1,19 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { apiRequest, apiUrl } from "./queryClient";
 
 /**
  * Cabinet Bridge integration layer.
  *
- * In production this would call Home Assistant webhooks (see Settings page for
- * the endpoint URLs). For the prototype every action runs through `dispatch`
- * which logs the call, optionally fires `fetch`, and feeds an in-memory log
- * that the Activity panel renders.
+ * In production this calls Home Assistant webhooks (see Settings page for the
+ * endpoint URLs). For the prototype every action runs through `dispatch` which
+ * logs the call, optionally fires `fetch`, and feeds an in-memory log that the
+ * Activity panel renders.
  *
- * No persistence — the prototype intentionally avoids localStorage / cookies
- * because the app is designed to live inside a Home Assistant iframe panel
- * where browser storage APIs are unreliable. Real installations would persist
- * configuration in HA itself (input_text helpers, REST commands, etc.).
+ * Persistence: integration settings (HA base URL, token, live mode, endpoint
+ * overrides) are stored server-side in SQLite via /api/settings/integration so
+ * they survive add-on restarts and HA ingress iframe reloads. The browser
+ * never writes to localStorage / cookies — those APIs are unreliable inside
+ * Home Assistant's sandboxed iframe.
  */
 
 export type CallStatus = "queued" | "ok" | "error" | "simulated";
@@ -36,6 +38,8 @@ export interface IntegrationConfig {
   endpoints: Record<string, string>;
 }
 
+export type IntegrationSaveStatus = "idle" | "loading" | "saving" | "saved" | "error";
+
 export interface PcStatus {
   online: boolean;
   state: "online" | "sleeping" | "offline" | "starting";
@@ -51,6 +55,8 @@ interface IntegrationContextValue {
   config: IntegrationConfig;
   setConfig: (next: Partial<IntegrationConfig>) => void;
   setEndpoint: (id: string, url: string) => void;
+  resetConfig: () => void;
+  saveStatus: IntegrationSaveStatus;
   pc: PcStatus;
   log: CallLogEntry[];
   dispatch: (params: {
@@ -84,10 +90,102 @@ const IntegrationContext = createContext<IntegrationContextValue | null>(null);
 
 let logSeq = 0;
 
+const SETTINGS_PATH = "/api/settings/integration";
+const SAVE_DEBOUNCE_MS = 400;
+
+function normalizeConfig(raw: unknown): IntegrationConfig {
+  const source = (raw && typeof raw === "object" ? raw : {}) as Partial<IntegrationConfig>;
+  const endpointsRaw = source.endpoints;
+  const endpoints: Record<string, string> = {};
+  if (endpointsRaw && typeof endpointsRaw === "object") {
+    for (const [key, value] of Object.entries(endpointsRaw)) {
+      if (typeof value === "string") endpoints[key] = value;
+    }
+  }
+  return {
+    haBaseUrl: typeof source.haBaseUrl === "string" ? source.haBaseUrl : defaultConfig.haBaseUrl,
+    haToken: typeof source.haToken === "string" ? source.haToken : defaultConfig.haToken,
+    liveMode: typeof source.liveMode === "boolean" ? source.liveMode : defaultConfig.liveMode,
+    endpoints,
+  };
+}
+
+function configsEqual(a: IntegrationConfig, b: IntegrationConfig): boolean {
+  if (a.haBaseUrl !== b.haBaseUrl) return false;
+  if (a.haToken !== b.haToken) return false;
+  if (a.liveMode !== b.liveMode) return false;
+  const aKeys = Object.keys(a.endpoints);
+  const bKeys = Object.keys(b.endpoints);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const k of aKeys) {
+    if (a.endpoints[k] !== b.endpoints[k]) return false;
+  }
+  return true;
+}
+
 export function IntegrationProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfigState] = useState<IntegrationConfig>(defaultConfig);
   const [pc, setPc] = useState<PcStatus>(defaultPc);
   const [log, setLog] = useState<CallLogEntry[]>([]);
+  const [saveStatus, setSaveStatus] = useState<IntegrationSaveStatus>("loading");
+  // Track the last value we either loaded from or successfully wrote to the
+  // server so we can skip persisting echoes of the loaded state.
+  const lastPersistedRef = useRef<IntegrationConfig | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load persisted settings on mount. If the request fails (backend unavailable
+  // or older server without the route), keep defaults — the UI still works.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(apiUrl(SETTINGS_PATH));
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const data = await res.json();
+        if (cancelled) return;
+        const loaded = normalizeConfig(data);
+        lastPersistedRef.current = loaded;
+        setConfigState(loaded);
+        setSaveStatus("idle");
+      } catch {
+        if (cancelled) return;
+        lastPersistedRef.current = { ...defaultConfig };
+        setSaveStatus("idle");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Debounced server-side persistence whenever config changes.
+  useEffect(() => {
+    if (saveStatus === "loading") return;
+    const last = lastPersistedRef.current;
+    if (last && configsEqual(last, config)) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      setSaveStatus("saving");
+      try {
+        const res = await apiRequest("PUT", SETTINGS_PATH, config);
+        const saved = normalizeConfig(await res.json());
+        lastPersistedRef.current = saved;
+        setSaveStatus("saved");
+        if (savedFlashTimerRef.current) clearTimeout(savedFlashTimerRef.current);
+        savedFlashTimerRef.current = setTimeout(() => {
+          setSaveStatus((s) => (s === "saved" ? "idle" : s));
+        }, 1500);
+      } catch {
+        setSaveStatus("error");
+      }
+    }, SAVE_DEBOUNCE_MS);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [config, saveStatus]);
 
   const setConfig = useCallback((next: Partial<IntegrationConfig>) => {
     setConfigState((prev) => ({ ...prev, ...next }));
@@ -98,6 +196,10 @@ export function IntegrationProvider({ children }: { children: React.ReactNode })
       ...prev,
       endpoints: { ...prev.endpoints, [id]: url },
     }));
+  }, []);
+
+  const resetConfig = useCallback(() => {
+    setConfigState({ ...defaultConfig });
   }, []);
 
   const dispatch = useCallback<IntegrationContextValue["dispatch"]>(
@@ -174,8 +276,8 @@ export function IntegrationProvider({ children }: { children: React.ReactNode })
   );
 
   const value = useMemo<IntegrationContextValue>(
-    () => ({ config, setConfig, setEndpoint, pc, log, dispatch }),
-    [config, setConfig, setEndpoint, pc, log, dispatch],
+    () => ({ config, setConfig, setEndpoint, resetConfig, saveStatus, pc, log, dispatch }),
+    [config, setConfig, setEndpoint, resetConfig, saveStatus, pc, log, dispatch],
   );
 
   return (

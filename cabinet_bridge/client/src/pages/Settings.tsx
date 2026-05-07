@@ -14,7 +14,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { UploadedRom } from "@shared/schema";
 
 export default function Settings() {
-  const { config, setConfig, setEndpoint } = useIntegration();
+  const { config, setConfig, setEndpoint, resetConfig, saveStatus } = useIntegration();
   const [copied, setCopied] = useState<string | null>(null);
   const { data: uploadedRoms = [] } = useQuery<UploadedRom[]>({
     queryKey: ["/api/roms"],
@@ -57,6 +57,35 @@ export default function Settings() {
             the URLs Cabinet Bridge will hit. In the prototype, calls are simulated unless
             you toggle Live mode below.
           </p>
+
+          <div
+            className="mt-4 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
+            data-testid="text-settings-save-status"
+          >
+            <span
+              aria-hidden="true"
+              className={`inline-block size-1.5 rounded-full ${
+                saveStatus === "saving"
+                  ? "bg-amber-400 animate-pulse"
+                  : saveStatus === "saved"
+                  ? "bg-status-online"
+                  : saveStatus === "error"
+                  ? "bg-destructive"
+                  : saveStatus === "loading"
+                  ? "bg-muted-foreground"
+                  : "bg-muted-foreground/40"
+              }`}
+            />
+            {saveStatus === "loading"
+              ? "Loading saved settings…"
+              : saveStatus === "saving"
+              ? "Saving…"
+              : saveStatus === "saved"
+              ? "Saved"
+              : saveStatus === "error"
+              ? "Save failed — retry by editing again"
+              : "Settings sync to add-on storage"}
+          </div>
 
           <Section
             title="Connection"
@@ -305,14 +334,7 @@ script:
           <Section title="Reset" description="Clear all overrides set in this session.">
             <Button
               variant="outline"
-              onClick={() =>
-                setConfig({
-                  haBaseUrl: "https://homeassistant.local:8123",
-                  haToken: "",
-                  liveMode: false,
-                  endpoints: {},
-                })
-              }
+              onClick={() => resetConfig()}
               data-testid="button-reset-config"
             >
               Reset to defaults

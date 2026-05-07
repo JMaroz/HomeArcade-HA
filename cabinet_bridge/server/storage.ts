@@ -1,15 +1,17 @@
-import { collectionItems, gameCollections, romSaveSlots, uploadedRoms, users } from '@shared/schema';
+import { appSettings, collectionItems, gameCollections, romSaveSlots, uploadedRoms, users } from '@shared/schema';
 import type {
   GameCollection,
   GameCollectionWithItems,
   InsertGameCollection,
   InsertRomSaveSlot,
   InsertUploadedRom,
+  IntegrationSettings,
   RomSaveSlot,
   UploadedRom,
   User,
   InsertUser,
 } from '@shared/schema';
+import { DEFAULT_INTEGRATION_SETTINGS, integrationSettingsSchema } from '@shared/schema';
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { and, desc, eq } from "drizzle-orm";
@@ -59,6 +61,11 @@ sqlite.exec(`
     updated_at INTEGER NOT NULL,
     UNIQUE(rom_id, slot)
   );
+  CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
 `);
 for (const statement of [
   "ALTER TABLE uploaded_roms ADD COLUMN art_url TEXT",
@@ -100,7 +107,11 @@ export interface IStorage {
   listRomSaveSlots(romId: number): Promise<RomSaveSlot[]>;
   upsertRomSaveSlot(saveSlot: InsertRomSaveSlot): Promise<RomSaveSlot>;
   deleteRomSaveSlot(romId: number, slot: number): Promise<boolean>;
+  getIntegrationSettings(): Promise<IntegrationSettings>;
+  saveIntegrationSettings(settings: IntegrationSettings): Promise<IntegrationSettings>;
 }
+
+const INTEGRATION_SETTINGS_KEY = "integration";
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
@@ -276,6 +287,44 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(romSaveSlots.romId, romId), eq(romSaveSlots.slot, slot)))
       .run();
     return result.changes > 0;
+  }
+
+  async getIntegrationSettings(): Promise<IntegrationSettings> {
+    const row = db
+      .select()
+      .from(appSettings)
+      .where(eq(appSettings.key, INTEGRATION_SETTINGS_KEY))
+      .get();
+    if (!row) return { ...DEFAULT_INTEGRATION_SETTINGS };
+    try {
+      const parsed = integrationSettingsSchema.parse(JSON.parse(row.value));
+      return parsed;
+    } catch {
+      return { ...DEFAULT_INTEGRATION_SETTINGS };
+    }
+  }
+
+  async saveIntegrationSettings(
+    settings: IntegrationSettings,
+  ): Promise<IntegrationSettings> {
+    const value = JSON.stringify(settings);
+    const updatedAt = Date.now();
+    const existing = db
+      .select()
+      .from(appSettings)
+      .where(eq(appSettings.key, INTEGRATION_SETTINGS_KEY))
+      .get();
+    if (existing) {
+      db.update(appSettings)
+        .set({ value, updatedAt })
+        .where(eq(appSettings.key, INTEGRATION_SETTINGS_KEY))
+        .run();
+    } else {
+      db.insert(appSettings)
+        .values({ key: INTEGRATION_SETTINGS_KEY, value, updatedAt })
+        .run();
+    }
+    return settings;
   }
 }
 

@@ -87,3 +87,27 @@ export type RomSaveSlot = typeof romSaveSlots.$inferSelect;
 export type GameCollectionWithItems = GameCollection & {
   romIds: number[];
 };
+
+export const appSettings = sqliteTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+export type AppSetting = typeof appSettings.$inferSelect;
+
+export const integrationSettingsSchema = z.object({
+  haBaseUrl: z.string().max(2048).default("https://homeassistant.local:8123"),
+  haToken: z.string().max(4096).default(""),
+  liveMode: z.boolean().default(false),
+  endpoints: z.record(z.string(), z.string().max(2048)).default({}),
+});
+
+export type IntegrationSettings = z.infer<typeof integrationSettingsSchema>;
+
+export const DEFAULT_INTEGRATION_SETTINGS: IntegrationSettings = {
+  haBaseUrl: "https://homeassistant.local:8123",
+  haToken: "",
+  liveMode: false,
+  endpoints: {},
+};
