@@ -6,6 +6,7 @@ import { RightPanel } from "@/components/RightPanel";
 import { GameCard } from "@/components/GameCard";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { SystemTile } from "@/components/GameArt";
+import { RomUpload } from "@/components/RomUpload";
 import { GAMES, SYSTEMS, type Game, type SystemId, uploadedRomToGame } from "@/data/library";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -208,6 +209,12 @@ export default function Home({
   };
 
   const isCollectionFilter = typeof filter === "string" && filter.startsWith("collection:");
+  const systemFilter = useMemo<SystemId | undefined>(() => {
+    if (typeof filter !== "string") return undefined;
+    if (filter === "favorites" || filter === "recent" || filter === "all") return undefined;
+    if (filter.startsWith("collection:")) return undefined;
+    return SYSTEMS.some((s) => s.id === filter) ? (filter as SystemId) : undefined;
+  }, [filter]);
 
   return (
     <div className="flex h-full">
@@ -312,6 +319,13 @@ export default function Home({
                 }
               />
               <Grid games={visibleRecentlyPlayed} onOpen={setOpenGame} onToggleFav={toggleFav} />
+            </section>
+          ) : null}
+
+          {/* Upload — pinned to current system on system pages, or generic with picker on All Games */}
+          {(systemFilter || filter === "all") && !query ? (
+            <section className="px-5 sm:px-8 pt-5 pb-1" data-testid="section-rom-upload">
+              <RomUpload system={systemFilter} variant="inline" />
             </section>
           ) : null}
 

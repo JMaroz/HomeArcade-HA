@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { MobileTopBar } from "@/components/MobileNav";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { useIntegration } from "@/lib/integration";
 import { QUICK_ACTIONS, SYSTEMS, formatRomSize } from "@/data/library";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { filterToPath } from "@/lib/filter";
 import { Link } from "wouter";
-import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Upload, FileArchive, Trash2, FolderOpen, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { UploadedRom } from "@shared/schema";
 
@@ -198,7 +199,7 @@ export default function Settings() {
             </ul>
           </Section>
 
-          <RomUploadSection />
+          <RomLibrarySection />
 
           <Section
             title="Game launch endpoints"
@@ -346,75 +347,9 @@ script:
   );
 }
 
-type UploadLimits = {
-  maxUploadMb: number;
-  maxUploadBytes: number;
-  allowedExtensions: Record<string, string[]>;
-};
-
-function RomUploadSection() {
-  const [system, setSystem] = useState("nes");
-  const [favorite, setFavorite] = useState(true);
-  const [files, setFiles] = useState<File[]>([]);
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+function RomLibrarySection() {
   const { data: roms = [] } = useQuery<UploadedRom[]>({
     queryKey: ["/api/roms"],
-  });
-  const { data: limits } = useQuery<UploadLimits>({
-    queryKey: ["/api/upload-limits"],
-  });
-  const maxUploadBytes = limits?.maxUploadBytes ?? 2048 * 1024 * 1024;
-  const maxUploadMb = limits?.maxUploadMb ?? 2048;
-  const oversize = files.find((f) => f.size > maxUploadBytes);
-
-  const mergeFiles = (incoming: File[]) => {
-    if (incoming.length === 0) return;
-    setFiles((prev) => {
-      const seen = new Set(prev.map((f) => `${f.name}:${f.size}`));
-      const merged = [...prev];
-      for (const f of incoming) {
-        const key = `${f.name}:${f.size}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          merged.push(f);
-        }
-      }
-      return merged;
-    });
-  };
-
-  const upload = useMutation({
-    mutationFn: async () => {
-      if (files.length === 0) throw new Error("Choose one or more ROM files first.");
-      const tooBig = files.find((f) => f.size > maxUploadBytes);
-      if (tooBig) {
-        throw new Error(
-          `${tooBig.name} is ${formatRomSize(tooBig.size)}, which exceeds the ${maxUploadMb} MB upload limit. Raise max_upload_mb in the add-on options or set CABINET_MAX_UPLOAD_MB.`,
-        );
-      }
-      const uploaded: UploadedRom[] = [];
-      for (const romFile of files) {
-        const res = await apiRequest(
-          "POST",
-          `/api/roms/upload?system=${encodeURIComponent(system)}&favorite=${favorite ? "1" : "0"}`,
-          romFile,
-          {
-            headers: {
-              "Content-Type": romFile.type || "application/octet-stream",
-              "X-ROM-Filename": encodeURIComponent(romFile.name),
-            },
-          },
-        );
-        uploaded.push((await res.json()) as UploadedRom);
-      }
-      return uploaded;
-    },
-    onSuccess: async () => {
-      setFiles([]);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
-    },
   });
   const scrape = useMutation({
     mutationFn: async (rom: UploadedRom) => {
@@ -440,199 +375,57 @@ function RomUploadSection() {
 
   return (
     <Section
-      title="ROM uploads"
-      description="Upload cartridge/disc files by console. Uploaded ROMs are added to the library and get a launch webhook slug automatically."
+      title="ROM library"
+      description="Upload ROMs from each system's page so they're filed under the right console automatically. This panel just lets you manage already-uploaded ROMs."
     >
-      <div className="rounded-lg border border-border bg-background/40 p-4 space-y-4">
-        <div className="grid gap-3 sm:grid-cols-[1fr_1fr]">
-          <Field label="Console" hint="Choose the system this ROM belongs to.">
-            <select
-              value={system}
-              onChange={(e) => setSystem(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              data-testid="select-rom-system"
-            >
-              {SYSTEMS.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.shortName} — {s.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="ROM file" hint={`Examples: .nes, .sfc, .gba, .z64, .iso, .zip, .7z. Per-file limit: ${maxUploadMb} MB.`}>
-            <input
-              ref={fileInputRef}
-              id="rom-file"
-              type="file"
-              multiple
-              className="sr-only"
-              onChange={(e) => {
-                mergeFiles(Array.from(e.target.files ?? []));
-                e.target.value = "";
-              }}
-              data-testid="input-rom-file"
-            />
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  fileInputRef.current?.click();
-                }
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragActive(true);
-              }}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragActive(false);
-                mergeFiles(Array.from(e.dataTransfer.files ?? []));
-              }}
-              className={`flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-6 text-center cursor-pointer transition-colors ${
-                dragActive
-                  ? "border-accent bg-accent/10"
-                  : "border-border bg-background/40 hover:border-accent/60 hover:bg-accent/5"
-              }`}
-              data-testid="dropzone-rom-file"
-            >
-              <FolderOpen className="size-6 text-accent" />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileInputRef.current?.click();
-                }}
-                className="font-mono uppercase tracking-wider"
-                data-testid="button-browse-rom-files"
-              >
-                Browse ROM files
-              </Button>
-              <p className="text-[11px] text-muted-foreground">
-                <span className="hidden sm:inline">Tap or drag and drop ROM files here. </span>
-                <span className="sm:hidden">Tap to choose ROM files. </span>
-                Multiple files supported.
-              </p>
-            </div>
-          </Field>
+      <div
+        className="rounded-md border border-border bg-card/40 p-4"
+        data-testid="rom-upload-redirect"
+      >
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          Where to upload
         </div>
-
-        <div className="flex items-start gap-3 rounded-md border border-border bg-card/50 p-3">
-          <Switch
-            id="rom-favorite"
-            checked={favorite}
-            onCheckedChange={(checked) => setFavorite(!!checked)}
-            data-testid="switch-rom-favorite"
-          />
-          <div>
-            <Label htmlFor="rom-favorite" className="font-medium text-sm">
-              Add to Favorites
-            </Label>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Keep this on if you want the uploaded game to appear on the first screen.
-            </p>
-          </div>
+        <p className="text-sm mt-1 max-w-prose">
+          Open a system from the sidebar — for example{" "}
+          <Link
+            href={filterToPath("ps1")}
+            className="text-primary hover:underline"
+            data-testid="link-upload-ps1"
+          >
+            PS1
+          </Link>
+          ,{" "}
+          <Link
+            href={filterToPath("snes")}
+            className="text-primary hover:underline"
+            data-testid="link-upload-snes"
+          >
+            SNES
+          </Link>
+          , or{" "}
+          <Link
+            href={filterToPath("nes")}
+            className="text-primary hover:underline"
+            data-testid="link-upload-nes"
+          >
+            NES
+          </Link>{" "}
+          — and you'll see an "Upload ROMs" dropzone pinned to that system. Files dropped there are
+          saved under the current console without you having to pick one.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {SYSTEMS.map((s) => (
+            <Link
+              key={s.id}
+              href={filterToPath(s.id)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-2.5 py-1 text-[11px] font-mono uppercase tracking-wider hover-elevate"
+              data-testid={`link-upload-system-${s.id}`}
+            >
+              {s.shortName}
+              <ChevronRight className="size-3" />
+            </Link>
+          ))}
         </div>
-
-        {files.length > 0 ? (
-          <div className="rounded-md border border-border bg-card/50 p-3" data-testid="text-selected-rom">
-            <div className="flex items-center justify-between gap-2 text-xs font-mono text-muted-foreground">
-              <div className="flex items-center gap-2 min-w-0">
-                <FileArchive className="size-4 text-accent shrink-0" />
-                <span className="truncate">
-                  {files.length} file{files.length === 1 ? "" : "s"} selected ·{" "}
-                  {formatRomSize(files.reduce((sum, item) => sum + item.size, 0))}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setFiles([]);
-                  if (fileInputRef.current) fileInputRef.current.value = "";
-                }}
-                className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground shrink-0"
-                data-testid="button-clear-rom-files"
-              >
-                Clear
-              </button>
-            </div>
-            <ul className="mt-2 space-y-1 text-[11px] font-mono text-muted-foreground">
-              {files.map((item) => (
-                <li key={`${item.name}-${item.size}`} className="flex items-center justify-between gap-2">
-                  <span className="truncate">
-                    {item.name} · {formatRomSize(item.size)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFiles((prev) =>
-                        prev.filter(
-                          (f) => !(f.name === item.name && f.size === item.size),
-                        ),
-                      )
-                    }
-                    aria-label={`Remove ${item.name}`}
-                    className="text-muted-foreground hover:text-foreground shrink-0"
-                    data-testid={`button-remove-rom-file-${item.name}`}
-                  >
-                    <X className="size-3" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        {oversize ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive" data-testid="warn-rom-upload-size">
-            {oversize.name} is {formatRomSize(oversize.size)}, larger than the {maxUploadMb} MB
-            upload limit. Raise <code>max_upload_mb</code> in the add-on options or set
-            <code> CABINET_MAX_UPLOAD_MB</code> for local runs and restart.
-          </div>
-        ) : null}
-
-        {upload.isError ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive" data-testid="error-rom-upload">
-            {(upload.error as Error).message}
-          </div>
-        ) : null}
-
-        {upload.isSuccess ? (
-          <div className="rounded-md border border-status-online/40 bg-status-online/10 px-3 py-2 text-xs text-status-online" data-testid="success-rom-upload">
-            ROM upload complete. Return to the library to launch newly added games or copy their webhooks below.
-          </div>
-        ) : null}
-
-        {deleteRom.isError ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive" data-testid="error-rom-delete">
-            {(deleteRom.error as Error).message}
-          </div>
-        ) : null}
-
-        {deleteRom.isSuccess ? (
-          <div className="rounded-md border border-status-online/40 bg-status-online/10 px-3 py-2 text-xs text-status-online" data-testid="success-rom-delete">
-            ROM removed from the library. Its save metadata and collection links were cleared too.
-          </div>
-        ) : null}
-
-        <Button
-          onClick={() => upload.mutate()}
-          disabled={files.length === 0 || upload.isPending}
-          className="font-mono uppercase tracking-wider"
-          data-testid="button-upload-rom"
-        >
-          <Upload className="size-4 mr-2" />
-          {upload.isPending
-            ? `Uploading ${files.length}…`
-            : files.length > 1
-            ? `Upload ${files.length} ROMs`
-            : "Upload ROM"}
-        </Button>
       </div>
 
       <div className="rounded-md border border-border bg-background/40 overflow-hidden">
@@ -646,7 +439,7 @@ function RomUploadSection() {
         </div>
         {roms.length === 0 ? (
           <p className="px-3 py-6 text-center text-xs text-muted-foreground" data-testid="state-no-roms">
-            No uploaded ROMs yet. Try uploading your Contra.nes file under NES.
+            No uploaded ROMs yet. Open a system page like NES or PS1 to upload.
           </p>
         ) : (
           <ul className="divide-y divide-border" data-testid="list-uploaded-roms">
@@ -710,8 +503,20 @@ function RomUploadSection() {
         )}
       </div>
 
+      {deleteRom.isError ? (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive" data-testid="error-rom-delete">
+          {(deleteRom.error as Error).message}
+        </div>
+      ) : null}
+
+      {deleteRom.isSuccess ? (
+        <div className="rounded-md border border-status-online/40 bg-status-online/10 px-3 py-2 text-xs text-status-online" data-testid="success-rom-delete">
+          ROM removed from the library. Its save metadata and collection links were cleared too.
+        </div>
+      ) : null}
+
       <p className="text-xs text-muted-foreground">
-        Prototype note: this uploads through the web app backend. For huge PS1/PS2/Dreamcast images, a production Home Assistant install should usually reference files already stored on your NAS or emulator PC instead of pushing multi-GB files through the browser.
+        Prototype note: ROM uploads stream through the web app backend. For huge PS1/PS2/Dreamcast images, a production Home Assistant install should usually reference files already stored on your NAS or emulator PC instead of pushing multi-GB files through the browser.
       </p>
     </Section>
   );

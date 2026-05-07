@@ -85,17 +85,26 @@ the current working directory.
 > built `dist/public/` from a CDN or another host) will load the UI but every
 > upload will 404 because there is no backend handling `/api/roms/upload`.
 
-Open the panel, pick a system, click **Manage ROMs**, then drag files in or
-use **Browse ROM files**. Allowed extensions are enforced server-side per
-system, including PS1 multi-track sets (`.cue`/`.bin`) and archives
-(`.zip`, `.7z`).
+Open the panel, click a system in the sidebar (NES, SNES, PS1, …), and the
+system page shows an "Upload ROMs" dropzone at the top — labelled with the
+active system, e.g. "Upload PS1 ROMs". Drop files in or use **Browse ROM
+files**; uploads are filed under that console automatically and the system's
+grid and sidebar count refresh as soon as the upload finishes. Allowed
+extensions are enforced server-side per system, including PS1 multi-track sets
+(`.cue`/`.bin`) and archives (`.zip`, `.7z`). Multi-file selection is
+preserved for PS1 sets and archives.
+
+The All Games view also has a dropzone, but you must pick a console there —
+the upload isn't bound to a specific system page. **Settings** no longer
+hosts the upload form; it links to the per-system pages and is otherwise for
+integration config and managing already-uploaded ROMs (delete, refresh art).
 
 ### Upload size limits
 
 Per-file uploads are capped at 2 GB by default — large enough for PS1 and most
 PS2 disc images. Tune this through the add-on option `max_upload_mb` (or the
 `CABINET_MAX_UPLOAD_MB` env var when running locally) and restart the add-on.
-The Settings panel reads the live cap from `/api/upload-limits` and refuses
+The dropzone reads the live cap from `/api/upload-limits` and refuses
 oversize files before sending them, so failures surface client-side instead of
 the old generic 413 from the Supervisor proxy.
 

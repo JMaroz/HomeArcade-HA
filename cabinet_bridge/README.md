@@ -62,6 +62,20 @@ directory.
 
 ## ROM uploads
 
+Uploads happen from the **system page** for the console you're adding to. Open
+**NES**, **SNES**, **PS1**, etc. from the sidebar and an "Upload ROMs" dropzone
+appears at the top — labelled with the active system (e.g. "Upload PS1 ROMs"),
+so files dropped there are filed under the right console without you having to
+pick one. The grid below refreshes immediately with the new game and the
+sidebar count for that system goes up.
+
+The All Games view also offers an upload dropzone, but there you must pick a
+console first because the upload isn't bound to a specific system page.
+
+**Settings** no longer hosts the upload dropzone — it links you to the system
+pages and is otherwise focused on integration config and managing already-
+uploaded ROMs (delete, refresh art).
+
 The backend must run as the Home Assistant add-on for uploads to work. Uploads
 write to `/data/rom-storage/` and `/data/data.db`, which only exist inside the
 Supervisor-managed container. A standalone deploy of the SPA will load the UI
@@ -75,11 +89,12 @@ update or rebuild the add-on if it is out of date.
 The mobile picker uses an unfiltered file dialog; allowed extensions are
 validated server-side per system after the file is chosen. Supported archive
 formats include `.zip` and `.7z`; PS1 also accepts `.cue`/`.bin`/`.iso`/`.chd`/
-`.pbp`.
+`.pbp`. Multi-file selection is preserved, so PS1 `.cue`/`.bin` sets and
+multi-disc archives upload as a batch.
 
 Per-file uploads are capped at the value of the `max_upload_mb` add-on option
-(default 2048 MB / 2 GB). The Settings panel shows the active limit next to
-the file picker and refuses oversize files before sending them.
+(default 2048 MB / 2 GB). The dropzone shows the active limit and refuses
+oversize files before sending them.
 
 ## Local development (without Home Assistant)
 
