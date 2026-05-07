@@ -3408,7 +3408,7 @@ function cabinetSetupGamepadPanel() {
         }).join("");
         return '<div style="background:rgba(248,250,252,0.04);border:1px solid rgba(248,250,252,0.1);border-radius:12px;padding:10px 14px;margin-bottom:6px;">'
           + '<div style="font:700 11px ui-monospace,monospace;color:#f8fafc;margin-bottom:6px;">' + (gp.id || "Unknown Controller") + '</div>'
-          + '<div style="margin-bottom:4px;">' + (btnHtml || "<em style=\"font-style:italic;color:rgba(248,250,252,0.3);font-size:10px;\">No buttons</em>") + '</div>'
+          + '<div style="margin-bottom:4px;">' + (btnHtml || "<em style='font-style:italic;color:rgba(248,250,252,0.3);font-size:10px;'>No buttons</em>") + '</div>'
           + '<div>' + (axisHtml || "") + '</div>'
           + '</div>';
       }).join("");
