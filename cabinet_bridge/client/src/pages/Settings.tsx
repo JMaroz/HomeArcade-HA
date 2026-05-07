@@ -377,6 +377,57 @@ script:
           </Section>
 
           <Section
+            title="PC Status panel (optional)"
+            description="Poll real Home Assistant entities to show live CPU, RAM, and online state in the right panel. Requires Live Mode on and an HA Long-Lived Access Token above. Works great with the System Bridge or HACS Frigate/System-monitor integrations."
+          >
+            <Field label="PC display name" hint="Shown as the hostname in the panel header.">
+              <Input
+                type="text"
+                value={config.pcHostname ?? ""}
+                onChange={(e) => setConfig({ pcHostname: e.target.value })}
+                placeholder="ARCADE-PC"
+                data-testid="input-pc-hostname"
+              />
+            </Field>
+            <Field label="Online entity" hint="e.g. binary_sensor.arcade_pc — must be on/off or true/false. Include the ip_address attribute for live IP display.">
+              <Input
+                type="text"
+                value={config.pcOnlineEntityId ?? ""}
+                onChange={(e) => setConfig({ pcOnlineEntityId: e.target.value })}
+                placeholder="binary_sensor.arcade_pc"
+                data-testid="input-pc-online-entity"
+              />
+            </Field>
+            <Field label="CPU % entity" hint="e.g. sensor.arcade_pc_cpu_percent — state should be a number 0-100.">
+              <Input
+                type="text"
+                value={config.pcCpuEntityId ?? ""}
+                onChange={(e) => setConfig({ pcCpuEntityId: e.target.value })}
+                placeholder="sensor.arcade_pc_cpu_percent"
+                data-testid="input-pc-cpu-entity"
+              />
+            </Field>
+            <Field label="RAM % entity" hint="e.g. sensor.arcade_pc_memory_percent — state should be a number 0-100.">
+              <Input
+                type="text"
+                value={config.pcRamEntityId ?? ""}
+                onChange={(e) => setConfig({ pcRamEntityId: e.target.value })}
+                placeholder="sensor.arcade_pc_memory_percent"
+                data-testid="input-pc-ram-entity"
+              />
+            </Field>
+            <Field label="Current app entity (optional)" hint="e.g. sensor.arcade_pc_foreground_app — state is shown as the running app name.">
+              <Input
+                type="text"
+                value={config.pcAppEntityId ?? ""}
+                onChange={(e) => setConfig({ pcAppEntityId: e.target.value })}
+                placeholder="sensor.arcade_pc_foreground_app"
+                data-testid="input-pc-app-entity"
+              />
+            </Field>
+          </Section>
+
+          <Section
             title="RetroAchievements (optional)"
             description="Earn achievements for your classic games. Register for free at retroachievements.org. Requires a game supported by the RA database."
           >

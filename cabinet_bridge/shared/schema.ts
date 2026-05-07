@@ -122,6 +122,12 @@ export const integrationSettingsSchema = z.object({
   kioskCollectionId: z.number().int().nullable().default(null),
   raUsername: z.string().max(256).default(""),
   raToken: z.string().max(256).default(""),
+  // PC status panel — HA entity IDs to poll for live stats
+  pcHostname: z.string().max(256).default("ARCADE-PC"),
+  pcOnlineEntityId: z.string().max(256).default(""),
+  pcCpuEntityId: z.string().max(256).default(""),
+  pcRamEntityId: z.string().max(256).default(""),
+  pcAppEntityId: z.string().max(256).default(""),
 });
 
 export type IntegrationSettings = z.infer<typeof integrationSettingsSchema>;
@@ -138,4 +144,9 @@ export const DEFAULT_INTEGRATION_SETTINGS: IntegrationSettings = {
   kioskCollectionId: null,
   raUsername: "",
   raToken: "",
+  pcHostname: "ARCADE-PC",
+  pcOnlineEntityId: "",
+  pcCpuEntityId: "",
+  pcRamEntityId: "",
+  pcAppEntityId: "",
 };

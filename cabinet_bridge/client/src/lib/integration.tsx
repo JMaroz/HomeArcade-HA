@@ -46,6 +46,12 @@ export interface IntegrationConfig {
   /** RetroAchievements */
   raUsername?: string;
   raToken?: string;
+  /** PC status panel */
+  pcHostname?: string;
+  pcOnlineEntityId?: string;
+  pcCpuEntityId?: string;
+  pcRamEntityId?: string;
+  pcAppEntityId?: string;
 }
 
 export type IntegrationSaveStatus = "idle" | "loading" | "saving" | "saved" | "error";
@@ -93,14 +99,14 @@ const defaultConfig: IntegrationConfig = {
 };
 
 const defaultPc: PcStatus = {
-  online: true,
-  state: "online",
-  ip: "192.168.1.42",
+  online: false,
+  state: "offline",
+  ip: "",
   hostname: "ARCADE-PC",
-  cpu: 14,
-  ram: 38,
-  uptimeMin: 184,
-  currentApp: "RetroBat",
+  cpu: 0,
+  ram: 0,
+  uptimeMin: 0,
+  currentApp: null,
 };
 
 const IntegrationContext = createContext<IntegrationContextValue | null>(null);
@@ -131,6 +137,11 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     kioskCollectionId: (typeof source.kioskCollectionId === "number" || source.kioskCollectionId === null) ? source.kioskCollectionId : null,
     raUsername: typeof source.raUsername === "string" ? source.raUsername : "",
     raToken: typeof source.raToken === "string" ? source.raToken : "",
+    pcHostname: typeof source.pcHostname === "string" ? source.pcHostname : "ARCADE-PC",
+    pcOnlineEntityId: typeof source.pcOnlineEntityId === "string" ? source.pcOnlineEntityId : "",
+    pcCpuEntityId: typeof source.pcCpuEntityId === "string" ? source.pcCpuEntityId : "",
+    pcRamEntityId: typeof source.pcRamEntityId === "string" ? source.pcRamEntityId : "",
+    pcAppEntityId: typeof source.pcAppEntityId === "string" ? source.pcAppEntityId : "",
   };
 }
 
@@ -145,6 +156,11 @@ function configsEqual(a: IntegrationConfig, b: IntegrationConfig): boolean {
   if (a.kioskCollectionId !== b.kioskCollectionId) return false;
   if (a.raUsername !== b.raUsername) return false;
   if (a.raToken !== b.raToken) return false;
+  if (a.pcHostname !== b.pcHostname) return false;
+  if (a.pcOnlineEntityId !== b.pcOnlineEntityId) return false;
+  if (a.pcCpuEntityId !== b.pcCpuEntityId) return false;
+  if (a.pcRamEntityId !== b.pcRamEntityId) return false;
+  if (a.pcAppEntityId !== b.pcAppEntityId) return false;
   const aKeys = Object.keys(a.endpoints);
   const bKeys = Object.keys(b.endpoints);
   if (aKeys.length !== bKeys.length) return false;
@@ -178,6 +194,7 @@ export function IntegrationProvider({ children }: { children: React.ReactNode })
         const loaded = normalizeConfig(data);
         lastPersistedRef.current = loaded;
         setConfigState(loaded);
+        if (loaded.pcHostname) setPc((p) => ({ ...p, hostname: loaded.pcHostname! }));
         setSaveStatus("idle");
       } catch {
         if (cancelled) return;
@@ -218,7 +235,86 @@ export function IntegrationProvider({ children }: { children: React.ReactNode })
     };
   }, [config, saveStatus]);
 
-  const setConfig = useCallback((next: Partial<IntegrationConfig>) => {
+  // ── Live PC status polling ──────────────────────────────────────────────────
+  // When Live Mode is on and at least one HA entity ID is configured, poll the
+  // HA REST API every 5 s to update the PC status panel with real values.
+  useEffect(() => {
+    if (!config.liveMode || !config.haBaseUrl) return;
+    const hasAny = config.pcOnlineEntityId || config.pcCpuEntityId || config.pcRamEntityId;
+    if (!hasAny) return;
+
+    const headers: HeadersInit = config.haToken
+      ? { Authorization: `Bearer ${config.haToken}` }
+      : {};
+
+    const fetchEntity = async (id: string) => {
+      if (!id) return null;
+      try {
+        const r = await fetch(`${config.haBaseUrl}/api/states/${id}`, {
+          headers,
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!r.ok) return null;
+        return r.json() as Promise<{ state: string; attributes?: Record<string, unknown> }>;
+      } catch {
+        return null;
+      }
+    };
+
+    const poll = async () => {
+      const [onlineRes, cpuRes, ramRes, appRes] = await Promise.all([
+        fetchEntity(config.pcOnlineEntityId ?? ""),
+        fetchEntity(config.pcCpuEntityId ?? ""),
+        fetchEntity(config.pcRamEntityId ?? ""),
+        fetchEntity(config.pcAppEntityId ?? ""),
+      ]);
+
+      setPc((prev) => {
+        const next = { ...prev };
+        // Hostname from config
+        if (config.pcHostname) next.hostname = config.pcHostname;
+        // Online state
+        if (onlineRes) {
+          const on = onlineRes.state === "on" || onlineRes.state === "home" || onlineRes.state === "online" || onlineRes.state === "true";
+          next.online = on;
+          next.state = on ? "online" : "offline";
+          const attrs = onlineRes.attributes ?? {};
+          if (typeof attrs.ip_address === "string") next.ip = attrs.ip_address;
+        }
+        // CPU %
+        if (cpuRes) {
+          const v = parseFloat(cpuRes.state);
+          if (!isNaN(v)) next.cpu = Math.min(100, Math.round(v));
+        }
+        // RAM %
+        if (ramRes) {
+          const v = parseFloat(ramRes.state);
+          if (!isNaN(v)) next.ram = Math.min(100, Math.round(v));
+        }
+        // Current app / foreground window
+        if (appRes && appRes.state !== "unavailable" && appRes.state !== "unknown") {
+          next.currentApp = appRes.state || null;
+        }
+        return next;
+      });
+    };
+
+    poll();
+    const timer = setInterval(poll, 5000);
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    config.liveMode,
+    config.haBaseUrl,
+    config.haToken,
+    config.pcHostname,
+    config.pcOnlineEntityId,
+    config.pcCpuEntityId,
+    config.pcRamEntityId,
+    config.pcAppEntityId,
+  ]);
+
+    const setConfig = useCallback((next: Partial<IntegrationConfig>) => {
     setConfigState((prev) => ({ ...prev, ...next }));
   }, []);
 
