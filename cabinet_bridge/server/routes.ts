@@ -641,7 +641,7 @@ export async function registerRoutes(
         headers: { "User-Agent": "HomeArcade/1.0 (home-assistant-addon; +https://github.com/GlerschNersch/token)" },
         redirect: "follow",
       });
-      if (!response.ok) throw new Error(\`Upstream \${response.status}\`);
+      if (!response.ok) throw new Error(`Upstream ${response.status}`);
       const text = await response.text();
       if (text.length > 0) {
         await fs.writeFile(cachePath, text, "utf8");
