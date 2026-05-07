@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.10
+
+- Fix: critical SyntaxError in bootstrap.js (introduced by v0.3.9 diagnostic) — JSON.stringify inside a string literal broke game loading entirely
+- The diagnostic console.log now uses string concatenation instead of JSON.stringify
+
 ## 0.3.9
 
 - Fix: system logo `<img>` src now routed through `apiUrl()` — fixes 404s hitting HA's own API instead of the addon under Ingress
