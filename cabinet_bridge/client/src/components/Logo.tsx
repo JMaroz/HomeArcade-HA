@@ -82,7 +82,7 @@ export function Wordmark({ className = "" }: { className?: string }) {
           HOME<span className="text-primary">.</span>ARCADE
         </div>
         <div className="font-mono text-[9px] uppercase tracking-[0.13em] text-muted-foreground mt-1 whitespace-nowrap">
-          Home Assistant ⇄ RetroBat
+          HOME ASSISTANT ⇌ RETRO GAMING
         </div>
       </div>
     </div>
