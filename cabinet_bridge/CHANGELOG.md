@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.5
+
+- Controls button now opens a proper panel with the full keyboard layout for the active system (PS1/PS2, GBA, GB/GBC, N64, NDS, PSP, and generic)
+- Panel dynamically adapts to the loaded core — shows the right buttons for each console
+- Closes on backdrop click, Escape, or ×
+
 ## 0.3.4
 
 - **Home Dashboard** — new default landing page with Continue Playing hero, stat cards (total hours, completed, in progress, backlog), system play-time bars, status donut chart, week-over-week activity, game highlights, and In Progress / Recently Played / New This Week shelves

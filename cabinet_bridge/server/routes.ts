@@ -2133,6 +2133,18 @@ function renderEmulatorPage({ title, returnTo, romHash }: { title: string; retur
       </div>
       <div class="cabinet-save-grid" id="cabinet-save-grid" data-testid="grid-save-slots"></div>
     </section>
+    <section class="cabinet-save-panel" id="cabinet-controls-panel" aria-label="Controls reference" aria-hidden="true" data-testid="panel-controls">
+      <div class="cabinet-save-panel__header">
+        <div>
+          <p class="cabinet-save-title">Controls</p>
+          <p class="cabinet-save-subtitle" id="cabinet-controls-subtitle">Keyboard &amp; gamepad layout</p>
+        </div>
+        <button type="button" class="cabinet-save-close" id="cabinet-controls-close" aria-label="Close controls" data-testid="button-close-controls">×</button>
+      </div>
+      <div style="padding:14px 18px 18px;display:flex;flex-direction:column;gap:14px;" id="cabinet-controls-body">
+        <!-- populated by cabinetRenderControls() -->
+      </div>
+    </section>
     <section class="cabinet-save-panel" id="cabinet-sleep-panel" aria-label="Sleep timer" aria-hidden="true" data-testid="panel-sleep-timer">
       <div class="cabinet-save-panel__header">
         <div>
@@ -2919,11 +2931,13 @@ function cabinetSetupSystemMenu() {
   backdrop.addEventListener("click", function () {
     cabinetSetMenuOpen(false);
     cabinetSetSaveManagerOpen(false);
+    cabinetSetControlsPanel(false);
   });
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
       cabinetSetMenuOpen(false);
       cabinetSetSaveManagerOpen(false);
+      cabinetSetControlsPanel(false);
     }
   });
 }
@@ -3020,10 +3034,10 @@ document.addEventListener("click", function (event) {
   }
   if (target.id === "cabinet-controls") {
     cabinetSetMenuOpen(false);
-    var isPsx = window.CABINET_CORE === "psx" || window.CABINET_CORE === "pcsx2";
-    cabinetToast(isPsx
-      ? "PS1/PS2: Cross Z, Circle X, Square A, Triangle S, L1 Q, R1 W, L2 E, R2 R, L3 Tab, R3 C. Save 1, Load 2. Rewind Backspace."
-      : "Keyboard and pad: arrows, A/B/X/Y, Start Enter, Select Shift, L1 Q, R1 W. Save 1, Load 2. Rewind Backspace.");
+    cabinetSetControlsPanel(true);
+  }
+  if (target.id === "cabinet-controls-close") {
+    cabinetSetControlsPanel(false);
   }
   if (target.id === "cabinet-rewind-toggle") {
     var rewindOn = target.getAttribute("aria-pressed") === "true";
@@ -3071,6 +3085,104 @@ document.addEventListener("click", function (event) {
     cabinetApplyFilter(target.dataset.filter);
   }
 });
+function cabinetSetControlsPanel(open) {
+  var panel = document.querySelector("#cabinet-controls-panel");
+  var backdrop = document.querySelector("#cabinet-menu-backdrop");
+  if (!panel || !backdrop) return;
+  panel.setAttribute("aria-hidden", open ? "false" : "true");
+  panel.classList.toggle("is-open", open);
+  backdrop.classList.toggle("is-open", open);
+  if (open) cabinetRenderControls();
+}
+function cabinetRenderControls() {
+  var body = document.querySelector("#cabinet-controls-body");
+  var subtitle = document.querySelector("#cabinet-controls-subtitle");
+  if (!body) return;
+  var isPsx = window.CABINET_CORE === "psx" || window.CABINET_CORE === "pcsx2";
+  var isGba = window.CABINET_CORE === "gba";
+  var isGb  = window.CABINET_CORE === "gb" || window.CABINET_CORE === "gbc";
+  var isN64 = window.CABINET_CORE === "n64";
+  var isNds = window.CABINET_CORE === "nds";
+  var isPsp = window.CABINET_CORE === "psp";
+  // Subtitle
+  if (subtitle) {
+    var coreLabel = isPsx ? "PlayStation" : isGba ? "Game Boy Advance" : isGb ? "Game Boy / GBC" : isN64 ? "Nintendo 64" : isNds ? "Nintendo DS" : isPsp ? "PSP" : "SNES / NES / Genesis";
+    subtitle.textContent = coreLabel + " · keyboard & gamepad";
+  }
+  var ROW_STYLE = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(248,250,252,0.06);';
+  var LABEL_STYLE = 'color:rgba(248,250,252,0.5);font:700 9px ui-monospace,monospace;letter-spacing:0.14em;text-transform:uppercase;';
+  var KEY_STYLE = 'color:#f8fafc;font:700 11px ui-monospace,monospace;background:rgba(248,250,252,0.08);border:1px solid rgba(248,250,252,0.18);border-radius:6px;padding:3px 8px;';
+  function row(label, key) {
+    return '<div style="' + ROW_STYLE + '"><span style="' + LABEL_STYLE + '">' + label + '</span><span style="' + KEY_STYLE + '">' + key + '</span></div>';
+  }
+  var rows = [];
+  var SECTION_STYLE = 'color:rgba(248,250,252,0.35);font:800 8px ui-monospace,monospace;letter-spacing:0.2em;text-transform:uppercase;margin-top:4px;';
+  function section(label) {
+    return '<div style="' + SECTION_STYLE + '">' + label + '</div>';
+  }
+  if (isPsx) {
+    rows.push(section("Face Buttons"));
+    rows.push(row("Cross", "Z"));
+    rows.push(row("Circle", "X"));
+    rows.push(row("Square", "A"));
+    rows.push(row("Triangle", "S"));
+    rows.push(section("Shoulders"));
+    rows.push(row("L1 / R1", "Q / W"));
+    rows.push(row("L2 / R2", "E / R"));
+    rows.push(row("L3 / R3", "Tab / C"));
+    rows.push(section("System"));
+    rows.push(row("Start / Select", "Enter / Shift"));
+    rows.push(row("D-Pad", "Arrow Keys"));
+  } else if (isGba) {
+    rows.push(section("Buttons"));
+    rows.push(row("A / B", "Z / X"));
+    rows.push(row("L / R", "Q / W"));
+    rows.push(section("System"));
+    rows.push(row("Start / Select", "Enter / Shift"));
+    rows.push(row("D-Pad", "Arrow Keys"));
+  } else if (isGb) {
+    rows.push(section("Buttons"));
+    rows.push(row("A / B", "Z / X"));
+    rows.push(section("System"));
+    rows.push(row("Start / Select", "Enter / Shift"));
+    rows.push(row("D-Pad", "Arrow Keys"));
+  } else if (isN64) {
+    rows.push(section("Buttons"));
+    rows.push(row("A / B", "Z / X"));
+    rows.push(row("C-Up/Down/Left/Right", "I / K / J / L"));
+    rows.push(row("L / R / Z", "Q / W / E"));
+    rows.push(section("System"));
+    rows.push(row("Start", "Enter"));
+    rows.push(row("Analog Stick", "Arrow Keys"));
+  } else if (isNds) {
+    rows.push(section("Buttons"));
+    rows.push(row("A / B / X / Y", "Z / X / A / S"));
+    rows.push(row("L / R", "Q / W"));
+    rows.push(section("System"));
+    rows.push(row("Start / Select", "Enter / Shift"));
+    rows.push(row("D-Pad", "Arrow Keys"));
+  } else if (isPsp) {
+    rows.push(section("Buttons"));
+    rows.push(row("Cross / Circle", "Z / X"));
+    rows.push(row("Square / Triangle", "A / S"));
+    rows.push(row("L / R", "Q / W"));
+    rows.push(section("System"));
+    rows.push(row("Start / Select", "Enter / Shift"));
+    rows.push(row("Analog / D-Pad", "Arrow Keys"));
+  } else {
+    rows.push(section("Buttons"));
+    rows.push(row("A / B", "Z / X"));
+    rows.push(row("X / Y", "A / S"));
+    rows.push(row("L / R", "Q / W"));
+    rows.push(section("System"));
+    rows.push(row("Start / Select", "Enter / Shift"));
+    rows.push(row("D-Pad", "Arrow Keys"));
+  }
+  rows.push(section("Emulator"));
+  rows.push(row("Quick Save / Load", "1 / 2"));
+  rows.push(row("Rewind", "Backspace"));
+  body.innerHTML = rows.join("\n");
+}
 function cabinetSetRewind(enabled) {
   var btn = document.querySelector("#cabinet-rewind-toggle");
   if (btn) btn.setAttribute("aria-pressed", String(enabled));
