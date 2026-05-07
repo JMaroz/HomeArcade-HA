@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.12
+
+- Fix: ReferenceError in bootstrap.js diagnostic — `core` used as JS runtime variable instead of TS template interpolation; changed to `${core}` so it resolves server-side
+
 ## 0.3.11
 
 - Fix: critical SyntaxError in bootstrap.js line 877 — `rows.join("\n")` inside a TypeScript template literal produced a literal newline character in generated JS, breaking game loading; changed to `rows.join("")`

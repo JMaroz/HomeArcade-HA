@@ -2397,7 +2397,7 @@ function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, r
   if (pct) pct.textContent = "2%";
   if (stage) stage.textContent = "Bootstrap";
   if (overlay) overlay.classList.remove("is-hidden");
-  console.log("[HomeArcade] bootstrap.js executing for ROM ${romId} core=" + core);
+  console.log("[HomeArcade] bootstrap.js executing for ROM ${romId} core=${core}");
 })();
 function cabinetToast(message) {
   var toast = document.querySelector("#cabinet-toast");
