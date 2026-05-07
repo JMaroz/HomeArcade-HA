@@ -2,16 +2,16 @@ ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:latest
 FROM ${BUILD_FROM} AS base
 
 ENV LANG=C.UTF-8 \
-    NODE_ENV=production \
     PORT=5000
 
 RUN apk add --no-cache nodejs npm python3 make g++ sqlite-libs
 
 WORKDIR /app
 
-# Install all dependencies (including dev) so we can build the bundle.
+# Install ALL dependencies (including dev) for the build step.
+# NODE_ENV must not be "production" here or npm ci skips devDependencies.
 COPY package.json package-lock.json ./
-RUN npm ci --include=dev --no-audit --no-fund
+RUN NODE_ENV=development npm ci --no-audit --no-fund
 
 # Copy the rest of the source and build.
 COPY tsconfig.json vite.config.ts tailwind.config.ts postcss.config.js components.json drizzle.config.ts ./
@@ -20,10 +20,13 @@ COPY server ./server
 COPY client ./client
 COPY script ./script
 
-RUN npm run build
+RUN NODE_ENV=production npm run build
 
 # Prune dev dependencies after the build to keep the runtime image smaller.
 RUN npm prune --omit=dev
+
+# Set production env for runtime.
+ENV NODE_ENV=production
 
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh
