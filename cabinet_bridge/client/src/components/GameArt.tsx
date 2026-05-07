@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Game, System } from "@/data/library";
+import { ConsoleSilhouette } from "@/components/ConsoleSilhouette";
 
 /**
  * Procedural cover art rendered from the game's gradient palette + a
@@ -97,7 +98,7 @@ export function SystemTile({
           />
         </>
       ) : (
-        <PixelGrid accent={`hsl(${b})`} dim />
+        <ConsoleSilhouette systemId={system.id} />
       )}
       <div className="absolute inset-x-0 top-2 flex justify-center">
         <span
