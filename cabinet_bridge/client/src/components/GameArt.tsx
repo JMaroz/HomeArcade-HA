@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Game, System } from "@/data/library";
 import { ConsoleSilhouette } from "@/components/ConsoleSilhouette";
+import { SystemLogo } from "@/components/SystemLogo";
 
 /**
  * Procedural cover art rendered from the game's gradient palette + a
@@ -98,16 +99,19 @@ export function SystemTile({
           />
         </>
       ) : (
-        <ConsoleSilhouette systemId={system.id} />
+        <SystemLogo systemId={system.id} />
       )}
-      <div className="absolute inset-x-0 top-2 flex justify-center">
-        <span
-          className="font-display text-[clamp(18px,3vw,28px)] font-black text-white/90 tracking-tight leading-none"
-          style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.55))" }}
-        >
-          {system.mono}
-        </span>
-      </div>
+      {/* Show text abbreviation only when no logo is available (arcade) */}
+      {!["nes","snes","n64","gba","genesis","ps1","ps2","psp","dreamcast","gb","gbc","nds"].includes(system.id) && (
+        <div className="absolute inset-x-0 top-2 flex justify-center">
+          <span
+            className="font-display text-[clamp(18px,3vw,28px)] font-black text-white/90 tracking-tight leading-none"
+            style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.55))" }}
+          >
+            {system.mono}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
