@@ -19,16 +19,27 @@ import {
 import { z } from "zod";
 
 const ROM_EXTENSIONS: Record<string, string[]> = {
-  nes: [".nes", ".zip"],
-  snes: [".sfc", ".smc", ".zip"],
-  n64: [".n64", ".z64", ".v64", ".zip"],
-  gba: [".gba", ".zip"],
-  genesis: [".gen", ".md", ".smd", ".bin", ".zip"],
-  ps1: [".cue", ".bin", ".iso", ".chd", ".pbp", ".zip"],
-  ps2: [".iso", ".chd", ".zip"],
+  nes: [".nes", ".zip", ".7z"],
+  snes: [".sfc", ".smc", ".zip", ".7z"],
+  n64: [".n64", ".z64", ".v64", ".zip", ".7z"],
+  gba: [".gba", ".zip", ".7z"],
+  genesis: [".gen", ".md", ".smd", ".bin", ".zip", ".7z"],
+  ps1: [".cue", ".bin", ".iso", ".chd", ".pbp", ".zip", ".7z"],
+  ps2: [".iso", ".chd", ".zip", ".7z"],
   arcade: [".zip", ".7z"],
-  dreamcast: [".cdi", ".gdi", ".chd", ".zip"],
+  dreamcast: [".cdi", ".gdi", ".chd", ".zip", ".7z"],
 };
+
+// Configurable upload ceiling. PS1/PS2 disc images frequently exceed the old
+// 512MB default — readers can dial this lower (or higher) per deployment via
+// CABINET_MAX_UPLOAD_MB. The HA add-on wires this up from the `max_upload_mb`
+// option in run.sh.
+const MAX_UPLOAD_MB = (() => {
+  const raw = Number.parseInt(process.env.CABINET_MAX_UPLOAD_MB ?? "", 10);
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  return 2048; // 2 GB default — covers virtually all PS1/PS2 ROM dumps.
+})();
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 
 const EMULATORJS_CORES: Record<string, string> = {
   nes: "nes",
@@ -79,6 +90,14 @@ export async function registerRoutes(
 
   app.put("/api/settings/integration", writeIntegrationSettings);
   app.patch("/api/settings/integration", writeIntegrationSettings);
+
+  app.get("/api/upload-limits", (_req, res) => {
+    res.json({
+      maxUploadMb: MAX_UPLOAD_MB,
+      maxUploadBytes: MAX_UPLOAD_BYTES,
+      allowedExtensions: ROM_EXTENSIONS,
+    });
+  });
 
   app.get("/api/roms", async (_req, res) => {
     const roms = await storage.listUploadedRoms();
@@ -312,7 +331,7 @@ export async function registerRoutes(
 
   app.post(
     "/api/roms/upload",
-    express.raw({ type: "*/*", limit: "512mb" }),
+    express.raw({ type: "*/*", limit: MAX_UPLOAD_BYTES }),
     async (req, res) => {
       const system = String(req.query.system ?? "");
       const favorite = req.query.favorite !== "0";

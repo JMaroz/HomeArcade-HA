@@ -87,7 +87,23 @@ the current working directory.
 
 Open the panel, pick a system, click **Manage ROMs**, then drag files in or
 use **Browse ROM files**. Allowed extensions are enforced server-side per
-system.
+system, including PS1 multi-track sets (`.cue`/`.bin`) and archives
+(`.zip`, `.7z`).
+
+### Upload size limits
+
+Per-file uploads are capped at 2 GB by default — large enough for PS1 and most
+PS2 disc images. Tune this through the add-on option `max_upload_mb` (or the
+`CABINET_MAX_UPLOAD_MB` env var when running locally) and restart the add-on.
+The Settings panel reads the live cap from `/api/upload-limits` and refuses
+oversize files before sending them, so failures surface client-side instead of
+the old generic 413 from the Supervisor proxy.
+
+The add-on declares `ingress_stream: true` so Home Assistant streams large
+upload bodies through ingress instead of capping them at the default 16 MB
+limit. If you previously hit
+`413: Maximum request body size 16777216 exceeded`, update or rebuild the
+add-on to pick up the new config and try again.
 
 ### Troubleshooting uploads
 

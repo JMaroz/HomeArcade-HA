@@ -346,6 +346,12 @@ script:
   );
 }
 
+type UploadLimits = {
+  maxUploadMb: number;
+  maxUploadBytes: number;
+  allowedExtensions: Record<string, string[]>;
+};
+
 function RomUploadSection() {
   const [system, setSystem] = useState("nes");
   const [favorite, setFavorite] = useState(true);
@@ -355,6 +361,12 @@ function RomUploadSection() {
   const { data: roms = [] } = useQuery<UploadedRom[]>({
     queryKey: ["/api/roms"],
   });
+  const { data: limits } = useQuery<UploadLimits>({
+    queryKey: ["/api/upload-limits"],
+  });
+  const maxUploadBytes = limits?.maxUploadBytes ?? 2048 * 1024 * 1024;
+  const maxUploadMb = limits?.maxUploadMb ?? 2048;
+  const oversize = files.find((f) => f.size > maxUploadBytes);
 
   const mergeFiles = (incoming: File[]) => {
     if (incoming.length === 0) return;
@@ -375,6 +387,12 @@ function RomUploadSection() {
   const upload = useMutation({
     mutationFn: async () => {
       if (files.length === 0) throw new Error("Choose one or more ROM files first.");
+      const tooBig = files.find((f) => f.size > maxUploadBytes);
+      if (tooBig) {
+        throw new Error(
+          `${tooBig.name} is ${formatRomSize(tooBig.size)}, which exceeds the ${maxUploadMb} MB upload limit. Raise max_upload_mb in the add-on options or set CABINET_MAX_UPLOAD_MB.`,
+        );
+      }
       const uploaded: UploadedRom[] = [];
       for (const romFile of files) {
         const res = await apiRequest(
@@ -441,7 +459,7 @@ function RomUploadSection() {
               ))}
             </select>
           </Field>
-          <Field label="ROM file" hint="Examples: .nes, .sfc, .gba, .z64, .iso, .zip">
+          <Field label="ROM file" hint={`Examples: .nes, .sfc, .gba, .z64, .iso, .zip, .7z. Per-file limit: ${maxUploadMb} MB.`}>
             <input
               ref={fileInputRef}
               id="rom-file"
@@ -567,6 +585,14 @@ function RomUploadSection() {
                 </li>
               ))}
             </ul>
+          </div>
+        ) : null}
+
+        {oversize ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive" data-testid="warn-rom-upload-size">
+            {oversize.name} is {formatRomSize(oversize.size)}, larger than the {maxUploadMb} MB
+            upload limit. Raise <code>max_upload_mb</code> in the add-on options or set
+            <code> CABINET_MAX_UPLOAD_MB</code> for local runs and restart.
           </div>
         ) : null}
 

@@ -20,9 +20,19 @@ Source and full documentation: <https://github.com/GlerschNersch/token>
    via Home Assistant Ingress (sidebar entry: **Cabinet**, or use **Open Web
    UI** from the add-on page).
 
-There are no add-on options to configure. Connection settings (HA base URL,
-long-lived token, endpoint overrides, Live mode) are managed from inside the
-panel at **Settings**, and persist to the add-on's SQLite database.
+Connection settings (HA base URL, long-lived token, endpoint overrides, Live
+mode) are managed from inside the panel at **Settings**, and persist to the
+add-on's SQLite database.
+
+### Add-on options
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `max_upload_mb` | `2048` | Per-file ROM upload ceiling. Raise for very large PS2 disc images, lower to fence off the add-on from oversized uploads. |
+
+The add-on also enables `ingress_stream: true` so Home Assistant streams large
+upload bodies through the Supervisor proxy instead of capping them at the
+default 16 MB ingress limit.
 
 ## Updating
 
@@ -63,7 +73,13 @@ hard-refresh the panel (the SPA detects the
 update or rebuild the add-on if it is out of date.
 
 The mobile picker uses an unfiltered file dialog; allowed extensions are
-validated server-side per system after the file is chosen.
+validated server-side per system after the file is chosen. Supported archive
+formats include `.zip` and `.7z`; PS1 also accepts `.cue`/`.bin`/`.iso`/`.chd`/
+`.pbp`.
+
+Per-file uploads are capped at the value of the `max_upload_mb` add-on option
+(default 2048 MB / 2 GB). The Settings panel shows the active limit next to
+the file picker and refuses oversize files before sending them.
 
 ## Local development (without Home Assistant)
 
