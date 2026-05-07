@@ -25,7 +25,7 @@ RUN npm run build
 # Prune dev dependencies after the build to keep the runtime image smaller.
 RUN npm prune --omit=dev
 
-COPY cabinet_bridge/run.sh /run.sh
+COPY run.sh /run.sh
 RUN chmod a+x /run.sh
 
 EXPOSE 5000

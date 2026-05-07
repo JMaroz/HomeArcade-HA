@@ -12,9 +12,13 @@ No options to configure. The add-on stores its SQLite database, uploaded ROMs, a
 
 ## Local development (without Home Assistant)
 
-Set `CABINET_DATA_DIR` to override the data directory:
+The application source lives inside this `cabinet_bridge/` directory so that
+Home Assistant Supervisor can build the add-on with this folder as the Docker
+context. Run npm commands from here:
 
 ```bash
+cd cabinet_bridge
+npm install
 CABINET_DATA_DIR=/tmp/cabinet-data npm run dev
 ```
 
