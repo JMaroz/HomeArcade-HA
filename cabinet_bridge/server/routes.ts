@@ -228,7 +228,7 @@ export async function registerRoutes(
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     const returnTo = typeof req.query.return === "string" ? req.query.return : "";
-    res.send(renderEmulatorPage({ title: rom.title, returnTo }));
+    res.send(renderEmulatorPage({ title: rom.title, returnTo, romHash: rom.romHash ?? null }));
   });
 
   app.get("/api/roms/:id/bootstrap.js", async (req, res) => {
@@ -1223,7 +1223,7 @@ function slugify(value: string) {
   );
 }
 
-function renderEmulatorPage({ title, returnTo }: { title: string; returnTo: string }) {
+function renderEmulatorPage({ title, returnTo, romHash }: { title: string; returnTo: string; romHash: string | null }) {
   const safeTitle = escapeHtml(title);
   const safeReturnTo = JSON.stringify(returnTo);
   return `<!doctype html>
