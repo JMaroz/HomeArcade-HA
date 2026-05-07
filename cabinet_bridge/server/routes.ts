@@ -136,6 +136,22 @@ async function extractFirstRomFromZip(
   return null;
 }
 
+
+function getUserFromRequest(req: import("express").Request): { userId: string; userName: string } {
+  const rawId =
+    (req.headers["x-remote-user-id"] as string | undefined) ||
+    (req.headers["x-hass-user-id"] as string | undefined) ||
+    (req.headers["x-remote-user"] as string | undefined) ||
+    "default";
+  const rawName =
+    (req.headers["x-remote-user-name"] as string | undefined) ||
+    (req.headers["x-hass-user"] as string | undefined) ||
+    rawId;
+  const userId = rawId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64) || "default";
+  const userName = rawName.slice(0, 128) || userId;
+  return { userId, userName };
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -261,6 +277,7 @@ export async function registerRoutes(
     }
 
     const bootstrapSettings = await storage.getIntegrationSettings();
+    const { userId, userName } = getUserFromRequest(req);
     res.setHeader("Content-Type", "application/javascript; charset=utf-8");
     res.send(renderEmulatorBootstrap({
       core,
@@ -272,6 +289,8 @@ export async function registerRoutes(
       raUsername: bootstrapSettings.raUsername ?? "",
       raToken: bootstrapSettings.raToken ?? "",
       controlDefaults: (bootstrapSettings.controlDefaults ?? {}) as Record<string, Record<number, string>>,
+      userId,
+      userName,
     }));
   });
 
@@ -776,12 +795,18 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/current-user", (req, res) => {
+    const { userId, userName } = getUserFromRequest(req);
+    res.json({ userId, userName });
+  });
+
   // ── Save-state server backups ──────────────────────────────────────────────
   app.get("/api/roms/:id/save-backups", async (req, res) => {
     const id = Number(req.params.id);
     const rom = await storage.getUploadedRom(id);
     if (!rom) return res.status(404).json({ message: "ROM not found." });
-    const dir = path.join(SAVE_BACKUP_DIR, String(id));
+    const { userId } = getUserFromRequest(req);
+    const dir = path.join(SAVE_BACKUP_DIR, userId, String(id));
     try {
       const files = await fs.readdir(dir);
       const slots = files
@@ -800,7 +825,8 @@ export async function registerRoutes(
     if (!Number.isFinite(slot) || slot < 1 || slot > 99) return res.status(400).json({ message: "Invalid slot." });
     const rom = await storage.getUploadedRom(id);
     if (!rom) return res.status(404).json({ message: "ROM not found." });
-    const filePath = path.join(SAVE_BACKUP_DIR, String(id), `slot-${slot}.state`);
+    const { userId } = getUserFromRequest(req);
+    const filePath = path.join(SAVE_BACKUP_DIR, userId, String(id), `slot-${slot}.state`);
     try {
       const buf = await fs.readFile(filePath);
       res.setHeader("Content-Type", "application/octet-stream");
@@ -817,7 +843,8 @@ export async function registerRoutes(
     if (!Number.isFinite(slot) || slot < 1 || slot > 99) return res.status(400).json({ message: "Invalid slot." });
     const rom = await storage.getUploadedRom(id);
     if (!rom) return res.status(404).json({ message: "ROM not found." });
-    const dir = path.join(SAVE_BACKUP_DIR, String(id));
+    const { userId } = getUserFromRequest(req);
+    const dir = path.join(SAVE_BACKUP_DIR, userId, String(id));
     await fs.mkdir(dir, { recursive: true });
     const filePath = path.join(dir, `slot-${slot}.state`);
     const chunks: Buffer[] = [];
@@ -838,7 +865,8 @@ export async function registerRoutes(
     const slot = Number(req.params.slot);
     const rom = await storage.getUploadedRom(id);
     if (!rom) return res.status(404).json({ message: "ROM not found." });
-    const filePath = path.join(SAVE_BACKUP_DIR, String(id), `slot-${slot}.state`);
+    const { userId } = getUserFromRequest(req);
+    const filePath = path.join(SAVE_BACKUP_DIR, userId, String(id), `slot-${slot}.state`);
     try { await fs.unlink(filePath); } catch { /* not found is fine */ }
     res.json({ ok: true });
   });
@@ -1431,6 +1459,26 @@ function renderEmulatorPage({ title, returnTo, romHash }: { title: string; retur
         letter-spacing: 0.08em;
         line-height: 1.5;
         text-transform: uppercase;
+      }
+      .cabinet-user-badge {
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(255,255,255,.75);
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 20px;
+        padding: 3px 10px;
+        white-space: nowrap;
+        align-self: flex-start;
+        margin-top: 4px;
+        letter-spacing: .3px;
+        flex-shrink: 0;
+      }
+      .cabinet-menu-panel__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
       }
       .cabinet-menu-grid {
         display: grid;
@@ -2174,6 +2222,7 @@ function renderEmulatorPage({ title, returnTo, romHash }: { title: string; retur
           <p class="cabinet-menu-title">${safeTitle}</p>
           <p class="cabinet-menu-subtitle">Save, load, controls, exit${romHash ? ` · MD5: <span style="user-select:all;cursor:text;" title="MD5 hash — click to select">${romHash}</span>` : ""}</p>
         </div>
+        <span class="cabinet-user-badge" id="cabinet-user-badge" title="Saves are stored per user" hidden></span>
       </div>
       <div class="cabinet-menu-grid">
         <button type="button" class="primary-action" id="cabinet-resume" data-testid="button-resume-game">Resume Game</button>
@@ -2198,7 +2247,7 @@ function renderEmulatorPage({ title, returnTo, romHash }: { title: string; retur
       <div class="cabinet-save-panel__header">
         <div>
           <p class="cabinet-save-title">Save-state Manager</p>
-          <p class="cabinet-save-subtitle">Nine browser-local slots for this game</p>
+          <p class="cabinet-save-subtitle">Nine browser-local slots for this game · saved as <strong id="cabinet-save-user"></strong></p>
         </div>
         <button type="button" class="cabinet-save-close" id="cabinet-save-manager-close" aria-label="Close save-state manager" data-testid="button-close-save-manager">×</button>
       </div>
@@ -2430,7 +2479,7 @@ function buildEjsControls(
   return { 0: p1, 1: {}, 2: {}, 3: {} };
 }
 
-function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; }) {
+function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults, userId, userName }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; userId: string; userName: string; }) {
   return `"use strict";
 // Diagnostic: immediately mark that this script is executing.
 // If the launch overlay stays at 0%, this script never ran.
@@ -3860,7 +3909,16 @@ window.EJS_player = "#game";
 window.EJS_core = ${JSON.stringify(core)};
 window.CABINET_CORE = ${JSON.stringify(core)};
 window.EJS_gameName = ${JSON.stringify(title)};
-window.EJS_gameID = ${JSON.stringify(gameId)};
+window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
+window.CABINET_USER_ID = ${JSON.stringify(userId)};
+window.CABINET_USER_NAME = ${JSON.stringify(userName)};
+(function () {
+  var name = window.CABINET_USER_NAME || "";
+  var el = document.getElementById("cabinet-save-user");
+  if (el) el.textContent = name || "you";
+  var badge = document.getElementById("cabinet-user-badge");
+  if (badge && name && name !== "default") { badge.textContent = name; badge.removeAttribute("hidden"); }
+})();
 ${discs.length > 1
   ? `window.EJS_discs = ${JSON.stringify(discs.map((d) => ({ fileName: `../\${d.id}/file`, label: d.label })))};`
   : `window.EJS_gameUrl = "./file";`}

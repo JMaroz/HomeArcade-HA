@@ -4,6 +4,18 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [0.3.16] — 2026-05-07
+
+### Per-user save states (Home Assistant multi-user support)
+- **Automatic user detection** — reads HA Ingress headers (`X-Remote-User-Id`, `X-Remote-User-Name`) on every player request; falls back to `"default"` for local dev
+- **Scoped `EJS_gameID`** — each user's EmulatorJS IDBFS storage key is prefixed with their HA user ID, so browser-local save states, SRAM, and memory cards are siloed per user automatically
+- **Per-user server-side backup paths** — save backup files are now stored under `save-backups/<userId>/<romId>/slot-N.state`; existing backups in the flat layout will no longer appear (migrate manually if needed)
+- **`/api/current-user` endpoint** — returns `{ userId, userName }` for the logged-in HA user; useful for client-side display and debugging
+- **Username badge in player menu** — the in-game menu now shows a pill badge with the logged-in user's display name (hidden for the default/local-dev user)
+- **Save manager user label** — the Save Slots panel subtitle now shows whose saves are being managed
+
+---
+
 ## [0.2.0] — 2026-05-07
 
 ### New systems
