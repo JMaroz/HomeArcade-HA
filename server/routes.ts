@@ -1305,42 +1305,34 @@ function renderEmulatorPage({ title, returnTo }: { title: string; returnTo: stri
           font-size: 10px;
           pointer-events: auto;
         }
+        .virtual-pad__dpad,
+        .virtual-pad__face {
+          --cabinet-pad-cell: clamp(44px, calc((100vw - 68px) / 6), 60px);
+          --cabinet-pad-gap: 6px;
+          bottom: max(20px, env(safe-area-inset-bottom));
+          grid-template-columns: repeat(3, var(--cabinet-pad-cell));
+          grid-template-rows: repeat(3, var(--cabinet-pad-cell));
+          gap: var(--cabinet-pad-gap);
+          pointer-events: none;
+          max-width: calc(50vw - 12px);
+        }
         .virtual-pad__dpad {
           left: max(10px, env(safe-area-inset-left));
-          bottom: max(20px, env(safe-area-inset-bottom));
-          grid-template-columns: repeat(3, 60px);
-          grid-template-rows: repeat(3, 60px);
-          gap: 6px;
-          pointer-events: none;
         }
         .virtual-pad__face {
           right: max(10px, env(safe-area-inset-right));
-          bottom: max(20px, env(safe-area-inset-bottom));
-          grid-template-columns: repeat(3, 60px);
-          grid-template-rows: repeat(3, 60px);
-          gap: 6px;
-          pointer-events: none;
         }
         .virtual-pad button {
-          min-width: 56px;
-          min-height: 56px;
+          min-width: 44px;
+          min-height: 44px;
+        }
+        .virtual-pad__dpad button,
+        .virtual-pad__face button {
+          width: var(--cabinet-pad-cell);
+          height: var(--cabinet-pad-cell);
         }
       }
       @media (max-width: 520px) {
-        .virtual-pad__dpad {
-          grid-template-columns: repeat(3, 56px);
-          grid-template-rows: repeat(3, 56px);
-          gap: 5px;
-        }
-        .virtual-pad__face {
-          grid-template-columns: repeat(3, 56px);
-          grid-template-rows: repeat(3, 56px);
-          gap: 5px;
-        }
-        .virtual-pad button {
-          min-width: 52px;
-          min-height: 52px;
-        }
         .virtual-pad__shoulders button,
         .virtual-pad__system button {
           min-height: 38px;
@@ -1351,20 +1343,6 @@ function renderEmulatorPage({ title, returnTo }: { title: string; returnTo: stri
         }
       }
       @media (max-width: 360px) {
-        .virtual-pad__dpad {
-          grid-template-columns: repeat(3, 50px);
-          grid-template-rows: repeat(3, 50px);
-          gap: 4px;
-        }
-        .virtual-pad__face {
-          grid-template-columns: repeat(3, 50px);
-          grid-template-rows: repeat(3, 50px);
-          gap: 4px;
-        }
-        .virtual-pad button {
-          min-width: 48px;
-          min-height: 48px;
-        }
         .virtual-pad__system button {
           min-width: 62px;
         }
