@@ -8,12 +8,15 @@ RUN apk add --no-cache nodejs npm python3 make g++ sqlite-libs
 
 WORKDIR /app
 
-# Install ALL dependencies (including dev) for the build step.
-# Use npm install instead of npm ci so optional platform-specific packages
-# (e.g. @esbuild/linux-x64-musl) are resolved for Alpine even when the
-# lock file was generated on a different OS.
+# Install dependencies without running postinstall scripts.
+# This avoids esbuild trying to compile/download a native binary for musl/Alpine
+# (which can fail or produce an incompatible binary). esbuild falls back to its
+# pure-JS implementation automatically, which is fine for a one-off build.
 COPY package.json package-lock.json ./
-RUN NODE_ENV=development npm install --no-audit --no-fund
+RUN NODE_ENV=development npm install --no-audit --no-fund --ignore-scripts
+
+# Compile better-sqlite3 natively — this IS needed at runtime.
+RUN npm rebuild better-sqlite3
 
 # Copy the rest of the source and build.
 COPY tsconfig.json vite.config.ts tailwind.config.ts postcss.config.js components.json drizzle.config.ts ./
