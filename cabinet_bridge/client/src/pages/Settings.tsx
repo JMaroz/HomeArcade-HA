@@ -13,6 +13,7 @@ import { filterToPath } from "@/lib/filter";
 import { Link } from "wouter";
 import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight, Palette } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import type { UploadedRom, GameCollectionWithItems } from "@shared/schema";
 
 export default function Settings() {
@@ -735,6 +736,31 @@ max_recent: 6`}</Code>
               Reset to defaults
             </Button>
           </Section>
+
+          <Section title="Help &amp; feedback" description="Found a bug or have a feature request? The project is open source.">
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="https://github.com/GlerschNersch/token/issues/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                data-testid="link-report-issue"
+              >
+                <AlertTriangle className="size-4 text-yellow-500" />
+                Report an issue
+                <ExternalLink className="size-3.5 text-muted-foreground" />
+              </a>
+              <a
+                href="https://github.com/GlerschNersch/token"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+              >
+                View on GitHub
+                <ExternalLink className="size-3.5 text-muted-foreground" />
+              </a>
+            </div>
+          </Section>
         </div>
       </main>
     </div>
@@ -742,16 +768,35 @@ max_recent: 6`}</Code>
 }
 
 function RomLibrarySection() {
+  const { toast } = useToast();
   const { data: roms = [] } = useQuery<UploadedRom[]>({
     queryKey: ["/api/roms"],
   });
   const scrape = useMutation({
     mutationFn: async (rom: UploadedRom) => {
       const res = await apiRequest("POST", `/api/roms/${rom.id}/scrape-art`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { message?: string }).message ?? `Server error ${res.status}`);
+      }
       return (await res.json()) as UploadedRom;
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
+      if (!data.artUrl) {
+        toast({
+          title: "No art found",
+          description: "ScreenScraper couldn't match this ROM. Try renaming it to match the official title, or check your ScreenScraper credentials in Settings.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Art scrape failed",
+        description: err.message || "Something went wrong reaching ScreenScraper. Check your internet connection and credentials.",
+        variant: "destructive",
+      });
     },
   });
   const deleteRom = useMutation({

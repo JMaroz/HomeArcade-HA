@@ -16,6 +16,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { filterToPath } from "@/lib/filter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { GameCollectionWithItems, UploadedRom } from "@shared/schema";
+import { WelcomeDialog } from "@/components/WelcomeDialog";
 
 type Sort = "title" | "year" | "recent" | "rating" | "plays";
 
@@ -284,6 +285,7 @@ export default function Home({
 
   return (
     <div className="flex h-full">
+      <WelcomeDialog hasRoms={uploadedRoms.length > 0} />
       <Sidebar active={filter} />
 
       <main className="flex-1 min-w-0 flex flex-col" data-testid="main-content">

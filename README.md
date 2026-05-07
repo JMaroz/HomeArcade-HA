@@ -1,330 +1,276 @@
 # HomeArcade
 
-Retro gaming frontend for Home Assistant. Runs as a Home Assistant add-on so the
-sidebar gains a **Cabinet** panel for browsing systems, launching games via HA
-webhooks, and managing your own uploaded ROMs.
+> Retro gaming, right inside Home Assistant.
 
-The add-on bundles both the React UI and the Express backend that handles ROM
-uploads, settings persistence, metadata scraping, and the system-image cache.
-All persistent state lives under the supervisor-managed `/data` volume so it
-survives add-on restarts and updates.
+HomeArcade is a Home Assistant add-on that turns your sidebar into a full retro game library. Upload ROMs, browse by system, launch games in an in-browser emulator, track play time, and earn RetroAchievements — all without leaving Home Assistant.
 
-**Current version: 0.2.0**  
-GitHub: <https://github.com/GlerschNersch/token>
+**Current version: 0.2.3** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+
+[![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
+
+---
+
+## Quick start
+
+**1. Add the repository**
+
+In Home Assistant: **Settings → Add-ons → Add-on Store → ⋮ → Repositories**, paste:
+```
+https://github.com/GlerschNersch/token
+```
+
+**2. Install and start**
+
+Find **HomeArcade** in the store, click **Install**, wait for the build to finish (2–5 minutes), then click **Start**. Enable **Show in sidebar**.
+
+**3. Upload a ROM and play**
+
+Open HomeArcade from the sidebar, click a system (e.g. NES), drop a ROM file onto the upload zone, then click the game card → **Play**.
+
+That's it. No port forwarding, no reverse proxy, no extra software.
 
 ---
 
 ## Supported systems
 
-| System | Core | File types |
-| --- | --- | --- |
-| NES | nestopia | `.nes`, `.zip`, `.7z` |
-| SNES | snes9x | `.smc`, `.sfc`, `.zip`, `.7z` |
-| Nintendo 64 | mupen64plus | `.n64`, `.z64`, `.v64`, `.zip`, `.7z` |
-| Game Boy | gambatte | `.gb`, `.zip`, `.7z` |
-| Game Boy Color | gambatte | `.gbc`, `.zip`, `.7z` |
-| Game Boy Advance | mgba | `.gba`, `.zip`, `.7z` |
-| Nintendo DS | melonds | `.nds`, `.zip`, `.7z` |
-| Genesis / Mega Drive | segaMD | `.md`, `.bin`, `.smd`, `.zip`, `.7z` |
-| PlayStation 1 | pcsx | `.cue`, `.bin`, `.iso`, `.zip`, `.7z` |
-| PlayStation 2 | pcsx2 | `.iso`, `.bin`, `.zip`, `.7z` |
-| PSP | ppsspp | `.iso`, `.cso`, `.pbp`, `.zip`, `.7z` |
-| Dreamcast | reicast | `.cdi`, `.gdi`, `.chd`, `.zip`, `.7z` |
-| Arcade (MAME) | mame2003 | `.zip`, `.7z` |
+| System | Core | Accepted formats |
+|---|---|---|
+| NES | nestopia | `.nes` `.zip` |
+| SNES | snes9x | `.smc` `.sfc` `.zip` |
+| Nintendo 64 | mupen64plus | `.n64` `.z64` `.v64` `.zip` |
+| Game Boy | gambatte | `.gb` `.zip` |
+| Game Boy Color | gambatte | `.gbc` `.zip` |
+| Game Boy Advance SP | mgba | `.gba` `.zip` |
+| Nintendo DS | melonds | `.nds` `.zip` |
+| Genesis / Mega Drive | segaMD | `.md` `.bin` `.smd` `.zip` |
+| PlayStation 1 | pcsx | `.cue+.bin` `.iso` `.zip` |
+| PlayStation 2 | pcsx2 | `.iso` `.bin` `.zip` |
+| PSP | ppsspp | `.iso` `.cso` `.pbp` `.zip` |
+| Dreamcast | reicast | `.cdi` `.gdi` `.chd` `.zip` |
+| Arcade (MAME) | mame2003 | `.zip` |
 
 ---
 
-## Install (Home Assistant add-on)
+## Features
 
-1. In Home Assistant: **Settings → Add-ons → Add-on Store → ⋮ (top right) →
-   Repositories**.
-2. Paste the repository URL and click **Add**:
-
-   ```
-   https://github.com/GlerschNersch/token
-   ```
-
-3. Close the dialog, scroll to the **HomeArcade Add-ons** section in the
-   store, and open **HomeArcade**.
-4. Click **Install**. Home Assistant Supervisor will build the image (this can
-   take several minutes on the first install).
-5. When the install finishes, click **Start**. With **Show in sidebar** enabled
-   the panel appears as **Cabinet** in the HA sidebar; you can also open it from
-   the add-on page via **Open Web UI**.
-
-The add-on listens on port 5000 internally and is exposed through Home
-Assistant Ingress, so no external port forwarding or reverse-proxy work is
-required.
-
-There are no add-on options to configure — connection settings (HA base URL,
-long-lived token, endpoint overrides, Live mode) are managed inside the panel
-itself at **Settings**, and are persisted to the add-on's SQLite database.
-
-### PWA install
-
-HomeArcade ships a web app manifest and service worker. On supported
-browsers (Chrome, Edge, Safari 16.4+) you can install it as a standalone app:
-
-- **Desktop (Chrome/Edge):** click the install icon (⊕) in the address bar.
-- **iOS (Safari):** tap Share → **Add to Home Screen**.
-- **Android (Chrome):** tap the browser menu → **Add to Home Screen**.
-
-The installed app works offline for already-cached assets and shows a
-home-screen icon. API calls (ROM lists, uploads, game launch) still require
-the add-on to be running.
+- **In-browser emulator** — powered by [EmulatorJS](https://emulatorjs.org); no plugins or installs needed
+- **Save states** — up to 4 slots per game with thumbnail previews; server-side cloud backup/restore
+- **Metadata scraping** — cover art, descriptions, genres from [ScreenScraper.fr](https://www.screenscraper.fr) (free account)
+- **RetroAchievements** — live achievement unlocks and a dashboard with your stats
+- **Play time tracking** — minutes played per game, recently played shelf
+- **Kiosk mode** — lock the UI with an optional PIN for shared/TV setups
+- **Collections** — create custom game lists
+- **Gamepad support** — plug in any USB or Bluetooth controller; test it live before playing
+- **Key remapping** — reassign any button, save named profiles per game
+- **Themes** — Default (dark), Synthwave, Game Boy, OLED
+- **PWA** — install as a standalone app on phone, tablet, or desktop
+- **Netplay** — room-based multiplayer over EmulatorJS peer connections
+- **HA automation hooks** — fires `homearcade_game_started` / `homearcade_game_ended` events; `input_text.homearcade_now_playing` entity; Lovelace card
 
 ---
 
-## Updating the add-on
+## Installation
 
-1. **Settings → Add-ons → ⋮ → Check for updates** (top-right of the add-on
-   store).
-2. Open **HomeArcade**. If a newer version is available, an **Update**
-   button appears at the top of the page — click it.
-3. If you don't see an update button but expect one, also try:
-   - **Settings → Add-ons → HomeArcade → ⋮ → Rebuild** to force a fresh
-     build of the current version.
-   - Reload the page with a hard refresh (Ctrl/Cmd-Shift-R) so the browser
-     drops cached JS/CSS from the previous version.
+### Requirements
 
-> **Maintainers:** any change that should ship to users must bump
-> `version:` in `cabinet_bridge/config.yaml`. Home Assistant compares that
-> string against the installed version, and will not surface an update prompt
-> if it hasn't changed — even if you've pushed new commits.
+- Home Assistant OS or Supervised (add-on support required)
+- `amd64` or `aarch64` host architecture
+- ~500 MB free space for the Docker image; more for ROMs
 
----
+### Step-by-step
 
-## Persistent data
+1. **Settings → Add-ons → Add-on Store → ⋮ (three dots, top right) → Repositories**
+2. Paste `https://github.com/GlerschNersch/token` and click **Add**
+3. Close the dialog and scroll to find **HomeArcade** in the store
+4. Click **Install** — the first build takes 2–5 minutes (compiling native SQLite bindings)
+5. Once installed, click **Start**
+6. Toggle **Show in sidebar** on the add-on page
+7. Click **Open Web UI** or select HomeArcade from the sidebar
 
-Everything HomeArcade needs to remember lives under `/data` inside the
-add-on container, which Home Assistant Supervisor persists across restarts,
-updates, and rebuilds:
+> The add-on runs on port 5000 internally and is exposed via HA Ingress — no firewall rules or reverse-proxy configuration needed.
 
-| Path | What it stores |
-| --- | --- |
-| `/data/data.db` | SQLite database: integration settings, ROM metadata, play stats, app state |
-| `/data/rom-storage/` | Uploaded ROM files, organized by system slug |
-| `/data/system-image-cache/` | Downloaded console artwork used by the Browse Systems tiles |
-| `/data/save-backups/` | Server-side save-state backups (per-ROM, per-slot) |
+### Updating
 
-If the `/data` volume is not writable (for example when running outside Home
-Assistant), the backend falls back to `CABINET_DATA_DIR` if set, otherwise to
-the current working directory.
+When a new version is available, an **Update** button appears at the top of the HomeArcade add-on page. Click it — your ROMs, save states, and settings are preserved (they live in the Supervisor-managed `/data` volume, which is never touched by an update).
+
+> **Rebuild vs Update:** "Rebuild" re-compiles the currently installed version from HA's local cache. "Update" pulls the latest code from GitHub and rebuilds — use this to get new features and bug fixes.
 
 ---
 
 ## Uploading ROMs
 
-> **The backend must run as the Home Assistant add-on for uploads to
-> succeed.** Uploads write to `/data/rom-storage/` and are recorded in
-> `/data/data.db`; both paths are only writable inside the Supervisor-managed
-> add-on container.
+ROMs are stored in `/data/rom-storage/` inside the add-on and tracked in a SQLite database — both survive updates and restarts.
 
-Open the panel, click a system in the sidebar, and the system page shows an
-"Upload ROMs" dropzone at the top. Drop files in or use **Browse ROM files**;
-uploads are filed under that console automatically and the system's grid and
-sidebar count refresh as soon as the upload finishes. Allowed extensions are
-enforced server-side per system, including PS1 multi-track sets (`.cue`/`.bin`)
-and archives (`.zip`, `.7z`).
+**How to upload:**
+1. Click a system in the sidebar (e.g. "PlayStation 1")
+2. Drop ROM files onto the upload zone, or click **Browse ROM files**
+3. The game appears in the grid immediately after upload
 
-The **All Games** view also has a dropzone, but you must pick a console there —
-the upload isn't bound to a specific system page.
+**Tips:**
+- PS1 multi-disc games: upload all `.bin` files plus the `.cue` sheet together
+- ZIP archives are extracted automatically on the server
+- Maximum file size: 2 GB per file (enough for PS2 ISOs)
+- Rename ROM files to match the official game title for best ScreenScraper results
 
-Each uploaded ROM is hashed with MD5 at upload time. The hash appears in the
-game detail dialog and can be used to cross-reference ROM databases. It is also
-stored in the database and exposed over the API.
+### Importing an existing library
 
-### Upload size limits
+If you have a RetroPie, Batocera, or EmulationStation setup, you can import metadata without re-uploading ROM files:
 
-Per-file uploads are capped at 2 GB by default — large enough for PS1 and most
-PS2 disc images. Tune this through the `CABINET_MAX_UPLOAD_MB` env var when
-running locally, and restart the add-on. The dropzone reads the live cap from
-`/api/upload-limits` and refuses oversize files before sending them.
+- **EmulationStation** — Settings → Import → EmulationStation → drop `gamelist.xml`
+- **LaunchBox** — Settings → Import → LaunchBox → drop the LaunchBox XML export
 
-The add-on declares `ingress_stream: true` so Home Assistant streams large
-upload bodies through ingress instead of capping them at the default 16 MB
-limit. If you previously hit `413: Maximum request body size 16777216 exceeded`,
-update or rebuild the add-on to pick up this config and try again.
-
-### Importing ROM libraries
-
-Instead of uploading files one at a time you can bulk-import metadata from
-existing collection databases:
-
-- **EmulationStation** — drop a `gamelist.xml` in **Settings → Import ROMs →
-  EmulationStation**. HomeArcade reads each `<game>` element and adds matched
-  entries to your library. The ROM files themselves are not copied; only the
-  metadata (title, description, genre, developer, publisher, release date, player
-  count) is imported.
-- **LaunchBox** — same flow with a LaunchBox XML export. HomeArcade reads
-  `<Game>` elements from the file.
-
-Both importers return a count of how many entries were successfully added.
-
-### Troubleshooting uploads
-
-- **"404: Not Found" when uploading under HA ingress.** The SPA detects the
-  `/api/hassio_ingress/<token>/` prefix and routes API calls through it. If you
-  still see a 404: make sure the add-on is **Started**, hard-refresh the panel,
-  and check you're on the latest version.
-- **Upload picker won't show your file on Android/iOS.** The current UI uses an
-  unfiltered picker; allowed extensions are enforced after the file is chosen.
-- **Upload appears to succeed but the ROM doesn't show up.** Reload the view;
-  the list is fetched from `/data/data.db`, so a hard refresh after a successful
-  upload guarantees a fresh read.
+Both importers add game metadata (title, description, genre, art URL) to your library. ROM files are not moved or copied.
 
 ---
 
 ## Playing games
 
-Click any game tile to open its detail dialog, then click **Play** to launch it
-in the EmulatorJS in-browser emulator. The emulator boots in a full-screen
-overlay.
+1. Click any game card to open its detail panel
+2. Click **Play** — the emulator opens full-screen in the current tab
+3. Press **Menu** (top-left) to access save states, rewind, fast-forward, shaders, key remapping, and the sleep timer
+4. Click **← Back** or press Escape to return to the library (auto-save triggers on exit)
 
-### Save states
+### Controls
 
-Use the **Save Manager** button in the emulator overlay to open the save-state
-panel. You can create up to 4 slots; each slot shows a thumbnail captured at
-save time and the date it was saved.
+| Action | Default |
+|---|---|
+| Menu toggle | `Escape` or on-screen button |
+| Save state | Save Manager panel → slot → Save |
+| Load state | Save Manager panel → slot → Load |
+| Rewind | Hold `R` (configurable) |
+| Fast-forward | Hold `F` (configurable) |
+| Screenshot | Screenshot button in menu |
 
-**Server-side backups** — each slot has a ☁ **Backup** button that uploads the
-save to the add-on's `/data/save-backups/` directory, and a ↺ **Restore**
-button that downloads the latest server backup for that slot back into the
-in-browser storage. Backups survive browser clears, device switches, and
-reinstalls. The save manager fetches the list of available server backups
-automatically when opened.
+Connect a USB or Bluetooth gamepad before launching — it's detected automatically. Use **Test Pad** in the emulator menu to verify button mapping.
 
-### Gamepad support
+---
 
-Physical gamepads are detected automatically via the HTML5 Gamepad API. The
-**Test Pad** button in the emulator menu opens a live visualization of every
-connected controller — axes and buttons update in real time so you can confirm
-mapping before you start playing.
+## Home Assistant integration
 
-**Key remapping** — the **Key Remap** panel lets you reassign any emulator
-button to a physical key or gamepad button. Remaps can be saved as named
-profiles per game and switched from a drop-down at the top of the remap panel.
-Profiles are stored in `localStorage` and survive page reloads.
+### Events
 
-### Netplay
+HomeArcade fires HA events you can use in automations:
 
-The **Netplay** button opens a room-based multiplayer session:
+```yaml
+trigger:
+  - platform: event
+    event_type: homearcade_game_started  # or homearcade_game_ended
+```
 
-- **Host** — generates a room code and waits for a player to join.
-- **Join** — enter a room code to connect to an existing session.
+Event data includes `rom_id`, `title`, and `system`.
 
-Netplay uses EmulatorJS's built-in peer connection and is best suited for
-local-network play or fast connections.
+### Now Playing sensor
+
+Add an `input_text` helper to track what's currently playing:
+
+```yaml
+# configuration.yaml
+input_text:
+  homearcade_now_playing:
+    name: HomeArcade Now Playing
+    initial: ""
+```
+
+### Lovelace card
+
+1. Download `homearcade-card.js` from **Settings → Lovelace card → Download**
+2. Copy it to `/config/www/homearcade-card.js` in your HA config
+3. Add a resource in **Settings → Dashboards → ⋮ → Resources**:
+   ```
+   /local/homearcade-card.js   (JavaScript module)
+   ```
+4. Add a card to any dashboard:
+   ```yaml
+   type: custom:homearcade-card
+   base_url: http://homeassistant.local:8123
+   title: Now Playing
+   max_recent: 6
+   ```
 
 ---
 
 ## RetroAchievements
 
-HomeArcade can display your RetroAchievements account stats and unlock
-achievements as you play.
+1. Create a free account at [retroachievements.org](https://retroachievements.org)
+2. Go to **Settings → RetroAchievements** in HomeArcade
+3. Enter your username and API key (RA profile → Settings → Keys)
+4. Save — achievements unlock automatically during gameplay
 
-### Setup
-
-1. Create a free account at [retroachievements.org](https://retroachievements.org).
-2. In HomeArcade **Settings → RetroAchievements**, enter your username and
-   API token (found on your RA profile page under **Settings → Keys**).
-3. Save. The add-on stores the credentials in its database and injects them into
-   the emulator at launch time.
-
-### Dashboard
-
-The **Achievements** page (trophy icon in the sidebar) shows:
-
-- Hardcore and softcore point totals
-- Global rank
-- Recently played games with per-game achievement progress
-- A list of recent unlocks with trophy icons and hardcore badges
-
-The dashboard pulls live data from the RetroAchievements API; an internet
-connection is required.
+View your stats and recent unlocks on the **Achievements** page (trophy icon in the sidebar).
 
 ---
 
-## Metadata scraping (ScreenScraper)
+## Metadata / cover art (ScreenScraper)
 
-HomeArcade can fetch box art, screenshots, descriptions, and other metadata
-from [ScreenScraper.fr](https://www.screenscraper.fr). Enter your ScreenScraper
-username and password in **Settings → ScreenScraper**, then use the
-**Refresh Art** action on any game to pull fresh data.
+1. Register free at [screenscraper.fr](https://www.screenscraper.fr)
+2. Go to **Settings → ScreenScraper** and enter your username + password
+3. Open any game's detail card and click **Find art** — cover art, description, and genre are fetched automatically
+
+Art is also scraped automatically on upload if credentials are configured.
 
 ---
 
 ## Kiosk mode
 
-Enable **Kiosk Mode** in Settings to lock the UI for public or shared setups:
-
-- The Settings, Achievements, and system management pages are hidden.
-- Optionally set a PIN — the PIN must be entered to exit kiosk mode.
-- Optionally pin a specific game **Collection** — the kiosk shows only that
-  collection's games.
-
-Kiosk settings persist in the database and survive restarts.
+Enable in **Settings → Kiosk**. Hides settings/system management pages and optionally requires a PIN to exit. Pin a specific Collection to restrict the library to a curated game list — useful for kids' profiles or TV setups.
 
 ---
 
-## Library features
+## Troubleshooting
 
-### Browsing
+### Game loads to 0% and stalls
+- Hard-refresh the page (`Ctrl`+`Shift`+`R`) to clear cached JS
+- Check the add-on log (**Settings → Add-ons → HomeArcade → Log**) for errors
+- Make sure you're on the latest version (click **Update** if available)
 
-- **All Games** — flat list of every uploaded ROM across all systems.
-- **System pages** — per-console views with a dropzone at the top.
-- **Collections** — custom named lists. Create, rename, and delete collections
-  from the Collections page; add games from the game detail dialog.
-- **Recently Played shelf** — a horizontal strip on system and collection pages
-  shows the most recently launched ROMs for that context.
-- **Genre filter** — filter any view by genre (data pulled from ScreenScraper
-  or imported from ES/LaunchBox metadata).
-- **Sort options** — sort by title, play count, recently played, or upload date.
+### "Couldn't launch game" error
+- The ROM file may have been deleted from `/data/rom-storage/`. Re-upload the ROM.
+- The add-on may have restarted — wait a moment and try again.
 
-### Play statistics
+### Upload returns 404 under HA Ingress
+- Make sure the add-on status is **Started** (not just installed)
+- Hard-refresh the panel — the Ingress token rotates on restart
+- Check **Settings → Add-ons → HomeArcade → Log** for startup errors
 
-Every launched session records its duration. The total **minutes played** for
-each ROM accumulates in the database and is visible in the game detail dialog.
+### Cover art scrape returns "No art found"
+- Rename the ROM file to exactly match the official title (e.g. `Super Mario World (USA).sfc`)
+- Check your ScreenScraper credentials in Settings
+- ScreenScraper has daily rate limits on free accounts — try again after midnight UTC
+
+### Add-on won't start after install
+- Check the Log tab for build errors
+- If you see `better-sqlite3` errors, try **Rebuild** (this re-compiles the native module for your architecture)
+- On Raspberry Pi 4 (aarch64), the first build takes up to 10 minutes — be patient
+
+### Changes I pushed to GitHub aren't showing up
+- "Rebuild" uses HA's cached source copy — it does **not** re-fetch from GitHub
+- To pull new code, wait for a version bump and click **Update** instead
+
+### The sidebar shows "Cabinet" instead of "HomeArcade"
+- This is a leftover panel title from older installs — it's cosmetic only. Remove and re-add the add-on to get the correct title, or rename it in your HA dashboard settings.
+
+### Gamepad not detected
+- Plug in the controller **before** launching the emulator
+- Open Menu → Test Pad — if buttons show up there, it's working
+- Some browsers require a button press to "activate" a newly connected gamepad
 
 ---
 
 ## Local development
 
-The application source (React client, Express server, shared schema, build
-config) lives inside [`cabinet_bridge/`](cabinet_bridge/) so that Home
-Assistant Supervisor can build the add-on with that folder as the Docker
-context. Run npm commands from there:
-
 ```bash
 cd cabinet_bridge
 npm install
-CABINET_DATA_DIR=/tmp/cabinet-data npm run dev
+CABINET_DATA_DIR=/tmp/ha-arcade-dev npm run dev
 ```
 
-The dev server listens on `http://localhost:5000`. Set `CABINET_DATA_DIR` to
-any writable directory; without it the backend tries `/data` first and then
-falls back to the current working directory.
-
-To produce a production build (the same one the add-on ships):
+The dev server starts at `http://localhost:5000`. Set `CABINET_DATA_DIR` to any writable directory.
 
 ```bash
-cd cabinet_bridge
-npm run build
-NODE_ENV=production node dist/index.cjs
+npm test          # run Vitest integration suite
+npm run test:watch  # watch mode
+npm run build     # production build (same as Docker)
 ```
-
-### Running tests
-
-HomeArcade includes a Vitest integration test suite that spins up an
-in-process Express server and exercises the API endpoints end-to-end:
-
-```bash
-cd cabinet_bridge
-npm test
-```
-
-Tests use an isolated temporary database directory and clean up after
-themselves. Run `npm run test:watch` to keep Vitest active during development.
 
 ---
 
@@ -332,43 +278,33 @@ themselves. Run `npm run test:watch` to keep Vitest active during development.
 
 ```
 .
-├── README.md              # this file
-├── repository.yaml        # Home Assistant add-on repository manifest
-└── cabinet_bridge/        # the add-on itself (Docker context)
-    ├── config.yaml        # add-on manifest — bump `version` to ship updates
+├── README.md
+├── repository.yaml          # HA add-on repository manifest
+└── cabinet_bridge/          # the add-on (Docker build context)
+    ├── config.yaml          # add-on manifest — bump version to ship updates
     ├── Dockerfile
     ├── run.sh
-    ├── vitest.config.ts   # test configuration
-    ├── client/            # React + Vite SPA
-    │   ├── index.html     # includes PWA manifest link + SW registration
-    │   ├── manifest.json  # PWA web app manifest
-    │   ├── sw.js          # service worker
-    │   └── src/
-    │       ├── pages/     # Home, Settings, Achievements, Collections, …
-    │       ├── components/# shared UI components
-    │       └── lib/       # integration config, utilities
-    ├── server/            # Express backend
-    │   ├── routes.ts      # all API endpoints + emulator bootstrap JS
-    │   ├── storage.ts     # SQLite/Drizzle ORM layer
-    │   └── __tests__/     # Vitest integration tests
-    └── shared/            # shared TypeScript schema (Zod + Drizzle)
+    ├── client/              # React + Vite SPA
+    │   ├── src/pages/       # Home, Settings, Achievements, …
+    │   ├── src/components/  # UI components
+    │   └── homearcade-card.js  # standalone Lovelace card
+    ├── server/
+    │   ├── routes.ts        # all API endpoints + emulator bootstrap JS
+    │   └── storage.ts       # SQLite / Drizzle ORM
+    └── shared/              # shared Zod + Drizzle schema
 ```
 
 ---
 
 ## Links
 
-- Repository: <https://github.com/GlerschNersch/token>
-- Issues: <https://github.com/GlerschNersch/token/issues>
-- RetroAchievements: <https://retroachievements.org>
-- ScreenScraper: <https://www.screenscraper.fr>
-- EmulatorJS: <https://emulatorjs.org>
-
----
+- [Report a bug](https://github.com/GlerschNersch/token/issues/new)
+- [EmulatorJS](https://emulatorjs.org)
+- [RetroAchievements](https://retroachievements.org)
+- [ScreenScraper](https://www.screenscraper.fr)
 
 ## Support
 
 If HomeArcade has been useful to you, a small tip is always appreciated but never expected!
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
-

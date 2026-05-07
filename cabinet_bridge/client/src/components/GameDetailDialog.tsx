@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { GameArt } from "@/components/GameArt";
 import { SYSTEMS, type Game, gameLaunchEndpoint } from "@/data/library";
 import { useIntegration, formatRelative } from "@/lib/integration";
 import { apiUrl } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { GameCollectionWithItems } from "@shared/schema";
-import { Heart, Play, Clock, Users, Star, Folder, Plus } from "lucide-react";
+import { Heart, Play, Clock, Users, Star, Folder, Plus, AlertTriangle } from "lucide-react";
 
 export function GameDetailDialog({
   game,
@@ -27,16 +29,38 @@ export function GameDetailDialog({
   onSetStatus?: (g: Game, status: string) => void;
 }) {
   const { dispatch } = useIntegration();
+  const { toast } = useToast();
+  const [launching, setLaunching] = useState(false);
 
   if (!game) return null;
   const system = SYSTEMS.find((s) => s.id === game.system);
   const endpoint = gameLaunchEndpoint(game);
 
-  const launch = () => {
+  const launch = async () => {
     if (game.romId) {
-      onClose();
+      setLaunching(true);
       const returnTo = encodeURIComponent(window.location.href);
       const playerUrl = apiUrl(`/api/roms/${game.romId}/player?return=${returnTo}`);
+      try {
+        const probe = await fetch(playerUrl, { method: "HEAD" });
+        if (!probe.ok) {
+          const msg = probe.status === 404
+            ? "ROM file not found on the server. It may have been deleted."
+            : `Server returned ${probe.status}. Try restarting the HomeArcade add-on.`;
+          toast({ title: "Couldn\'t launch game", description: msg, variant: "destructive" });
+          setLaunching(false);
+          return;
+        }
+      } catch {
+        toast({
+          title: "Couldn\'t reach server",
+          description: "HomeArcade server is not responding. Check that the add-on is running.",
+          variant: "destructive",
+        });
+        setLaunching(false);
+        return;
+      }
+      onClose();
       window.location.href = playerUrl;
       return;
     }
@@ -259,7 +283,7 @@ export function GameDetailDialog({
                 className="font-mono uppercase tracking-wider"
                 data-testid="button-detail-launch"
               >
-                <Play className="size-4 fill-current" /> {game.romId ? "Play" : "Launch"}
+                <Play className="size-4 fill-current" /> {launching ? "Launching…" : game.romId ? "Play" : "Launch"}
               </Button>
               <Button
                 size="lg"
