@@ -48,6 +48,7 @@ const EMULATORJS_CORES: Record<string, string> = {
   gba: "gba",
   genesis: "segaMD",
   ps1: "psx",
+  ps2: "pcsx2",
   arcade: "mame2003",
 };
 
