@@ -3434,45 +3434,46 @@ function cabinetSetupVirtualPad() {
   });
   setPadVisible(visible, false);
 }
-	function cabinetSetMenuOpen(open) {
-	  var button = document.querySelector("#cabinet-menu-toggle");
-	  var panel = document.querySelector("#cabinet-menu-panel");
-	  var backdrop = document.querySelector("#cabinet-menu-backdrop");
-	  if (!button || !panel || !backdrop) return;
-	  button.setAttribute("aria-expanded", open ? "true" : "false");
-	  panel.setAttribute("aria-hidden", open ? "false" : "true");
-	  panel.classList.toggle("is-open", open);
-	  backdrop.classList.toggle("is-open", open);
-	  if (open) {
-	    var resume = document.querySelector("#cabinet-resume");
-	    if (resume && resume.focus) {
-	      window.setTimeout(function () {
-	        resume.focus();
-	      }, 30);
-	    }
-	  }
-	}
-	function cabinetSetupSystemMenu() {
-	  var button = document.querySelector("#cabinet-menu-toggle");
-	  var backdrop = document.querySelector("#cabinet-menu-backdrop");
-	  if (!button || !backdrop) return;
-	  button.addEventListener("click", function () {
-	    var isOpen = button.getAttribute("aria-expanded") === "true";
-	    cabinetSetMenuOpen(!isOpen);
-	  });
-	  backdrop.addEventListener("click", function () {
-	    cabinetSetMenuOpen(false);
-	    cabinetSetSaveManagerOpen(false);
-	    cabinetSetControlsPanel(false);
-	  });
-	  document.addEventListener("keydown", function (event) {
-	    if (event.key === "Escape") {
-	      cabinetSetMenuOpen(false);
-	      cabinetSetSaveManagerOpen(false);
-	      cabinetSetControlsPanel(false);
-	    }
-	  });
-	}
+function cabinetSetMenuOpen(open) {
+  var button = document.querySelector("#cabinet-menu-toggle");
+  var panel = document.querySelector("#cabinet-menu-panel");
+  var backdrop = document.querySelector("#cabinet-menu-backdrop");
+  if (!button || !panel || !backdrop) return;
+  button.setAttribute("aria-expanded", open ? "true" : "false");
+  panel.setAttribute("aria-hidden", open ? "false" : "true");
+  panel.classList.toggle("is-open", open);
+  backdrop.classList.toggle("is-open", open);
+  if (open) {
+    var resume = document.querySelector("#cabinet-resume");
+    if (resume && resume.focus) {
+      window.setTimeout(function () {
+        resume.focus();
+      }, 30);
+    }
+  }
+}
+
+function cabinetSetupSystemMenu() {
+  var button = document.querySelector("#cabinet-menu-toggle");
+  var backdrop = document.querySelector("#cabinet-menu-backdrop");
+  if (!button || !backdrop) return;
+  button.addEventListener("click", function () {
+    var isOpen = button.getAttribute("aria-expanded") === "true";
+    cabinetSetMenuOpen(!isOpen);
+  });
+  backdrop.addEventListener("click", function () {
+    cabinetSetMenuOpen(false);
+    cabinetSetSaveManagerOpen(false);
+    cabinetSetControlsPanel(false);
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      cabinetSetMenuOpen(false);
+      cabinetSetSaveManagerOpen(false);
+      cabinetSetControlsPanel(false);
+    }
+  });
+}
 document.addEventListener("click", function (event) {
   var target = event.target;
   if (!(target instanceof HTMLElement)) return;
