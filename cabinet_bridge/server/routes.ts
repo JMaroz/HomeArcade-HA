@@ -3127,7 +3127,7 @@ function cabinetRenderSaveSlots() {
     
     var thumbUrl = (state || hasBackup) ? cabinetGetThumbUrl(slot) : null;
     var thumbHtml = thumbUrl
-      ? '<div class="cabinet-save-slot__thumb"><img src="' + thumbUrl + '" alt="Save slot ' + slot + ' preview" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=\\\'cabinet-save-slot__thumb cabinet-save-slot__thumb--empty\\\'></div>\'"></div>'
+      ? '<div class="cabinet-save-slot__thumb"><img src="' + thumbUrl + '" alt="Save slot ' + slot + ' preview" loading="lazy"></div>'
       : '<div class="cabinet-save-slot__thumb cabinet-save-slot__thumb--empty"></div>';
     
     var cloudBadge = hasBackup ? ' <span title="Server backup exists" style="font-size:10px;">&#9729;</span>' : "";
