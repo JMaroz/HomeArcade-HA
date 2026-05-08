@@ -78,6 +78,8 @@ export interface Game {
   lastPlayed?: number;
   /** Total minutes played. */
   minutesPlayed?: number;
+  /** Total number of play sessions. */
+  playCount?: number;
   favorite?: boolean;
   playStatus?: string;
   communityScore?: number | null;
@@ -320,6 +322,7 @@ export function uploadedRomToGame(rom: UploadedRom): Game {
     romId: rom.id,
     lastPlayed: rom.lastPlayed ?? 0,
     minutesPlayed: rom.minutesPlayed ?? 0,
+    playCount: rom.playCount ?? 0,
     romHash: rom.romHash ?? null,
     favorite: rom.favorite,
     playStatus: rom.playStatus ?? "unset",

@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { GameArt } from "@/components/GameArt";
 import { SYSTEMS, type Game, gameLaunchEndpoint } from "@/data/library";
 import { useIntegration, formatRelative } from "@/lib/integration";
-import { apiUrl } from "@/lib/queryClient";
+import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { GameCollectionWithItems } from "@shared/schema";
-import { Heart, Play, Clock, Users, Star, Folder, Plus } from "lucide-react";
+import type { GameCollectionWithItems, UploadedRom } from "@shared/schema";
+import { Heart, Play, Clock, Users, Star, Folder, Plus, ChevronDown, ChevronUp, Hash, Loader2, ImagePlus } from "lucide-react";
 
 export function GameDetailDialog({
   game,
@@ -32,6 +32,27 @@ export function GameDetailDialog({
   const { toast } = useToast();
   const [launching, setLaunching] = useState(false);
   const [wheelArtError, setWheelArtError] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [scrapingArt, setScrapingArt] = useState(false);
+
+  const refreshArt = useCallback(async () => {
+    if (!game?.romId) return;
+    setScrapingArt(true);
+    try {
+      const res = await apiRequest("POST", `/api/roms/${game.romId}/scrape-art`);
+      const data = await res.json() as UploadedRom;
+      await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
+      if (data.artUrl) {
+        toast({ title: "Art updated", description: "Cover art fetched successfully." });
+      } else {
+        toast({ title: "No art found", description: "ScreenScraper couldn't match this title.", variant: "destructive" });
+      }
+    } catch (err) {
+      toast({ title: "Art refresh failed", description: String(err), variant: "destructive" });
+    } finally {
+      setScrapingArt(false);
+    }
+  }, [game, toast]);
 
   if (!game) return null;
   const system = SYSTEMS.find((s) => s.id === game.system);
@@ -85,16 +106,29 @@ export function GameDetailDialog({
 
   const showWheelArt = !!game.wheelArtUrl && !wheelArtError;
 
+  // Play time display
+  const playTimeDisplay = (() => {
+    const m = game.minutesPlayed ?? 0;
+    if (!m) return "—";
+    const h = Math.floor(m / 60);
+    return h > 0 ? `${h}h ${m % 60}m` : `${m}m`;
+  })();
+
+  // Description: clamp unless expanded
+  const descLong = game.description && game.description.length > 220;
+
   return (
     <Dialog open={!!game} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
         className="sm:max-w-2xl max-h-[92dvh] p-0 overflow-y-auto bg-card border-card-border"
         data-testid="dialog-game-detail"
       >
-        <div className="grid sm:grid-cols-[200px_1fr]">
-          {/* Left panel — box art + wheel logo overlay */}
-          <div className="relative h-40 sm:h-auto">
-            <GameArt game={game} />
+        <div className="grid sm:grid-cols-[220px_1fr]">
+          {/* Left panel — box art */}
+          <div className="relative sm:h-auto h-48 group">
+            <div className="absolute inset-0">
+              <GameArt game={game} />
+            </div>
             {showWheelArt && (
               <div className="absolute inset-x-0 bottom-0 flex items-end justify-center pb-3 px-3 pointer-events-none">
                 <img
@@ -103,13 +137,30 @@ export function GameDetailDialog({
                   onError={() => setWheelArtError(true)}
                   className="max-h-14 max-w-full object-contain drop-shadow-lg"
                   style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.7))" }}
+                  decoding="async"
                 />
               </div>
+            )}
+            {/* Refresh art button — appears on hover */}
+            {game.romId && (
+              <button
+                type="button"
+                onClick={refreshArt}
+                disabled={scrapingArt}
+                className="absolute top-2 right-2 flex items-center gap-1.5 rounded-md border border-white/20 bg-black/55 backdrop-blur-sm px-2 py-1.5 font-mono text-[9px] uppercase tracking-wider text-white/80 hover:bg-black/75 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none"
+                aria-label="Refresh cover art"
+                data-testid="button-refresh-art"
+              >
+                {scrapingArt
+                  ? <Loader2 className="size-3 animate-spin" />
+                  : <ImagePlus className="size-3" />}
+                {scrapingArt ? "Scraping…" : "Refresh art"}
+              </button>
             )}
           </div>
 
           {/* Right panel */}
-          <div className="p-5 sm:p-6 flex flex-col gap-4">
+          <div className="p-5 sm:p-6 flex flex-col gap-4 min-w-0">
             {/* Header */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -127,7 +178,6 @@ export function GameDetailDialog({
               >
                 {game.title}
               </DialogTitle>
-              {/* Developer / publisher */}
               {(game.developer || game.publisher) && (
                 <DialogDescription className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex flex-wrap gap-x-3">
                   {game.developer && <span>{game.developer}</span>}
@@ -135,7 +185,6 @@ export function GameDetailDialog({
                   {game.publisher && <span>{game.publisher}</span>}
                 </DialogDescription>
               )}
-              {/* Genre pills */}
               {genrePills.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-0.5">
                   {genrePills.map((g) => (
@@ -148,37 +197,34 @@ export function GameDetailDialog({
                   ))}
                 </div>
               )}
-              {/* Description */}
+              {/* Description with expand/collapse */}
               {game.description && (
-                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4 pt-1">
-                  {game.description}
-                </p>
+                <div className="pt-1">
+                  <p className={`text-sm text-muted-foreground leading-relaxed ${descExpanded ? "" : "line-clamp-3"}`}>
+                    {game.description}
+                  </p>
+                  {descLong && (
+                    <button
+                      type="button"
+                      onClick={() => setDescExpanded((v) => !v)}
+                      className="mt-1 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-primary hover:underline focus:outline-none"
+                      data-testid="button-expand-desc"
+                    >
+                      {descExpanded
+                        ? <><ChevronUp className="size-3" /> Show less</>
+                        : <><ChevronDown className="size-3" /> Show more</>}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 
             {/* Stats row */}
             <div className="grid grid-cols-4 gap-2 text-xs">
-              <Stat
-                icon={<Star className="size-3.5" />}
-                label="Community"
-                value={scoreDisplay ?? "—"}
-              />
+              <Stat icon={<Star className="size-3.5" />} label="Community" value={scoreDisplay ?? "—"} />
               <Stat icon={<Users className="size-3.5" />} label="Players" value={game.players !== "Uploaded ROM" ? (game.players || "—") : "—"} />
-              <Stat
-                icon={<Clock className="size-3.5" />}
-                label="Last played"
-                value={game.lastPlayed ? formatRelative(game.lastPlayed) : "—"}
-              />
-              <Stat
-                icon={<Play className="size-3.5" />}
-                label="Play time"
-                value={(() => {
-                  const m = game.minutesPlayed ?? 0;
-                  if (!m) return "—";
-                  const h = Math.floor(m / 60);
-                  return h > 0 ? `${h}h ${m % 60}m` : `${m}m`;
-                })()}
-              />
+              <Stat icon={<Clock className="size-3.5" />} label="Play time" value={playTimeDisplay} />
+              <Stat icon={<Hash className="size-3.5" />} label="Play count" value={game.playCount != null && game.playCount > 0 ? String(game.playCount) : "—"} />
             </div>
 
             {/* Your Rating */}

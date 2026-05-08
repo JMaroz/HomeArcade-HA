@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIntegration } from "@/lib/integration";
 import { SYSTEMS, formatRomSize } from "@/data/library";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import { filterToPath } from "@/lib/filter";
 import { Link } from "wouter";
-import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight, RotateCcw } from "lucide-react";
+import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight, RotateCcw, Zap, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { UploadedRom, GameCollectionWithItems } from "@shared/schema";
@@ -678,6 +678,7 @@ function RomLibrarySection() {
   const { toast } = useToast();
   const { data: roms = [] } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
 
+  // ── Per-ROM scrape ────────────────────────────────────────────────────────
   const scrape = useMutation({
     mutationFn: async (rom: UploadedRom) => {
       const res = await apiRequest("POST", `/api/roms/${rom.id}/scrape-art`);
@@ -704,9 +705,139 @@ function RomLibrarySection() {
     },
   });
 
+  // ── Bulk scrape ───────────────────────────────────────────────────────────
+  type ScrapeResult = { id: number; title: string; status: string };
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkTotal, setBulkTotal] = useState(0);
+  const [bulkIndex, setBulkIndex] = useState(0);
+  const [bulkCurrent, setBulkCurrent] = useState("");
+  const [bulkResults, setBulkResults] = useState<ScrapeResult[]>([]);
+  const [bulkDone, setBulkDone] = useState<{ matched: number; failed: number; total: number } | null>(null);
+
+  const unmatched = roms.filter((r) => r.scrapeStatus !== "matched").length;
+
+  const startBulkScrape = useCallback((force = false) => {
+    setBulkRunning(true);
+    setBulkDone(null);
+    setBulkResults([]);
+    setBulkIndex(0);
+    setBulkTotal(0);
+    setBulkCurrent("Starting…");
+
+    const url = apiUrl("/api/roms/scrape-all") + (force ? "?force=1" : "");
+    // Use fetch+ReadableStream for POST with SSE
+    fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ force }) })
+      .then(async (res) => {
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop()!;
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const ev = JSON.parse(line.slice(6));
+              if (ev.type === "start") { setBulkTotal(ev.total); }
+              if (ev.type === "progress") { setBulkIndex(ev.index); setBulkCurrent(ev.title); }
+              if (ev.type === "result") {
+                setBulkResults((prev) => [...prev, { id: ev.id, title: ev.title, status: ev.status }]);
+              }
+              if (ev.type === "done") {
+                setBulkDone({ matched: ev.matched, failed: ev.failed, total: ev.total });
+                setBulkRunning(false);
+                queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
+              }
+            } catch { /* ignore malformed */ }
+          }
+        }
+      })
+      .catch((err) => {
+        setBulkRunning(false);
+        toast({ title: "Scrape failed", description: String(err), variant: "destructive" });
+      });
+  }, [toast]);
+
+  const pct = bulkTotal > 0 ? Math.round((bulkIndex / bulkTotal) * 100) : 0;
+
   return (
     <Section title="ROM library" description="Manage uploaded ROMs. Upload new ones from each system's page.">
-      <div className="rounded-md border border-border bg-card/40 p-4" data-testid="rom-upload-redirect">
+      {/* ── Bulk art scrape ── */}
+      <div className="rounded-md border border-border bg-background/40 p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Art scraper</div>
+            <p className="text-sm mt-0.5">
+              {bulkDone
+                ? `Done — ${bulkDone.matched} matched, ${bulkDone.failed} not found`
+                : bulkRunning
+                ? `Scraping ${bulkIndex + 1} of ${bulkTotal}…`
+                : unmatched > 0
+                ? `${unmatched} ROM${unmatched === 1 ? "" : "s"} without art`
+                : "All ROMs have art"}
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button
+              variant="outline" size="sm"
+              onClick={() => startBulkScrape(false)}
+              disabled={bulkRunning || unmatched === 0}
+              data-testid="button-scrape-all"
+            >
+              {bulkRunning ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <Zap className="size-3.5 mr-1.5" />}
+              {bulkRunning ? "Scraping…" : "Scrape missing"}
+            </Button>
+            <Button
+              variant="ghost" size="sm"
+              onClick={() => startBulkScrape(true)}
+              disabled={bulkRunning || roms.length === 0}
+              data-testid="button-scrape-all-force"
+              title="Re-scrape every ROM including those already matched"
+            >
+              <RotateCcw className="size-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        {(bulkRunning || bulkDone) && (
+          <div className="space-y-2">
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-300"
+                style={{ width: `${bulkDone ? 100 : pct}%` }}
+              />
+            </div>
+            {bulkRunning && (
+              <p className="font-mono text-[10px] text-muted-foreground truncate">
+                {bulkCurrent}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Results scroll list */}
+        {bulkResults.length > 0 && (
+          <div className="max-h-36 overflow-y-auto space-y-0.5 rounded border border-border bg-background/60 p-2">
+            {bulkResults.map((r) => (
+              <div key={r.id} className="flex items-center gap-2 text-[11px] font-mono">
+                {r.status === "matched"
+                  ? <CheckCircle2 className="size-3 shrink-0 text-green-500" />
+                  : <XCircle className="size-3 shrink-0 text-muted-foreground" />}
+                <span className="truncate text-muted-foreground">{r.title}</span>
+                <span className={`ml-auto shrink-0 ${r.status === "matched" ? "text-green-500" : "text-muted-foreground/60"}`}>
+                  {r.status === "matched" ? "matched" : "not found"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-md border border-border bg-background/40 p-4" data-testid="rom-upload-redirect">
         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Where to upload</div>
         <p className="text-sm mt-1 max-w-prose">
           Open a system from the sidebar —{" "}
@@ -745,7 +876,7 @@ function RomLibrarySection() {
                   <div className="font-mono text-[10px] text-muted-foreground truncate">cabinet_launch_{rom.slug}</div>
                 </div>
                 <div className="shrink-0 flex flex-wrap items-center justify-start sm:justify-end gap-2">
-                  {rom.artUrl && <img src={rom.artUrl} alt="" className="h-10 w-8 rounded object-cover border border-border" loading="lazy" data-testid={`img-rom-art-${rom.id}`} />}
+                  {rom.artUrl && <img src={rom.artUrl} alt="" className="h-10 w-8 rounded object-cover border border-border" loading="lazy" decoding="async" data-testid={`img-rom-art-${rom.id}`} />}
                   <Button variant="outline" size="sm" onClick={() => scrape.mutate(rom)} disabled={scrape.isPending} data-testid={`button-scrape-rom-${rom.id}`}>
                     {rom.artUrl ? "Refresh art" : "Find art"}
                   </Button>
