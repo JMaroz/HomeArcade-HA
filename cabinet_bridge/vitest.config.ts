@@ -10,12 +10,15 @@ export default defineConfig({
       "server/__tests__/**/*.test.ts",
       "shared/__tests__/**/*.test.ts",
       "client/src/**/__tests__/**/*.test.ts",
+      "client/src/__tests__/**/*.test.ts",
     ],
+    benchmark: {
+      include: ["client/src/__benchmarks__/**/*.bench.ts"],
+    },
     environmentMatchGlobs: [
-      // Client-side tests run in a browser-like environment
       ["client/src/**", "happy-dom"],
     ],
-    environment: "node", // default for server + shared tests
+    environment: "node",
   },
   resolve: {
     alias: {
