@@ -24,6 +24,44 @@ interface RomUploadProps {
   variant?: "card" | "inline";
 }
 
+interface UploadProgress {
+  fileIndex: number;   // 0-based index of file currently uploading
+  total: number;       // total number of files
+  fileName: string;
+  filePct: number;     // 0-100 for current file
+  overallPct: number;  // 0-100 across all files
+}
+
+/** Upload a single file via XHR so we can track progress. */
+function xhrUpload(
+  file: File,
+  url: string,
+  onProgress: (pct: number) => void,
+): Promise<UploadedRom> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    xhr.setRequestHeader("X-ROM-Filename", encodeURIComponent(file.name));
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    });
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText) as UploadedRom); }
+        catch { reject(new Error("Invalid server response")); }
+      } else {
+        let msg = `Upload failed (${xhr.status})`;
+        try { msg = (JSON.parse(xhr.responseText) as { message?: string }).message ?? msg; } catch { /* ignore */ }
+        reject(new Error(msg));
+      }
+    });
+    xhr.addEventListener("error", () => reject(new Error("Network error during upload")));
+    xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")));
+    xhr.send(file);
+  });
+}
+
 export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadProps) {
   const [pickedSystem, setPickedSystem] = useState<string>(fixedSystem ?? "");
   const system = fixedSystem ?? pickedSystem;
@@ -31,7 +69,9 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
   const [favorite, setFavorite] = useState(true);
   const [files, setFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const { data: limits } = useQuery<UploadLimits>({
     queryKey: ["/api/upload-limits"],
   });
@@ -46,10 +86,7 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
       const merged = [...prev];
       for (const f of incoming) {
         const key = `${f.name}:${f.size}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          merged.push(f);
-        }
+        if (!seen.has(key)) { seen.add(key); merged.push(f); }
       }
       return merged;
     });
@@ -62,33 +99,55 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
       const tooBig = files.find((f) => f.size > maxUploadBytes);
       if (tooBig) {
         throw new Error(
-          `${tooBig.name} is ${formatRomSize(tooBig.size)}, which exceeds the ${maxUploadMb} MB upload limit. Raise max_upload_mb in the add-on options or set CABINET_MAX_UPLOAD_MB.`,
+          `${tooBig.name} is ${formatRomSize(tooBig.size)}, which exceeds the ${maxUploadMb} MB limit.`,
         );
       }
+
       const uploaded: UploadedRom[] = [];
-      for (const romFile of files) {
-        const res = await apiRequest(
-          "POST",
-          `/api/roms/upload?system=${encodeURIComponent(system)}&favorite=${favorite ? "1" : "0"}`,
-          romFile,
-          {
-            headers: {
-              "Content-Type": romFile.type || "application/octet-stream",
-              "X-ROM-Filename": encodeURIComponent(romFile.name),
-            },
-          },
-        );
-        uploaded.push((await res.json()) as UploadedRom);
+      const total = files.length;
+
+      for (let i = 0; i < total; i++) {
+        const file = files[i];
+        // Base progress already earned by fully completed files
+        const basePct = Math.round((i / total) * 100);
+
+        setProgress({
+          fileIndex: i,
+          total,
+          fileName: file.name,
+          filePct: 0,
+          overallPct: basePct,
+        });
+
+        const baseUrl = window.location.pathname.replace(/\/[^/]*$/, "");
+        const url = `${baseUrl}/api/roms/upload?system=${encodeURIComponent(system)}&favorite=${favorite ? "1" : "0"}`;
+
+        const rom = await xhrUpload(file, url, (filePct) => {
+          setProgress({
+            fileIndex: i,
+            total,
+            fileName: file.name,
+            filePct,
+            overallPct: Math.round(basePct + (filePct / total)),
+          });
+        });
+
+        uploaded.push(rom);
       }
+
       return uploaded;
     },
     onSuccess: async () => {
       setFiles([]);
+      setProgress(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["/api/roms"] }),
         queryClient.invalidateQueries({ queryKey: ["/api/collections"] }),
       ]);
+    },
+    onError: () => {
+      setProgress(null);
     },
   });
 
@@ -121,9 +180,7 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
         >
           <option value="">Select a console…</option>
           {SYSTEMS.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.shortName} — {s.name}
-            </option>
+            <option key={s.id} value={s.id}>{s.shortName} — {s.name}</option>
           ))}
         </select>
       ) : null}
@@ -134,10 +191,7 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
         type="file"
         multiple
         className="sr-only"
-        onChange={(e) => {
-          mergeFiles(Array.from(e.target.files ?? []));
-          e.target.value = "";
-        }}
+        onChange={(e) => { mergeFiles(Array.from(e.target.files ?? [])); e.target.value = ""; }}
         data-testid="input-rom-file"
       />
       <div
@@ -145,18 +199,11 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
         tabIndex={0}
         onClick={() => fileInputRef.current?.click()}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            fileInputRef.current?.click();
-          }
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); }
         }}
         onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
         onDragLeave={() => setDragActive(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragActive(false);
-          mergeFiles(Array.from(e.dataTransfer.files ?? []));
-        }}
+        onDrop={(e) => { e.preventDefault(); setDragActive(false); mergeFiles(Array.from(e.dataTransfer.files ?? [])); }}
         className={`flex items-center justify-center gap-3 rounded-md border-2 border-dashed px-4 py-3 cursor-pointer transition-colors ${
           dragActive
             ? "border-accent bg-accent/10"
@@ -174,13 +221,11 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
         >
           Browse {targetLabel}
         </Button>
-        <p className="text-[11px] text-muted-foreground hidden sm:block">
-          or drag &amp; drop here
-        </p>
+        <p className="text-[11px] text-muted-foreground hidden sm:block">or drag &amp; drop here</p>
       </div>
 
       {/* ── Selected file list ───────────────────────────────────────────────── */}
-      {files.length > 0 ? (
+      {files.length > 0 && !upload.isPending ? (
         <div className="rounded-md border border-border bg-card/50 p-3" data-testid="text-selected-rom">
           <div className="flex items-center justify-between gap-2 text-xs font-mono text-muted-foreground">
             <div className="flex items-center gap-2 min-w-0">
@@ -218,31 +263,72 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
         </div>
       ) : null}
 
+      {/* ── Upload progress ──────────────────────────────────────────────────── */}
+      {progress && upload.isPending ? (
+        <div className="rounded-md border border-border bg-card/50 p-3 space-y-2" data-testid="upload-progress">
+          {/* File name + count */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileArchive className="size-4 text-accent shrink-0" />
+              <span className="text-[11px] font-mono text-muted-foreground truncate">
+                {progress.fileName}
+              </span>
+            </div>
+            {progress.total > 1 && (
+              <span className="text-[10px] font-mono text-muted-foreground shrink-0">
+                {progress.fileIndex + 1} / {progress.total}
+              </span>
+            )}
+          </div>
+
+          {/* Per-file progress bar */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
+              <span>{progress.total > 1 ? "Current file" : "Uploading"}</span>
+              <span>{progress.filePct}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-border overflow-hidden">
+              <div
+                className="h-full rounded-full bg-accent transition-all duration-150"
+                style={{ width: `${progress.filePct}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Overall progress bar (multi-file only) */}
+          {progress.total > 1 && (
+            <div className="space-y-1">
+              <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
+                <span>Overall</span>
+                <span>{progress.overallPct}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-border overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-accent/50 transition-all duration-150"
+                  style={{ width: `${progress.overallPct}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
+
       {/* ── Error / success banners ──────────────────────────────────────────── */}
       {oversize ? (
-        <div
-          className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
-          data-testid="warn-rom-upload-size"
-        >
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive" data-testid="warn-rom-upload-size">
           {oversize.name} is {formatRomSize(oversize.size)}, larger than the {maxUploadMb} MB limit.
           Raise <code>max_upload_mb</code> in add-on options and restart.
         </div>
       ) : null}
 
       {upload.isError ? (
-        <div
-          className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
-          data-testid="error-rom-upload"
-        >
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive" data-testid="error-rom-upload">
           {(upload.error as Error).message}
         </div>
       ) : null}
 
       {upload.isSuccess ? (
-        <div
-          className="rounded-md border border-status-online/40 bg-status-online/10 px-3 py-2 text-xs text-status-online"
-          data-testid="success-rom-upload"
-        >
+        <div className="rounded-md border border-status-online/40 bg-status-online/10 px-3 py-2 text-xs text-status-online" data-testid="success-rom-upload">
           {fixedSystem && systemMeta
             ? `${systemMeta.shortName} ROMs added — they should appear in the grid below.`
             : "ROM upload complete. Switch to that system's page to launch newly added games."}
@@ -264,13 +350,13 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
         </div>
         <Button
           onClick={() => upload.mutate()}
-          disabled={!system || files.length === 0 || upload.isPending}
+          disabled={!system || files.length === 0 || upload.isPending || !!oversize}
           className="font-mono uppercase tracking-wider shrink-0"
           data-testid="button-upload-rom"
         >
           <Upload className="size-4 mr-2" />
           {upload.isPending
-            ? `Uploading ${files.length}\u2026`
+            ? `Uploading${progress ? ` ${progress.filePct}%` : "…"}`
             : files.length > 1
             ? `Upload ${files.length} ${systemMeta ? systemMeta.shortName + " " : ""}ROMs`
             : `Upload ${systemMeta ? systemMeta.shortName + " " : ""}ROM`}
