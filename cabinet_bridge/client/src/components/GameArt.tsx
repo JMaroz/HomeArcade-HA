@@ -81,6 +81,25 @@ export function SystemTile({
         background: `linear-gradient(140deg, hsl(${a}) 0%, hsl(${b}) 100%)`,
       }}
     >
+      {/* Scanline texture — subtle CRT feel */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px)",
+          zIndex: 1,
+        }}
+      />
+      {/* Radial sheen at top-center — gives the tile a lit, 3-D feel */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 55% at 50% 8%, rgba(255,255,255,0.16) 0%, transparent 70%)",
+          zIndex: 2,
+        }}
+      />
+
       {showImage ? (
         <>
           <img
@@ -91,29 +110,34 @@ export function SystemTile({
             decoding="async"
             onError={() => setImageFailed(true)}
             data-testid={`img-system-${system.id}`}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.05) 55%, rgba(0,0,0,0.45) 100%)",
-            }}
+            style={{ zIndex: 0 }}
           />
         </>
       ) : (
-        <SystemLogo systemId={system.id} />
-      )}
-      {/* Show text abbreviation only when no logo is available (arcade) */}
-      {!["nes","snes","n64","gba","genesis","ps1","ps2","psp","dreamcast","gb","gbc","nds"].includes(system.id) && (
-        <div className="absolute inset-x-0 top-2 flex justify-center">
-          <span
-            className="font-display text-[clamp(18px,3vw,28px)] font-black text-white/90 tracking-tight leading-none"
-            style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.55))" }}
+        <>
+          {/* Large silhouette watermark behind logo */}
+          <div
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            style={{ opacity: 0.18, zIndex: 0 }}
           >
-            {system.mono}
-          </span>
-        </div>
+            <ConsoleSilhouette systemId={system.id} />
+          </div>
+          {/* Logo floating above the silhouette */}
+          <div className="absolute inset-0" style={{ zIndex: 3 }}>
+            <SystemLogo systemId={system.id} />
+          </div>
+        </>
       )}
+
+      {/* Bottom vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.5) 100%)",
+          zIndex: 4,
+        }}
+      />
     </div>
   );
 }
