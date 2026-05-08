@@ -8,13 +8,14 @@ export default defineConfig({
     hookTimeout: 20_000,
     include: [
       "server/__tests__/**/*.test.ts",
+      "shared/__tests__/**/*.test.ts",
       "client/src/**/__tests__/**/*.test.ts",
     ],
     environmentMatchGlobs: [
       // Client-side tests run in a browser-like environment
       ["client/src/**", "happy-dom"],
     ],
-    environment: "node", // default for server tests
+    environment: "node", // default for server + shared tests
   },
   resolve: {
     alias: {
