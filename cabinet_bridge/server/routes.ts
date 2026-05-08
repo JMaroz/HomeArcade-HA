@@ -332,6 +332,36 @@ export async function registerRoutes(
     }
   });
 
+
+  // EmulatorJS CDN proxy — fetches EmulatorJS assets server-side so the
+  // browser never needs to reach an external CDN through HA Ingress.
+  // GET /api/emulatorjs/* → https://cdn.emulatorjs.org/stable/data/*
+  app.get("/api/emulatorjs/*", async (req: import("express").Request, res: import("express").Response) => {
+    const filePath = (req.params as Record<string, string>)[0] ?? "";
+    if (!filePath || filePath.includes("..")) {
+      return res.status(400).send("Invalid path");
+    }
+    const cdnUrl = `https://cdn.emulatorjs.org/stable/data/${filePath}`;
+    try {
+      const upstream = await fetch(cdnUrl, {
+        headers: { "User-Agent": "CabinetBridge/0.1" },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!upstream.ok || !upstream.body) {
+        return res.status(upstream.status).send("CDN error");
+      }
+      const ct = upstream.headers.get("Content-Type") ?? "application/octet-stream";
+      res.setHeader("Content-Type", ct);
+      res.setHeader("Cache-Control", "public, max-age=604800"); // 7 days
+      const cl = upstream.headers.get("Content-Length");
+      if (cl) res.setHeader("Content-Length", cl);
+      const { Readable } = await import("stream");
+      Readable.fromWeb(upstream.body as import("stream/web").ReadableStream).pipe(res);
+    } catch {
+      res.status(502).send("EmulatorJS CDN unreachable");
+    }
+  });
+
   app.get("/api/roms/:id/file", async (req, res) => {
     const id = Number(req.params.id);
     const rom = await storage.getUploadedRom(id);
@@ -4325,7 +4355,7 @@ window.CABINET_USER_NAME = ${JSON.stringify(userName)};
 ${discs.length > 1
   ? `window.EJS_discs = ${JSON.stringify(discs.map((d) => ({ fileName: `../\${d.id}/file`, label: d.label })))};`
   : `window.EJS_gameUrl = "./file";`}
-window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+window.EJS_pathtodata = "../../emulatorjs/";
 window.EJS_startOnLoaded = true;
 window.EJS_AdUrl = "";
 ${raUsername && raToken ? `window.EJS_retroachievements = { username: ${JSON.stringify(raUsername)}, apiKey: ${JSON.stringify(raToken)}, hardcore: false };` : "// RetroAchievements not configured"}
@@ -4359,7 +4389,7 @@ window.EJS_Buttons = {
   exitEmulation: true
 };
 var loader = document.createElement("script");
-loader.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
+loader.src = "../../emulatorjs/loader.js";
 loader.onload = function () {
   cabinetSetLaunchProgress(42, "Emulator loader downloaded…", "Loader");
 };
