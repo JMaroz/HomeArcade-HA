@@ -349,7 +349,7 @@ export default function Settings() {
   return (
     <div className="flex h-full">
       <Sidebar active="favorites" />
-      <main className="flex-1 min-w-0 flex flex-col overflow-y-auto" data-testid="page-settings">
+      <main className="flex-1 min-w-0 flex flex-col overflow-y-auto pb-20 lg:pb-0" data-testid="page-settings">
         <MobileTopBar active="favorites" />
         <div className="px-4 sm:px-10 py-5 sm:py-10 max-w-4xl w-full mx-auto">
           <Link

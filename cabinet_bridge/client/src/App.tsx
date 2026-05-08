@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationProvider } from "@/lib/integration";
 import { parseFilter, parseCollectionFilter, DEFAULT_FILTER } from "@/lib/filter";
+import { MobileBottomNav } from "@/components/MobileNav";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
@@ -26,9 +27,7 @@ export function applyTheme(theme: AppTheme) {
   localStorage.setItem("ha-theme", theme);
 }
 
-function AppRouter({
-}: {
-}) {
+function AppRouter() {
   return (
     <Switch>
       <Route path="/">
@@ -39,16 +38,12 @@ function AppRouter({
       </Route>
       <Route path="/library/collection/:id">
         {(params) => (
-          <Home
-            filter={parseCollectionFilter(params.id)}
-          />
+          <Home filter={parseCollectionFilter(params.id)} />
         )}
       </Route>
       <Route path="/library/:filter">
         {(params) => (
-          <Home
-            filter={parseFilter(params.filter)}
-          />
+          <Home filter={parseFilter(params.filter)} />
         )}
       </Route>
       <Route path="/settings">
@@ -82,9 +77,15 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router hook={useHashLocation}>
+            {/*
+             * Root container — fills the viewport.
+             * MobileBottomNav is fixed-position so it doesn't affect layout,
+             * but pages must add pb-20 lg:pb-0 to their scroll containers
+             * so content isn't hidden behind it.
+             */}
             <div className="h-dvh min-h-dvh flex flex-col">
-              <AppRouter
-              />
+              <AppRouter />
+              <MobileBottomNav />
             </div>
           </Router>
         </TooltipProvider>

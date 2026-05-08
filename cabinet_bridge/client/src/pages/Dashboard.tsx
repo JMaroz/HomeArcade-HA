@@ -6,6 +6,7 @@ import { GameCard } from "@/components/GameCard";
 import { SystemTile } from "@/components/GameArt";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { Sidebar } from "@/components/Sidebar";
+import { MobileTopBar } from "@/components/MobileNav";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { Button } from "@/components/ui/button";
 import { apiUrl } from "@/lib/queryClient";
@@ -14,8 +15,7 @@ import { useGameDialogState } from "@/lib/useGameDialogState";
 import type { UploadedRom, GameCollectionWithItems } from "@shared/schema";
 import { Play, Clock, Trophy, ListTodo, TrendingUp, Star, Zap } from "lucide-react";
 
-// ─── helpers ────────────────────────────────────────────────────────────────
-
+// ─── helpers ──────────────────────────────────────────────────────────────────
 function fmtHours(minutes: number) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -25,13 +25,12 @@ function fmtHours(minutes: number) {
 }
 
 function fmtHoursShort(minutes: number) {
-  const h = (minutes / 60);
+  const h = minutes / 60;
   if (h < 1) return `${minutes}m`;
   return `${h % 1 === 0 ? h : h.toFixed(1)}h`;
 }
 
-// ─── sub-components ─────────────────────────────────────────────────────────
-
+// ─── sub-components ───────────────────────────────────────────────────────────
 function StatCard({
   icon,
   label,
@@ -47,21 +46,29 @@ function StatCard({
 }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-1.5">
-      <div className={`flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] ${accent ?? "text-muted-foreground"}`}>
+      <div
+        className={`flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] ${
+          accent ?? "text-muted-foreground"
+        }`}
+      >
         {icon}
         {label}
       </div>
-      <div className="font-display text-3xl font-bold text-foreground leading-none">
-        {value}
-      </div>
-      {sub && (
-        <div className="font-mono text-[10px] text-muted-foreground">{sub}</div>
-      )}
+      <div className="font-display text-3xl font-bold text-foreground leading-none">{value}</div>
+      {sub && <div className="font-mono text-[10px] text-muted-foreground">{sub}</div>}
     </div>
   );
 }
 
-function SectionHeader({ title, href, count }: { title: string; href?: string; count?: number }) {
+function SectionHeader({
+  title,
+  href,
+  count,
+}: {
+  title: string;
+  href?: string;
+  count?: number;
+}) {
   return (
     <div className="flex items-center justify-between mb-3">
       <h2 className="font-display text-base font-semibold text-foreground">{title}</h2>
@@ -72,7 +79,10 @@ function SectionHeader({ title, href, count }: { title: string; href?: string; c
           </span>
         )}
         {href && (
-          <Link href={href} className="font-mono text-[10px] uppercase tracking-wider text-primary hover:underline">
+          <Link
+            href={href}
+            className="font-mono text-[10px] uppercase tracking-wider text-primary hover:underline"
+          >
             See all →
           </Link>
         )}
@@ -83,9 +93,7 @@ function SectionHeader({ title, href, count }: { title: string; href?: string; c
 
 function HorizontalShelf({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
-      {children}
-    </div>
+    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">{children}</div>
   );
 }
 
@@ -115,11 +123,7 @@ function HighlightCard({
         {label}
       </div>
       {game.artUrl ? (
-        <img
-          src={game.artUrl}
-          alt={game.title}
-          className="w-full h-24 object-cover rounded-lg"
-        />
+        <img src={game.artUrl} alt={game.title} className="w-full h-24 object-cover rounded-lg" />
       ) : (
         <div
           className="w-full h-24 rounded-lg"
@@ -129,18 +133,32 @@ function HighlightCard({
         />
       )}
       <div>
-        <div className="font-medium text-sm text-foreground leading-tight line-clamp-1">{game.title}</div>
-        <div className="font-mono text-[10px] text-muted-foreground mt-0.5">{game.system.toUpperCase()}</div>
+        <div className="font-medium text-sm text-foreground leading-tight line-clamp-1">
+          {game.title}
+        </div>
+        <div className="font-mono text-[10px] text-muted-foreground mt-0.5">
+          {game.system.toUpperCase()}
+        </div>
       </div>
       <div className="mt-auto pt-1 border-t border-border flex items-baseline gap-1.5">
         <span className="font-display text-lg font-bold text-primary">{stat}</span>
-        <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">{statLabel}</span>
+        <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+          {statLabel}
+        </span>
       </div>
     </button>
   );
 }
 
-function SystemBar({ system, minutes, maxMinutes }: { system: typeof SYSTEMS[number]; minutes: number; maxMinutes: number }) {
+function SystemBar({
+  system,
+  minutes,
+  maxMinutes,
+}: {
+  system: (typeof SYSTEMS)[number];
+  minutes: number;
+  maxMinutes: number;
+}) {
   const pct = maxMinutes > 0 ? (minutes / maxMinutes) * 100 : 0;
   const [a, b] = system.art;
   return (
@@ -164,7 +182,13 @@ function SystemBar({ system, minutes, maxMinutes }: { system: typeof SYSTEMS[num
   );
 }
 
-function StatusDonut({ counts, total }: { counts: Record<string, number>; total: number }) {
+function StatusDonut({
+  counts,
+  total,
+}: {
+  counts: Record<string, number>;
+  total: number;
+}) {
   const items = [
     { key: "playing", label: "Playing", color: "#3b82f6" },
     { key: "completed", label: "Completed", color: "#00c87a" },
@@ -172,11 +196,9 @@ function StatusDonut({ counts, total }: { counts: Record<string, number>; total:
     { key: "dropped", label: "Dropped", color: "#ef4444" },
     { key: "unset", label: "Untracked", color: "#334155" },
   ];
-
   const unset = total - Object.values(counts).reduce((s, v) => s + v, 0);
   const all: Record<string, number> = { ...counts, unset };
 
-  // Build SVG donut
   const r = 40;
   const circumference = 2 * Math.PI * r;
   let offset = 0;
@@ -192,7 +214,14 @@ function StatusDonut({ counts, total }: { counts: Record<string, number>; total:
   return (
     <div className="flex items-center gap-6">
       <svg viewBox="0 0 100 100" className="w-24 h-24 shrink-0 -rotate-90">
-        <circle cx="50" cy="50" r={r} fill="none" stroke="hsl(var(--border))" strokeWidth="12" />
+        <circle
+          cx="50"
+          cy="50"
+          r={r}
+          fill="none"
+          stroke="hsl(var(--border))"
+          strokeWidth="12"
+        />
         {segments.map((s) =>
           s.pct > 0 ? (
             <circle
@@ -206,53 +235,75 @@ function StatusDonut({ counts, total }: { counts: Record<string, number>; total:
               strokeDasharray={`${s.dash} ${circumference - s.dash}`}
               strokeDashoffset={-s.offset}
             />
-          ) : null
+          ) : null,
         )}
       </svg>
       <div className="flex flex-col gap-1.5">
-        {segments.filter((s) => s.key !== "unset" || s.count > 0).map((s) => (
-          <div key={s.key} className="flex items-center gap-2">
-            <div className="size-2 rounded-full shrink-0" style={{ background: s.color }} />
-            <span className="font-mono text-[10px] text-muted-foreground w-20">{s.label}</span>
-            <span className="font-mono text-[11px] font-semibold text-foreground">{s.count}</span>
-          </div>
-        ))}
+        {segments
+          .filter((s) => s.key !== "unset" || s.count > 0)
+          .map((s) => (
+            <div key={s.key} className="flex items-center gap-2">
+              <div className="size-2 rounded-full shrink-0" style={{ background: s.color }} />
+              <span className="font-mono text-[10px] text-muted-foreground w-20">{s.label}</span>
+              <span className="font-mono text-[11px] font-semibold text-foreground">{s.count}</span>
+            </div>
+          ))}
       </div>
     </div>
   );
 }
 
-function ActivityBar({ thisWeek, lastWeek }: { thisWeek: number; lastWeek: number }) {
+function ActivityBar({
+  thisWeek,
+  lastWeek,
+}: {
+  thisWeek: number;
+  lastWeek: number;
+}) {
   const max = Math.max(thisWeek, lastWeek, 1);
   const diff = thisWeek - lastWeek;
   return (
     <div className="space-y-3">
       <div className="flex items-end gap-4">
         <div className="flex flex-col items-center gap-1.5">
-          <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Last week</div>
+          <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+            Last week
+          </div>
           <div className="w-12 bg-border rounded-sm overflow-hidden" style={{ height: 56 }}>
             <div
               className="w-full bg-muted-foreground/40 rounded-sm transition-all duration-500"
-              style={{ height: `${(lastWeek / max) * 100}%`, marginTop: `${100 - (lastWeek / max) * 100}%` }}
+              style={{
+                height: `${(lastWeek / max) * 100}%`,
+                marginTop: `${100 - (lastWeek / max) * 100}%`,
+              }}
             />
           </div>
           <div className="font-mono text-[11px] text-muted-foreground">{lastWeek}</div>
         </div>
         <div className="flex flex-col items-center gap-1.5">
-          <div className="font-mono text-[9px] uppercase tracking-wider text-primary">This week</div>
+          <div className="font-mono text-[9px] uppercase tracking-wider text-primary">
+            This week
+          </div>
           <div className="w-12 bg-border rounded-sm overflow-hidden" style={{ height: 56 }}>
             <div
               className="w-full bg-primary rounded-sm transition-all duration-500"
-              style={{ height: `${(thisWeek / max) * 100}%`, marginTop: `${100 - (thisWeek / max) * 100}%` }}
+              style={{
+                height: `${(thisWeek / max) * 100}%`,
+                marginTop: `${100 - (thisWeek / max) * 100}%`,
+              }}
             />
           </div>
           <div className="font-mono text-[11px] font-bold text-foreground">{thisWeek}</div>
         </div>
         <div className="ml-2 flex-1">
           {diff > 0 ? (
-            <div className="font-mono text-[11px] text-status-online">↑ {diff} more game{diff !== 1 ? "s" : ""} than last week</div>
+            <div className="font-mono text-[11px] text-status-online">
+              ↑ {diff} more game{diff !== 1 ? "s" : ""} than last week
+            </div>
           ) : diff < 0 ? (
-            <div className="font-mono text-[11px] text-destructive">↓ {Math.abs(diff)} fewer than last week</div>
+            <div className="font-mono text-[11px] text-destructive">
+              ↓ {Math.abs(diff)} fewer than last week
+            </div>
           ) : (
             <div className="font-mono text-[11px] text-muted-foreground">Same as last week</div>
           )}
@@ -262,11 +313,12 @@ function ActivityBar({ thisWeek, lastWeek }: { thisWeek: number; lastWeek: numbe
   );
 }
 
-// ─── main page ───────────────────────────────────────────────────────────────
-
+// ─── main page ─────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { data: roms = [] } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
-  const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({ queryKey: ["/api/collections"] });
+  const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({
+    queryKey: ["/api/collections"],
+  });
 
   const {
     selectedGame,
@@ -282,66 +334,105 @@ export default function Dashboard() {
   const games = useMemo(() => roms.map(uploadedRomToGame), [roms]);
 
   // ── metrics ──
-  const totalMinutes = useMemo(() => games.reduce((s, g) => s + (g.minutesPlayed ?? 0), 0), [games]);
-  const completed = useMemo(() => games.filter((g) => g.playStatus === "completed").length, [games]);
+  const totalMinutes = useMemo(
+    () => games.reduce((s, g) => s + (g.minutesPlayed ?? 0), 0),
+    [games],
+  );
+  const completed = useMemo(
+    () => games.filter((g) => g.playStatus === "completed").length,
+    [games],
+  );
   const backlog = useMemo(() => games.filter((g) => g.playStatus === "backlog").length, [games]);
-  const completionRate = games.length > 0 ? Math.round((completed / games.length) * 100) : 0;
+  const completionRate =
+    games.length > 0 ? Math.round((completed / games.length) * 100) : 0;
 
   // ── status counts ──
-  const statusCounts = useMemo(() => ({
-    playing: games.filter((g) => g.playStatus === "playing").length,
-    completed,
-    backlog,
-    dropped: games.filter((g) => g.playStatus === "dropped").length,
-  }), [games, completed, backlog]);
+  const statusCounts = useMemo(
+    () => ({
+      playing: games.filter((g) => g.playStatus === "playing").length,
+      completed,
+      backlog,
+      dropped: games.filter((g) => g.playStatus === "dropped").length,
+    }),
+    [games, completed, backlog],
+  );
 
   // ── system breakdown ──
-  const systemBreakdown = useMemo(() =>
-    SYSTEMS
-      .map((s) => ({
+  const systemBreakdown = useMemo(
+    () =>
+      SYSTEMS.map((s) => ({
         system: s,
-        minutes: games.filter((g) => g.system === s.id).reduce((sum, g) => sum + (g.minutesPlayed ?? 0), 0),
+        minutes: games
+          .filter((g) => g.system === s.id)
+          .reduce((sum, g) => sum + (g.minutesPlayed ?? 0), 0),
       }))
-      .filter((s) => s.minutes > 0)
-      .sort((a, b) => b.minutes - a.minutes)
-      .slice(0, 6),
-  [games]);
-
+        .filter((s) => s.minutes > 0)
+        .sort((a, b) => b.minutes - a.minutes)
+        .slice(0, 6),
+    [games],
+  );
   const maxSystemMinutes = systemBreakdown[0]?.minutes ?? 0;
 
   // ── highlights ──
-  const mostPlayed = useMemo(() =>
-    [...games].filter((g) => (g.minutesPlayed ?? 0) > 0).sort((a, b) => (b.minutesPlayed ?? 0) - (a.minutesPlayed ?? 0))[0],
-  [games]);
-
-  const highestRated = useMemo(() =>
-    [...games].filter((g) => g.rating > 0).sort((a, b) => b.rating - a.rating)[0],
-  [games]);
-
-  const bestCommunity = useMemo(() =>
-    [...games].filter((g) => g.communityScore != null).sort((a, b) => (b.communityScore ?? 0) - (a.communityScore ?? 0))[0],
-  [games]);
+  const mostPlayed = useMemo(
+    () =>
+      [...games]
+        .filter((g) => (g.minutesPlayed ?? 0) > 0)
+        .sort((a, b) => (b.minutesPlayed ?? 0) - (a.minutesPlayed ?? 0))[0],
+    [games],
+  );
+  const highestRated = useMemo(
+    () =>
+      [...games].filter((g) => g.rating > 0).sort((a, b) => b.rating - a.rating)[0],
+    [games],
+  );
+  const bestCommunity = useMemo(
+    () =>
+      [...games]
+        .filter((g) => g.communityScore != null)
+        .sort((a, b) => (b.communityScore ?? 0) - (a.communityScore ?? 0))[0],
+    [games],
+  );
 
   // ── activity ──
   const now = Date.now();
   const WEEK = 7 * 24 * 60 * 60 * 1000;
-  const thisWeek = useMemo(() => games.filter((g) => g.lastPlayed && g.lastPlayed > now - WEEK).length, [games]);
-  const lastWeekCount = useMemo(() => games.filter((g) => g.lastPlayed && g.lastPlayed > now - 2 * WEEK && g.lastPlayed <= now - WEEK).length, [games]);
+  const thisWeek = useMemo(
+    () => games.filter((g) => g.lastPlayed && g.lastPlayed > now - WEEK).length,
+    [games],
+  );
+  const lastWeekCount = useMemo(
+    () =>
+      games.filter(
+        (g) => g.lastPlayed && g.lastPlayed > now - 2 * WEEK && g.lastPlayed <= now - WEEK,
+      ).length,
+    [games],
+  );
 
   // ── shelves ──
-  const continueGame = useMemo(() =>
-    [...games].filter((g) => g.lastPlayed && g.lastPlayed > 0).sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))[0],
-  [games]);
-
+  const continueGame = useMemo(
+    () =>
+      [...games]
+        .filter((g) => g.lastPlayed && g.lastPlayed > 0)
+        .sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))[0],
+    [games],
+  );
   const inProgress = useMemo(() => games.filter((g) => g.playStatus === "playing"), [games]);
-
-  const recentlyPlayed = useMemo(() =>
-    [...games].filter((g) => g.lastPlayed && g.lastPlayed > 0).sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0)).slice(0, 8),
-  [games]);
-
-  const newAdditions = useMemo(() =>
-    [...games].filter((g) => g.createdAt && g.createdAt > now - WEEK).sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)),
-  [games]);
+  const recentlyPlayed = useMemo(
+    () =>
+      [...games]
+        .filter((g) => g.lastPlayed && g.lastPlayed > 0)
+        .sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))
+        .slice(0, 8),
+    [games],
+  );
+  const newAdditions = useMemo(
+    () =>
+      [...games]
+        .filter((g) => g.createdAt && g.createdAt > now - WEEK)
+        .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)),
+    [games],
+  );
 
   const showHighlights = mostPlayed || highestRated || bestCommunity;
   const showSystemChart = systemBreakdown.length > 0;
@@ -357,9 +448,13 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-dvh min-h-dvh overflow-hidden">
-      <Sidebar />
+      {/* Sidebar — desktop only */}
+      <Sidebar active="all" />
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        {/* Mobile top bar */}
+        <MobileTopBar />
+
         {/* ── Continue Playing hero ── */}
         {continueGame && (
           <section className="px-5 sm:px-8 pt-6">
@@ -382,18 +477,37 @@ export default function Dashboard() {
               )}
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.75)_0%,rgba(0,0,0,0.4)_55%,rgba(0,0,0,0.1)_100%)]" />
               <div className="relative p-6 sm:p-8 flex flex-col gap-2.5 max-w-xl">
-                <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/70">Continue Playing</div>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">{continueGame.title}</h2>
+                <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/70">
+                  Continue Playing
+                </div>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
+                  {continueGame.title}
+                </h2>
                 <div className="font-mono text-[11px] text-white/60 uppercase tracking-wider">
                   {SYSTEMS.find((s) => s.id === continueGame.system)?.shortName}
-                  {continueGame.lastPlayed ? ` · Last played ${formatRelative(continueGame.lastPlayed)}` : ""}
-                  {(continueGame.minutesPlayed ?? 0) > 0 ? ` · ${fmtHours(continueGame.minutesPlayed ?? 0)} played` : ""}
+                  {continueGame.lastPlayed
+                    ? ` · Last played ${formatRelative(continueGame.lastPlayed)}`
+                    : ""}
+                  {(continueGame.minutesPlayed ?? 0) > 0
+                    ? ` · ${fmtHours(continueGame.minutesPlayed ?? 0)} played`
+                    : ""}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <Button size="lg" onClick={() => launchGame(continueGame)} className="font-mono uppercase tracking-wider ring-neon" data-testid="button-hero-launch">
-                    <Play className="size-4 fill-current" /> Play
+                  <Button
+                    size="lg"
+                    onClick={() => launchGame(continueGame)}
+                    className="font-mono uppercase tracking-wider ring-neon"
+                    data-testid="button-hero-launch"
+                  >
+                    <Play className="size-4 fill-current" />
+                    Play
                   </Button>
-                  <Button size="lg" variant="outline" onClick={() => openGame(continueGame)} className="bg-black/70 border-white/35 text-white hover:bg-black/85">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => openGame(continueGame)}
+                    className="bg-black/70 border-white/35 text-white hover:bg-black/85"
+                  >
                     Details
                   </Button>
                 </div>
@@ -403,7 +517,6 @@ export default function Dashboard() {
         )}
 
         <div className="px-5 sm:px-8 py-6 space-y-8">
-
           {/* ── Stats row ── */}
           <section>
             <SectionHeader title="Overview" />
@@ -433,7 +546,11 @@ export default function Dashboard() {
                 icon={<TrendingUp className="size-3" />}
                 label="This week"
                 value={String(thisWeek)}
-                sub={thisWeek !== lastWeekCount ? `${thisWeek > lastWeekCount ? "+" : ""}${thisWeek - lastWeekCount} vs last week` : "same as last week"}
+                sub={
+                  thisWeek !== lastWeekCount
+                    ? `${thisWeek > lastWeekCount ? "+" : ""}${thisWeek - lastWeekCount} vs last week`
+                    : "same as last week"
+                }
                 accent="text-accent"
               />
             </div>
@@ -446,17 +563,28 @@ export default function Dashboard() {
               <div className="grid sm:grid-cols-2 gap-4">
                 {showSystemChart && (
                   <div className="rounded-xl border border-border bg-card p-5 space-y-3">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">Play time by system</div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
+                      Play time by system
+                    </div>
                     {systemBreakdown.map(({ system, minutes }) => (
-                      <SystemBar key={system.id} system={system} minutes={minutes} maxMinutes={maxSystemMinutes} />
+                      <SystemBar
+                        key={system.id}
+                        system={system}
+                        minutes={minutes}
+                        maxMinutes={maxSystemMinutes}
+                      />
                     ))}
                     {systemBreakdown.length === 0 && (
-                      <p className="text-sm text-muted-foreground">Play some games to see your breakdown.</p>
+                      <p className="text-sm text-muted-foreground">
+                        Play some games to see your breakdown.
+                      </p>
                     )}
                   </div>
                 )}
                 <div className="rounded-xl border border-border bg-card p-5">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">Status breakdown</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
+                    Status breakdown
+                  </div>
                   <StatusDonut counts={statusCounts} total={games.length} />
                 </div>
               </div>
@@ -467,7 +595,9 @@ export default function Dashboard() {
           <section>
             <SectionHeader title="Activity" />
             <div className="rounded-xl border border-border bg-card p-5">
-              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">Games played — this week vs last</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
+                Games played — this week vs last
+              </div>
               <ActivityBar thisWeek={thisWeek} lastWeek={lastWeekCount} />
             </div>
           </section>
@@ -528,7 +658,11 @@ export default function Dashboard() {
           {/* ── Recently Played ── */}
           {recentlyPlayed.length > 0 && (
             <section>
-              <SectionHeader title="Recently Played" href="/library/recent" count={recentlyPlayed.length} />
+              <SectionHeader
+                title="Recently Played"
+                href="/library/recent"
+                count={recentlyPlayed.length}
+              />
               <HorizontalShelf>
                 {recentlyPlayed.map((g) => (
                   <div key={g.id} className="w-44 shrink-0">
@@ -572,7 +706,6 @@ export default function Dashboard() {
               })}
             </div>
           </section>
-
         </div>
       </main>
 
