@@ -724,6 +724,11 @@ function ListView({
                 {g.genre && g.genre !== "Uploaded ROM" ? ` · ${g.genre}` : ""}
                 {(g.minutesPlayed ?? 0) > 0 ? ` · ${g.minutesPlayed}m played` : ""}
               </div>
+              {g.description && (
+                <div className="text-[11px] text-foreground/50 mt-0.5 truncate leading-tight">
+                  {g.description}
+                </div>
+              )}
             </div>
 
             {/* Rating + fav */}

@@ -96,6 +96,7 @@ for (const statement of [
   "ALTER TABLE uploaded_roms ADD COLUMN play_status TEXT NOT NULL DEFAULT 'unset'",
   "ALTER TABLE uploaded_roms ADD COLUMN community_score INTEGER",
   "ALTER TABLE uploaded_roms ADD COLUMN wheel_art_url TEXT",
+  "ALTER TABLE uploaded_roms ADD COLUMN video_url TEXT",
   // Per-user save state isolation
   "ALTER TABLE rom_save_slots ADD COLUMN user_id TEXT NOT NULL DEFAULT \'default\'",
   "CREATE UNIQUE INDEX IF NOT EXISTS rom_save_slots_user_idx ON rom_save_slots (rom_id, user_id, slot)",
@@ -133,7 +134,7 @@ export interface IStorage {
   listRecentSessions(limit?: number): Promise<Array<{ id: number; romId: number; romTitle: string; romSystem: string; startedAt: number; endedAt: number | null; durationSeconds: number | null }>>;
   updateUploadedRomMetadata(
     id: number,
-    meta: Partial<Pick<InsertUploadedRom, "description" | "releaseYear" | "developer" | "publisher" | "genre" | "players" | "artUrl" | "scrapeStatus" | "scrapeMessage" | "communityScore" | "wheelArtUrl">>,
+    meta: Partial<Pick<InsertUploadedRom, "description" | "releaseYear" | "developer" | "publisher" | "genre" | "players" | "artUrl" | "scrapeStatus" | "scrapeMessage" | "communityScore" | "wheelArtUrl" | "videoUrl">>,
   ): Promise<UploadedRom | undefined>;
   listCollections(): Promise<GameCollectionWithItems[]>;
   createCollection(collection: InsertGameCollection): Promise<GameCollection>;
@@ -196,7 +197,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateUploadedRomMetadata(
     id: number,
-    meta: Partial<Pick<InsertUploadedRom, "description" | "releaseYear" | "developer" | "publisher" | "genre" | "players" | "artUrl" | "scrapeStatus" | "scrapeMessage" | "communityScore" | "wheelArtUrl">>,
+    meta: Partial<Pick<InsertUploadedRom, "description" | "releaseYear" | "developer" | "publisher" | "genre" | "players" | "artUrl" | "scrapeStatus" | "scrapeMessage" | "communityScore" | "wheelArtUrl" | "videoUrl">>,
   ): Promise<UploadedRom | undefined> {
     return db
       .update(uploadedRoms)

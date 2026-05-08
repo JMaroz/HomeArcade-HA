@@ -14,6 +14,7 @@ const LOGO_IDS = new Set([
   "ps1", "ps2", "psp", "dreamcast",
   "gb", "gbc", "nds", "arcade",
   "atari2600", "saturn", "gamegear", "sms", "pce",
+  "sega32x", "segacd", "neogeo", "virtualboy", "atari7800", "lynx",
 ]);
 
 export function SystemLogo({ systemId }: { systemId: string }) {

@@ -29,7 +29,18 @@ export type SystemId =
   | "gb"
   | "gbc"
   | "nds"
-  | "psp";
+  | "psp"
+  | "atari2600"
+  | "saturn"
+  | "gamegear"
+  | "sms"
+  | "pce"
+  | "sega32x"
+  | "segacd"
+  | "neogeo"
+  | "virtualboy"
+  | "atari7800"
+  | "lynx";
 
 export interface System {
   id: SystemId;
@@ -84,6 +95,7 @@ export interface Game {
   playStatus?: string;
   communityScore?: number | null;
   wheelArtUrl?: string | null;
+  videoUrl?: string | null;
   createdAt?: number;
 }
 
@@ -286,6 +298,72 @@ export const SYSTEMS: System[] = [
     mono: "PCE",
     image: systemImage("pce"),
   },
+  {
+    id: "sega32x",
+    name: "Sega 32X",
+    shortName: "32X",
+    era: "1994",
+    count: 40,
+    art: ["0 78% 36%", "14 88% 48%"],
+    slug: "sega32x",
+    mono: "32X",
+    image: systemImage("sega32x"),
+  },
+  {
+    id: "segacd",
+    name: "Sega CD",
+    shortName: "Sega CD",
+    era: "1991",
+    count: 197,
+    art: ["195 60% 25%", "210 70% 40%"],
+    slug: "segacd",
+    mono: "SCD",
+    image: systemImage("segacd"),
+  },
+  {
+    id: "neogeo",
+    name: "Neo Geo",
+    shortName: "Neo Geo",
+    era: "1990",
+    count: 148,
+    art: ["220 70% 20%", "234 80% 38%"],
+    slug: "neogeo",
+    mono: "NEO",
+    image: systemImage("neogeo"),
+  },
+  {
+    id: "virtualboy",
+    name: "Virtual Boy",
+    shortName: "Virtual Boy",
+    era: "1995",
+    count: 22,
+    art: ["0 90% 20%", "0 75% 35%"],
+    slug: "virtualboy",
+    mono: "VB",
+    image: systemImage("virtualboy"),
+  },
+  {
+    id: "atari7800",
+    name: "Atari 7800",
+    shortName: "Atari 7800",
+    era: "1986",
+    count: 59,
+    art: ["36 70% 28%", "24 80% 44%"],
+    slug: "atari7800",
+    mono: "A78",
+    image: systemImage("atari7800"),
+  },
+  {
+    id: "lynx",
+    name: "Atari Lynx",
+    shortName: "Lynx",
+    era: "1989",
+    count: 73,
+    art: ["200 55% 28%", "190 65% 42%"],
+    slug: "lynx",
+    mono: "LNX",
+    image: systemImage("lynx"),
+  },
 ];
 
 export const GAMES: Game[] = [];
@@ -383,6 +461,7 @@ export function uploadedRomToGame(rom: UploadedRom): Game {
     playStatus: rom.playStatus ?? "unset",
     communityScore: rom.communityScore ?? null,
     wheelArtUrl: rom.wheelArtUrl ?? null,
+    videoUrl: (rom as Record<string, unknown>).videoUrl as string | null ?? null,
     createdAt: rom.createdAt,
   };
 }

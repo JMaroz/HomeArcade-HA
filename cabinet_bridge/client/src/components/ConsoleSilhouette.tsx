@@ -26,6 +26,12 @@ export function ConsoleSilhouette({ systemId }: { systemId: string }) {
     case "gamegear":  return <GameGear />;
     case "sms":       return <MasterSystem />;
     case "pce":       return <PCEngine />;
+    case "sega32x":   return <Sega32X />;
+    case "segacd":    return <SegaCD />;
+    case "neogeo":    return <NeoGeo />;
+    case "virtualboy":return <VirtualBoy />;
+    case "atari7800": return <Atari7800 />;
+    case "lynx":      return <AtariLynx />;
     default:          return null;
   }
 }
@@ -525,6 +531,165 @@ function PCEngine() {
         <circle cx="72" cy="88" r="2.5" opacity="0.5" />
         {/* Controller port */}
         <rect x="62" y="104" width="76" height="6" rx="2" />
+      </g>
+    </svg>
+  );
+}
+
+/* ── Sega 32X ────────────────────────────────────────────────────────── */
+function Sega32X() {
+  return (
+    <svg {...svgProps}>
+      <g opacity={S} fill="white">
+        {/* Genesis-shaped base */}
+        <rect x="10" y="40" width="180" height="55" rx="4" />
+        {/* 32X mushroom dome on top */}
+        <rect x="60" y="22" width="80" height="22" rx="4" />
+        {/* Cartridge slot in dome */}
+        <rect x="75" y="18" width="50" height="8" rx="2" />
+        {/* Power button */}
+        <circle cx="150" cy="55" r="7" opacity="0.8" />
+        {/* Reset button */}
+        <rect x="155" y="68" width="14" height="10" rx="3" opacity="0.7" />
+        {/* Controller ports */}
+        <rect x="20" y="52" width="22" height="16" rx="3" />
+        <rect x="20" y="74" width="22" height="16" rx="3" />
+        {/* Vent slits */}
+        <rect x="50" y="52" width="5" height="30" rx="1" opacity="0.4" />
+        <rect x="58" y="52" width="5" height="30" rx="1" opacity="0.4" />
+        <rect x="66" y="52" width="5" height="30" rx="1" opacity="0.4" />
+      </g>
+    </svg>
+  );
+}
+
+/* ── Sega CD ──────────────────────────────────────────────────────────── */
+function SegaCD() {
+  return (
+    <svg {...svgProps}>
+      <g opacity={S} fill="white">
+        {/* Main rectangular body */}
+        <rect x="15" y="20" width="170" height="80" rx="6" />
+        {/* CD tray / disc bay */}
+        <ellipse cx="100" cy="60" rx="42" ry="34" fill="black" opacity="0.25" />
+        <ellipse cx="100" cy="60" rx="30" ry="24" fill="black" opacity="0.15" />
+        {/* Tray eject button */}
+        <rect x="140" y="52" width="20" height="10" rx="3" opacity="0.8" />
+        {/* Power button */}
+        <circle cx="152" cy="76" r="6" opacity="0.8" />
+        {/* Headphone jack */}
+        <circle cx="28" cy="76" r="4" opacity="0.6" />
+        {/* Volume control */}
+        <rect x="36" y="72" width="28" height="8" rx="4" opacity="0.6" />
+        {/* LED */}
+        <circle cx="152" cy="32" r="4" opacity="0.8" />
+      </g>
+    </svg>
+  );
+}
+
+/* ── Neo Geo ──────────────────────────────────────────────────────────── */
+function NeoGeo() {
+  return (
+    <svg {...svgProps}>
+      <g opacity={S} fill="white">
+        {/* Wide flat body */}
+        <rect x="8" y="30" width="184" height="58" rx="6" />
+        {/* Cartridge slot top-center */}
+        <rect x="70" y="24" width="60" height="10" rx="3" />
+        {/* Power LED strip */}
+        <rect x="16" y="38" width="8" height="6" rx="1" opacity="0.8" />
+        {/* Memory Card slot */}
+        <rect x="30" y="36" width="26" height="10" rx="2" opacity="0.7" />
+        {/* CD / cartridge label indent */}
+        <rect x="62" y="36" width="76" height="38" rx="4" fill="black" opacity="0.2" />
+        {/* Controller ports × 2 */}
+        <rect x="148" y="36" width="30" height="14" rx="3" />
+        <rect x="148" y="56" width="30" height="14" rx="3" />
+        {/* Decorative vent lines */}
+        <rect x="16" y="52" width="38" height="3" rx="1" opacity="0.4" />
+        <rect x="16" y="58" width="38" height="3" rx="1" opacity="0.4" />
+        <rect x="16" y="64" width="38" height="3" rx="1" opacity="0.4" />
+      </g>
+    </svg>
+  );
+}
+
+/* ── Virtual Boy ──────────────────────────────────────────────────────── */
+function VirtualBoy() {
+  return (
+    <svg {...svgProps}>
+      <g opacity={S} fill="white">
+        {/* Visor / eyepiece bar */}
+        <rect x="20" y="20" width="160" height="50" rx="10" />
+        {/* Eyepiece lenses */}
+        <ellipse cx="70" cy="45" rx="28" ry="20" fill="black" opacity="0.3" />
+        <ellipse cx="130" cy="45" rx="28" ry="20" fill="black" opacity="0.3" />
+        {/* Nose bridge */}
+        <rect x="92" y="50" width="16" height="10" rx="4" fill="black" opacity="0.2" />
+        {/* Stand legs */}
+        <rect x="40" y="68" width="12" height="42" rx="4" />
+        <rect x="148" y="68" width="12" height="42" rx="4" />
+        {/* Foot spread */}
+        <rect x="26" y="104" width="40" height="8" rx="4" />
+        <rect x="134" y="104" width="40" height="8" rx="4" />
+        {/* Controller port */}
+        <rect x="86" y="72" width="28" height="10" rx="3" opacity="0.7" />
+      </g>
+    </svg>
+  );
+}
+
+/* ── Atari 7800 ───────────────────────────────────────────────────────── */
+function Atari7800() {
+  return (
+    <svg {...svgProps}>
+      <g opacity={S} fill="white">
+        {/* Main body — angular top-loader style */}
+        <path d="M20 30 L180 30 L172 95 L28 95 Z" />
+        {/* Cartridge slot top */}
+        <rect x="70" y="22" width="60" height="12" rx="2" />
+        {/* Power switch */}
+        <rect x="140" y="38" width="24" height="10" rx="3" opacity="0.8" />
+        {/* Difficulty switches */}
+        <rect x="30" y="38" width="14" height="10" rx="3" opacity="0.7" />
+        <rect x="50" y="38" width="14" height="10" rx="3" opacity="0.7" />
+        {/* Controller ports */}
+        <rect x="35" y="56" width="22" height="16" rx="3" />
+        <rect x="35" y="76" width="22" height="16" rx="3" />
+        {/* Faceplate recess */}
+        <rect x="80" y="50" width="80" height="34" rx="4" fill="black" opacity="0.2" />
+        {/* LED */}
+        <circle cx="155" cy="58" r="4" opacity="0.8" />
+      </g>
+    </svg>
+  );
+}
+
+/* ── Atari Lynx ───────────────────────────────────────────────────────── */
+function AtariLynx() {
+  return (
+    <svg {...svgProps}>
+      <g opacity={S} fill="white">
+        {/* Wide landscape handheld body */}
+        <rect x="10" y="28" width="180" height="72" rx="10" />
+        {/* Screen */}
+        <rect x="52" y="36" width="96" height="52" rx="6" fill="black" opacity="0.3" />
+        {/* D-pad left */}
+        <rect x="20" y="58" width="22" height="8" rx="2" />
+        <rect x="27" y="51" width="8" height="22" rx="2" />
+        {/* A/B buttons right */}
+        <circle cx="158" cy="56" r="7" opacity="0.85" />
+        <circle cx="170" cy="68" r="7" opacity="0.85" />
+        {/* Option 1/2 buttons */}
+        <rect x="62" y="82" width="12" height="6" rx="2" opacity="0.7" />
+        <rect x="80" y="82" width="12" height="6" rx="2" opacity="0.7" />
+        {/* Pause */}
+        <rect x="98" y="82" width="12" height="6" rx="2" opacity="0.7" />
+        {/* Cartridge slot top-right */}
+        <rect x="142" y="24" width="38" height="8" rx="2" />
+        {/* Power LED */}
+        <circle cx="24" cy="36" r="4" opacity="0.8" />
       </g>
     </svg>
   );

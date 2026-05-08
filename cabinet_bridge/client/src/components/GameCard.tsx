@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import { GameArt } from "@/components/GameArt";
 import { SYSTEMS, type Game } from "@/data/library";
 import { formatRelative } from "@/lib/integration";
@@ -16,6 +16,22 @@ export const GameCard = memo(function GameCard({
   focused?: boolean;
 }) {
   const system = SYSTEMS.find((s) => s.id === game.system);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const showVideo = !!game.videoUrl && !videoFailed;
+
+  const handleMouseEnter = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      void videoRef.current.play().catch(() => setVideoFailed(true));
+    }
+  }, []);
+  const handleMouseLeave = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, []);
 
   const handleOpen = useCallback(() => onOpen(game), [game, onOpen]);
   const handleFav = useCallback(
@@ -44,9 +60,23 @@ export const GameCard = memo(function GameCard({
           : "border-card-border focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       ].join(" ")}
       data-testid={`card-game-${game.id}`}
+      onMouseEnter={showVideo ? handleMouseEnter : undefined}
+      onMouseLeave={showVideo ? handleMouseLeave : undefined}
     >
-      <div className="aspect-[16/10]">
+      <div className="aspect-[16/10] relative">
         <GameArt game={game} />
+        {showVideo && (
+          <video
+            ref={videoRef}
+            src={`/api/roms/${game.romId}/video`}
+            muted
+            loop
+            playsInline
+            preload="none"
+            onError={() => setVideoFailed(true)}
+            className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+          />
+        )}
       </div>
 
       {isNew && (
@@ -68,14 +98,22 @@ export const GameCard = memo(function GameCard({
         />
       </button>
 
+      {/* Hover overlay — description preview + details button */}
       <button
         type="button"
         onClick={handleOpen}
-        className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition-opacity focus:outline-none focus-visible:pointer-events-auto focus-visible:opacity-100"
+        className="absolute inset-0 flex flex-col justify-between bg-black/70 opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition-opacity focus:outline-none focus-visible:pointer-events-auto focus-visible:opacity-100 p-3"
         data-testid={`button-details-${game.id}`}
         aria-label={`View details for ${game.title}`}
       >
-        <span className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground font-mono text-xs font-bold uppercase tracking-wider ring-neon">
+        {game.description ? (
+          <p className="text-white/90 text-[11px] leading-[1.4] line-clamp-4 text-left">
+            {game.description}
+          </p>
+        ) : (
+          <span />
+        )}
+        <span className="self-center flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground font-mono text-xs font-bold uppercase tracking-wider ring-neon">
           <Info className="size-3.5" /> Details
         </span>
       </button>

@@ -72,6 +72,12 @@ const EMULATORJS_CORES: Record<string, string> = {
   gamegear: "smsgg",
   sms: "smsgg",
   pce: "pce",
+  sega32x: "picodrive",
+  segacd: "segaCD",
+  neogeo: "fbneo",
+  virtualboy: "beetle_vb",
+  atari7800: "prosystem",
+  lynx: "mednafen_lynx",
 };
 
 const ROM_ROOT = path.resolve(dataPath("rom-storage"));
@@ -102,6 +108,12 @@ const LIBRETRO_PLAYLISTS: Record<string, string> = {
   gamegear: "Sega - Game Gear",
   sms: "Sega - Master System - Mark III",
   pce: "NEC - PC Engine - TurboGrafx 16",
+  sega32x: "Sega - 32X",
+  segacd: "Sega - Mega-CD - Sega CD",
+  neogeo: "SNK - Neo Geo",
+  virtualboy: "Nintendo - Virtual Boy",
+  atari7800: "Atari - 7800",
+  lynx: "Atari - Lynx",
 };
 
 /**
@@ -289,6 +301,35 @@ export async function registerRoutes(
       return res.status(404).json({ message: "Uploaded ROM not found." });
     }
     res.json(rom);
+  });
+
+
+  // Video preview proxy — streams the ScreenScraper video so the browser
+  // doesn't hit CORS issues fetching directly from screenscraper.fr
+  // GET /api/roms/:id/video
+  app.get("/api/roms/:id/video", async (req, res) => {
+    const id = Number(req.params.id);
+    const rom = await storage.getUploadedRom(id);
+    if (!rom) return res.status(404).json({ message: "ROM not found." });
+    const videoUrl = (rom as Record<string, unknown>).videoUrl as string | null;
+    if (!videoUrl) return res.status(404).json({ message: "No video available." });
+    try {
+      const upstream = await fetch(videoUrl, {
+        headers: { "User-Agent": "CabinetBridge/0.1" },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!upstream.ok || !upstream.body) {
+        return res.status(502).json({ message: "Failed to fetch video." });
+      }
+      res.setHeader("Content-Type", upstream.headers.get("Content-Type") ?? "video/mp4");
+      const cl = upstream.headers.get("Content-Length");
+      if (cl) res.setHeader("Content-Length", cl);
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      const { Readable } = await import("stream");
+      Readable.fromWeb(upstream.body as import("stream/web").ReadableStream).pipe(res);
+    } catch {
+      res.status(502).json({ message: "Video fetch error." });
+    }
   });
 
   app.get("/api/roms/:id/file", async (req, res) => {
@@ -647,6 +688,7 @@ export async function registerRoutes(
         players: ssMeta?.players ?? null,
         communityScore: ssMeta?.communityScore ?? null,
         wheelArtUrl: ssMeta?.wheelArtUrl ?? null,
+        videoUrl: ssMeta?.videoUrl ?? null,
         favorite,
         rating: 0,
         lastPlayed: 0,
@@ -741,6 +783,12 @@ export async function registerRoutes(
     gamegear:  "https://commons.wikimedia.org/wiki/Special:FilePath/Sega_Game_Gear_logo.svg",
     sms:       "https://commons.wikimedia.org/wiki/Special:FilePath/Sega_Master_System_logo.svg",
     pce:       "https://commons.wikimedia.org/wiki/Special:FilePath/TurboGrafx16-logo.svg",
+    sega32x:   "https://commons.wikimedia.org/wiki/Special:FilePath/Sega-32X-logo.svg",
+    segacd:    "https://commons.wikimedia.org/wiki/Special:FilePath/Sega-CD-logo.svg",
+    neogeo:    "https://commons.wikimedia.org/wiki/Special:FilePath/Neo-Geo-logo.svg",
+    virtualboy:"https://commons.wikimedia.org/wiki/Special:FilePath/Virtual-Boy-logo.svg",
+    atari7800: "https://commons.wikimedia.org/wiki/Special:FilePath/Atari-logo.svg",
+    lynx:      "https://commons.wikimedia.org/wiki/Special:FilePath/Atari-logo.svg",
   };
 
   app.get("/api/system-logos/:id", async (req, res) => {
@@ -806,6 +854,7 @@ export async function registerRoutes(
       players: ssMeta?.players ?? undefined,
       communityScore: ssMeta?.communityScore ?? undefined,
       wheelArtUrl: ssMeta?.wheelArtUrl ?? undefined,
+      videoUrl: ssMeta?.videoUrl ?? undefined,
     });
     res.json(updated);
   });
@@ -854,6 +903,7 @@ export async function registerRoutes(
           players: ssMeta?.players ?? undefined,
           communityScore: ssMeta?.communityScore ?? undefined,
           wheelArtUrl: ssMeta?.wheelArtUrl ?? undefined,
+          videoUrl: ssMeta?.videoUrl ?? undefined,
         });
 
         if (status === "matched") matched++;
@@ -1251,11 +1301,18 @@ const SCREENSCRAPER_SYSTEM_IDS: Record<string, number> = {
   gamegear: 21,
   sms: 2,
   pce: 31,
+  sega32x: 19,
+  segacd: 20,
+  neogeo: 142,
+  virtualboy: 11,
+  atari7800: 41,
+  lynx: 28,
 };
 
 interface ScreenScraperMeta {
   artUrl: string | null;
   wheelArtUrl: string | null;
+  videoUrl: string | null;
   communityScore: number | null;
   description: string | null;
   releaseYear: number | null;
@@ -1335,6 +1392,7 @@ async function fetchScreenScraperMeta(
     // Box art: prefer "box-2D" media in us/wor region
     let artUrl: string | null = null;
     let wheelArtUrl: string | null = null;
+    let videoUrl: string | null = null;
     const medias = jeu.medias as Array<{ type: string; region?: string; url?: string }> | undefined;
     if (Array.isArray(medias)) {
       const boxTypes = ["box-2D", "box-2D-side", "mixrbv1"];
@@ -1349,6 +1407,12 @@ async function fetchScreenScraperMeta(
         const w = medias.find((m) => m.type === wt);
         if (w?.url) { wheelArtUrl = w.url; break; }
       }
+      // Video preview clip
+      const videoTypes = ["video-normalized", "video"];
+      for (const vt of videoTypes) {
+        const v = medias.find((m) => m.type === vt);
+        if (v?.url) { videoUrl = v.url; break; }
+      }
     }
 
     // Community score: ScreenScraper returns note on a /20 scale
@@ -1362,6 +1426,7 @@ async function fetchScreenScraperMeta(
     return {
       artUrl,
       wheelArtUrl,
+      videoUrl,
       communityScore,
       description,
       releaseYear,

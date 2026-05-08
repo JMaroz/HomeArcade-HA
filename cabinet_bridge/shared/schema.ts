@@ -45,6 +45,7 @@ export const uploadedRoms = sqliteTable("uploaded_roms", {
   romHash: text("rom_hash"),
   communityScore: integer("community_score"),
   wheelArtUrl: text("wheel_art_url"),
+  videoUrl: text("video_url"),
   minutesPlayed: integer("minutes_played").notNull().default(0),
   playStatus: text("play_status").notNull().default("unset"),
   createdAt: integer("created_at").notNull(),
