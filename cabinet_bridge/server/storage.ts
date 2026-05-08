@@ -97,6 +97,7 @@ for (const statement of [
   "ALTER TABLE uploaded_roms ADD COLUMN community_score INTEGER",
   "ALTER TABLE uploaded_roms ADD COLUMN wheel_art_url TEXT",
   "ALTER TABLE uploaded_roms ADD COLUMN video_url TEXT",
+  "ALTER TABLE uploaded_roms ADD COLUMN ra_game_id INTEGER",
   // Per-user save state isolation
   "ALTER TABLE rom_save_slots ADD COLUMN user_id TEXT NOT NULL DEFAULT \'default\'",
   "CREATE UNIQUE INDEX IF NOT EXISTS rom_save_slots_user_idx ON rom_save_slots (rom_id, user_id, slot)",
