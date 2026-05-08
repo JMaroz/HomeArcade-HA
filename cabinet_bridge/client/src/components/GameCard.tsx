@@ -1,9 +1,10 @@
+import { memo, useCallback } from "react";
 import { GameArt } from "@/components/GameArt";
 import { SYSTEMS, type Game } from "@/data/library";
 import { formatRelative } from "@/lib/integration";
 import { Heart, Info, Star } from "lucide-react";
 
-export function GameCard({
+export const GameCard = memo(function GameCard({
   game,
   onOpen,
   onToggleFav,
@@ -14,19 +15,26 @@ export function GameCard({
 }) {
   const system = SYSTEMS.find((s) => s.id === game.system);
 
+  const handleOpen = useCallback(() => onOpen(game), [game, onOpen]);
+  const handleFav = useCallback(
+    (e: React.MouseEvent) => { e.stopPropagation(); onToggleFav(game); },
+    [game, onToggleFav],
+  );
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(game); }
+    },
+    [game, onOpen],
+  );
+
+  const isNew = game.createdAt != null && Date.now() - game.createdAt < 7 * 24 * 60 * 60 * 1000;
+
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={() => {
-        onOpen(game);
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onOpen(game);
-        }
-      }}
+      onClick={handleOpen}
+      onKeyDown={handleKeyDown}
       className="group relative rounded-lg overflow-hidden border border-card-border bg-card hover-elevate active-elevate-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       data-testid={`card-game-${game.id}`}
     >
@@ -35,22 +43,16 @@ export function GameCard({
       </div>
 
       {/* Top-left NEW badge */}
-      {(() => {
-        const isNew = game.createdAt && Date.now() - game.createdAt < 7 * 24 * 60 * 60 * 1000;
-        return isNew ? (
-          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded font-mono text-[9px] font-bold uppercase tracking-wider bg-green-500/20 text-green-400 border border-green-500/30 pointer-events-none">
-            New
-          </div>
-        ) : null;
-      })()}
+      {isNew && (
+        <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded font-mono text-[9px] font-bold uppercase tracking-wider bg-green-500/20 text-green-400 border border-green-500/30 pointer-events-none">
+          New
+        </div>
+      )}
 
       {/* Top-right favorite */}
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleFav(game);
-        }}
+        onClick={handleFav}
         className="absolute top-2 right-2 size-8 rounded-md bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         aria-label={game.favorite ? "Remove from favorites" : "Add to favorites"}
         aria-pressed={!!game.favorite}
@@ -64,10 +66,7 @@ export function GameCard({
       {/* Hover-only details overlay */}
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onOpen(game);
-        }}
+        onClick={handleOpen}
         className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition-opacity focus:outline-none focus-visible:pointer-events-auto focus-visible:opacity-100"
         data-testid={`button-details-${game.id}`}
         aria-label={`View details for ${game.title}`}
@@ -93,6 +92,19 @@ export function GameCard({
             {game.rating > 0 ? game.rating : "—"}
           </span>
         </div>
+      </div>
+    </div>
+  );
+});
+
+/** Animated placeholder shown while the library is loading. */
+export function GameCardSkeleton() {
+  return (
+    <div className="rounded-lg overflow-hidden border border-card-border bg-card animate-pulse">
+      <div className="aspect-[16/10] bg-muted/40" />
+      <div className="px-3 py-2.5 flex items-center justify-between gap-2">
+        <div className="h-2.5 w-16 rounded bg-muted/40" />
+        <div className="h-2.5 w-8 rounded bg-muted/40" />
       </div>
     </div>
   );

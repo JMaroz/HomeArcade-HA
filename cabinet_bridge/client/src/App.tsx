@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Switch, Route, Router } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
@@ -8,12 +8,22 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationProvider } from "@/lib/integration";
 import { parseFilter, parseCollectionFilter, DEFAULT_FILTER } from "@/lib/filter";
 import { MobileBottomNav } from "@/components/MobileNav";
+// Critical path — loaded eagerly
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
-import Settings from "@/pages/Settings";
-import Player from "@/pages/Player";
-import Achievements from "@/pages/Achievements";
 import NotFound from "@/pages/not-found";
+// Lazy — loaded only when navigated to
+const Settings = lazy(() => import("@/pages/Settings"));
+const Player = lazy(() => import("@/pages/Player"));
+const Achievements = lazy(() => import("@/pages/Achievements"));
+
+function PageFallback() {
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+    </div>
+  );
+}
 
 export const THEMES = ["default", "synthwave", "gameboy", "oled"] as const;
 export type AppTheme = (typeof THEMES)[number];
@@ -47,13 +57,13 @@ function AppRouter() {
         )}
       </Route>
       <Route path="/settings">
-        <Settings />
+        <Suspense fallback={<PageFallback />}><Settings /></Suspense>
       </Route>
       <Route path="/play/:id">
-        {(params) => <Player id={params.id} />}
+        {(params) => <Suspense fallback={<PageFallback />}><Player id={params.id} /></Suspense>}
       </Route>
       <Route path="/achievements">
-        <Achievements />
+        <Suspense fallback={<PageFallback />}><Achievements /></Suspense>
       </Route>
       <Route component={NotFound} />
     </Switch>
@@ -78,20 +88,4 @@ function App() {
           <Toaster />
           <Router hook={useHashLocation}>
             {/*
-             * Root container — fills the viewport.
-             * MobileBottomNav is fixed-position so it doesn't affect layout,
-             * but pages must add pb-20 lg:pb-0 to their scroll containers
-             * so content isn't hidden behind it.
-             */}
-            <div className="h-dvh min-h-dvh flex flex-col">
-              <AppRouter />
-              <MobileBottomNav />
-            </div>
-          </Router>
-        </TooltipProvider>
-      </IntegrationProvider>
-    </QueryClientProvider>
-  );
-}
-
-export default App;
+             * Root container — f

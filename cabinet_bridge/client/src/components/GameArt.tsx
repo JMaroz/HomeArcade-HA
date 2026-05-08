@@ -36,6 +36,7 @@ export function GameArt({
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
+          decoding="async"
           data-testid={`img-art-${game.id}`}
         />
       ) : null}
@@ -87,6 +88,7 @@ export function SystemTile({
             alt=""
             className="absolute inset-0 h-full w-full object-cover mix-blend-soft-light"
             loading="lazy"
+            decoding="async"
             onError={() => setImageFailed(true)}
             data-testid={`img-system-${system.id}`}
           />
@@ -203,8 +205,4 @@ function PixelGrid({ accent, dim = false }: { accent: string; dim?: boolean }) {
 function hashSeed(s: string) {
   let h = 0;
   for (let i = 0; i < s.length; i++) {
-    h = (h << 5) - h + s.charCodeAt(i);
-    h |= 0;
-  }
-  return Math.abs(h);
-}
+    h = (h << 5) - h + s

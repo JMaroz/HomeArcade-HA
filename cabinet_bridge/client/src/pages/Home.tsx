@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { Sidebar, type Filter } from "@/components/Sidebar";
 import { MobileTopBar } from "@/components/MobileNav";
-import { GameCard } from "@/components/GameCard";
+import { GameCard, GameCardSkeleton } from "@/components/GameCard";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { SystemTile } from "@/components/GameArt";
 import { RomUpload } from "@/components/RomUpload";
@@ -49,7 +49,7 @@ export default function Home({ filter }: { filter: Filter }) {
 
   const { pc } = useIntegration();
 
-  const { data: uploadedRoms = [] } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
+  const { data: uploadedRoms = [], isLoading: romsLoading } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
   const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({
     queryKey: ["/api/collections"],
   });
@@ -555,7 +555,11 @@ export default function Home({ filter }: { filter: Filter }) {
                 </div>
               }
             />
-            {filtered.length === 0 ? (
+            {romsLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
+                {Array.from({ length: 12 }).map((_, i) => <GameCardSkeleton key={i} />)}
+              </div>
+            ) : filtered.length === 0 ? (
               <EmptyState
                 query={query}
                 filter={filter}
@@ -858,15 +862,3 @@ function ContinueHero({ game, onOpen }: { game: Game; onOpen: (g: Game) => void 
             <Button
               size="lg"
               variant="outline"
-              onClick={() => onOpen(game)}
-              className="bg-black/70 border-white/35 text-white hover:bg-black/85 shadow-sm"
-              data-testid="button-hero-details"
-            >
-              Details
-            </Button>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}

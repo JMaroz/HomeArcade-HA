@@ -793,6 +793,70 @@ export async function registerRoutes(
     res.json(updated);
   });
 
+  // Bulk art scrape — SSE stream so the client can show live progress.
+  // POST /api/roms/scrape-all
+  // Optional body: { force: true } to re-scrape already-matched ROMs.
+  app.post("/api/roms/scrape-all", express.json(), async (req, res) => {
+    const force = !!(req.body as Record<string, unknown>)?.force;
+    const roms = await storage.listUploadedRoms();
+    const targets = force ? roms : roms.filter((r) => r.scrapeStatus !== "matched");
+
+    // Set up SSE
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+
+    const send = (data: Record<string, unknown>) => {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    send({ type: "start", total: targets.length });
+
+    const settings = await storage.getIntegrationSettings();
+    let matched = 0;
+    let failed = 0;
+
+    for (let i = 0; i < targets.length; i++) {
+      const rom = targets[i];
+      send({ type: "progress", index: i, id: rom.id, title: rom.title, total: targets.length });
+
+      try {
+        const ssMeta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.ssUserId, settings.ssPassword);
+        const libretroArt = ssMeta?.artUrl ? null : await findLibretroBoxArt(rom.system, rom.title);
+        const status = ssMeta?.scrapeStatus ?? (libretroArt?.url ? "matched" : "not_found");
+
+        await storage.updateUploadedRomMetadata(rom.id, {
+          artUrl: ssMeta?.artUrl ?? libretroArt?.url ?? null,
+          scrapeStatus: status,
+          scrapeMessage: ssMeta?.scrapeMessage ?? libretroArt?.message ?? "",
+          description: ssMeta?.description ?? undefined,
+          releaseYear: ssMeta?.releaseYear ?? undefined,
+          developer: ssMeta?.developer ?? undefined,
+          publisher: ssMeta?.publisher ?? undefined,
+          genre: ssMeta?.genre ?? undefined,
+          players: ssMeta?.players ?? undefined,
+          communityScore: ssMeta?.communityScore ?? undefined,
+          wheelArtUrl: ssMeta?.wheelArtUrl ?? undefined,
+        });
+
+        if (status === "matched") matched++;
+        else failed++;
+
+        send({ type: "result", id: rom.id, title: rom.title, status, index: i, total: targets.length });
+      } catch (err) {
+        failed++;
+        send({ type: "result", id: rom.id, title: rom.title, status: "error", error: String(err), index: i, total: targets.length });
+      }
+
+      // Polite delay to avoid hammering ScreenScraper rate limits
+      await new Promise((r) => setTimeout(r, 300));
+    }
+
+    send({ type: "done", matched, failed, total: targets.length });
+    res.end();
+  });
+
   // Kiosk mode config — public so the client can read it before auth
   app.get("/api/kiosk", async (_req, res) => {
     const settings = await storage.getIntegrationSettings();
@@ -4005,85 +4069,4 @@ window.CABINET_USER_NAME = ${JSON.stringify(userName)};
   var el = document.getElementById("cabinet-save-user");
   if (el) el.textContent = name || "you";
   var badge = document.getElementById("cabinet-user-badge");
-  if (badge && name && name !== "default") { badge.textContent = name; badge.removeAttribute("hidden"); }
-})();
-${discs.length > 1
-  ? `window.EJS_discs = ${JSON.stringify(discs.map((d) => ({ fileName: `../\${d.id}/file`, label: d.label })))};`
-  : `window.EJS_gameUrl = "./file";`}
-window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
-window.EJS_startOnLoaded = true;
-window.EJS_AdUrl = "";
-${raUsername && raToken ? `window.EJS_retroachievements = { username: ${JSON.stringify(raUsername)}, apiKey: ${JSON.stringify(raToken)}, hardcore: false };` : "// RetroAchievements not configured"}
-window.EJS_rewindEnabled = true;
-window.EJS_rewindGranularity = 2;
-window.EJS_fastForwardSpeed = 3;
-window.EJS_controlScheme = ${JSON.stringify(core)};
-window.EJS_defaultControls = ${JSON.stringify(buildEjsControls(core, controlDefaults))};
-window.EJS_defaultOptions = {
-  "save-state-location": "browser",
-  "save-state-slot": 1
-};
-window.EJS_Buttons = {
-  playPause: true,
-  restart: true,
-  mute: true,
-  settings: true,
-  fullscreen: true,
-  saveState: true,
-  loadState: true,
-  screenRecord: false,
-  gamepad: true,
-  cheat: true,
-  volume: true,
-  saveSavFiles: true,
-  loadSavFiles: true,
-  quickSave: true,
-  quickLoad: true,
-  screenshot: true,
-  cacheManager: true,
-  exitEmulation: true
-};
-var loader = document.createElement("script");
-loader.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
-loader.onload = function () {
-  cabinetSetLaunchProgress(42, "Emulator loader downloaded…", "Loader");
-};
-loader.onerror = function () {
-  cabinetFailLaunchProgress("Emulator loader blocked. Try the standalone player or local Home Assistant add-on.");
-  var game = document.querySelector("#game");
-  if (game) game.innerHTML = '<div class="loading"><div>Emulator loader blocked</div><div class="hint">The preview frame could not load EmulatorJS from the CDN. The Home Assistant local add-on will avoid this by serving the emulator locally.</div></div>';
-};
-document.body.appendChild(loader);
-`;
-}
-
-function renderPlayerError(message: string) {
-  return `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-      html, body {
-        height: 100%;
-        margin: 0;
-        display: grid;
-        place-items: center;
-        background: #050507;
-        color: #f8fafc;
-        font: 14px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      }
-    </style>
-  </head>
-  <body>${escapeHtml(message)}</body>
-</html>`;
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+  if (badge && name && name !== "default") { badge.textContent = nam
