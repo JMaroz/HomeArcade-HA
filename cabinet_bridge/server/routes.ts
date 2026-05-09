@@ -679,58 +679,71 @@ export async function registerRoutes(
     if (!rom) return res.status(404).json({ message: "ROM not found." });
 
     const SYSTEM_FOLDERS: Record<string, string> = {
-      ps1:           "Sony - PlayStation",
-      psx:           "Sony - PlayStation",
-      snes:          "Nintendo - Super Nintendo Entertainment System",
-      nes:           "Nintendo - Nintendo Entertainment System",
-      n64:           "Nintendo - Nintendo 64",
-      gba:           "Nintendo - Game Boy Advance",
-      gbc:           "Nintendo - Game Boy Color",
-      gb:            "Nintendo - Game Boy",
-      genesis:       "Sega - Mega Drive - Genesis",
-      megadrive:     "Sega - Mega Drive - Genesis",
-      "game-gear":   "Sega - Game Gear",
+      ps1:             "Sony - PlayStation",
+      psx:             "Sony - PlayStation",
+      snes:            "Nintendo - Super Nintendo Entertainment System",
+      nes:             "Nintendo - Nintendo Entertainment System",
+      n64:             "Nintendo - Nintendo 64",
+      gba:             "Nintendo - Game Boy Advance",
+      gbc:             "Nintendo - Game Boy Color",
+      gb:              "Nintendo - Game Boy",
+      genesis:         "Sega - Mega Drive - Genesis",
+      megadrive:       "Sega - Mega Drive - Genesis",
+      "game-gear":     "Sega - Game Gear",
       "master-system": "Sega - Master System - Mark III",
-      arcade:        "MAME",
-      mame:          "MAME",
-      saturn:        "Sega - Saturn",
-      psp:           "Sony - PlayStation Portable",
-      ps2:           "Sony - PlayStation 2",
-      nds:           "Nintendo - Nintendo DS",
+      arcade:          "MAME",
+      mame:            "MAME",
+      saturn:          "Sega - Saturn",
+      psp:             "Sony - PlayStation Portable",
+      ps2:             "Sony - PlayStation 2",
+      nds:             "Nintendo - Nintendo DS",
     };
 
     const folder = SYSTEM_FOLDERS[rom.system?.toLowerCase() ?? ""];
     if (!folder) return res.json({ cheats: [], message: "No cheat database for this system." });
 
-    // Search GitHub for best-matching .cht file
-    const words = rom.title
-      .replace(/[^\w\s]/g, " ")
-      .trim()
-      .split(/\s+/)
-      .slice(0, 4)
-      .join("+");
+    // List all .cht files in the system folder via GitHub Contents API
+    const contentsUrl =
+      `https://api.github.com/repos/libretro/libretro-database/contents/cht/${encodeURIComponent(folder)}`;
 
-    const searchUrl =
-      `https://api.github.com/search/code?q=repo:libretro/libretro-database+${encodeURIComponent(words)}+path:cht/${encodeURIComponent(folder)}&per_page=5`;
-
-    let chtPath: string | null = null;
+    let files: { name: string; path: string }[] = [];
     try {
-      const searchRes = await fetch(searchUrl, {
+      const contentsRes = await fetch(contentsUrl, {
         headers: { Accept: "application/vnd.github+json", "User-Agent": "HomeArcade/1.0" },
       });
-      if (searchRes.ok) {
-        const data = await searchRes.json() as { items?: { path: string }[] };
-        chtPath = data.items?.[0]?.path ?? null;
-      }
-    } catch { /* network error */ }
+      if (!contentsRes.ok) return res.json({ cheats: [], message: "Could not reach cheat database." });
+      files = await contentsRes.json() as { name: string; path: string }[];
+    } catch {
+      return res.json({ cheats: [], message: "Network error reaching cheat database." });
+    }
 
-    if (!chtPath) return res.json({ cheats: [], message: "No cheat file found for this game." });
+    // Fuzzy-match: normalise title and filename, score by shared words
+    const normalise = (s: string) =>
+      s.toLowerCase().replace(/\(.*?\)/g, "").replace(/[^a-z0-9\s]/g, " ").trim();
+
+    const titleWords = new Set(normalise(rom.title).split(/\s+/).filter(Boolean));
+
+    let bestPath: string | null = null;
+    let bestScore = 0;
+    for (const file of files) {
+      if (!file.name.endsWith(".cht")) continue;
+      const fileWords = normalise(file.name.replace(/\.cht$/, "")).split(/\s+/).filter(Boolean);
+      let score = 0;
+      for (const w of fileWords) { if (titleWords.has(w)) score++; }
+      // Bonus: exact normalised prefix match
+      if (normalise(file.name).startsWith(normalise(rom.title).slice(0, 6))) score += 2;
+      if (score > bestScore) { bestScore = score; bestPath = file.path; }
+    }
+
+    if (!bestPath || bestScore < 1) {
+      return res.json({ cheats: [], message: "No cheat file found for this game." });
+    }
 
     // Fetch raw .cht content
     let chtText = "";
     try {
       const rawRes = await fetch(
-        `https://raw.githubusercontent.com/libretro/libretro-database/master/${chtPath}`,
+        `https://raw.githubusercontent.com/libretro/libretro-database/master/${bestPath}`,
         { headers: { "User-Agent": "HomeArcade/1.0" } },
       );
       if (!rawRes.ok) return res.json({ cheats: [], message: "Could not download cheat file." });
@@ -754,7 +767,7 @@ export async function registerRoutes(
       .filter((e) => e.desc && e.code)
       .map((e) => ({ desc: e.desc!, code: e.code! }));
 
-    res.json({ cheats, source: chtPath });
+    res.json({ cheats, source: bestPath });
   });
 
   app.get("/api/collections", async (_req, res) => {
