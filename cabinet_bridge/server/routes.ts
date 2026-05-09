@@ -771,19 +771,19 @@ export async function registerRoutes(
         return res.json({ cheats: [], message: "Network error fetching cheat file." });
       }
 
-      const entries: Record<number, { desc?: string; code?: string }> = {};
+      // Handles both combined (cheatN_code) and split (cheatN_address + cheatN_value) styles
+      const entries: Record<number, { desc?: string; code?: string; address?: string; value?: string }> = {};
       for (const line of chtText.split(/\r?\n/)) {
-        const m = line.match(/^cheat(\d+)_(desc|code)\s*=\s*"(.*)"\s*$/);
+        const m = line.match(/^cheat(\d+)_(desc|code|address|value)\s*=\s*"(.*)"\s*$/);
         if (!m) continue;
         const idx = Number(m[1]);
         if (!entries[idx]) entries[idx] = {};
-        if (m[2] === "desc") entries[idx].desc = m[3].trim();
-        if (m[2] === "code") entries[idx].code = m[3].trim();
+        (entries[idx] as Record<string, string>)[m[2]] = m[3].trim();
       }
 
       cheats = Object.values(entries)
-        .filter((e) => e.desc && e.code)
-        .map((e) => ({ desc: e.desc!, code: e.code! }));
+        .filter((e) => e.desc && (e.code || (e.address && e.value)))
+        .map((e) => ({ desc: e.desc!, code: e.code ?? `${e.address}+${e.value}` }));
 
       await storage.setCachedCheats(bestPath, cheats);
     }
