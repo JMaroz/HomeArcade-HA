@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { MobileTopBar } from "@/components/MobileNav";
 import { SYSTEMS, uploadedRomToGame } from "@/data/library";
 import type { UploadedRom } from "@shared/schema";
-import { Clock, Gamepad2, TrendingUp, Calendar, ArrowLeft, BarChart2, ChevronLeft } from "lucide-react";
+import { Clock, Gamepad2, TrendingUp, Calendar, ArrowLeft, BarChart2, ChevronLeft, Download } from "lucide-react";
 import { apiUrl } from "@/lib/queryClient";
 
 interface PlaySession {
@@ -101,6 +101,28 @@ export default function History() {
 
   const systemLabel = (id: string) => SYSTEMS.find((s) => s.id === id)?.name ?? id;
 
+  const exportCsv = () => {
+    const header = ["Date", "Time", "Game", "System", "Duration (s)", "Duration"];
+    const rows = [...sessions]
+      .sort((a, b) => b.startedAt - a.startedAt)
+      .map((s) => [
+        new Date(s.startedAt).toLocaleDateString(),
+        new Date(s.startedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }),
+        `"${s.romTitle.replace(/"/g, '""')}"`,
+        s.romSystem.toUpperCase(),
+        String(s.durationSeconds ?? 0),
+        fmtDuration(s.durationSeconds),
+      ]);
+    const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `homearcade-history-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Per-game drill-down
   const [selectedGameKey, setSelectedGameKey] = useState<string | null>(null);
 
@@ -141,12 +163,22 @@ export default function History() {
             <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="size-4" />
             </Link>
-            <div>
+            <div className="flex-1">
               <h1 className="font-display text-2xl font-bold text-foreground">Play History</h1>
               <p className="text-sm text-muted-foreground font-mono">
                 {sessions.length} session{sessions.length !== 1 ? "s" : ""} tracked
               </p>
             </div>
+            {sessions.length > 0 && (
+              <button
+                type="button"
+                onClick={exportCsv}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Export play history as CSV"
+              >
+                <Download className="size-3.5" /> Export CSV
+              </button>
+            )}
           </div>
 
           {/* ── Per-game drill-down ── */}

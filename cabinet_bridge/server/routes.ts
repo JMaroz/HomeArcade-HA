@@ -1158,6 +1158,7 @@ export async function registerRoutes(
     }).parse(req.body);
 
     // Track "now playing" in memory and log to play_sessions
+    let resolvedDuration: number | undefined;
     if (event === "started") {
       nowPlayingRom = { id: rom.id, title: rom.title, system: rom.system };
       activeSessionStart = Date.now();
@@ -1166,22 +1167,24 @@ export async function registerRoutes(
       nowPlayingRom = null;
       if (activeSessionId) {
         const endedAt = Date.now();
-        const dur = durationSeconds ?? Math.round((endedAt - activeSessionStart) / 1000);
-        await storage.endPlaySession(activeSessionId, endedAt, dur).catch(() => {});
+        resolvedDuration = durationSeconds ?? Math.round((endedAt - activeSessionStart) / 1000);
+        await storage.endPlaySession(activeSessionId, endedAt, resolvedDuration).catch(() => {});
         activeSessionId = null;
+      } else {
+        resolvedDuration = durationSeconds;
       }
     }
 
     const settings = await storage.getIntegrationSettings();
     // Accumulate real play time
-    if (event === "ended" && durationSeconds && durationSeconds > 0) {
-      const minutes = durationSeconds / 60;
+    if (event === "ended" && resolvedDuration && resolvedDuration > 0) {
+      const minutes = resolvedDuration / 60;
       await storage.incrementRomMinutesPlayed(id, minutes).catch(() => {});
     }
 
     if (settings.haBaseUrl && settings.haToken) {
       const eventType = event === "started" ? "homearcade_game_started" : "homearcade_game_ended";
-      const payload = {
+      const payload: Record<string, unknown> = {
         game: rom.title,
         system: rom.system,
         rom_id: rom.id,
@@ -1190,8 +1193,11 @@ export async function registerRoutes(
         developer: rom.developer ?? "Unknown",
         genre: rom.genre ?? "Action",
         release_year: rom.releaseYear ?? null,
-        ...(durationSeconds !== undefined ? { duration_seconds: durationSeconds } : {}),
       };
+      if (event === "ended" && resolvedDuration !== undefined) {
+        payload.duration_seconds = resolvedDuration;
+        payload.duration_minutes = Math.round(resolvedDuration / 60);
+      }
       try {
         // Fire HA event
         await fetch(`${settings.haBaseUrl}/api/events/${eventType}`, {
