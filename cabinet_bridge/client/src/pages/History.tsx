@@ -1,11 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Sidebar } from "@/components/Sidebar";
 import { MobileTopBar } from "@/components/MobileNav";
 import { SYSTEMS, uploadedRomToGame } from "@/data/library";
 import type { UploadedRom } from "@shared/schema";
-import { Clock, Gamepad2, TrendingUp, Calendar, ArrowLeft } from "lucide-react";
+import { Clock, Gamepad2, TrendingUp, Calendar, ArrowLeft, BarChart2, ChevronLeft } from "lucide-react";
 import { apiUrl } from "@/lib/queryClient";
 
 interface PlaySession {
@@ -101,6 +101,34 @@ export default function History() {
 
   const systemLabel = (id: string) => SYSTEMS.find((s) => s.id === id)?.name ?? id;
 
+  // Per-game drill-down
+  const [selectedGameKey, setSelectedGameKey] = useState<string | null>(null);
+
+  const gameSessions = useMemo(() => {
+    if (!selectedGameKey) return [];
+    return sessions
+      .filter((s) => `${s.romSystem}:${s.romTitle}` === selectedGameKey)
+      .sort((a, b) => b.startedAt - a.startedAt);
+  }, [sessions, selectedGameKey]);
+
+  const selectedGameInfo = useMemo(() => {
+    if (!selectedGameKey || gameSessions.length === 0) return null;
+    const first = gameSessions[gameSessions.length - 1];
+    const totalSec = gameSessions.reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0);
+    const avgSec = Math.round(totalSec / gameSessions.length);
+    const rom = romMap.get(first.romId);
+    return {
+      title: first.romTitle,
+      system: first.romSystem,
+      rom,
+      totalSec,
+      avgSec,
+      sessionCount: gameSessions.length,
+      firstPlayed: first.startedAt,
+      lastPlayed: gameSessions[0].startedAt,
+    };
+  }, [selectedGameKey, gameSessions, romMap]);
+
   return (
     <div className="flex h-full overflow-hidden">
       <Sidebar active={"all"} />
@@ -121,17 +149,94 @@ export default function History() {
             </div>
           </div>
 
-          {isLoading ? (
+          {/* ── Per-game drill-down ── */}
+          {selectedGameKey && selectedGameInfo && (
+            <div className="space-y-6">
+              {/* Back button */}
+              <button
+                type="button"
+                onClick={() => setSelectedGameKey(null)}
+                className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronLeft className="size-3.5" /> All Games
+              </button>
+
+              {/* Game header */}
+              <div className="flex items-center gap-4">
+                {selectedGameInfo.rom?.artUrl ? (
+                  <img
+                    src={apiUrl(selectedGameInfo.rom.artUrl)}
+                    alt=""
+                    className="size-16 rounded-lg object-cover border border-border shrink-0"
+                  />
+                ) : (
+                  <div className="size-16 rounded-lg bg-secondary flex items-center justify-center shrink-0 border border-border">
+                    <Gamepad2 className="size-6 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    {systemLabel(selectedGameInfo.system)}
+                  </div>
+                  <h2 className="font-display text-xl font-bold text-foreground leading-tight line-clamp-2">
+                    {selectedGameInfo.title}
+                  </h2>
+                </div>
+              </div>
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: "Total Time", icon: <Clock className="size-3" />, value: fmtDuration(selectedGameInfo.totalSec), color: "text-primary" },
+                  { label: "Sessions", icon: <BarChart2 className="size-3" />, value: String(selectedGameInfo.sessionCount), color: "text-blue-400" },
+                  { label: "Avg Session", icon: <TrendingUp className="size-3" />, value: fmtDuration(selectedGameInfo.avgSec), color: "text-yellow-400" },
+                  { label: "First Played", icon: <Calendar className="size-3" />, value: fmtDate(selectedGameInfo.firstPlayed), color: "text-green-400" },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-xl border border-border bg-card p-4 flex flex-col gap-1.5">
+                    <div className={`flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] ${stat.color}`}>
+                      {stat.icon} {stat.label}
+                    </div>
+                    <div className="font-display text-xl font-bold text-foreground">{stat.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Session list */}
+              <div className="space-y-2">
+                <h3 className="font-display text-sm font-semibold text-foreground">All Sessions</h3>
+                {gameSessions.map((s, i) => (
+                  <div key={s.id} className="flex items-center gap-3 rounded-lg border border-border bg-card/60 px-4 py-3">
+                    <div className="font-mono text-[10px] text-muted-foreground/50 w-5 text-right shrink-0">
+                      {gameSessions.length - i}
+                    </div>
+                    <div
+                      className="w-1 h-8 rounded-full shrink-0"
+                      style={{ backgroundColor: systemColor(s.romSystem) }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-mono text-[10px] text-muted-foreground">{fmtDate(s.startedAt)}</div>
+                      <div className="font-mono text-[9px] text-muted-foreground/50">{fmtTime(s.startedAt)}</div>
+                    </div>
+                    <div className="font-mono text-sm font-semibold text-foreground shrink-0">
+                      {fmtDuration(s.durationSeconds)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!selectedGameKey && isLoading ? (
             <div className="flex justify-center py-20">
               <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
             </div>
-          ) : sessions.length === 0 ? (
+          ) : !selectedGameKey && sessions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
               <Gamepad2 className="size-10 opacity-30" />
               <p className="font-mono text-sm uppercase tracking-wider">No sessions yet</p>
               <p className="text-sm">Play a game to start tracking your history.</p>
             </div>
-          ) : (
+          ) : !selectedGameKey ? (
             <>
               {/* Stats row */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -172,9 +277,9 @@ export default function History() {
                   <h2 className="font-display text-sm font-semibold text-foreground mb-4">Top Games by Playtime</h2>
                   <div className="space-y-3">
                     {topGames.map((g) => (
-                      <div key={`${g.system}:${g.title}`} className="space-y-1">
+                      <div key={`${g.system}:${g.title}`} className="space-y-1 cursor-pointer group" onClick={() => setSelectedGameKey(`${g.system}:${g.title}`)}>
                         <div className="flex justify-between items-baseline">
-                          <span className="text-sm font-medium text-foreground line-clamp-1 flex-1 mr-4">{g.title}</span>
+                          <span className="text-sm font-medium text-foreground line-clamp-1 flex-1 mr-4 group-hover:text-primary transition-colors">{g.title}</span>
                           <span className="font-mono text-[11px] text-muted-foreground shrink-0">{fmtDuration(g.seconds)}</span>
                         </div>
                         <div className="h-2 rounded-full bg-secondary overflow-hidden">
@@ -210,7 +315,8 @@ export default function History() {
                         return (
                           <div
                             key={s.id}
-                            className="flex items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2 hover:bg-card transition-colors"
+                            className="flex items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2 hover:bg-card transition-colors cursor-pointer"
+                            onClick={() => setSelectedGameKey(`${s.romSystem}:${s.romTitle}`)}
                           >
                             {/* System color bar */}
                             <div
@@ -249,7 +355,7 @@ export default function History() {
                 ))}
               </div>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
