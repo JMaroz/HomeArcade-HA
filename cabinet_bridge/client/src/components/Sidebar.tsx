@@ -65,7 +65,7 @@ export function Sidebar({ active, alwaysVisible = false, onNavigate }: SidebarPr
       </div>
 
       {/* ── Navigation items ── */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+      <nav className="flex-1 overflow-y-auto nav-scroll px-3 py-4 space-y-5">
         {/* Dashboard */}
         <NavSection label="">
           <NavItem
