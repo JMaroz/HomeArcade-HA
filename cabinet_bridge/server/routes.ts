@@ -1185,9 +1185,11 @@ export async function registerRoutes(
         game: rom.title,
         system: rom.system,
         rom_id: rom.id,
+        art_url: rom.artUrl ?? "",
         players: rom.players ?? 1,
         developer: rom.developer ?? "Unknown",
         genre: rom.genre ?? "Action",
+        release_year: rom.releaseYear ?? null,
         ...(durationSeconds !== undefined ? { duration_seconds: durationSeconds } : {}),
       };
       try {
