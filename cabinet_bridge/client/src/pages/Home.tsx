@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Sidebar, type Filter } from "@/components/Sidebar";
 import { MobileTopBar } from "@/components/MobileNav";
@@ -16,6 +16,7 @@ import {
   LayoutGrid,
   LayoutList,
   Shuffle,
+  X,
 } from "lucide-react";
 import { useProfile } from "@/lib/useProfile";
 import { useIntegration } from "@/lib/integration";
@@ -48,7 +49,23 @@ export default function Home({ filter }: { filter: Filter }) {
   const [ratingOverrides, setRatingOverrides] = useState<Record<string, number>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const searchRef = useRef<HTMLInputElement>(null);
   const { currentProfileId, setCurrentProfileId } = useProfile();
+
+  // "/" or Cmd+K focuses search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key === "k")) {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const { pc } = useIntegration();
 
@@ -240,11 +257,15 @@ export default function Home({ filter }: { filter: Filter }) {
 
     if (query.trim()) {
       const q = query.trim().toLowerCase();
-      list = list.filter(
+      // When a search is active, break out of the current system/collection filter
+      // so the user can find games across all systems
+      list = games.filter(
         (g) =>
           g.title.toLowerCase().includes(q) ||
           g.genre.toLowerCase().includes(q) ||
-          g.system.toLowerCase().includes(q),
+          g.system.toLowerCase().includes(q) ||
+          (g.developer ?? "").toLowerCase().includes(q) ||
+          (g.publisher ?? "").toLowerCase().includes(q),
       );
     }
 
@@ -419,11 +440,23 @@ export default function Home({ filter }: { filter: Filter }) {
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search…"
-                  className="pl-9 font-mono text-sm"
+                  placeholder="Search… (press /)"
+                  className="pl-9 pr-8 font-mono text-sm"
+                  ref={searchRef}
                   data-testid="input-search"
                   aria-label="Search games"
+                  onKeyDown={(e) => { if (e.key === "Escape") { setQuery(""); searchRef.current?.blur(); } }}
                 />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => { setQuery(""); searchRef.current?.focus(); }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
               </div>
 
               {/* Sort — desktop pills (hidden on mobile, shown via MobileSortBar below) */}
@@ -459,6 +492,24 @@ export default function Home({ filter }: { filter: Filter }) {
             </div>
           </div>
         </div>
+
+        {/* ── Search scope notice ── */}
+        {query.trim() && (
+          <div className="px-4 sm:px-8 py-1.5 border-b border-border flex items-center gap-2 bg-primary/5">
+            <Search className="size-3 text-primary/60 shrink-0" />
+            <span className="font-mono text-[10px] text-muted-foreground flex-1">
+              Searching all {games.length} games —{" "}
+              <span className="text-foreground font-semibold">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
         {/* ── Mobile sort bar (visible only below sm) ── */}
         <div
