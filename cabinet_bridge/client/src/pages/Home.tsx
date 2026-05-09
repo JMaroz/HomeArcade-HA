@@ -16,14 +16,13 @@ import {
   LayoutGrid,
   LayoutList,
   Shuffle,
-  UserCircle2,
-  ChevronDown,
 } from "lucide-react";
+import { useProfile } from "@/lib/useProfile";
 import { useIntegration } from "@/lib/integration";
 import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import { filterToPath } from "@/lib/filter";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { GameCollectionWithItems, UploadedRom, UserProfile, ProfileGameState } from "@shared/schema";
+import type { GameCollectionWithItems, UploadedRom, ProfileGameState } from "@shared/schema";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { useGridNav } from "@/lib/useGridNav";
 
@@ -49,19 +48,13 @@ export default function Home({ filter }: { filter: Filter }) {
   const [ratingOverrides, setRatingOverrides] = useState<Record<string, number>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [currentProfileId, setCurrentProfileId] = useState<number>(() => {
-    try { return Number(localStorage.getItem("cabinet_profile_id") || "1"); } catch { return 1; }
-  });
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const { currentProfileId, setCurrentProfileId } = useProfile();
 
   const { pc } = useIntegration();
 
   const { data: uploadedRoms = [], isLoading: romsLoading } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
   const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({
     queryKey: ["/api/collections"],
-  });
-  const { data: profiles = [] } = useQuery<UserProfile[]>({
-    queryKey: ["/api/profiles"],
   });
   const { data: profileGameStates = [] } = useQuery<ProfileGameState[]>({
     queryKey: ["/api/profiles", currentProfileId, "game-states"],
@@ -463,47 +456,6 @@ export default function Home({ filter }: { filter: Filter }) {
                 )}
               </button>
 
-              {/* Profile switcher */}
-              {profiles.length > 0 && (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setProfileMenuOpen((o) => !o)}
-                    className="h-9 flex items-center gap-1.5 rounded-md border border-border bg-background/40 px-2.5 text-muted-foreground hover:text-foreground hover-elevate font-mono text-xs"
-                    data-testid="button-profile-switcher"
-                    title="Switch player profile"
-                  >
-                    <UserCircle2 className="size-4 shrink-0" style={{ color: profiles.find(p => p.id === currentProfileId)?.color ?? "#8b5cf6" }} />
-                    <span className="hidden sm:inline max-w-[80px] truncate">
-                      {profiles.find(p => p.id === currentProfileId)?.name ?? "Player 1"}
-                    </span>
-                    <ChevronDown className="size-3 shrink-0 opacity-60" />
-                  </button>
-                  {profileMenuOpen && (
-                    <div
-                      className="absolute right-0 top-full mt-1 z-50 min-w-[140px] rounded-lg border border-border bg-card shadow-xl py-1"
-                      onMouseLeave={() => setProfileMenuOpen(false)}
-                    >
-                      {profiles.map(p => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => {
-                            setCurrentProfileId(p.id);
-                            try { localStorage.setItem("cabinet_profile_id", String(p.id)); } catch {}
-                            setProfileMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-left font-mono text-xs hover:bg-muted/60 transition-colors ${p.id === currentProfileId ? "text-foreground font-bold" : "text-muted-foreground"}`}
-                        >
-                          <span className="size-2.5 rounded-full shrink-0" style={{ background: p.color }} />
-                          <span className="truncate">{p.name}</span>
-                          {p.id === currentProfileId && <span className="ml-auto text-[9px] tracking-wider uppercase opacity-60">Active</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>

@@ -9,6 +9,7 @@ import { IntegrationProvider } from "@/lib/integration";
 import { parseFilter, parseCollectionFilter, DEFAULT_FILTER } from "@/lib/filter";
 import { MobileBottomNav } from "@/components/MobileNav";
 import Home from "@/pages/Home";
+import { ProfileProvider } from "@/lib/useProfile";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 // Lazy — loaded only when navigated to
@@ -116,6 +117,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ProfileProvider>
       <IntegrationProvider>
         <TooltipProvider>
           <Toaster />
@@ -135,6 +137,7 @@ function App() {
           </Router>
         </TooltipProvider>
       </IntegrationProvider>
+      </ProfileProvider>
     </QueryClientProvider>
   );
 }

@@ -16,7 +16,11 @@ import {
   Trophy,
   Folder,
   History,
+  ChevronsUpDown,
 } from "lucide-react";
+import { useState } from "react";
+import { useProfile } from "@/lib/useProfile";
+import type { UserProfile } from "@shared/schema";
 
 export type Filter = SystemId | `collection:${number}`;
 
@@ -174,6 +178,7 @@ export function Sidebar({ active, alwaysVisible = false, onNavigate }: SidebarPr
           onNavigate={onNavigate}
           testId="link-settings"
         />
+        <SidebarProfile onNavigate={onNavigate} />
       </div>
     </aside>
   );
@@ -243,5 +248,57 @@ function NavItem({
         </span>
       )}
     </Link>
+  );
+}
+
+/* ── Profile Switcher (sidebar footer) ── */
+function SidebarProfile({ onNavigate }: { onNavigate?: () => void }) {
+  const { currentProfileId, setCurrentProfileId } = useProfile();
+  const [open, setOpen] = useState(false);
+  const { data: profiles = [] } = useQuery<UserProfile[]>({ queryKey: ["/api/profiles"] });
+  const active = profiles.find((p) => p.id === currentProfileId);
+
+  if (!active || profiles.length <= 1) return null;
+
+  return (
+    <div className="relative mt-1">
+      {open && (
+        <div className="absolute bottom-full left-0 right-0 mb-1.5 rounded-2xl border border-sidebar-border bg-sidebar shadow-2xl py-1 z-50 overflow-hidden">
+          {profiles.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => {
+                setCurrentProfileId(p.id);
+                setOpen(false);
+                onNavigate?.();
+              }}
+              className={[
+                "w-full flex items-center gap-3 px-4 h-[3.25rem] text-left transition-colors",
+                p.id === currentProfileId
+                  ? "bg-primary-container/60 text-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-white/[0.05]",
+              ].join(" ")}
+            >
+              <span className="size-2.5 rounded-full shrink-0" style={{ background: p.color }} />
+              <span className="flex-1 truncate font-medium text-sm">{p.name}</span>
+              {p.id === currentProfileId && (
+                <span className="text-primary text-[11px] font-mono uppercase tracking-wider">active</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-3 px-4 h-[3.5rem] rounded-2xl text-sidebar-foreground/80 hover:bg-white/[0.05] transition-colors"
+        data-testid="nav-profile-switcher"
+      >
+        <span className="size-2.5 rounded-full shrink-0" style={{ background: active.color }} />
+        <span className="flex-1 truncate text-left font-medium text-sm">{active.name}</span>
+        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground/50" />
+      </button>
+    </div>
   );
 }
