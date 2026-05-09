@@ -12,7 +12,7 @@ import { SYSTEMS, formatRomSize } from "@/data/library";
 import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import { filterToPath } from "@/lib/filter";
 import { Link } from "wouter";
-import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight, RotateCcw, Zap, CheckCircle2, XCircle, Loader2, UserCircle2, Plus, X, Gamepad2, Wifi, WifiOff } from "lucide-react";
+import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight, RotateCcw, Zap, CheckCircle2, XCircle, Loader2, UserCircle2, Plus, X, Gamepad2, Wifi, WifiOff, Pencil } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ConsoleSilhouette } from "@/components/ConsoleSilhouette";
@@ -592,12 +592,37 @@ export default function Settings() {
   const [lbResult, setLbResult] = useState<{ imported: number; skipped: number } | null>(null);
   const [lbError, setLbError] = useState<string | null>(null);
 
+  const [renamingCollectionId, setRenamingCollectionId] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+
   const { data: uploadedRoms = [] } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
   const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({ queryKey: ["/api/collections"] });
 
   const copy = async (text: string, key: string) => {
     try { await navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(null), 1200); }
     catch { /* ignore */ }
+  };
+
+  const renameCollectionMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: number; name: string }) => {
+      const res = await apiRequest("PATCH", `/api/collections/${id}`, { name });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      setRenamingCollectionId(null);
+    },
+  });
+
+  const deleteCollectionMutation = useMutation({
+    mutationFn: async (id: number) => apiRequest("DELETE", `/api/collections/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/collections"] }),
+  });
+
+  const submitRename = (id: number) => {
+    const trimmed = renameValue.trim();
+    if (!trimmed) { setRenamingCollectionId(null); return; }
+    renameCollectionMutation.mutate({ id, name: trimmed });
   };
 
   return (
@@ -795,6 +820,64 @@ export default function Settings() {
                     </tbody>
                   </table>
                 </div>
+              </Section>
+
+
+              <Section title="Collections"
+                description="Rename or delete your game collections. Games are not affected when a collection is deleted.">
+                {collections.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No collections yet. Create one from the library sidebar.</p>
+                ) : (
+                  <div className="rounded-md border border-border bg-background/40 divide-y divide-border overflow-hidden">
+                    {collections.map((col) => (
+                      <div key={col.id} className="flex items-center gap-2 px-3 py-2.5">
+                        {renamingCollectionId === col.id ? (
+                          <>
+                            <input
+                              autoFocus
+                              type="text"
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") submitRename(col.id);
+                                if (e.key === "Escape") setRenamingCollectionId(null);
+                              }}
+                              className="flex-1 h-7 rounded border border-border bg-background px-2 font-mono text-[12px] focus:outline-none focus:ring-1 focus:ring-ring"
+                              data-testid={"input-rename-collection-" + col.id}
+                            />
+                            <button type="button" onClick={() => submitRename(col.id)}
+                              className="text-muted-foreground hover:text-foreground shrink-0" aria-label="Save rename"
+                              data-testid={"button-save-rename-" + col.id}>
+                              <Check className="size-3.5" />
+                            </button>
+                            <button type="button" onClick={() => setRenamingCollectionId(null)}
+                              className="text-muted-foreground hover:text-foreground shrink-0" aria-label="Cancel rename"
+                              data-testid={"button-cancel-rename-" + col.id}>
+                              <X className="size-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="flex-1 text-sm truncate">{col.name}</span>
+                            <span className="text-[11px] text-muted-foreground shrink-0">{col.romIds.length} game{col.romIds.length === 1 ? "" : "s"}</span>
+                            <button type="button"
+                              onClick={() => { setRenamingCollectionId(col.id); setRenameValue(col.name); }}
+                              className="text-muted-foreground hover:text-foreground shrink-0" aria-label="Rename collection"
+                              data-testid={"button-rename-collection-" + col.id}>
+                              <Pencil className="size-3.5" />
+                            </button>
+                            <button type="button"
+                              onClick={() => { if (window.confirm("Delete collection \"" + col.name + "\"?")) deleteCollectionMutation.mutate(col.id); }}
+                              className="text-muted-foreground hover:text-destructive shrink-0" aria-label="Delete collection"
+                              data-testid={"button-delete-collection-" + col.id}>
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </Section>
 
               <Section title="Metadata import"

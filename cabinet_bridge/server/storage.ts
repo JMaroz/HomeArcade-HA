@@ -143,6 +143,7 @@ export interface IStorage {
   listCollections(): Promise<GameCollectionWithItems[]>;
   createCollection(collection: InsertGameCollection): Promise<GameCollection>;
   deleteCollection(id: number): Promise<boolean>;
+  renameCollection(id: number, name: string): Promise<GameCollection | undefined>;
   addRomToCollection(collectionId: number, romId: number): Promise<GameCollectionWithItems | undefined>;
   removeRomFromCollection(collectionId: number, romId: number): Promise<GameCollectionWithItems | undefined>;
   listRomSaveSlots(romId: number, userId: string): Promise<RomSaveSlot[]>;
@@ -312,6 +313,10 @@ export class DatabaseStorage implements IStorage {
     db.delete(collectionItems).where(eq(collectionItems.collectionId, id)).run();
     const result = db.delete(gameCollections).where(eq(gameCollections.id, id)).run();
     return result.changes > 0;
+  }
+
+  async renameCollection(id: number, name: string): Promise<GameCollection | undefined> {
+    return db.update(gameCollections).set({ name }).where(eq(gameCollections.id, id)).returning().get();
   }
 
   async addRomToCollection(

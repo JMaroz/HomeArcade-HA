@@ -701,6 +701,20 @@ export async function registerRoutes(
     res.status(204).end();
   });
 
+
+  app.patch("/api/collections/:id", express.json(), async (req, res) => {
+    const id = Number(req.params.id);
+    const parsed = z.object({ name: z.string().trim().min(1).max(48) }).safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Collection name must be 1-48 characters." });
+    }
+    const updated = await storage.renameCollection(id, parsed.data.name);
+    if (!updated) {
+      return res.status(404).json({ message: "Collection not found." });
+    }
+    res.json(updated);
+  });
+
   app.put("/api/collections/:id/roms/:romId", async (req, res) => {
     const id = Number(req.params.id);
     const romId = Number(req.params.romId);

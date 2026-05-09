@@ -17,6 +17,7 @@ import {
   LayoutList,
   Shuffle,
   X,
+  Check,
 } from "lucide-react";
 import { useProfile } from "@/lib/useProfile";
 import { useIntegration } from "@/lib/integration";
@@ -49,6 +50,7 @@ export default function Home({ filter }: { filter: Filter }) {
   const [ratingOverrides, setRatingOverrides] = useState<Record<string, number>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [newCollectionName, setNewCollectionName] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const { currentProfileId, setCurrentProfileId } = useProfile();
 
@@ -387,11 +389,12 @@ export default function Home({ filter }: { filter: Filter }) {
     setOpenGame(pick);
   };
 
-  const handleCreateCollection = () => {
-    const name = window.prompt("Name this collection", "RPGs");
-    const trimmed = name?.trim();
-    if (!trimmed) return;
-    createCollection.mutate(trimmed);
+  const handleCreateCollection = () => setNewCollectionName("");
+
+  const submitNewCollection = () => {
+    const trimmed = newCollectionName?.trim();
+    if (!trimmed) { setNewCollectionName(null); return; }
+    createCollection.mutate(trimmed, { onSuccess: () => setNewCollectionName(null) });
   };
 
   const handleToggleCollection = (collectionId: number, game: Game, selected: boolean) => {
@@ -693,14 +696,40 @@ export default function Home({ filter }: { filter: Filter }) {
               action={
                 <div className="flex items-center gap-3">
                   {!kioskMode && (
-                    <button
-                      type="button"
-                      onClick={handleCreateCollection}
-                      className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
-                      data-testid="button-create-collection"
-                    >
-                      New collection
-                    </button>
+                    newCollectionName !== null ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          autoFocus
+                          type="text"
+                          value={newCollectionName}
+                          onChange={(e) => setNewCollectionName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") submitNewCollection();
+                            if (e.key === "Escape") setNewCollectionName(null);
+                          }}
+                          placeholder="Collection name…"
+                          className="h-6 w-32 rounded border border-border bg-background/70 px-2 font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-ring"
+                          data-testid="input-new-collection"
+                        />
+                        <button type="button" onClick={submitNewCollection}
+                          className="text-muted-foreground hover:text-foreground" data-testid="button-save-collection">
+                          <Check className="size-3.5" />
+                        </button>
+                        <button type="button" onClick={() => setNewCollectionName(null)}
+                          className="text-muted-foreground hover:text-foreground" data-testid="button-cancel-collection">
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleCreateCollection}
+                        className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                        data-testid="button-create-collection"
+                      >
+                        + New collection
+                      </button>
+                    )
                   )}
                   <span
                     className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground"
