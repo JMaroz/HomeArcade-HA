@@ -21,19 +21,20 @@ export function MobileTopBar({ active }: Props) {
     >
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
+          {/* MD3 Icon Button */}
           <button
             type="button"
-            className="size-9 rounded-md border border-border flex items-center justify-center hover-elevate"
+            className="size-10 rounded-full flex items-center justify-center text-foreground/80 md3-state md3-state-on-surface hover:bg-white/[0.08] transition-colors"
             data-testid="button-open-nav"
             aria-label="Open navigation"
           >
-            <Menu className="size-4" />
+            <Menu className="size-5" />
           </button>
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-72 bg-sidebar text-sidebar-foreground border-sidebar-border">
           <SheetTitle className="sr-only">HomeArcade navigation</SheetTitle>
           <div className="h-full flex">
-            <SidebarMobileWrapper active={active ?? "all"} onNavigate={() => setOpen(false)} />
+            <Sidebar active={active ?? "all"} alwaysVisible onNavigate={() => setOpen(false)} />
           </div>
         </SheetContent>
       </Sheet>
@@ -42,30 +43,25 @@ export function MobileTopBar({ active }: Props) {
         <Wordmark />
       </Link>
 
-      {/* Settings shortcut — highlighted when on settings route */}
+      {/* MD3 Icon Button — Settings */}
       <Link
         href="/settings"
-        className={`size-9 rounded-md border border-border flex items-center justify-center hover-elevate transition-colors ${
+        className={[
+          "size-10 rounded-full flex items-center justify-center transition-colors md3-state",
           onSettingsRoute
-            ? "border-primary/60 bg-primary/15 text-primary"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-        aria-label="Integration & Settings"
+            ? "bg-primary-container text-primary md3-state-primary"
+            : "text-foreground/70 hover:bg-white/[0.08] md3-state-on-surface",
+        ].join(" ")}
+        aria-label="Settings"
         data-testid="link-settings-topbar"
       >
-        <Settings className="size-4" />
+        <Settings className="size-5" />
       </Link>
     </div>
   );
 }
 
-function SidebarMobileWrapper({
-  active,
-  onNavigate,
-}: {
-  active: Filter;
-  onNavigate: () => void;
-}) {
+function SidebarMobileWrapper({ active, onNavigate }: { active: Filter; onNavigate: () => void }) {
   return (
     <div className="flex flex-col w-full h-full">
       <Sidebar active={active} alwaysVisible onNavigate={onNavigate} />
@@ -74,18 +70,20 @@ function SidebarMobileWrapper({
 }
 
 /**
- * Fixed bottom tab bar — visible only below lg breakpoint.
- * Place once in App.tsx; pages add `pb-20 lg:pb-0` to their scroll containers.
+ * MD3 Navigation Bar — fixed bottom tab bar.
+ * Active tab: pill-shaped indicator under icon, primary color icon+label.
+ * Inactive: icon + label, muted foreground.
+ * Place once in App.tsx; pages add pb-20 lg:pb-0 to scroll containers.
  */
 export function MobileBottomNav() {
   const [location] = useLocation();
 
   const tabs = [
-    { href: "/", icon: LayoutDashboard, label: "Home" },
-    { href: "/library", icon: Gamepad2, label: "Library" },
-    { href: "/history", icon: History, label: "History" },
-    { href: "/achievements", icon: Trophy, label: "Awards" },
-    { href: "/settings", icon: Settings, label: "Settings" },
+    { href: "/",            icon: LayoutDashboard, label: "Home"     },
+    { href: "/library",     icon: Gamepad2,        label: "Library"  },
+    { href: "/history",     icon: History,         label: "History"  },
+    { href: "/achievements",icon: Trophy,          label: "Awards"   },
+    { href: "/settings",    icon: Settings,        label: "Settings" },
   ] as const;
 
   return (
@@ -96,26 +94,44 @@ export function MobileBottomNav() {
     >
       <div className="flex h-16 items-stretch">
         {tabs.map(({ href, icon: Icon, label }) => {
-          const active =
+          const isActive =
             href === "/"
               ? location === "/"
-              : location === href ||
-                location.startsWith(href + "/") ||
-                location.startsWith(href + "?");
+              : location === href || location.startsWith(href + "/") || location.startsWith(href + "?");
+
           return (
             <Link
               key={href}
               href={href}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${
-                active ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              }`}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
               data-testid={`nav-bottom-${label.toLowerCase()}`}
-              aria-current={active ? "page" : undefined}
+              aria-current={isActive ? "page" : undefined}
             >
-              <Icon
-                className={`transition-transform ${active ? "size-[22px] scale-110" : "size-5"}`}
-              />
-              <span className="font-mono text-[9px] uppercase tracking-wider">{label}</span>
+              {/* MD3 indicator pill — wraps the icon */}
+              <span
+                className={[
+                  "relative flex items-center justify-center h-8 w-16 rounded-full transition-all duration-200",
+                  isActive
+                    ? "bg-primary-container"
+                    : "bg-transparent",
+                ].join(" ")}
+              >
+                <Icon
+                  className={[
+                    "transition-all duration-200",
+                    isActive ? "size-[22px] text-primary" : "size-5 text-muted-foreground",
+                  ].join(" ")}
+                />
+              </span>
+              {/* MD3 Label Medium */}
+              <span
+                className={[
+                  "md-label-small transition-colors",
+                  isActive ? "text-primary font-semibold" : "text-muted-foreground",
+                ].join(" ")}
+              >
+                {label}
+              </span>
             </Link>
           );
         })}

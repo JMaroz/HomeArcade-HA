@@ -4,6 +4,9 @@ import { SYSTEMS, type Game } from "@/data/library";
 import { formatRelative } from "@/lib/integration";
 import { Heart, Info, Star } from "lucide-react";
 
+/**
+ * MD3 Elevated Card — 16px large shape, tonal surface, state layer on hover/press.
+ */
 export const GameCard = memo(function GameCard({
   game,
   onOpen,
@@ -22,7 +25,9 @@ export const GameCard = memo(function GameCard({
   const [videoFailed, setVideoFailed] = useState(false);
   const [thumbFailed, setThumbFailed] = useState(false);
   const showVideo = !!game.videoUrl && !videoFailed && !showSaveThumb;
-  const saveThumbUrl = game.romId ? `/api/roms/${game.romId}/save-thumb/auto?t=${game.lastPlayed}` : null;
+  const saveThumbUrl = game.romId
+    ? `/api/roms/${game.romId}/save-thumb/auto?t=${game.lastPlayed}`
+    : null;
 
   const handleMouseEnter = useCallback(() => {
     if (videoRef.current) {
@@ -36,18 +41,11 @@ export const GameCard = memo(function GameCard({
       videoRef.current.currentTime = 0;
     }
   }, []);
-
-  const handleOpen = useCallback(() => onOpen(game), [game, onOpen]);
-  const handleFav = useCallback(
-    (e: React.MouseEvent) => { e.stopPropagation(); onToggleFav(game); },
-    [game, onToggleFav],
-  );
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(game); }
-    },
-    [game, onOpen],
-  );
+  const handleOpen    = useCallback(() => onOpen(game), [game, onOpen]);
+  const handleFav     = useCallback((e: React.MouseEvent) => { e.stopPropagation(); onToggleFav(game); }, [game, onToggleFav]);
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(game); }
+  }, [game, onOpen]);
 
   const isNew = game.createdAt != null && Date.now() - game.createdAt < 7 * 24 * 60 * 60 * 1000;
 
@@ -57,16 +55,31 @@ export const GameCard = memo(function GameCard({
       tabIndex={0}
       onClick={handleOpen}
       onKeyDown={handleKeyDown}
+      /* MD3 Elevated Card:
+         - rounded-xl  → 16px large shape
+         - bg-card      → surface-container tonal surface
+         - md3-state    → state layer for hover/press/focus
+         - No border when unfocused (MD3 Elevated Cards are borderless, elevated by shadow)
+      */
       className={[
-        "group relative rounded-lg overflow-hidden border bg-card hover-elevate active-elevate-2 focus:outline-none transition-[border-color,box-shadow] duration-100 [touch-action:manipulation]",
+        "group relative rounded-xl overflow-hidden bg-card",
+        "md3-state md3-state-on-surface",
+        "focus:outline-none [touch-action:manipulation]",
+        "transition-[box-shadow,transform] duration-150",
         focused
-          ? "border-accent ring-2 ring-accent/60 ring-offset-1 ring-offset-background shadow-[0_0_12px_2px_hsl(var(--accent)/0.35)]"
-          : "border-card-border focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          ? "ring-2 ring-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.5),0_0_18px_hsl(var(--primary)/0.35)] scale-[1.02]"
+          : [
+              /* MD3 Elevated Card shadow (Level 1) */
+              "shadow-[0_1px_2px_hsl(0_0%_0%/0.3),0_2px_6px_1px_hsl(0_0%_0%/0.15)]",
+              "hover:shadow-[0_1px_2px_hsl(0_0%_0%/0.3),0_4px_12px_2px_hsl(0_0%_0%/0.25)]",
+              "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            ].join(" "),
       ].join(" ")}
       data-testid={`card-game-${game.id}`}
       onMouseEnter={showVideo ? handleMouseEnter : undefined}
       onMouseLeave={showVideo ? handleMouseLeave : undefined}
     >
+      {/* ── Art / video ── */}
       <div className="aspect-[16/10] relative">
         {showSaveThumb && saveThumbUrl && !thumbFailed ? (
           <img
@@ -79,7 +92,7 @@ export const GameCard = memo(function GameCard({
           <GameArt game={game} />
         )}
         {game.isMultiDisc && (
-          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded font-mono text-[9px] font-bold uppercase tracking-wider bg-black/60 text-white border border-white/20 backdrop-blur-sm">
+          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md font-mono text-[9px] font-bold uppercase tracking-wider bg-black/60 text-white border border-white/20 backdrop-blur-sm">
             Multi-Disc
           </div>
         )}
@@ -87,37 +100,41 @@ export const GameCard = memo(function GameCard({
           <video
             ref={videoRef}
             src={`/api/roms/${game.romId}/video`}
-            muted
-            loop
-            playsInline
-            preload="none"
+            muted loop playsInline preload="none"
             onError={() => setVideoFailed(true)}
             className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
           />
         )}
       </div>
 
+      {/* ── "New" badge ── */}
       {isNew && (
-        <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded font-mono text-[9px] font-bold uppercase tracking-wider bg-green-500/20 text-green-400 border border-green-500/30 pointer-events-none">
+        <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full font-mono text-[9px] font-bold uppercase tracking-wider bg-primary-container/80 text-[hsl(var(--on-primary-container))] pointer-events-none backdrop-blur-sm">
           New
         </div>
       )}
 
+      {/* ── Favorite button (MD3 Icon Button — Tonal) ── */}
       <button
         type="button"
         onClick={handleFav}
         style={{ touchAction: "manipulation" }}
-        className="absolute top-2 right-2 size-8 rounded-md bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className={[
+          "absolute top-2 right-2 size-9 rounded-full flex items-center justify-center",
+          "transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+          "md3-state",
+          game.favorite
+            ? "bg-primary-container text-primary md3-state-primary"
+            : "bg-black/50 backdrop-blur-sm text-white/80 md3-state-on-surface hover:bg-black/70",
+        ].join(" ")}
         aria-label={game.favorite ? "Remove from favorites" : "Add to favorites"}
         aria-pressed={!!game.favorite}
         data-testid={`button-fav-${game.id}`}
       >
-        <Heart
-          className={`size-4 ${game.favorite ? "fill-primary text-primary" : "text-white/80"}`}
-        />
+        <Heart className={`size-4 ${game.favorite ? "fill-current" : ""}`} />
       </button>
 
-      {/* Hover overlay — description preview + details button */}
+      {/* ── Hover overlay — description + details ── */}
       <button
         type="button"
         onClick={handleOpen}
@@ -132,24 +149,26 @@ export const GameCard = memo(function GameCard({
         ) : (
           <span />
         )}
-        <span className="self-center flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground font-mono text-xs font-bold uppercase tracking-wider ring-neon">
+        {/* MD3 Filled Tonal Button */}
+        <span className="self-center flex items-center gap-2 px-4 py-2 rounded-full bg-primary-container text-[hsl(var(--on-primary-container))] font-mono text-xs font-bold uppercase tracking-wider">
           <Info className="size-3.5" /> Details
         </span>
       </button>
 
-      <div className="px-3 py-2.5 flex items-center justify-between gap-2 text-[10px] 2xl:text-[11px] font-mono text-muted-foreground border-t border-card-border">
-        <span className="truncate uppercase tracking-wider min-w-0" data-testid={`text-system-${game.id}`}>
+      {/* ── Card footer — system + meta ── */}
+      <div className="px-3 py-2.5 flex items-center justify-between gap-2 border-t border-card-border/60">
+        <span className="md-label-small text-muted-foreground uppercase tracking-[0.08em] truncate min-w-0" data-testid={`text-system-${game.id}`}>
           {system?.shortName ?? game.system}
         </span>
-        <div className="flex items-center gap-1.5 2xl:gap-2 shrink-0 whitespace-nowrap">
+        <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
           {game.lastPlayed ? (
-            <span className="text-foreground/70 whitespace-nowrap" data-testid={`text-lastplayed-${game.id}`}>
+            <span className="md-label-small text-foreground/60 whitespace-nowrap" data-testid={`text-lastplayed-${game.id}`}>
               {formatRelative(game.lastPlayed)}
             </span>
           ) : null}
-          <span className="flex items-center gap-0.5 whitespace-nowrap" data-testid={`text-rating-${game.id}`}>
+          <span className="flex items-center gap-0.5 md-label-small text-foreground/60" data-testid={`text-rating-${game.id}`}>
             <Star className="size-3 fill-current text-chart-3" />
-            {game.rating > 0 ? game.rating : "\u2014"}
+            {game.rating > 0 ? game.rating : "—"}
           </span>
         </div>
       </div>
@@ -157,14 +176,14 @@ export const GameCard = memo(function GameCard({
   );
 });
 
-/** Animated placeholder shown while the library is loading. */
+/** MD3 animated skeleton — matches elevated card shape */
 export function GameCardSkeleton() {
   return (
-    <div className="rounded-lg overflow-hidden border border-card-border bg-card animate-pulse">
+    <div className="rounded-xl overflow-hidden bg-card shadow-[0_1px_2px_hsl(0_0%_0%/0.3),0_2px_6px_1px_hsl(0_0%_0%/0.15)] animate-pulse">
       <div className="aspect-[16/10] bg-muted/40" />
       <div className="px-3 py-2.5 flex items-center justify-between gap-2">
-        <div className="h-2.5 w-16 rounded bg-muted/40" />
-        <div className="h-2.5 w-8 rounded bg-muted/40" />
+        <div className="h-2.5 w-16 rounded-full bg-muted/40" />
+        <div className="h-2.5 w-8 rounded-full bg-muted/40" />
       </div>
     </div>
   );

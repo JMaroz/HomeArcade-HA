@@ -3,186 +3,308 @@
 @tailwind utilities;
 
 /* ============================================================
-   CABINET BRIDGE — retro arcade / CRT inspired
-   Neon magenta primary, phosphor cyan accent, deep ink surfaces.
-   Dark mode is the default; light mode is supported but secondary.
+   HOMEARCADE — Material Design 3 + Dark Gaming Aesthetic
+   v0.7.0: Full MD3 token system (color roles, type scale,
+   shape scale, state layers, tonal elevation).
+   Neon magenta primary · phosphor cyan secondary · deep ink surfaces.
    ============================================================ */
 
 :root {
+  /* ── MD3 Shape Scale ──────────────────────────────────── */
+  --md-shape-xs:   0.25rem;   /* 4px  — extra-small */
+  --md-shape-sm:   0.5rem;    /* 8px  — small       */
+  --md-shape-md:   0.75rem;   /* 12px — medium      */
+  --md-shape-lg:   1rem;      /* 16px — large       */
+  --md-shape-xl:   1.75rem;   /* 28px — extra-large */
+  --md-shape-full: 9999px;    /* full / pill        */
+
+  /* ── shadcn radius alias (MD3 medium = default card/dialog shape) ── */
+  --radius: 0.75rem;
+
+  /* ── State layer opacities (MD3) ─────────────────────── */
+  --md-state-hover:   0.08;
+  --md-state-press:   0.12;
+  --md-state-focus:   0.12;
+  --md-state-drag:    0.16;
+  --md-state-selected: 0.08;
+
+  /* ── Tonal elevation overlays (dark theme uses tinted surfaces) ── */
+  --md-elev-1:  rgba(255,255,255,0.05);
+  --md-elev-2:  rgba(255,255,255,0.08);
+  --md-elev-3:  rgba(255,255,255,0.11);
+  --md-elev-4:  rgba(255,255,255,0.12);
+  --md-elev-5:  rgba(255,255,255,0.14);
+
+  /* keep legacy aliases */
+  --elevate-1: var(--md-elev-1);
+  --elevate-2: var(--md-elev-2);
+  --opaque-button-border-intensity: -8;
   --button-outline: rgba(0, 0, 0, 0.1);
   --badge-outline: rgba(0, 0, 0, 0.05);
-  --opaque-button-border-intensity: -8;
-  --elevate-1: rgba(0, 0, 0, 0.04);
-  --elevate-2: rgba(0, 0, 0, 0.09);
 
-  /* Light mode — used rarely, but kept WCAG AA compliant */
-  --background: 36 18% 96%;
-  --foreground: 240 14% 10%;
-  --border: 36 8% 84%;
-  --card: 36 22% 98%;
-  --card-foreground: 240 14% 10%;
-  --card-border: 36 10% 88%;
-  --sidebar: 240 8% 14%;
-  --sidebar-foreground: 36 18% 92%;
-  --sidebar-border: 240 8% 22%;
-  --sidebar-primary: 322 92% 58%;
+  /* ── Light mode base palette ─────────────────────────── */
+  --background:            36 18% 96%;
+  --foreground:            240 14% 10%;
+  --border:                36 8% 84%;
+
+  /* MD3 Surface containers (light) */
+  --surface-container-lowest: 36 22% 100%;
+  --surface-container-low:    36 18% 97%;
+  --surface-container:        36 14% 94%;
+  --surface-container-high:   36 10% 90%;
+  --surface-container-highest:36 8% 86%;
+
+  --card:                  var(--surface-container-low);
+  --card-foreground:       240 14% 10%;
+  --card-border:           36 10% 88%;
+  --sidebar:               240 8% 14%;
+  --sidebar-foreground:    36 18% 92%;
+  --sidebar-border:        240 8% 22%;
+  --sidebar-primary:       322 92% 48%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 8% 22%;
+  --sidebar-accent:        240 8% 22%;
   --sidebar-accent-foreground: 36 18% 92%;
-  --sidebar-ring: 322 92% 58%;
-  --popover: 36 22% 98%;
-  --popover-foreground: 240 14% 10%;
-  --popover-border: 36 10% 88%;
-  --primary: 322 92% 48%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 36 14% 90%;
-  --secondary-foreground: 240 14% 10%;
-  --muted: 36 14% 92%;
-  --muted-foreground: 240 6% 38%;
-  --accent: 188 90% 38%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 76% 48%;
-  --destructive-foreground: 0 0% 100%;
-  --input: 36 8% 78%;
-  --ring: 322 92% 48%;
+  --sidebar-ring:          322 92% 48%;
+  --popover:               36 22% 98%;
+  --popover-foreground:    240 14% 10%;
+  --popover-border:        36 10% 88%;
+
+  /* MD3 Primary role */
+  --primary:               322 92% 48%;
+  --primary-foreground:    0 0% 100%;
+  --primary-container:     322 50% 88%;
+  --on-primary-container:  322 80% 20%;
+
+  /* MD3 Secondary role (phosphor cyan) */
+  --secondary:             188 90% 38%;
+  --secondary-foreground:  0 0% 100%;
+  --secondary-container:   188 60% 84%;
+  --on-secondary-container:188 80% 16%;
+
+  /* MD3 Tertiary role */
+  --tertiary:              42 96% 44%;
+  --tertiary-foreground:   0 0% 100%;
+  --tertiary-container:    42 90% 88%;
+  --on-tertiary-container: 42 80% 16%;
+
+  --muted:                 36 14% 92%;
+  --muted-foreground:      240 6% 38%;
+  --accent:                188 90% 38%;
+  --accent-foreground:     0 0% 100%;
+  --destructive:           0 76% 48%;
+  --destructive-foreground:0 0% 100%;
+  --input:                 36 8% 78%;
+  --ring:                  322 92% 48%;
+
   --chart-1: 322 92% 58%;
   --chart-2: 188 90% 50%;
   --chart-3: 42 96% 56%;
   --chart-4: 142 70% 48%;
   --chart-5: 264 80% 60%;
-  --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --font-sans:    Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
-  --radius: 0.625rem;
+  --font-mono:    'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+  /* ── MD3 Type Scale tokens ───────────────────────────── */
+  /* Display */
+  --md-type-display-large-size:   3.5625rem;  /* 57sp */
+  --md-type-display-large-line:   4rem;
+  --md-type-display-large-track: -0.016em;
+  --md-type-display-medium-size:  2.8125rem;  /* 45sp */
+  --md-type-display-medium-line:  3.25rem;
+  --md-type-display-medium-track: 0;
+  --md-type-display-small-size:   2.25rem;    /* 36sp */
+  --md-type-display-small-line:   2.75rem;
+  --md-type-display-small-track:  0;
+  /* Headline */
+  --md-type-headline-large-size:  2rem;       /* 32sp */
+  --md-type-headline-large-line:  2.5rem;
+  --md-type-headline-large-track: 0;
+  --md-type-headline-medium-size: 1.75rem;    /* 28sp */
+  --md-type-headline-medium-line: 2.25rem;
+  --md-type-headline-medium-track:0;
+  --md-type-headline-small-size:  1.5rem;     /* 24sp */
+  --md-type-headline-small-line:  2rem;
+  --md-type-headline-small-track: 0;
+  /* Title */
+  --md-type-title-large-size:     1.375rem;   /* 22sp */
+  --md-type-title-large-line:     1.75rem;
+  --md-type-title-large-track:    0;
+  --md-type-title-medium-size:    1rem;       /* 16sp */
+  --md-type-title-medium-line:    1.5rem;
+  --md-type-title-medium-track:   0.009em;
+  --md-type-title-small-size:     0.875rem;   /* 14sp */
+  --md-type-title-small-line:     1.25rem;
+  --md-type-title-small-track:    0.007em;
+  /* Body */
+  --md-type-body-large-size:      1rem;       /* 16sp */
+  --md-type-body-large-line:      1.5rem;
+  --md-type-body-large-track:     0.031em;
+  --md-type-body-medium-size:     0.875rem;   /* 14sp */
+  --md-type-body-medium-line:     1.25rem;
+  --md-type-body-medium-track:    0.018em;
+  --md-type-body-small-size:      0.75rem;    /* 12sp */
+  --md-type-body-small-line:      1rem;
+  --md-type-body-small-track:     0.025em;
+  /* Label */
+  --md-type-label-large-size:     0.875rem;   /* 14sp */
+  --md-type-label-large-line:     1.25rem;
+  --md-type-label-large-track:    0.007em;
+  --md-type-label-large-weight:   500;
+  --md-type-label-medium-size:    0.75rem;    /* 12sp */
+  --md-type-label-medium-line:    1rem;
+  --md-type-label-medium-track:   0.031em;
+  --md-type-label-medium-weight:  500;
+  --md-type-label-small-size:     0.6875rem;  /* 11sp */
+  --md-type-label-small-line:     1rem;
+  --md-type-label-small-track:    0.031em;
+  --md-type-label-small-weight:   500;
+
+  /* shadows */
   --shadow-2xs: 0 1px 2px 0 hsl(240 14% 4% / 0.18);
-  --shadow-xs: 0 1px 2px 0 hsl(240 14% 4% / 0.22);
-  --shadow-sm: 0 2px 6px -1px hsl(240 14% 4% / 0.28), 0 1px 2px -1px hsl(240 14% 4% / 0.18);
-  --shadow: 0 4px 10px -2px hsl(240 14% 4% / 0.32), 0 2px 4px -2px hsl(240 14% 4% / 0.22);
-  --shadow-md: 0 8px 18px -4px hsl(240 14% 4% / 0.36), 0 3px 6px -3px hsl(240 14% 4% / 0.22);
-  --shadow-lg: 0 20px 40px -10px hsl(240 14% 4% / 0.44), 0 8px 12px -6px hsl(240 14% 4% / 0.28);
-  --shadow-xl: 0 28px 56px -12px hsl(240 14% 4% / 0.5);
+  --shadow-xs:  0 1px 2px 0 hsl(240 14% 4% / 0.22);
+  --shadow-sm:  0 2px 6px -1px hsl(240 14% 4% / 0.28), 0 1px 2px -1px hsl(240 14% 4% / 0.18);
+  --shadow:     0 4px 10px -2px hsl(240 14% 4% / 0.32), 0 2px 4px -2px hsl(240 14% 4% / 0.22);
+  --shadow-md:  0 8px 18px -4px hsl(240 14% 4% / 0.36), 0 3px 6px -3px hsl(240 14% 4% / 0.22);
+  --shadow-lg:  0 20px 40px -10px hsl(240 14% 4% / 0.44), 0 8px 12px -6px hsl(240 14% 4% / 0.28);
+  --shadow-xl:  0 28px 56px -12px hsl(240 14% 4% / 0.5);
   --shadow-2xl: 0 36px 72px -16px hsl(240 14% 4% / 0.6);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
   --sidebar-primary-border: hsl(var(--sidebar-primary));
-  --sidebar-primary-border: hsl(
-    from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --sidebar-accent-border: hsl(var(--sidebar-accent));
-  --sidebar-accent-border: hsl(
-    from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --primary-border: hsl(var(--primary));
-  --primary-border: hsl(
-    from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --secondary-border: hsl(var(--secondary));
-  --secondary-border: hsl(
-    from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --muted-border: hsl(var(--muted));
-  --muted-border: hsl(
-    from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --accent-border: hsl(var(--accent));
-  --accent-border: hsl(
-    from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --destructive-border: hsl(var(--destructive));
-  --destructive-border: hsl(
-    from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
+  --sidebar-accent-border:  hsl(var(--sidebar-accent));
+  --primary-border:    hsl(var(--primary));
+  --secondary-border:  hsl(var(--secondary));
+  --muted-border:      hsl(var(--muted));
+  --accent-border:     hsl(var(--accent));
+  --destructive-border:hsl(var(--destructive));
 }
 
+/* ─────────────────────────────────────────────────────────────
+   DARK MODE — primary palette
+   Deep ink background · neon magenta primary · phosphor cyan secondary
+   ───────────────────────────────────────────────────────────── */
 .dark {
+  --opaque-button-border-intensity: 8;
   --button-outline: rgba(255, 255, 255, 0.08);
   --badge-outline: rgba(255, 255, 255, 0.06);
-  --opaque-button-border-intensity: 8;
-  --elevate-1: rgba(255, 255, 255, 0.04);
-  --elevate-2: rgba(255, 255, 255, 0.08);
 
-  /* Dark mode — primary palette. Deep ink with a faint blue-violet bias. */
-  --background: 240 14% 6%;
-  --foreground: 36 22% 94%;
-  --border: 240 8% 18%;
-  --card: 240 14% 9%;
+  /* MD3 Tonal elevation overlays for dark theme (primary-tinted surfaces) */
+  --md-elev-1:  hsl(322 30% 100% / 0.05);
+  --md-elev-2:  hsl(322 30% 100% / 0.08);
+  --md-elev-3:  hsl(322 30% 100% / 0.11);
+  --md-elev-4:  hsl(322 30% 100% / 0.12);
+  --md-elev-5:  hsl(322 30% 100% / 0.14);
+  --elevate-1: var(--md-elev-1);
+  --elevate-2: var(--md-elev-2);
+
+  /* Surface containers (dark — progressively lighter ink tones) */
+  --surface-container-lowest: 240 16% 4%;
+  --surface-container-low:    240 14% 6%;
+  --surface-container:        240 13% 8%;
+  --surface-container-high:   240 12% 10%;
+  --surface-container-highest:240 11% 13%;
+
+  /* Base tokens */
+  --background:  var(--surface-container-lowest);
+  --foreground:  36 22% 94%;
+  --border:      240 8% 18%;
+
+  --card:          var(--surface-container);
   --card-foreground: 36 22% 94%;
-  --card-border: 240 10% 15%;
-  --sidebar: 240 16% 5%;
-  --sidebar-foreground: 36 22% 92%;
-  --sidebar-border: 240 10% 14%;
-  --sidebar-primary: 322 92% 60%;
+  --card-border:   240 10% 15%;
+
+  --sidebar:          var(--surface-container-low);
+  --sidebar-foreground:    36 22% 92%;
+  --sidebar-border:        240 10% 14%;
+  --sidebar-primary:       322 92% 60%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 10% 14%;
+  --sidebar-accent:        240 10% 14%;
   --sidebar-accent-foreground: 36 22% 94%;
-  --sidebar-ring: 322 92% 60%;
-  --popover: 240 14% 9%;
+  --sidebar-ring:          322 92% 60%;
+
+  --popover:          var(--surface-container-high);
   --popover-foreground: 36 22% 94%;
-  --popover-border: 240 10% 16%;
-  --primary: 322 92% 60%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 240 10% 16%;
-  --secondary-foreground: 36 22% 94%;
-  --muted: 240 8% 14%;
-  --muted-foreground: 240 6% 64%;
-  --accent: 188 90% 52%;
-  --accent-foreground: 240 14% 6%;
-  --destructive: 0 76% 56%;
-  --destructive-foreground: 0 0% 100%;
-  --input: 240 8% 22%;
-  --ring: 322 92% 60%;
+  --popover-border:   240 10% 16%;
+
+  /* MD3 Primary — neon magenta */
+  --primary:               322 92% 60%;
+  --primary-foreground:    0 0% 100%;
+  --primary-container:     322 55% 20%;
+  --on-primary-container:  322 90% 88%;
+
+  /* MD3 Secondary — phosphor cyan */
+  --secondary:             240 10% 16%;
+  --secondary-foreground:  36 22% 94%;
+  --secondary-container:   188 50% 18%;
+  --on-secondary-container:188 90% 84%;
+
+  /* MD3 Tertiary — amber/gold */
+  --tertiary:              42 96% 60%;
+  --tertiary-foreground:   240 14% 6%;
+  --tertiary-container:    42 55% 18%;
+  --on-tertiary-container: 42 90% 84%;
+
+  --muted:          240 8% 14%;
+  --muted-foreground:240 6% 64%;
+  --accent:         188 90% 52%;
+  --accent-foreground:240 14% 6%;
+  --destructive:    0 76% 56%;
+  --destructive-foreground:0 0% 100%;
+  --input:          240 8% 22%;
+  --ring:           322 92% 60%;
+
   --chart-1: 322 92% 60%;
   --chart-2: 188 90% 56%;
   --chart-3: 42 96% 60%;
   --chart-4: 142 60% 56%;
   --chart-5: 264 80% 68%;
+
   --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.45);
-  --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.5);
-  --shadow-sm: 0 2px 6px -1px hsl(0 0% 0% / 0.55), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
-  --shadow: 0 4px 12px -2px hsl(0 0% 0% / 0.55), 0 2px 4px -2px hsl(0 0% 0% / 0.4);
-  --shadow-md: 0 10px 22px -4px hsl(0 0% 0% / 0.55), 0 3px 8px -3px hsl(0 0% 0% / 0.4);
-  --shadow-lg: 0 22px 44px -10px hsl(0 0% 0% / 0.6), 0 8px 14px -6px hsl(0 0% 0% / 0.45);
-  --shadow-xl: 0 30px 60px -12px hsl(0 0% 0% / 0.7);
+  --shadow-xs:  0 1px 3px 0 hsl(0 0% 0% / 0.5);
+  --shadow-sm:  0 2px 6px -1px hsl(0 0% 0% / 0.55), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
+  --shadow:     0 4px 12px -2px hsl(0 0% 0% / 0.55), 0 2px 4px -2px hsl(0 0% 0% / 0.4);
+  --shadow-md:  0 10px 22px -4px hsl(0 0% 0% / 0.55), 0 3px 8px -3px hsl(0 0% 0% / 0.4);
+  --shadow-lg:  0 22px 44px -10px hsl(0 0% 0% / 0.6), 0 8px 14px -6px hsl(0 0% 0% / 0.45);
+  --shadow-xl:  0 30px 60px -12px hsl(0 0% 0% / 0.7);
   --shadow-2xl: 0 40px 80px -20px hsl(0 0% 0% / 0.8);
 
   --sidebar-primary-border: hsl(var(--sidebar-primary));
-  --sidebar-primary-border: hsl(
-    from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --sidebar-accent-border: hsl(var(--sidebar-accent));
-  --sidebar-accent-border: hsl(
-    from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --primary-border: hsl(var(--primary));
-  --primary-border: hsl(
-    from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --secondary-border: hsl(var(--secondary));
-  --secondary-border: hsl(
-    from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --muted-border: hsl(var(--muted));
-  --muted-border: hsl(
-    from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --accent-border: hsl(var(--accent));
-  --accent-border: hsl(
-    from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
-  --destructive-border: hsl(var(--destructive));
-  --destructive-border: hsl(
-    from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
-  );
+  --sidebar-accent-border:  hsl(var(--sidebar-accent));
+  --primary-border:    hsl(var(--primary));
+  --secondary-border:  hsl(var(--secondary));
+  --muted-border:      hsl(var(--muted));
+  --accent-border:     hsl(var(--accent));
+  --destructive-border:hsl(var(--destructive));
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MD3 TYPE SCALE UTILITIES
+   Apply these classes directly on text elements for MD3-compliant typography.
+   ───────────────────────────────────────────────────────────── */
+@layer utilities {
+  .md-display-large  { font-size: var(--md-type-display-large-size);  line-height: var(--md-type-display-large-line);  letter-spacing: var(--md-type-display-large-track);  font-weight: 400; }
+  .md-display-medium { font-size: var(--md-type-display-medium-size); line-height: var(--md-type-display-medium-line); letter-spacing: var(--md-type-display-medium-track); font-weight: 400; }
+  .md-display-small  { font-size: var(--md-type-display-small-size);  line-height: var(--md-type-display-small-line);  letter-spacing: var(--md-type-display-small-track);  font-weight: 400; }
+  .md-headline-large  { font-size: var(--md-type-headline-large-size);  line-height: var(--md-type-headline-large-line);  letter-spacing: var(--md-type-headline-large-track);  font-weight: 400; }
+  .md-headline-medium { font-size: var(--md-type-headline-medium-size); line-height: var(--md-type-headline-medium-line); letter-spacing: var(--md-type-headline-medium-track); font-weight: 400; }
+  .md-headline-small  { font-size: var(--md-type-headline-small-size);  line-height: var(--md-type-headline-small-line);  letter-spacing: var(--md-type-headline-small-track);  font-weight: 400; }
+  .md-title-large  { font-size: var(--md-type-title-large-size);  line-height: var(--md-type-title-large-line);  letter-spacing: var(--md-type-title-large-track);  font-weight: 500; }
+  .md-title-medium { font-size: var(--md-type-title-medium-size); line-height: var(--md-type-title-medium-line); letter-spacing: var(--md-type-title-medium-track); font-weight: 500; }
+  .md-title-small  { font-size: var(--md-type-title-small-size);  line-height: var(--md-type-title-small-line);  letter-spacing: var(--md-type-title-small-track);  font-weight: 500; }
+  .md-body-large  { font-size: var(--md-type-body-large-size);  line-height: var(--md-type-body-large-line);  letter-spacing: var(--md-type-body-large-track);  font-weight: 400; }
+  .md-body-medium { font-size: var(--md-type-body-medium-size); line-height: var(--md-type-body-medium-line); letter-spacing: var(--md-type-body-medium-track); font-weight: 400; }
+  .md-body-small  { font-size: var(--md-type-body-small-size);  line-height: var(--md-type-body-small-line);  letter-spacing: var(--md-type-body-small-track);  font-weight: 400; }
+  .md-label-large  { font-size: var(--md-type-label-large-size);  line-height: var(--md-type-label-large-line);  letter-spacing: var(--md-type-label-large-track);  font-weight: var(--md-type-label-large-weight); }
+  .md-label-medium { font-size: var(--md-type-label-medium-size); line-height: var(--md-type-label-medium-line); letter-spacing: var(--md-type-label-medium-track); font-weight: var(--md-type-label-medium-weight); }
+  .md-label-small  { font-size: var(--md-type-label-small-size);  line-height: var(--md-type-label-small-line);  letter-spacing: var(--md-type-label-small-track);  font-weight: var(--md-type-label-small-weight); }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  html, body, #root {
-    height: 100%;
-  }
+  * { @apply border-border; }
+  html, body, #root { height: 100%; }
   body {
     @apply font-sans antialiased bg-background text-foreground;
     font-feature-settings: 'cv11', 'ss01', 'ss03';
@@ -193,12 +315,40 @@
   }
 }
 
-/* Subtle CRT scanline overlay — opt-in via .crt class on the body or container.
-   Off by default (Arcade Mode toggle turns it on). Respects reduced-motion. */
+/* ─────────────────────────────────────────────────────────────
+   MD3 STATE LAYERS
+   All interactive surfaces get a ::before overlay for state indication.
+   Opacity driven by data-state or interaction pseudo-class.
+   ───────────────────────────────────────────────────────────── */
 @layer utilities {
-  .crt {
+
+  /* Base state-layer setup — all interactive md3 components use this */
+  .md3-state {
     position: relative;
+    overflow: hidden;
+    isolation: isolate;
   }
+  .md3-state::before {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: 0;
+    transition: opacity 150ms ease;
+    z-index: 1;
+  }
+  .md3-state:hover::before        { opacity: var(--md-state-hover); }
+  .md3-state:active::before       { opacity: var(--md-state-press); }
+  .md3-state:focus-visible::before{ opacity: var(--md-state-focus); }
+
+  /* State layer tinted to primary (used on primary-container backgrounds) */
+  .md3-state-primary::before { background-color: hsl(var(--primary)); }
+  .md3-state-on-surface::before { background-color: hsl(var(--foreground)); }
+
+  /* CRT scanline overlay — opt-in via .crt on body/container */
+  .crt { position: relative; }
   .crt::after {
     content: '';
     position: fixed;
@@ -206,10 +356,8 @@
     pointer-events: none;
     background-image: repeating-linear-gradient(
       to bottom,
-      hsl(0 0% 0% / 0.18) 0px,
-      hsl(0 0% 0% / 0.18) 1px,
-      transparent 1px,
-      transparent 3px
+      hsl(0 0% 0% / 0.18) 0px, hsl(0 0% 0% / 0.18) 1px,
+      transparent 1px, transparent 3px
     );
     mix-blend-mode: multiply;
     z-index: 50;
@@ -219,11 +367,11 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    background:
-      radial-gradient(120% 80% at 50% 50%, transparent 60%, hsl(0 0% 0% / 0.5) 100%);
+    background: radial-gradient(120% 80% at 50% 50%, transparent 60%, hsl(0 0% 0% / 0.5) 100%);
     z-index: 49;
   }
 
+  /* Neon glow utilities */
   .neon-text {
     text-shadow:
       0 0 1px hsl(var(--primary) / 0.8),
@@ -249,19 +397,15 @@
     background-position: -1px -1px;
   }
 
-  input[type='search']::-webkit-search-cancel-button {
-    @apply hidden;
-  }
+  /* MD3 Tonal surface elevation helpers */
+  .surface-1 { background-color: hsl(var(--surface-container-low)); }
+  .surface-2 { background-color: hsl(var(--surface-container)); }
+  .surface-3 { background-color: hsl(var(--surface-container-high)); }
+  .surface-4 { background-color: hsl(var(--surface-container-highest)); }
 
-  [contenteditable][data-placeholder]:empty::before {
-    content: attr(data-placeholder);
-    color: hsl(var(--muted-foreground));
-    pointer-events: none;
-  }
-
+  /* Legacy hover-elevate compatibility — kept for components not yet migrated */
   .no-default-hover-elevate {}
   .no-default-active-elevate {}
-
   .toggle-elevate::before,
   .toggle-elevate-2::before {
     content: '';
@@ -271,12 +415,8 @@
     border-radius: inherit;
     z-index: -1;
   }
-  .toggle-elevate.toggle-elevated::before {
-    background-color: var(--elevate-2);
-  }
-  .border.toggle-elevate::before {
-    inset: -1px;
-  }
+  .toggle-elevate.toggle-elevated::before { background-color: var(--elevate-2); }
+  .border.toggle-elevate::before { inset: -1px; }
 
   .hover-elevate:not(.no-default-hover-elevate),
   .active-elevate:not(.no-default-active-elevate),
@@ -285,7 +425,6 @@
     position: relative;
     z-index: 0;
   }
-
   .hover-elevate:not(.no-default-hover-elevate)::after,
   .active-elevate:not(.no-default-active-elevate)::after,
   .hover-elevate-2:not(.no-default-hover-elevate)::after,
@@ -297,26 +436,26 @@
     border-radius: inherit;
     z-index: 999;
   }
-
   .hover-elevate:hover:not(.no-default-hover-elevate)::after,
-  .active-elevate:active:not(.no-default-active-elevate)::after {
-    background-color: var(--elevate-1);
-  }
+  .active-elevate:active:not(.no-default-active-elevate)::after { background-color: var(--elevate-1); }
   .hover-elevate-2:hover:not(.no-default-hover-elevate)::after,
-  .active-elevate-2:active:not(.no-default-active-elevate)::after {
-    background-color: var(--elevate-2);
-  }
-
+  .active-elevate-2:active:not(.no-default-active-elevate)::after { background-color: var(--elevate-2); }
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
   .border.active-elevate:not(.no-active-interaction-elevate)::after,
   .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
-  .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
-  .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
-    inset: -1px;
+  .border.active-elevate-2:not(.no-active-interaction-elevate)::after { inset: -1px; }
+
+  input[type='search']::-webkit-search-cancel-button { @apply hidden; }
+  [contenteditable][data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
   }
 }
 
-/* Stronger keyboard focus ring — important for TV / controller users */
+/* ─────────────────────────────────────────────────────────────
+   FOCUS RING — keyboard / controller navigation
+   ───────────────────────────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid hsl(var(--accent));
   outline-offset: 3px;
@@ -339,20 +478,24 @@ a:focus-visible,
   }
 }
 
-/* ============================================================
-   CUSTOM THEMES — applied via data-theme attribute on <html>
-   Each block overrides the .dark palette for that theme.
-   ============================================================ */
+/* ─────────────────────────────────────────────────────────────
+   CUSTOM THEMES — data-theme attribute on <html>
+   ───────────────────────────────────────────────────────────── */
 
-/* ---------- Synthwave — deep purple, neon pink, electric teal ---------- */
+/* ── Synthwave ── */
 html.dark[data-theme="synthwave"] {
   --background: 265 45% 4%;
   --foreground: 290 60% 94%;
   --border: 270 30% 20%;
-  --card: 265 42% 7%;
+  --surface-container-lowest: 265 48% 3%;
+  --surface-container-low:    265 45% 4%;
+  --surface-container:        265 42% 7%;
+  --surface-container-high:   265 38% 10%;
+  --surface-container-highest:265 34% 13%;
+  --card:    var(--surface-container);
   --card-foreground: 290 60% 94%;
   --card-border: 270 28% 14%;
-  --sidebar: 265 48% 3%;
+  --sidebar: var(--surface-container-low);
   --sidebar-foreground: 290 55% 92%;
   --sidebar-border: 270 30% 13%;
   --sidebar-primary: 295 100% 65%;
@@ -360,13 +503,17 @@ html.dark[data-theme="synthwave"] {
   --sidebar-accent: 265 40% 12%;
   --sidebar-accent-foreground: 290 55% 92%;
   --sidebar-ring: 295 100% 65%;
-  --popover: 265 42% 7%;
+  --popover: var(--surface-container-high);
   --popover-foreground: 290 60% 94%;
   --popover-border: 270 28% 16%;
   --primary: 295 100% 65%;
   --primary-foreground: 0 0% 100%;
+  --primary-container: 295 55% 20%;
+  --on-primary-container: 295 90% 88%;
   --secondary: 265 32% 14%;
   --secondary-foreground: 290 60% 94%;
+  --secondary-container: 180 50% 18%;
+  --on-secondary-container: 180 90% 84%;
   --muted: 265 28% 12%;
   --muted-foreground: 270 20% 60%;
   --accent: 180 100% 55%;
@@ -381,22 +528,26 @@ html.dark[data-theme="synthwave"] {
   --chart-4: 142 60% 56%;
   --chart-5: 340 80% 68%;
 }
-
 html.dark[data-theme="synthwave"] body {
   background-image:
     radial-gradient(1200px 600px at 90% -10%, hsl(295 100% 30% / 0.22), transparent 60%),
     radial-gradient(900px 500px at 0% 100%, hsl(180 100% 28% / 0.16), transparent 60%);
 }
 
-/* ---------- Game Boy — olive-green LCD, classic handheld feel ---------- */
+/* ── Game Boy ── */
 html.dark[data-theme="gameboy"] {
   --background: 84 30% 7%;
   --foreground: 88 55% 80%;
   --border: 86 25% 18%;
-  --card: 84 28% 10%;
+  --surface-container-lowest: 84 32% 5%;
+  --surface-container-low:    84 30% 7%;
+  --surface-container:        84 28% 10%;
+  --surface-container-high:   84 25% 13%;
+  --surface-container-highest:84 22% 16%;
+  --card: var(--surface-container);
   --card-foreground: 88 55% 80%;
   --card-border: 86 24% 15%;
-  --sidebar: 84 32% 5%;
+  --sidebar: var(--surface-container-low);
   --sidebar-foreground: 88 50% 78%;
   --sidebar-border: 86 26% 12%;
   --sidebar-primary: 88 65% 48%;
@@ -404,11 +555,13 @@ html.dark[data-theme="gameboy"] {
   --sidebar-accent: 84 26% 14%;
   --sidebar-accent-foreground: 88 50% 78%;
   --sidebar-ring: 88 65% 48%;
-  --popover: 84 28% 10%;
+  --popover: var(--surface-container-high);
   --popover-foreground: 88 55% 80%;
   --popover-border: 86 24% 16%;
   --primary: 88 65% 48%;
   --primary-foreground: 84 50% 6%;
+  --primary-container: 88 40% 18%;
+  --on-primary-container: 88 65% 84%;
   --secondary: 84 22% 16%;
   --secondary-foreground: 88 55% 80%;
   --muted: 84 20% 13%;
@@ -425,22 +578,26 @@ html.dark[data-theme="gameboy"] {
   --chart-4: 130 60% 48%;
   --chart-5: 72 70% 55%;
 }
-
 html.dark[data-theme="gameboy"] body {
   background-image:
     radial-gradient(1000px 500px at 80% -5%, hsl(88 65% 20% / 0.18), transparent 60%),
     radial-gradient(800px 400px at 0% 100%, hsl(100 70% 20% / 0.14), transparent 60%);
 }
 
-/* ---------- OLED Black — true black, hyper-saturated neon accents ---------- */
+/* ── OLED Black ── */
 html.dark[data-theme="oled"] {
   --background: 0 0% 0%;
   --foreground: 0 0% 93%;
   --border: 0 0% 12%;
-  --card: 0 0% 4%;
+  --surface-container-lowest: 0 0% 0%;
+  --surface-container-low:    0 0% 2%;
+  --surface-container:        0 0% 4%;
+  --surface-container-high:   0 0% 7%;
+  --surface-container-highest:0 0% 10%;
+  --card: var(--surface-container);
   --card-foreground: 0 0% 93%;
   --card-border: 0 0% 9%;
-  --sidebar: 0 0% 2%;
+  --sidebar: var(--surface-container-low);
   --sidebar-foreground: 0 0% 91%;
   --sidebar-border: 0 0% 10%;
   --sidebar-primary: 322 100% 65%;
@@ -448,11 +605,13 @@ html.dark[data-theme="oled"] {
   --sidebar-accent: 0 0% 8%;
   --sidebar-accent-foreground: 0 0% 91%;
   --sidebar-ring: 322 100% 65%;
-  --popover: 0 0% 4%;
+  --popover: var(--surface-container-high);
   --popover-foreground: 0 0% 93%;
   --popover-border: 0 0% 10%;
   --primary: 322 100% 65%;
   --primary-foreground: 0 0% 100%;
+  --primary-container: 322 55% 16%;
+  --on-primary-container: 322 90% 88%;
   --secondary: 0 0% 10%;
   --secondary-foreground: 0 0% 93%;
   --muted: 0 0% 8%;
@@ -469,7 +628,4 @@ html.dark[data-theme="oled"] {
   --chart-4: 142 70% 58%;
   --chart-5: 264 90% 70%;
 }
-
-html.dark[data-theme="oled"] body {
-  background-image: none;
-}
+html.dark[data-theme="oled"] body { background-image: none; }

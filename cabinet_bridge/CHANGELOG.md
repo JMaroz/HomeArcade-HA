@@ -1,3 +1,17 @@
+## [0.7.0] – 2026-05-08
+
+### Changed
+- **Material Design 3 full overhaul** — complete alignment to the MD3 design system (m3.material.io) while preserving the dark gaming aesthetic
+- **Color system** — MD3 color roles: primary/secondary/tertiary containers, surface container levels (lowest → highest), on-container text roles; dark theme uses tonal elevation overlays (primary-tinted surfaces)
+- **Shape scale** — MD3 shape scale: extra-small 4px · small 8px · medium 12px (new default radius) · large 16px · extra-large 28px; all cards, dialogs, and chips updated
+- **Type scale** — full MD3 type scale tokens (Display, Headline, Title, Body, Label with correct sizes, weights, and letter-spacing);  utility classes available
+- **State layers** — replaced box-shadow elevation with MD3 state layers (): 8% hover, 12% press/focus, 16% drag; tinted to current-color for correct on-surface contrast
+- **Navigation Drawer** — sidebar rebuilt to MD3 Navigation Drawer: active items use a 56 × pill-shaped primary-container indicator, section headers use Label Small, icon tinted to primary when active
+- **Navigation Bar** — mobile bottom nav rebuilt to MD3 Navigation Bar: active tab has indicator pill under icon (primary-container), Label Small style, active icon tinted primary
+- **Game Cards** — updated to MD3 Elevated Card: 16px large shape (rounded-xl), tonal surface (surface-container), Level-1 shadow, state layer on hover/press, borderless elevated style
+- **Favorite button** — MD3 Tonal Icon Button: primary-container fill when active, rounded-full shape
+- **Tailwind config** — Tailwind border-radius overrides updated to MD3 scale; new color tokens: , , , , 
+
 # Changelog
 
 ## 0.6.1
