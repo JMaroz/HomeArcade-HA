@@ -224,3 +224,20 @@ export const gamepadBindings = sqliteTable("gamepad_bindings", {
 });
 
 export type GamepadBinding = typeof gamepadBindings.$inferSelect;
+
+// ── Cheat library cache ──────────────────────────────────────────────────────
+// cheat_index_cache: one row per system folder, stores the directory listing
+export const cheatIndexCache = sqliteTable("cheat_index_cache", {
+  id:        integer("id").primaryKey({ autoIncrement: true }),
+  folder:    text("folder").notNull().unique(),
+  filesJson: text("files_json").notNull(), // JSON: { name, path }[]
+  cachedAt:  integer("cached_at").notNull(),
+});
+
+// cheat_file_cache: one row per .cht file path, stores the parsed cheats
+export const cheatFileCache = sqliteTable("cheat_file_cache", {
+  id:        integer("id").primaryKey({ autoIncrement: true }),
+  path:      text("path").notNull().unique(),
+  cheatsJson: text("cheats_json").notNull(), // JSON: { desc, code }[]
+  cachedAt:  integer("cached_at").notNull(),
+});

@@ -672,7 +672,7 @@ export async function registerRoutes(
   });
 
 
-  // GET /api/roms/:id/fetch-cheats — pull from libretro cheat database
+  // GET /api/roms/:id/fetch-cheats — pull from libretro cheat database (with SQLite cache)
   app.get("/api/roms/:id/fetch-cheats", async (req, res) => {
     const romId = Number(req.params.id);
     const rom = await storage.getUploadedRom(romId);
@@ -702,35 +702,36 @@ export async function registerRoutes(
     const folder = SYSTEM_FOLDERS[rom.system?.toLowerCase() ?? ""];
     if (!folder) return res.json({ cheats: [], message: "No cheat database for this system." });
 
-    // List all .cht files in the system folder via GitHub Contents API
-    const contentsUrl =
-      `https://api.github.com/repos/libretro/libretro-database/contents/cht/${encodeURIComponent(folder)}`;
-
-    let files: { name: string; path: string }[] = [];
-    try {
-      const contentsRes = await fetch(contentsUrl, {
-        headers: { Accept: "application/vnd.github+json", "User-Agent": "HomeArcade/1.0" },
-      });
-      if (!contentsRes.ok) return res.json({ cheats: [], message: "Could not reach cheat database." });
-      files = await contentsRes.json() as { name: string; path: string }[];
-    } catch {
-      return res.json({ cheats: [], message: "Network error reaching cheat database." });
+    // 1. Get directory index — from cache or GitHub
+    let files = await storage.getCheatIndex(folder);
+    if (!files) {
+      const contentsUrl =
+        `https://api.github.com/repos/libretro/libretro-database/contents/cht/${encodeURIComponent(folder)}`;
+      try {
+        const contentsRes = await fetch(contentsUrl, {
+          headers: { Accept: "application/vnd.github+json", "User-Agent": "HomeArcade/1.0" },
+        });
+        if (!contentsRes.ok) return res.json({ cheats: [], message: "Could not reach cheat database." });
+        const raw = await contentsRes.json() as { name: string; path: string }[];
+        files = raw.filter((f) => f.name.endsWith(".cht"));
+        await storage.setCheatIndex(folder, files);
+      } catch {
+        return res.json({ cheats: [], message: "Network error reaching cheat database." });
+      }
     }
 
-    // Fuzzy-match: normalise title and filename, score by shared words
+    // 2. Fuzzy-match title against directory listing
     const normalise = (s: string) =>
       s.toLowerCase().replace(/\(.*?\)/g, "").replace(/[^a-z0-9\s]/g, " ").trim();
 
     const titleWords = new Set(normalise(rom.title).split(/\s+/).filter(Boolean));
-
     let bestPath: string | null = null;
     let bestScore = 0;
+
     for (const file of files) {
-      if (!file.name.endsWith(".cht")) continue;
       const fileWords = normalise(file.name.replace(/\.cht$/, "")).split(/\s+/).filter(Boolean);
       let score = 0;
       for (const w of fileWords) { if (titleWords.has(w)) score++; }
-      // Bonus: exact normalised prefix match
       if (normalise(file.name).startsWith(normalise(rom.title).slice(0, 6))) score += 2;
       if (score > bestScore) { bestScore = score; bestPath = file.path; }
     }
@@ -739,35 +740,45 @@ export async function registerRoutes(
       return res.json({ cheats: [], message: "No cheat file found for this game." });
     }
 
-    // Fetch raw .cht content
-    let chtText = "";
-    try {
-      const rawRes = await fetch(
-        `https://raw.githubusercontent.com/libretro/libretro-database/master/${bestPath}`,
-        { headers: { "User-Agent": "HomeArcade/1.0" } },
-      );
-      if (!rawRes.ok) return res.json({ cheats: [], message: "Could not download cheat file." });
-      chtText = await rawRes.text();
-    } catch {
-      return res.json({ cheats: [], message: "Network error fetching cheat file." });
+    // 3. Get parsed cheats — from cache or GitHub raw
+    let cheats = await storage.getCachedCheats(bestPath);
+    if (!cheats) {
+      let chtText = "";
+      try {
+        const rawRes = await fetch(
+          `https://raw.githubusercontent.com/libretro/libretro-database/master/${bestPath}`,
+          { headers: { "User-Agent": "HomeArcade/1.0" } },
+        );
+        if (!rawRes.ok) return res.json({ cheats: [], message: "Could not download cheat file." });
+        chtText = await rawRes.text();
+      } catch {
+        return res.json({ cheats: [], message: "Network error fetching cheat file." });
+      }
+
+      const entries: Record<number, { desc?: string; code?: string }> = {};
+      for (const line of chtText.split(/\r?\n/)) {
+        const m = line.match(/^cheat(\d+)_(desc|code)\s*=\s*"(.*)"\s*$/);
+        if (!m) continue;
+        const idx = Number(m[1]);
+        if (!entries[idx]) entries[idx] = {};
+        if (m[2] === "desc") entries[idx].desc = m[3].trim();
+        if (m[2] === "code") entries[idx].code = m[3].trim();
+      }
+
+      cheats = Object.values(entries)
+        .filter((e) => e.desc && e.code)
+        .map((e) => ({ desc: e.desc!, code: e.code! }));
+
+      await storage.setCachedCheats(bestPath, cheats);
     }
 
-    // Parse .cht format: cheatN_desc = "..." / cheatN_code = "..."
-    const entries: Record<number, { desc?: string; code?: string }> = {};
-    for (const line of chtText.split(/\r?\n/)) {
-      const m = line.match(/^cheat(\d+)_(desc|code)\s*=\s*"(.*)"\s*$/);
-      if (!m) continue;
-      const idx = Number(m[1]);
-      if (!entries[idx]) entries[idx] = {};
-      if (m[2] === "desc") entries[idx].desc = m[3].trim();
-      if (m[2] === "code") entries[idx].code = m[3].trim();
-    }
+    res.json({ cheats, source: bestPath, cached: true });
+  });
 
-    const cheats = Object.values(entries)
-      .filter((e) => e.desc && e.code)
-      .map((e) => ({ desc: e.desc!, code: e.code! }));
-
-    res.json({ cheats, source: bestPath });
+  // DELETE /api/cheat-cache — clear cached cheat index and file data
+  app.delete("/api/cheat-cache", async (_req, res) => {
+    await storage.clearCheatCache();
+    res.json({ ok: true });
   });
 
   app.get("/api/collections", async (_req, res) => {

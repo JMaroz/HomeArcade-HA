@@ -171,6 +171,12 @@ export interface IStorage {
   getGamepadBindings(profileId: number, gamepadId: string): Promise<Record<number, number>>;
   setGamepadBindings(profileId: number, gamepadId: string, bindings: Record<number, number>): Promise<void>;
   listGamepadBindings(profileId: number): Promise<Array<{ gamepadId: string; bindings: Record<number, number> }>>;
+  // Cheat cache
+  getCheatIndex(folder: string): Promise<{ name: string; path: string }[] | null>;
+  setCheatIndex(folder: string, files: { name: string; path: string }[]): Promise<void>;
+  getCachedCheats(path: string): Promise<{ desc: string; code: string }[] | null>;
+  setCachedCheats(path: string, cheats: { desc: string; code: string }[]): Promise<void>;
+  clearCheatCache(): Promise<void>;
 }
 
 const INTEGRATION_SETTINGS_KEY = "integration";
@@ -567,6 +573,45 @@ export class DatabaseStorage implements IStorage {
       bindings: (() => { try { return JSON.parse(r.bindings) as Record<number, number>; } catch { return {}; } })(),
     }));
   }
+
+  // ── Cheat cache ────────────────────────────────────────────────────────
+  private static CHEAT_INDEX_TTL = 7 * 24 * 60 * 60 * 1000;  // 7 days
+  private static CHEAT_FILE_TTL  = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+  async getCheatIndex(folder: string): Promise<{ name: string; path: string }[] | null> {
+    const row = sqlite.prepare(
+      "SELECT files_json, cached_at FROM cheat_index_cache WHERE folder=?"
+    ).get(folder) as { files_json: string; cached_at: number } | undefined;
+    if (!row) return null;
+    if (Date.now() - row.cached_at > DatabaseStorage.CHEAT_INDEX_TTL) return null;
+    try { return JSON.parse(row.files_json) as { name: string; path: string }[]; } catch { return null; }
+  }
+
+  async setCheatIndex(folder: string, files: { name: string; path: string }[]): Promise<void> {
+    sqlite.prepare(
+      "INSERT INTO cheat_index_cache (folder, files_json, cached_at) VALUES (?,?,?) ON CONFLICT(folder) DO UPDATE SET files_json=excluded.files_json, cached_at=excluded.cached_at"
+    ).run(folder, JSON.stringify(files), Date.now());
+  }
+
+  async getCachedCheats(path: string): Promise<{ desc: string; code: string }[] | null> {
+    const row = sqlite.prepare(
+      "SELECT cheats_json, cached_at FROM cheat_file_cache WHERE path=?"
+    ).get(path) as { cheats_json: string; cached_at: number } | undefined;
+    if (!row) return null;
+    if (Date.now() - row.cached_at > DatabaseStorage.CHEAT_FILE_TTL) return null;
+    try { return JSON.parse(row.cheats_json) as { desc: string; code: string }[]; } catch { return null; }
+  }
+
+  async setCachedCheats(path: string, cheats: { desc: string; code: string }[]): Promise<void> {
+    sqlite.prepare(
+      "INSERT INTO cheat_file_cache (path, cheats_json, cached_at) VALUES (?,?,?) ON CONFLICT(path) DO UPDATE SET cheats_json=excluded.cheats_json, cached_at=excluded.cached_at"
+    ).run(path, JSON.stringify(cheats), Date.now());
+  }
+
+  async clearCheatCache(): Promise<void> {
+    sqlite.exec("DELETE FROM cheat_index_cache");
+    sqlite.exec("DELETE FROM cheat_file_cache");
+  }
 }
 
 export const storage = new DatabaseStorage();
@@ -601,6 +646,18 @@ export const storage = new DatabaseStorage();
       bindings TEXT NOT NULL DEFAULT '{}',
       updated_at INTEGER NOT NULL,
       UNIQUE(profile_id, gamepad_id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS cheat_index_cache (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      folder TEXT NOT NULL UNIQUE,
+      files_json TEXT NOT NULL,
+      cached_at INTEGER NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS cheat_file_cache (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      path TEXT NOT NULL UNIQUE,
+      cheats_json TEXT NOT NULL,
+      cached_at INTEGER NOT NULL
     )`,
   ];
   for (const stmt of stmts) {

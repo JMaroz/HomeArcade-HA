@@ -579,6 +579,7 @@ function GamepadRemapSection({ profileId }: { profileId: number }) {
 
 export default function Settings() {
   const { config, setConfig, resetConfig, saveStatus } = useIntegration();
+  const { toast } = useToast();
   const [copied, setCopied] = useState<string | null>(null);
   const [activeTheme, setActiveTheme] = useState<AppTheme>(
     () => (localStorage.getItem("ha-theme") as AppTheme | null) ?? "default"
@@ -822,6 +823,16 @@ export default function Settings() {
                 </div>
               </Section>
 
+
+              <Section title="Cheat database cache"
+                description="Cheat codes are cached locally after first lookup — one fetch per system, then instant. Cache refreshes automatically after 7 days.">
+                <Button variant="outline" size="sm" onClick={async () => {
+                  await fetch("/api/cheat-cache", { method: "DELETE" });
+                  toast({ title: "Cheat cache cleared", description: "Next lookup will re-fetch from the libretro database." });
+                }} data-testid="button-clear-cheat-cache">
+                  <RotateCcw className="size-3 mr-2" /> Clear cheat cache
+                </Button>
+              </Section>
 
               <Section title="Collections"
                 description="Rename or delete your game collections. Games are not affected when a collection is deleted.">
