@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [0.7.27] — 2026-05-10
+
+### Fix: save-state thumbnails no longer black
+
+- `cabinetCaptureThumb` now calls `emulator.screenshot()` first — EmulatorJS's built-in method bypasses the WebGL `preserveDrawingBuffer=false` restriction that caused `drawImage()` on the game canvas to always return a black frame
+- Falls back to direct canvas read for 2D-rendered cores
+- Screenshots from `emulator.screenshot()` are resized down to thumbnail dimensions before upload
+
+---
+
 ## [0.7.26] — 2026-05-10
 
 ### Fix: save-state backup now reliably reads from IDBFS

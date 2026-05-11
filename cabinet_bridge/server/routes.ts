@@ -3702,19 +3702,57 @@ async function cabinetFetchSaveSlots() {
 }
 async function cabinetCaptureThumb(slot) {
   try {
-    var canvas = document.querySelector("#game canvas");
-    if (!canvas) return;
-    var thumb = document.createElement("canvas");
-    var scale = Math.min(1, 160 / canvas.width);
-    thumb.width = Math.round(canvas.width * scale);
-    thumb.height = Math.round(canvas.height * scale);
-    var ctx = thumb.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(canvas, 0, 0, thumb.width, thumb.height);
-    var dataUrl = thumb.toDataURL("image/jpeg", 0.72);
+    var dataUrl = null;
+
+    // Prefer EmulatorJS built-in screenshot — avoids WebGL preserveDrawingBuffer=false
+    // which causes drawImage() on the canvas to return a black frame.
+    var emulator = window.EJS_emulator;
+    if (emulator && typeof emulator.screenshot === "function") {
+      try { dataUrl = emulator.screenshot(); } catch (_e) {}
+    }
+
+    // Fallback: read directly from the canvas (works for 2D-rendered cores)
+    if (!dataUrl || dataUrl === "data:,") {
+      var canvas = document.querySelector("#game canvas");
+      if (!canvas) return;
+      var thumb = document.createElement("canvas");
+      var scale = Math.min(1, 160 / canvas.width);
+      thumb.width = Math.round(canvas.width * scale) || 160;
+      thumb.height = Math.round(canvas.height * scale) || 120;
+      var ctx = thumb.getContext("2d");
+      if (!ctx) return;
+      try {
+        ctx.drawImage(canvas, 0, 0, thumb.width, thumb.height);
+        dataUrl = thumb.toDataURL("image/jpeg", 0.72);
+      } catch (_e) { return; }
+    }
+
+    // Resize the screenshot down to thumbnail size if it came from emulator.screenshot()
+    if (dataUrl && dataUrl.startsWith("data:image")) {
+      var img = new Image();
+      await new Promise(function(resolve) {
+        img.onload = resolve;
+        img.onerror = resolve;
+        img.src = dataUrl;
+      });
+      if (img.naturalWidth > 0) {
+        var thumb2 = document.createElement("canvas");
+        var scale2 = Math.min(1, 160 / img.naturalWidth);
+        thumb2.width = Math.round(img.naturalWidth * scale2) || 160;
+        thumb2.height = Math.round(img.naturalHeight * scale2) || 120;
+        var ctx2 = thumb2.getContext("2d");
+        if (ctx2) {
+          ctx2.drawImage(img, 0, 0, thumb2.width, thumb2.height);
+          dataUrl = thumb2.toDataURL("image/jpeg", 0.72);
+        }
+      }
+    }
+
+    if (!dataUrl || !dataUrl.startsWith("data:image")) return;
+
     var key = "cabinet_thumb_" + (window.EJS_gameID || "game") + "_" + slot;
     try { localStorage.setItem(key, dataUrl); } catch (_e) {}
-    
+
     // Upload to server
     await fetch("./save-thumb/" + slot, {
       method: "PUT",
