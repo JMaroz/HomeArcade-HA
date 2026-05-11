@@ -4,6 +4,23 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [0.7.31] — 2026-05-10
+
+### Feature: controller haptics + per-system display options
+
+**Controller haptics**
+- New toggle in Settings → Controls: "Gamepad rumble / vibration"
+- Stored as `gamepadRumble` in integration settings, applied at game launch
+- When disabled, overrides `vibrationActuator` to suppress all rumble events
+
+**Per-system display options**
+- New section in Settings → Controls: "Display Options" — one row per system
+- Three overrides per system: **Aspect ratio** (Default / 4:3 / 3:2 / 16:9 / 1:1), **Integer scale** (pixel-perfect rendering), **Shader** (None / CRT / Scanlines / Grayscale)
+- Options stored in `systemDisplay` integration setting and injected into the bootstrap JS; applied via CSS on canvas after `EJS_emulator_ready`
+- Shader value forwarded to `EJS_defaultOptions["shader"]` for EmulatorJS to apply
+
+---
+
 ## [0.7.30] — 2026-05-10
 
 ### Feature: play time on game cards

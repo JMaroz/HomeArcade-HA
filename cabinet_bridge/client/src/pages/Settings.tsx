@@ -12,7 +12,7 @@ import { SYSTEMS, formatRomSize } from "@/data/library";
 import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import { filterToPath } from "@/lib/filter";
 import { Link } from "wouter";
-import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight, RotateCcw, Zap, CheckCircle2, XCircle, Loader2, UserCircle2, Plus, X, Gamepad2, Wifi, WifiOff, Pencil } from "lucide-react";
+import { ArrowLeft, ExternalLink, Copy, Check, AlertTriangle, Trash2, ChevronRight, RotateCcw, Zap, CheckCircle2, XCircle, Loader2, UserCircle2, Plus, X, Gamepad2, Wifi, WifiOff, Pencil, Monitor, Vibrate } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ConsoleSilhouette } from "@/components/ConsoleSilhouette";
@@ -384,6 +384,90 @@ function ControlsTab() {
 
       {/* Gamepad remapper */}
       <GamepadRemapSection profileId={selectedProfileId} playerPort={playerPort} />
+
+      {/* ── Haptics ──────────────────────────────────────────────────── */}
+      <div className="space-y-4 pt-6 border-t border-border">
+        <div className="flex items-center gap-2">
+          <Vibrate className="size-4 text-primary" />
+          <h3 className="font-display text-lg font-bold">Controller Haptics</h3>
+        </div>
+        <div className="flex items-center justify-between rounded-xl border border-border bg-black/30 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium">Gamepad rumble / vibration</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Requires a controller with a vibration motor and browser support.</p>
+          </div>
+          <Switch
+            id="haptics-toggle"
+            checked={config.gamepadRumble ?? true}
+            onCheckedChange={(v) => setConfig({ gamepadRumble: v })}
+          />
+        </div>
+      </div>
+
+      {/* ── Per-system display options ───────────────────────────────── */}
+      <div className="space-y-4 pt-6 border-t border-border">
+        <div className="flex items-center gap-2">
+          <Monitor className="size-4 text-primary" />
+          <h3 className="font-display text-lg font-bold">Display Options</h3>
+        </div>
+        <p className="text-sm text-muted-foreground -mt-2">
+          Per-system overrides applied when a game launches. Integer scale forces pixel-perfect rendering; aspect ratio overrides the default stretch.
+        </p>
+        <div className="space-y-3">
+          {SYSTEMS_WITH_CORES.map((s) => {
+            const opts = config.systemDisplay?.[s.core] ?? {};
+            const setOpts = (patch: { aspectRatio?: string; integerScale?: boolean; shader?: string }) =>
+              setConfig({ systemDisplay: { ...(config.systemDisplay ?? {}), [s.core]: { ...opts, ...patch } } });
+            return (
+              <div key={s.core} className="rounded-xl border border-border bg-black/30 px-4 py-3 space-y-3">
+                <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{s.label}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Aspect ratio */}
+                  <div className="space-y-1">
+                    <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Aspect ratio</Label>
+                    <select
+                      value={opts.aspectRatio ?? ""}
+                      onChange={(e) => setOpts({ aspectRatio: e.target.value || undefined })}
+                      className="w-full h-9 rounded-md border border-border bg-background/50 px-2 font-mono text-xs text-foreground"
+                    >
+                      <option value="">Default</option>
+                      <option value="4/3">4:3</option>
+                      <option value="3/2">3:2</option>
+                      <option value="16/9">16:9</option>
+                      <option value="1/1">1:1 (Square)</option>
+                    </select>
+                  </div>
+                  {/* Integer scale */}
+                  <div className="space-y-1">
+                    <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Integer scale</Label>
+                    <div className="flex items-center gap-2 h-9">
+                      <Switch
+                        checked={opts.integerScale ?? false}
+                        onCheckedChange={(v) => setOpts({ integerScale: v || undefined })}
+                      />
+                      <span className="text-xs text-muted-foreground">Pixel-perfect</span>
+                    </div>
+                  </div>
+                  {/* Shader */}
+                  <div className="space-y-1">
+                    <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Shader</Label>
+                    <select
+                      value={opts.shader ?? ""}
+                      onChange={(e) => setOpts({ shader: e.target.value || undefined })}
+                      className="w-full h-9 rounded-md border border-border bg-background/50 px-2 font-mono text-xs text-foreground"
+                    >
+                      <option value="">None</option>
+                      <option value="crt">CRT</option>
+                      <option value="scanlines">Scanlines</option>
+                      <option value="grayscale">Grayscale</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

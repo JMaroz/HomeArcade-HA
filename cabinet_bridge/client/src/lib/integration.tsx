@@ -59,6 +59,10 @@ export interface IntegrationConfig {
    * Value: map of button index → key name (same format as EJS_defaultControls value).
    */
   controlDefaults?: Record<string, Record<number, string>>;
+  /** Enable gamepad rumble/haptics */
+  gamepadRumble?: boolean;
+  /** Per-system display overrides: { [core]: { aspectRatio?, integerScale?, shader? } } */
+  systemDisplay?: Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>;
 }
 
 export type IntegrationSaveStatus = "idle" | "loading" | "saving" | "saved" | "error";
@@ -105,6 +109,8 @@ const defaultConfig: IntegrationConfig = {
   liveMode: false,
   endpoints: {},
   controlDefaults: {},
+  gamepadRumble: true,
+  systemDisplay: {},
 };
 
 const defaultPc: PcStatus = {
@@ -154,6 +160,10 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     pcAppEntityId: typeof source.pcAppEntityId === "string" ? source.pcAppEntityId : "",
     controlDefaults: (source.controlDefaults && typeof source.controlDefaults === "object")
       ? source.controlDefaults as Record<string, Record<number, string>>
+      : {},
+    gamepadRumble: typeof source.gamepadRumble === "boolean" ? source.gamepadRumble : true,
+    systemDisplay: (source.systemDisplay && typeof source.systemDisplay === "object")
+      ? source.systemDisplay as Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>
       : {},
   };
 }

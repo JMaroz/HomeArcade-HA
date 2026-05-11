@@ -134,6 +134,14 @@ export const integrationSettingsSchema = z.object({
   pcAppEntityId: z.string().max(256).default(""),
   /** Per-core default key bindings: { [core]: { [buttonIndex]: keyName } } */
   controlDefaults: z.record(z.string(), z.record(z.coerce.number(), z.string().max(64))).default({}),
+  /** Enable gamepad rumble/haptics (requires browser + controller support) */
+  gamepadRumble: z.boolean().default(true),
+  /** Per-system display options: { [systemId]: { aspectRatio?, integerScale?, shader? } } */
+  systemDisplay: z.record(z.string(), z.object({
+    aspectRatio: z.string().max(16).optional(),
+    integerScale: z.boolean().optional(),
+    shader: z.string().max(64).optional(),
+  })).default({}),
 });
 
 export type IntegrationSettings = z.infer<typeof integrationSettingsSchema>;
@@ -157,6 +165,8 @@ export const DEFAULT_INTEGRATION_SETTINGS: IntegrationSettings = {
   pcRamEntityId: "",
   pcAppEntityId: "",
   controlDefaults: {},
+  gamepadRumble: true,
+  systemDisplay: {},
 };
 
 // ── User profiles (named, no passwords) ─────────────────────────────────────

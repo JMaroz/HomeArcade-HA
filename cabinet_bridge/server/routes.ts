@@ -483,6 +483,8 @@ export async function registerRoutes(
         const pId = profileParam ? Number(profileParam) : 1;
         return await storage.getGamepadBindings(pId, "default_p2");
       })(),
+      gamepadRumble: bootstrapSettings.gamepadRumble ?? true,
+      systemDisplay: (bootstrapSettings.systemDisplay ?? {}) as Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>,
       userId,
       userName,
       profileId: profileParam ?? "1",
@@ -3503,7 +3505,7 @@ function buildEjsControls(
   return { 0: p1, 1: p2, 2: {}, 3: {} };
 }
 
-function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2, userId, userName, profileId, cheats }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; gamepadBindings: Record<number, number>; controlDefaultsP2: Record<number, string>; gamepadBindingsP2: Record<number, number>; userId: string; userName: string; profileId: string; cheats: Array<{ description: string; code: string }>; }) {
+function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2, gamepadRumble, systemDisplay, userId, userName, profileId, cheats }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; gamepadBindings: Record<number, number>; controlDefaultsP2: Record<number, string>; gamepadBindingsP2: Record<number, number>; gamepadRumble: boolean; systemDisplay: Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>; userId: string; userName: string; profileId: string; cheats: Array<{ description: string; code: string }>; }) {
   return `"use strict";
 // Diagnostic: immediately mark that this script is executing.
 // If the launch overlay stays at 0%, this script never ran.
@@ -4822,6 +4824,38 @@ document.addEventListener("keydown", function (e) {
 // Apply saved remap when game starts
 window.addEventListener("EJS_emulator_ready", function () {
   cabinetApplyRemap(cabinetLoadRemap());
+
+  // ── Per-system display options ─────────────────────────────────────────
+  (function () {
+    var opts = window.CABINET_DISPLAY_OPTS || {};
+    var canvas = document.querySelector("#game canvas");
+    if (!canvas) return;
+    // Integer scale: pixelated rendering
+    if (opts.integerScale) {
+      canvas.style.imageRendering = "pixelated";
+    }
+    // Custom aspect ratio (e.g. "4/3", "3/2")
+    if (opts.aspectRatio) {
+      canvas.style.aspectRatio = opts.aspectRatio;
+      canvas.style.width = "auto";
+      canvas.style.height = "100%";
+    }
+  })();
+
+  // ── Gamepad rumble ─────────────────────────────────────────────────────
+  if (window.CABINET_RUMBLE === false) {
+    // Disable vibration by overriding Gamepad vibrationActuator
+    var _origGetGamepads = navigator.getGamepads.bind(navigator);
+    navigator.getGamepads = function () {
+      var pads = _origGetGamepads();
+      return Array.from(pads).map(function (p) {
+        if (!p) return p;
+        Object.defineProperty(p, "vibrationActuator", { get: function () { return null; } });
+        return p;
+      });
+    };
+  }
+
   // Wire up hold-to-rewind on the rewind button
   var rewindBtn = document.querySelector("#cabinet-rewind-toggle");
   if (rewindBtn) {
@@ -5316,6 +5350,18 @@ window.EJS_fastForwardSpeed = 3;
 window.EJS_controlScheme = ${JSON.stringify(core)};
 ${cheats.length > 0 ? `window.EJS_cheats = ${JSON.stringify(cheats.map(c => [c.description, c.code]))};` : "// No cheats saved for this game"}
 window.EJS_defaultControls = ${JSON.stringify(buildEjsControls(core, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2))};
+// ── Display options (per-system) ────────────────────────────────────────────
+window.CABINET_RUMBLE = ${JSON.stringify(gamepadRumble)};
+(function () {
+  var sysId = ${JSON.stringify(core)};
+  var opts = ${JSON.stringify(systemDisplay)};
+  var sysOpts = opts[sysId] || {};
+  if (sysOpts.shader) {
+    window.EJS_defaultOptions = window.EJS_defaultOptions || {};
+    window.EJS_defaultOptions["shader"] = sysOpts.shader;
+  }
+  window.CABINET_DISPLAY_OPTS = sysOpts;
+})();
 window.EJS_defaultOptions = {
   "save-state-location": "browser",
   "save-state-slot": 1
