@@ -18,8 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ConsoleSilhouette } from "@/components/ConsoleSilhouette";
 import type { UploadedRom, GameCollectionWithItems, UserProfile } from "@shared/schema";
 import { useProfile } from "@/lib/useProfile";
-
-// ── Control definitions ────────────────────────────────────────────────────
+import type { SmartFilterRules } from "@shared/schema";
 
 const DEFAULT_KEYS: Record<number, string> = {
   0: "z", 1: "a", 2: "shift", 3: "enter",
@@ -168,20 +167,17 @@ function captureKeyName(e: KeyboardEvent): string {
   return map[e.key] ?? e.key.toLowerCase();
 }
 
-// ── Controls tab component ─────────────────────────────────────────────────
-
 function ControlsTab() {
   const { config, setConfig } = useIntegration();
   const { currentProfileId } = useProfile();
   const [selectedSystem, setSelectedSystem] = useState(SYSTEMS_WITH_CORES[0].systemId);
   const [capturing, setCapturing] = useState<number | null>(null);
   const [selectedProfileId, setSelectedProfileId] = useState<number>(currentProfileId);
-  const [playerPort, setPlayerPort] = useState(0); // 0 = Player 1, 1 = Player 2
+  const [playerPort, setPlayerPort] = useState(0);
   const { toast } = useToast();
 
   const { data: profiles = [] } = useQuery<UserProfile[]>({ queryKey: ["/api/profiles"] });
 
-  // Keep selector in sync if active profile changes externally
   React.useEffect(() => {
     setSelectedProfileId(currentProfileId);
   }, [currentProfileId]);
@@ -191,7 +187,6 @@ function ControlsTab() {
   const defs = BUTTON_DEFS[core] ?? [];
   const saved = config.controlDefaults?.[core] ?? {};
 
-  // Profile-specific bindings override global
   const { data: profileBindings = {} } = useQuery<Record<number, string>>({
     queryKey: ["/api/profiles", selectedProfileId, "controls", core, playerPort],
     queryFn: async () => {
@@ -225,7 +220,6 @@ function ControlsTab() {
     toast({ title: "Reset", description: `${sys.label} bindings reset for this profile.` });
   };
 
-  // Key capture listener
   useEffect(() => {
     if (capturing === null) return;
     const handler = (e: KeyboardEvent) => {
@@ -248,8 +242,6 @@ function ControlsTab() {
             Customise keyboard controls per system and per profile. Profile overrides take precedence over global defaults.
           </p>
         </div>
-
-        {/* P1 / P2 player port selector */}
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Player:</span>
           {[{ port: 0, label: "Player 1" }, { port: 1, label: "Player 2" }].map(({ port, label }) => (
@@ -266,8 +258,6 @@ function ControlsTab() {
             </button>
           ))}
         </div>
-
-        {/* Profile selector */}
         {profiles.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Profile:</span>
@@ -290,7 +280,6 @@ function ControlsTab() {
             ))}
           </div>
         )}
-
         <div className="flex flex-wrap gap-2">
           {SYSTEMS_WITH_CORES.map((s) => (
             <button
@@ -307,13 +296,10 @@ function ControlsTab() {
           ))}
         </div>
       </div>
-
       <div className="grid md:grid-cols-[240px_1fr] gap-6 p-4 rounded-xl border border-card-border bg-black/40 backdrop-blur-sm relative overflow-hidden">
-        {/* Silhouette background */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <ConsoleSilhouette systemId={selectedSystem} />
         </div>
-
         <div className="space-y-4 relative">
           <div className="aspect-[4/3] rounded-lg border border-white/10 bg-black/40 p-4 flex items-center justify-center relative group">
              <ConsoleSilhouette systemId={selectedSystem} />
@@ -326,7 +312,6 @@ function ControlsTab() {
             <RotateCcw className="size-3 mr-2" /> Reset {sys.label}
           </Button>
         </div>
-
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 relative">
            {defs.map((d) => {
              const key = getKey(d.index);
@@ -355,8 +340,6 @@ function ControlsTab() {
            })}
         </div>
       </div>
-      
-      {/* Hotkeys */}
       <div className="space-y-3">
         <h4 className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Emulator Hotkeys</h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -381,11 +364,7 @@ function ControlsTab() {
            })}
         </div>
       </div>
-
-      {/* Gamepad remapper */}
       <GamepadRemapSection profileId={selectedProfileId} playerPort={playerPort} />
-
-      {/* ── Haptics ──────────────────────────────────────────────────── */}
       <div className="space-y-4 pt-6 border-t border-border">
         <div className="flex items-center gap-2">
           <Vibrate className="size-4 text-primary" />
@@ -403,8 +382,6 @@ function ControlsTab() {
           />
         </div>
       </div>
-
-      {/* ── Per-system display options ───────────────────────────────── */}
       <div className="space-y-4 pt-6 border-t border-border">
         <div className="flex items-center gap-2">
           <Monitor className="size-4 text-primary" />
@@ -422,7 +399,6 @@ function ControlsTab() {
               <div key={s.core} className="rounded-xl border border-border bg-black/30 px-4 py-3 space-y-3">
                 <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{s.label}</div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {/* Aspect ratio */}
                   <div className="space-y-1">
                     <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Aspect ratio</Label>
                     <select
@@ -437,7 +413,6 @@ function ControlsTab() {
                       <option value="1/1">1:1 (Square)</option>
                     </select>
                   </div>
-                  {/* Integer scale */}
                   <div className="space-y-1">
                     <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Integer scale</Label>
                     <div className="flex items-center gap-2 h-9">
@@ -448,7 +423,6 @@ function ControlsTab() {
                       <span className="text-xs text-muted-foreground">Pixel-perfect</span>
                     </div>
                   </div>
-                  {/* Shader */}
                   <div className="space-y-1">
                     <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Shader</Label>
                     <select
@@ -472,9 +446,6 @@ function ControlsTab() {
   );
 }
 
-
-// ── Gamepad remapper ────────────────────────────────────────────────────────
-
 const RETROPAD_BUTTONS: { index: number; label: string; group: string }[] = [
   { index: 8,  label: "A (East)",   group: "Face" },
   { index: 0,  label: "B (South)",  group: "Face" },
@@ -494,13 +465,12 @@ const RETROPAD_BUTTONS: { index: number; label: string; group: string }[] = [
   { index: 15, label: "R3 (Click)", group: "Analog" },
 ];
 
-// Standard Xbox/PS gamepad default mapping (retropad → physical button index)
 const DEFAULT_GAMEPAD_MAP: Record<number, number> = {
-  8: 0, 0: 1, 9: 2, 1: 3,   // A→0, B→1, X→2, Y→3
-  2: 8, 3: 9,                 // Select→8, Start→9
-  4: 12, 5: 13, 6: 14, 7: 15,// D-pad
-  10: 4, 11: 5, 12: 6, 13: 7,// Shoulders
-  14: 10, 15: 11,             // Sticks
+  8: 0, 0: 1, 9: 2, 1: 3,
+  2: 8, 3: 9,
+  4: 12, 5: 13, 6: 14, 7: 15,
+  10: 4, 11: 5, 12: 6, 13: 7,
+  14: 10, 15: 11,
 };
 
 function physicalButtonLabel(idx: number): string {
@@ -523,7 +493,6 @@ function GamepadRemapSection({ profileId, playerPort = 0 }: { profileId: number;
   const rafRef = React.useRef<number | null>(null);
   const prevBtns = React.useRef<boolean[]>([]);
 
-  // Refresh gamepad list
   const refreshGamepads = React.useCallback(() => {
     const pads = Array.from(navigator.getGamepads()).filter(Boolean) as Gamepad[];
     setGamepads(pads);
@@ -539,7 +508,6 @@ function GamepadRemapSection({ profileId, playerPort = 0 }: { profileId: number;
     };
   }, [refreshGamepads]);
 
-  // Load saved bindings for this profile + port
   React.useEffect(() => {
     fetch(`/api/profiles/${profileId}/gamepad-bindings/default?port=${playerPort}`)
       .then((r) => r.json())
@@ -553,7 +521,6 @@ function GamepadRemapSection({ profileId, playerPort = 0 }: { profileId: number;
       .catch(() => setBindings({ ...DEFAULT_GAMEPAD_MAP }));
   }, [profileId, playerPort]);
 
-  // Polling loop for button capture
   React.useEffect(() => {
     if (capturingBtn === null) {
       prevBtns.current = [];
@@ -564,9 +531,7 @@ function GamepadRemapSection({ profileId, playerPort = 0 }: { profileId: number;
       const pads = Array.from(navigator.getGamepads()).filter(Boolean) as Gamepad[];
       const pad = pads[0];
       if (!pad) { rafRef.current = requestAnimationFrame(poll); return; }
-
       const curr = pad.buttons.map((b) => b.pressed);
-      // Detect newly pressed button (not pressed on previous frame)
       for (let i = 0; i < curr.length; i++) {
         if (curr[i] && !(prevBtns.current[i] ?? false)) {
           setBindings((prev) => ({ ...prev, [capturingBtn]: i }));
@@ -593,10 +558,7 @@ function GamepadRemapSection({ profileId, playerPort = 0 }: { profileId: number;
     }
   };
 
-  const resetBindings = () => {
-    setBindings({ ...DEFAULT_GAMEPAD_MAP });
-  };
-
+  const resetBindings = () => { setBindings({ ...DEFAULT_GAMEPAD_MAP }); };
   const groups = Array.from(new Set(RETROPAD_BUTTONS.map((b) => b.group)));
 
   return (
@@ -618,12 +580,10 @@ function GamepadRemapSection({ profileId, playerPort = 0 }: { profileId: number;
           )}
         </div>
       </div>
-
       <p className="text-sm text-muted-foreground">
         Map each RetroArch button to a physical button on your controller.
         {gamepads.length === 0 && " Plug in a controller to use the press-to-capture feature."}
       </p>
-
       {capturingBtn !== null && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-accent/15 border border-accent text-accent font-mono text-sm animate-pulse">
           <Gamepad2 className="size-4 shrink-0" />
@@ -631,7 +591,6 @@ function GamepadRemapSection({ profileId, playerPort = 0 }: { profileId: number;
           <button onClick={() => setCapturingBtn(null)} className="underline">cancel</button>
         </div>
       )}
-
       <div className="space-y-4">
         {groups.map((group) => (
           <div key={group} className="space-y-2">
@@ -665,7 +624,6 @@ function GamepadRemapSection({ profileId, playerPort = 0 }: { profileId: number;
           </div>
         ))}
       </div>
-
       <div className="flex items-center gap-3 pt-2">
         <Button onClick={saveBindings} size="sm" className="font-mono text-[11px] uppercase tracking-wider">
           {saved ? <><Check className="size-3 mr-2" />Saved!</> : "Save Gamepad Map"}
@@ -677,8 +635,6 @@ function GamepadRemapSection({ profileId, playerPort = 0 }: { profileId: number;
     </div>
   );
 }
-
-// ── Main Settings page ─────────────────────────────────────────────────────
 
 export default function Settings() {
   const { config, setConfig, resetConfig, saveStatus } = useIntegration();
@@ -742,18 +698,9 @@ export default function Settings() {
           >
             <ArrowLeft className="size-3.5" /> Back to Library
           </Link>
-
-          <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-            Configuration
-          </div>
-          <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight mt-1 mb-1">
-            Settings
-          </h1>
-
-          <div
-            className="mb-5 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
-            data-testid="text-settings-save-status"
-          >
+          <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Configuration</div>
+          <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight mt-1 mb-1">Settings</h1>
+          <div className="mb-5 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground" data-testid="text-settings-save-status">
             <span aria-hidden="true" className={`inline-block size-1.5 rounded-full ${
               saveStatus === "saving" ? "bg-amber-400 animate-pulse"
               : saveStatus === "saved" ? "bg-status-online"
@@ -766,7 +713,6 @@ export default function Settings() {
               : saveStatus === "error" ? "Save failed"
               : "Settings sync to add-on storage"}
           </div>
-
           <Tabs defaultValue="general">
             <TabsList className="mb-6 w-full grid grid-cols-3 sm:flex sm:flex-wrap h-auto gap-1 p-1">
               <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>
@@ -775,26 +721,21 @@ export default function Settings() {
               <TabsTrigger value="controls" className="text-xs sm:text-sm">Controls</TabsTrigger>
               <TabsTrigger value="kiosk" className="text-xs sm:text-sm">Kiosk</TabsTrigger>
               <TabsTrigger value="ha" className="text-xs sm:text-sm">HA Setup</TabsTrigger>
+              <TabsTrigger value="appearance" className="text-xs sm:text-sm">Appearance</TabsTrigger>
             </TabsList>
-
-            {/* ── General ──────────────────────────────────────────────── */}
             <TabsContent value="general" className="space-y-8">
               <Section title="Home Assistant connection" description="Where HomeArcade sends its requests. The base URL is only needed when Live mode is on.">
                 <Field label="Home Assistant base URL" hint="e.g. https://homeassistant.local:8123">
-                  <Input type="url" value={config.haBaseUrl} onChange={(e) => setConfig({ haBaseUrl: e.target.value })}
-                    placeholder="https://homeassistant.local:8123" data-testid="input-ha-base" />
+                  <Input type="url" value={config.haBaseUrl} onChange={(e) => setConfig({ haBaseUrl: e.target.value })} placeholder="https://homeassistant.local:8123" data-testid="input-ha-base" />
                 </Field>
                 <Field label="Long-lived access token (optional)" hint="Only required for /api/services/* calls. Webhook endpoints are unauthenticated by design.">
-                  <Input type="password" value={config.haToken} onChange={(e) => setConfig({ haToken: e.target.value })}
-                    placeholder="eyJhbGciOiJIUzI1NiIs…" data-testid="input-ha-token" autoComplete="off" />
+                  <Input type="password" value={config.haToken} onChange={(e) => setConfig({ haToken: e.target.value })} placeholder="eyJhbGciOiJIUzI1NiIs…" data-testid="input-ha-token" autoComplete="off" />
                 </Field>
                 <div className="flex items-start gap-3 rounded-md border border-border bg-background/40 p-3">
                   <Switch id="live-mode" checked={config.liveMode} onCheckedChange={(v) => setConfig({ liveMode: !!v })} data-testid="switch-live-mode" />
                   <div className="flex-1">
                     <Label htmlFor="live-mode" className="font-medium text-sm">Live mode</Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      When off, every action is logged as a simulation. Turn on once your HA webhooks are configured.
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">When off, every action is logged as a simulation. Turn on once your HA webhooks are configured.</p>
                   </div>
                 </div>
                 {config.liveMode && (
@@ -804,93 +745,24 @@ export default function Settings() {
                   </div>
                 )}
               </Section>
-
-              <Section title="Appearance" description="Choose a colour theme. Saved in the browser.">
-                {([
-                  { group: "Base",
-                    themes: [
-                      { id: "default",   label: "Default",      swatch: ["#f026ab", "#22d3ee", "#0f0f18"] },
-                      { id: "synthwave", label: "Synthwave",     swatch: ["#d946ef", "#06f0e0", "#0b0612"] },
-                      { id: "oled",      label: "OLED Black",    swatch: ["#ff2dba", "#06f0e0", "#000000"] },
-                      { id: "nord",      label: "Nord",          swatch: ["#81a1c1", "#88c0d0", "#1e222a"] },
-                      { id: "amber",     label: "Amber CRT",     swatch: ["#f59e0b", "#fbbf24", "#140e08"] },
-                      { id: "dracula",   label: "Dracula",       swatch: ["#bd93f9", "#50fa7b", "#1e1f29"] },
-                      { id: "cyberpunk", label: "Cyberpunk",     swatch: ["#e8d510", "#ff2d6b", "#070712"] },
-                      { id: "gameboy",   label: "Game Boy",      swatch: ["#4ade80", "#86efac", "#0f1a0a"] },
-                    ]},
-                  { group: "80s",
-                    themes: [
-                      { id: "miami-vice",  label: "Miami Vice",    swatch: ["#f43f5e", "#2dd4bf", "#080e1e"] },
-                      { id: "c64",         label: "Commodore 64",  swatch: ["#facc15", "#a5b4fc", "#1c1c70"] },
-                      { id: "arcade",      label: "Arcade Cabinet",swatch: ["#facc15", "#ef4444", "#0a0a0a"] },
-                    ]},
-                  { group: "90s",
-                    themes: [
-                      { id: "vaporwave",   label: "Vaporwave",     swatch: ["#f472b6", "#67e8f9", "#180d25"] },
-                      { id: "grunge",      label: "Grunge",        swatch: ["#c2602a", "#6b7c3a", "#131009"] },
-                      { id: "win95",       label: "Windows 95",    swatch: ["#00a8cc", "#4169e1", "#191c1e"] },
-                      { id: "blockbuster", label: "Blockbuster",   swatch: ["#fbbf24", "#3b82f6", "#06081a"] },
-                    ]},
-                  { group: "Early 2000s",
-                    themes: [
-                      { id: "aqua",        label: "Mac OS X Aqua", swatch: ["#0ea5e9", "#f97316", "#141618"] },
-                      { id: "y2k",         label: "Y2K Chrome",    swatch: ["#3b82f6", "#ec4899", "#0a0b12"] },
-                      { id: "halo",        label: "Halo / Xbox",   swatch: ["#22c55e", "#f59e0b", "#0d1209"] },
-                    ]},
-                ] as { group: string; themes: { id: AppTheme; label: string; swatch: string[] }[] }[]).map(({ group, themes }) => (
-                  <div key={group} className="mb-5 last:mb-0">
-                    <p className="md-label-small text-muted-foreground/70 uppercase tracking-[0.1em] mb-2">{group}</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                      {themes.map(({ id, label, swatch }) => (
-                        <button key={id} onClick={() => handleTheme(id)} data-testid={`button-theme-${id}`}
-                          className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-xs font-mono transition-all ${
-                            activeTheme === id
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border hover:border-primary/40 text-muted-foreground"
-                          }`}>
-                          <div className="flex gap-1">
-                            {swatch.map((c, i) => (
-                              <span key={i} className="size-5 rounded-full border border-white/10" style={{ background: c }} />
-                            ))}
-                          </div>
-                          <span className="text-center leading-tight">{label}</span>
-                          {activeTheme === id && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Active</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </Section>
-
               <ProfilesSection />
-
               <Section title="Reset" description="Clear all locally saved settings.">
                 <Button variant="outline" onClick={() => resetConfig()} data-testid="button-reset-config">Reset to defaults</Button>
               </Section>
-
               <Section title="Help &amp; feedback" description="Found a bug or have a feature request?">
                 <div className="flex flex-wrap gap-3">
-                  <a href="https://github.com/GlerschNersch/token/issues/new" target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-                    data-testid="link-report-issue">
+                  <a href="https://github.com/GlerschNersch/token/issues/new" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors" data-testid="link-report-issue">
                     <AlertTriangle className="size-4 text-yellow-500" /> Report an issue <ExternalLink className="size-3.5 text-muted-foreground" />
                   </a>
-                  <a href="https://github.com/GlerschNersch/token" target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
+                  <a href="https://github.com/GlerschNersch/token" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
                     View on GitHub <ExternalLink className="size-3.5 text-muted-foreground" />
                   </a>
                 </div>
               </Section>
             </TabsContent>
-
-            {/* ── Library ──────────────────────────────────────────────── */}
             <TabsContent value="library" className="space-y-8">
               <RomLibrarySection />
-
-              <Section title="Game launch endpoints"
-                description="HomeArcade derives a webhook URL for each uploaded ROM. Register these in Home Assistant to wire up automations or voice commands.">
+              <Section title="Game launch endpoints" description="HomeArcade derives a webhook URL for each uploaded ROM. Register these in Home Assistant to wire up automations or voice commands.">
                 <div className="rounded-md border border-border bg-background/40 overflow-hidden">
                   <table className="w-full text-sm" data-testid="table-launch-endpoints">
                     <thead className="bg-secondary/40 text-muted-foreground">
@@ -913,8 +785,7 @@ export default function Settings() {
                             </td>
                             <td className="hidden sm:table-cell px-3 py-2 font-mono text-[12px] text-foreground/80 break-all">POST {ep}</td>
                             <td className="px-3 py-2 text-right">
-                              <button type="button" onClick={() => copy(ep, `rom-${rom.id}`)} aria-label={`Copy ${rom.title} endpoint`}
-                                data-testid={`button-copy-rom-endpoint-${rom.id}`} className="text-muted-foreground hover:text-foreground">
+                              <button type="button" onClick={() => copy(ep, `rom-${rom.id}`)} aria-label={`Copy ${rom.title} endpoint`} data-testid={`button-copy-rom-endpoint-${rom.id}`} className="text-muted-foreground hover:text-foreground">
                                 {copied === `rom-${rom.id}` ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
                               </button>
                             </td>
@@ -925,10 +796,7 @@ export default function Settings() {
                   </table>
                 </div>
               </Section>
-
-
-              <Section title="Cheat database cache"
-                description="Cheat codes are cached locally after first lookup — one fetch per system, then instant. Cache refreshes automatically after 7 days.">
+              <Section title="Cheat database cache" description="Cheat codes are cached locally after first lookup — one fetch per system, then instant. Cache refreshes automatically after 7 days.">
                 <Button variant="outline" size="sm" onClick={async () => {
                   await fetch("/api/cheat-cache", { method: "DELETE" });
                   toast({ title: "Cheat cache cleared", description: "Next lookup will re-fetch from the libretro database." });
@@ -936,9 +804,7 @@ export default function Settings() {
                   <RotateCcw className="size-3 mr-2" /> Clear cheat cache
                 </Button>
               </Section>
-
-              <Section title="Collections"
-                description="Rename or delete your game collections. Games are not affected when a collection is deleted.">
+              <Section title="Collections" description="Rename or delete your game collections. Games are not affected when a collection is deleted.">
                 {collections.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No collections yet. Create one from the library sidebar.</p>
                 ) : (
@@ -947,45 +813,19 @@ export default function Settings() {
                       <div key={col.id} className="flex items-center gap-2 px-3 py-2.5">
                         {renamingCollectionId === col.id ? (
                           <>
-                            <input
-                              autoFocus
-                              type="text"
-                              value={renameValue}
-                              onChange={(e) => setRenameValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") submitRename(col.id);
-                                if (e.key === "Escape") setRenamingCollectionId(null);
-                              }}
+                            <input autoFocus type="text" value={renameValue} onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") submitRename(col.id); if (e.key === "Escape") setRenamingCollectionId(null); }}
                               className="flex-1 h-7 rounded border border-border bg-background px-2 font-mono text-[12px] focus:outline-none focus:ring-1 focus:ring-ring"
-                              data-testid={"input-rename-collection-" + col.id}
-                            />
-                            <button type="button" onClick={() => submitRename(col.id)}
-                              className="text-muted-foreground hover:text-foreground shrink-0" aria-label="Save rename"
-                              data-testid={"button-save-rename-" + col.id}>
-                              <Check className="size-3.5" />
-                            </button>
-                            <button type="button" onClick={() => setRenamingCollectionId(null)}
-                              className="text-muted-foreground hover:text-foreground shrink-0" aria-label="Cancel rename"
-                              data-testid={"button-cancel-rename-" + col.id}>
-                              <X className="size-3.5" />
-                            </button>
+                              data-testid={"input-rename-collection-" + col.id} />
+                            <button type="button" onClick={() => submitRename(col.id)} className="text-muted-foreground hover:text-foreground shrink-0" aria-label="Save rename" data-testid={"button-save-rename-" + col.id}><Check className="size-3.5" /></button>
+                            <button type="button" onClick={() => setRenamingCollectionId(null)} className="text-muted-foreground hover:text-foreground shrink-0" aria-label="Cancel rename" data-testid={"button-cancel-rename-" + col.id}><X className="size-3.5" /></button>
                           </>
                         ) : (
                           <>
                             <span className="flex-1 text-sm truncate">{col.name}</span>
                             <span className="text-[11px] text-muted-foreground shrink-0">{col.romIds.length} game{col.romIds.length === 1 ? "" : "s"}</span>
-                            <button type="button"
-                              onClick={() => { setRenamingCollectionId(col.id); setRenameValue(col.name); }}
-                              className="text-muted-foreground hover:text-foreground shrink-0" aria-label="Rename collection"
-                              data-testid={"button-rename-collection-" + col.id}>
-                              <Pencil className="size-3.5" />
-                            </button>
-                            <button type="button"
-                              onClick={() => { if (window.confirm("Delete collection \"" + col.name + "\"?")) deleteCollectionMutation.mutate(col.id); }}
-                              className="text-muted-foreground hover:text-destructive shrink-0" aria-label="Delete collection"
-                              data-testid={"button-delete-collection-" + col.id}>
-                              <Trash2 className="size-3.5" />
-                            </button>
+                            <button type="button" onClick={() => { setRenamingCollectionId(col.id); setRenameValue(col.name); }} className="text-muted-foreground hover:text-foreground shrink-0" aria-label="Rename collection" data-testid={"button-rename-collection-" + col.id}><Pencil className="size-3.5" /></button>
+                            <button type="button" onClick={() => { if (window.confirm("Delete collection \"" + col.name + "\"?")) deleteCollectionMutation.mutate(col.id); }} className="text-muted-foreground hover:text-destructive shrink-0" aria-label="Delete collection" data-testid={"button-delete-collection-" + col.id}><Trash2 className="size-3.5" /></button>
                           </>
                         )}
                       </div>
@@ -993,18 +833,13 @@ export default function Settings() {
                   </div>
                 )}
               </Section>
-
               <SmartFilterCollectionCreator />
-
               <ScannerStatusSection />
-
-              <Section title="Metadata import"
-                description="Import game metadata from an EmulationStation gamelist.xml or a LaunchBox platform XML.">
+              <Section title="Metadata import" description="Import game metadata from an EmulationStation gamelist.xml or a LaunchBox platform XML.">
                 <div className="rounded-md border border-border bg-background/40 p-3">
                   <Label className="text-sm font-medium">EmulationStation / Batocera / RetroPie</Label>
                   <p className="text-xs text-muted-foreground mt-0.5 mb-2">Upload a gamelist.xml file.</p>
-                  <input type="file" accept=".xml,text/xml,application/xml" data-testid="input-es-xml"
-                    className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-background file:text-sm file:font-mono file:uppercase file:tracking-wide file:cursor-pointer"
+                  <input type="file" accept=".xml,text/xml,application/xml" data-testid="input-es-xml" className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-background file:text-sm file:font-mono file:uppercase file:tracking-wide file:cursor-pointer"
                     onChange={async (e) => {
                       const file = e.target.files?.[0]; if (!file) return;
                       setEsImporting(true); setEsResult(null); setEsError(null);
@@ -1024,8 +859,7 @@ export default function Settings() {
                 <div className="rounded-md border border-border bg-background/40 p-3">
                   <Label className="text-sm font-medium">LaunchBox</Label>
                   <p className="text-xs text-muted-foreground mt-0.5 mb-2">Upload a platform XML from your LaunchBox Data/Platforms folder.</p>
-                  <input type="file" accept=".xml,text/xml,application/xml" data-testid="input-lb-xml"
-                    className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-background file:text-sm file:font-mono file:uppercase file:tracking-wide file:cursor-pointer"
+                  <input type="file" accept=".xml,text/xml,application/xml" data-testid="input-lb-xml" className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-background file:text-sm file:font-mono file:uppercase file:tracking-wide file:cursor-pointer"
                     onChange={async (e) => {
                       const file = e.target.files?.[0]; if (!file) return;
                       setLbImporting(true); setLbResult(null); setLbError(null);
@@ -1044,51 +878,32 @@ export default function Settings() {
                 </div>
               </Section>
             </TabsContent>
-
-            {/* ── Services ─────────────────────────────────────────────── */}
             <TabsContent value="services" className="space-y-8">
-              <Section title="TheGamesDB (recommended)"
-                description="Primary metadata source — box art, descriptions, genre, developer, and publisher. Free API key at thegamesdb.net (sign up → API Key).">
+              <Section title="TheGamesDB (recommended)" description="Primary metadata source — box art, descriptions, genre, developer, and publisher. Free API key at thegamesdb.net (sign up → API Key).">
                 <Field label="TheGamesDB API Key" hint="Register at thegamesdb.net to get a free key.">
-                  <Input type="password" value={config.tgdbApiKey ?? ""} onChange={(e) => setConfig({ tgdbApiKey: e.target.value })}
-                    placeholder="••••••••" autoComplete="off" />
+                  <Input type="password" value={config.tgdbApiKey ?? ""} onChange={(e) => setConfig({ tgdbApiKey: e.target.value })} placeholder="••••••••" autoComplete="off" />
                 </Field>
               </Section>
-
-              <Section title="ScreenScraper.fr (optional)"
-                description="Fallback metadata source. Excellent retro coverage. Register free at screenscraper.fr.">
+              <Section title="ScreenScraper.fr (optional)" description="Fallback metadata source. Excellent retro coverage. Register free at screenscraper.fr.">
                 <Field label="ScreenScraper user ID" hint="Your screenscraper.fr username.">
-                  <Input type="text" value={config.ssUserId ?? ""} onChange={(e) => setConfig({ ssUserId: e.target.value })}
-                    placeholder="your_username" data-testid="input-ss-userid" autoComplete="off" />
+                  <Input type="text" value={config.ssUserId ?? ""} onChange={(e) => setConfig({ ssUserId: e.target.value })} placeholder="your_username" data-testid="input-ss-userid" autoComplete="off" />
                 </Field>
                 <Field label="ScreenScraper password" hint="Your screenscraper.fr password.">
-                  <Input type="password" value={config.ssPassword ?? ""} onChange={(e) => setConfig({ ssPassword: e.target.value })}
-                    placeholder="••••••••" data-testid="input-ss-password" autoComplete="off" />
+                  <Input type="password" value={config.ssPassword ?? ""} onChange={(e) => setConfig({ ssPassword: e.target.value })} placeholder="••••••••" data-testid="input-ss-password" autoComplete="off" />
                 </Field>
               </Section>
-
-              <Section title="RetroAchievements (optional)"
-                description="Earn achievements for classic games. Register free at retroachievements.org.">
+              <Section title="RetroAchievements (optional)" description="Earn achievements for classic games. Register free at retroachievements.org.">
                 <Field label="RA Username" hint="Your retroachievements.org username.">
-                  <Input type="text" value={config.raUsername ?? ""} onChange={(e) => setConfig({ raUsername: e.target.value })}
-                    placeholder="your_ra_username" data-testid="input-ra-username" autoComplete="off" />
+                  <Input type="text" value={config.raUsername ?? ""} onChange={(e) => setConfig({ raUsername: e.target.value })} placeholder="your_ra_username" data-testid="input-ra-username" autoComplete="off" />
                 </Field>
                 <Field label="RA API Token" hint="Found under Settings → Keys on retroachievements.org.">
-                  <Input type="password" value={config.raToken ?? ""} onChange={(e) => setConfig({ raToken: e.target.value })}
-                    placeholder="••••••••" data-testid="input-ra-token" autoComplete="off" />
+                  <Input type="password" value={config.raToken ?? ""} onChange={(e) => setConfig({ raToken: e.target.value })} placeholder="••••••••" data-testid="input-ra-token" autoComplete="off" />
                 </Field>
               </Section>
             </TabsContent>
-
-            {/* ── Controls ─────────────────────────────────────────────── */}
-            <TabsContent value="controls">
-              <ControlsTab />
-            </TabsContent>
-
-            {/* ── Kiosk ────────────────────────────────────────────────── */}
+            <TabsContent value="controls"><ControlsTab /></TabsContent>
             <TabsContent value="kiosk" className="space-y-8">
-              <Section title="Kiosk / Arcade mode"
-                description="Lock the UI to a specific collection, hide upload and settings, and optionally require a PIN to exit.">
+              <Section title="Kiosk / Arcade mode" description="Lock the UI to a specific collection, hide upload and settings, and optionally require a PIN to exit.">
                 <div className="flex items-start gap-3 rounded-md border border-border bg-background/40 p-3">
                   <Switch id="kiosk-mode" checked={config.kioskMode ?? false} onCheckedChange={(v) => setConfig({ kioskMode: !!v })} data-testid="switch-kiosk-mode" />
                   <div className="flex-1">
@@ -1097,74 +912,84 @@ export default function Settings() {
                   </div>
                 </div>
                 <Field label="Exit PIN (optional)" hint="4–8 digit PIN to leave kiosk mode. Leave blank for no PIN.">
-                  <Input type="password" inputMode="numeric" maxLength={8}
-                    value={config.kioskPin ?? ""} onChange={(e) => setConfig({ kioskPin: e.target.value.replace(/\D/g, "") })}
-                    placeholder="e.g. 1234" data-testid="input-kiosk-pin" autoComplete="off" />
+                  <Input type="password" inputMode="numeric" maxLength={8} value={config.kioskPin ?? ""} onChange={(e) => setConfig({ kioskPin: e.target.value.replace(/\D/g, "") })} placeholder="e.g. 1234" data-testid="input-kiosk-pin" autoComplete="off" />
                 </Field>
                 <Field label="Locked collection (optional)" hint="Kiosk mode shows only games from this collection.">
-                  <select value={config.kioskCollectionId ?? ""} onChange={(e) => setConfig({ kioskCollectionId: e.target.value ? Number(e.target.value) : null })}
-                    data-testid="select-kiosk-collection"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                  <select value={config.kioskCollectionId ?? ""} onChange={(e) => setConfig({ kioskCollectionId: e.target.value ? Number(e.target.value) : null })} data-testid="select-kiosk-collection" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
                     <option value="">— Show all games —</option>
                     {collections.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </Field>
               </Section>
             </TabsContent>
-
-            {/* ── HA Setup ─────────────────────────────────────────────── */}
             <TabsContent value="ha" className="space-y-8">
-              <Section title="Now Playing sensor"
-                description="HomeArcade exposes a live endpoint so Home Assistant can display what's currently running.">
+              <Section title="Now Playing sensor" description="HomeArcade exposes a live endpoint so Home Assistant can display what's currently running.">
                 <p className="text-xs text-muted-foreground">Add a <code>rest</code> sensor to your <code>configuration.yaml</code>:</p>
-                <Code>{`rest:
-  - resource: http://homeassistant.local:7860/api/now-playing
-    scan_interval: 15
-    sensor:
-      - name: "HomeArcade Now Playing"
-        unique_id: homearcade_now_playing
-        value_template: >
-          {% if value_json.playing %}
-            {{ value_json.title }}
-          {% else %}
-            Idle
-          {% endif %}
-        json_attributes:
-          - playing
-          - system
-          - id`}</Code>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Optionally create an <code>input_text.homearcade_now_playing</code> helper — HomeArcade will update it automatically.
-                </p>
-                <Code>{`input_text:
-  homearcade_now_playing:
-    name: HomeArcade Now Playing
-    max: 100`}</Code>
+                <Code>{`rest:\n  - resource: http://homeassistant.local:7860/api/now-playing\n    scan_interval: 15\n    sensor:\n      - name: "HomeArcade Now Playing"\n        unique_id: homearcade_now_playing\n        value_template: >\n          {% if value_json.playing %}\n            {{ value_json.title }}\n          {% else %}\n            Idle\n          {% endif %}\n        json_attributes:\n          - playing\n          - system\n          - id`}</Code>
+                <p className="text-xs text-muted-foreground mt-2">Optionally create an <code>input_text.homearcade_now_playing</code> helper — HomeArcade will update it automatically.</p>
+                <Code>{`input_text:\n  homearcade_now_playing:\n    name: HomeArcade Now Playing\n    max: 100`}</Code>
               </Section>
-
-              <Section title="Lovelace card"
-                description="Add HomeArcade as a card to your HA dashboard with now-playing status and a recent games shelf.">
+              <Section title="Lovelace card" description="Add HomeArcade as a card to your HA dashboard with now-playing status and a recent games shelf.">
                 <ol className="space-y-4 list-none p-0 m-0">
-                  <Step n={1} title="Copy the card file">
-                    Place <code>homearcade-card.js</code> in your HA <code>/config/www/</code> folder.
-                    <Code>{`wget -O /config/www/homearcade-card.js \\
-  http://homeassistant.local:7860/homearcade-card.js`}</Code>
-                  </Step>
-                  <Step n={2} title="Register the resource">
-                    Go to <strong>Settings → Dashboards → Resources → Add</strong>:
-                    <Code>{`URL:  /local/homearcade-card.js\nType: JavaScript Module`}</Code>
-                  </Step>
-                  <Step n={3} title="Add the card">
-                    <strong>Add Card → Manual</strong>:
-                    <Code>{`type: custom:homearcade-card\ntitle: HomeArcade\nbase_url: http://homeassistant.local:7860\nmax_recent: 6`}</Code>
-                  </Step>
+                  <Step n={1} title="Copy the card file">Place <code>homearcade-card.js</code> in your HA <code>/config/www/</code> folder.<Code>{`wget -O /config/www/homearcade-card.js \\\n  http://homeassistant.local:7860/homearcade-card.js`}</Code></Step>
+                  <Step n={2} title="Register the resource">Go to <strong>Settings → Dashboards → Resources → Add</strong>:<Code>{`URL:  /local/homearcade-card.js\nType: JavaScript Module`}</Code></Step>
+                  <Step n={3} title="Add the card"><strong>Add Card → Manual</strong>:<Code>{`type: custom:homearcade-card\ntitle: HomeArcade\nbase_url: http://homeassistant.local:7860\nmax_recent: 6`}</Code></Step>
                 </ol>
                 <div className="mt-3">
-                  <a href="/homearcade-card.js" download="homearcade-card.js"
-                    className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline" data-testid="link-download-card">
+                  <a href="/homearcade-card.js" download="homearcade-card.js" className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline" data-testid="link-download-card">
                     <ExternalLink className="size-3.5" /> Download homearcade-card.js
                   </a>
                 </div>
+              </Section>
+            </TabsContent>
+            <TabsContent value="appearance" className="space-y-8">
+              <Section title="Theme" description="Choose a colour theme. Saved in the browser and applied immediately.">
+                {([
+                  { group: "Base", themes: [
+                    { id: "default", label: "Default", swatch: ["#f026ab","#22d3ee","#0f0f18"] },
+                    { id: "synthwave", label: "Synthwave", swatch: ["#d946ef","#06f0e0","#0b0612"] },
+                    { id: "oled", label: "OLED Black", swatch: ["#ff2dba","#06f0e0","#000000"] },
+                    { id: "nord", label: "Nord", swatch: ["#81a1c1","#88c0d0","#1e222a"] },
+                    { id: "amber", label: "Amber CRT", swatch: ["#f59e0b","#fbbf24","#140e08"] },
+                    { id: "dracula", label: "Dracula", swatch: ["#bd93f9","#50fa7b","#1e1f29"] },
+                    { id: "cyberpunk", label: "Cyberpunk", swatch: ["#e8d510","#ff2d6b","#070712"] },
+                    { id: "gameboy", label: "Game Boy", swatch: ["#4ade80","#86efac","#0f1a0a"] },
+                  ]},
+                  { group: "80s", themes: [
+                    { id: "miami-vice", label: "Miami Vice", swatch: ["#f43f5e","#2dd4bf","#080e1e"] },
+                    { id: "c64", label: "Commodore 64", swatch: ["#facc15","#a5b4fc","#1c1c70"] },
+                    { id: "arcade", label: "Arcade Cabinet", swatch: ["#facc15","#ef4444","#0a0a0a"] },
+                  ]},
+                  { group: "90s", themes: [
+                    { id: "vaporwave", label: "Vaporwave", swatch: ["#f472b6","#67e8f9","#180d25"] },
+                    { id: "grunge", label: "Grunge", swatch: ["#c2602a","#6b7c3a","#131009"] },
+                    { id: "win95", label: "Windows 95", swatch: ["#00a8cc","#4169e1","#191c1e"] },
+                    { id: "blockbuster", label: "Blockbuster", swatch: ["#fbbf24","#3b82f6","#06081a"] },
+                  ]},
+                  { group: "Early 2000s", themes: [
+                    { id: "aqua", label: "Mac OS X Aqua", swatch: ["#0ea5e9","#f97316","#141618"] },
+                    { id: "y2k", label: "Y2K Chrome", swatch: ["#3b82f6","#ec4899","#0a0b12"] },
+                    { id: "halo", label: "Halo / Xbox", swatch: ["#22c55e","#f59e0b","#0d1209"] },
+                  ]},
+                ] as { group: string; themes: { id: AppTheme; label: string; swatch: string[] }[] }[]).map(({ group, themes }) => (
+                  <div key={group} className="mb-5 last:mb-0">
+                    <p className="md-label-small text-muted-foreground/70 uppercase tracking-[0.1em] mb-2">{group}</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                      {themes.map(({ id, label, swatch }) => (
+                        <button key={id} onClick={() => handleTheme(id)} data-testid={`button-theme-${id}`}
+                          className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-xs font-mono transition-all ${
+                            activeTheme === id ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 text-muted-foreground"
+                          }`}>
+                          <div className="flex gap-1">
+                            {swatch.map((c, i) => <span key={i} className="size-5 rounded-full border border-white/10" style={{ background: c }} />)}
+                          </div>
+                          <span className="text-center leading-tight">{label}</span>
+                          {activeTheme === id && <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Active</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </Section>
             </TabsContent>
           </Tabs>
@@ -1174,13 +999,9 @@ export default function Settings() {
   );
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────
-
 function RomLibrarySection() {
   const { toast } = useToast();
   const { data: roms = [] } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
-
-  // ── Per-ROM scrape ────────────────────────────────────────────────────────
   const scrape = useMutation({
     mutationFn: async (rom: UploadedRom) => {
       const res = await apiRequest("POST", `/api/roms/${rom.id}/scrape-art`);
@@ -1193,7 +1014,6 @@ function RomLibrarySection() {
     },
     onError: (err: Error) => toast({ title: "Art scrape failed", description: err.message, variant: "destructive" }),
   });
-
   const deleteRom = useMutation({
     mutationFn: async (rom: UploadedRom) => {
       const res = await apiRequest("DELETE", `/api/roms/${rom.id}`);
@@ -1206,8 +1026,6 @@ function RomLibrarySection() {
       ]);
     },
   });
-
-  // ── Bulk scrape ───────────────────────────────────────────────────────────
   type ScrapeResult = { id: number; title: string; status: string };
   const [bulkRunning, setBulkRunning] = useState(false);
   const [bulkTotal, setBulkTotal] = useState(0);
@@ -1215,19 +1033,10 @@ function RomLibrarySection() {
   const [bulkCurrent, setBulkCurrent] = useState("");
   const [bulkResults, setBulkResults] = useState<ScrapeResult[]>([]);
   const [bulkDone, setBulkDone] = useState<{ matched: number; failed: number; total: number } | null>(null);
-
   const unmatched = roms.filter((r) => r.scrapeStatus !== "matched").length;
-
   const startBulkScrape = useCallback((force = false) => {
-    setBulkRunning(true);
-    setBulkDone(null);
-    setBulkResults([]);
-    setBulkIndex(0);
-    setBulkTotal(0);
-    setBulkCurrent("Starting…");
-
+    setBulkRunning(true); setBulkDone(null); setBulkResults([]); setBulkIndex(0); setBulkTotal(0); setBulkCurrent("Starting…");
     const url = apiUrl("/api/roms/scrape-all") + (force ? "?force=1" : "");
-    // Use fetch+ReadableStream for POST with SSE
     fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ force }) })
       .then(async (res) => {
         const reader = res.body!.getReader();
@@ -1245,120 +1054,53 @@ function RomLibrarySection() {
               const ev = JSON.parse(line.slice(6));
               if (ev.type === "start") { setBulkTotal(ev.total); }
               if (ev.type === "progress") { setBulkIndex(ev.index); setBulkCurrent(ev.title); }
-              if (ev.type === "result") {
-                setBulkResults((prev) => [...prev, { id: ev.id, title: ev.title, status: ev.status }]);
-              }
-              if (ev.type === "done") {
-                setBulkDone({ matched: ev.matched, failed: ev.failed, total: ev.total });
-                setBulkRunning(false);
-                queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
-              }
+              if (ev.type === "result") { setBulkResults((prev) => [...prev, { id: ev.id, title: ev.title, status: ev.status }]); }
+              if (ev.type === "done") { setBulkDone({ matched: ev.matched, failed: ev.failed, total: ev.total }); setBulkRunning(false); queryClient.invalidateQueries({ queryKey: ["/api/roms"] }); }
             } catch { /* ignore malformed */ }
           }
         }
       })
-      .catch((err) => {
-        setBulkRunning(false);
-        toast({ title: "Scrape failed", description: String(err), variant: "destructive" });
-      });
+      .catch((err) => { setBulkRunning(false); toast({ title: "Scrape failed", description: String(err), variant: "destructive" }); });
   }, [toast]);
-
   const pct = bulkTotal > 0 ? Math.round((bulkIndex / bulkTotal) * 100) : 0;
-
   return (
     <Section title="ROM library" description="Manage uploaded ROMs. Upload new ones from each system's page.">
-      {/* ── Bulk art scrape ── */}
       <div className="rounded-md border border-border bg-background/40 p-4 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Art scraper</div>
-            <p className="text-sm mt-0.5">
-              {bulkDone
-                ? `Done — ${bulkDone.matched} matched, ${bulkDone.failed} not found`
-                : bulkRunning
-                ? `Scraping ${bulkIndex + 1} of ${bulkTotal}…`
-                : unmatched > 0
-                ? `${unmatched} ROM${unmatched === 1 ? "" : "s"} without art`
-                : "All ROMs have art"}
-            </p>
+            <p className="text-sm mt-0.5">{bulkDone ? `Done — ${bulkDone.matched} matched, ${bulkDone.failed} not found` : bulkRunning ? `Scraping ${bulkIndex + 1} of ${bulkTotal}…` : unmatched > 0 ? `${unmatched} ROM${unmatched === 1 ? "" : "s"} without art` : "All ROMs have art"}</p>
           </div>
           <div className="flex gap-2 shrink-0">
-            <Button
-              variant="outline" size="sm"
-              onClick={() => startBulkScrape(false)}
-              disabled={bulkRunning || unmatched === 0}
-              data-testid="button-scrape-all"
-            >
-              {bulkRunning ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <Zap className="size-3.5 mr-1.5" />}
-              {bulkRunning ? "Scraping…" : "Scrape missing"}
+            <Button variant="outline" size="sm" onClick={() => startBulkScrape(false)} disabled={bulkRunning || unmatched === 0} data-testid="button-scrape-all">
+              {bulkRunning ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <Zap className="size-3.5 mr-1.5" />}{bulkRunning ? "Scraping…" : "Scrape missing"}
             </Button>
-            <Button
-              variant="ghost" size="sm"
-              onClick={() => startBulkScrape(true)}
-              disabled={bulkRunning || roms.length === 0}
-              data-testid="button-scrape-all-force"
-              title="Re-scrape every ROM including those already matched"
-            >
-              <RotateCcw className="size-3.5" />
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => startBulkScrape(true)} disabled={bulkRunning || roms.length === 0} data-testid="button-scrape-all-force" title="Re-scrape every ROM including those already matched"><RotateCcw className="size-3.5" /></Button>
           </div>
         </div>
-
-        {/* Progress bar */}
         {(bulkRunning || bulkDone) && (
           <div className="space-y-2">
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full bg-primary transition-all duration-300"
-                style={{ width: `${bulkDone ? 100 : pct}%` }}
-              />
-            </div>
-            {bulkRunning && (
-              <p className="font-mono text-[10px] text-muted-foreground truncate">
-                {bulkCurrent}
-              </p>
-            )}
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${bulkDone ? 100 : pct}%` }} /></div>
+            {bulkRunning && <p className="font-mono text-[10px] text-muted-foreground truncate">{bulkCurrent}</p>}
           </div>
         )}
-
-        {/* Results scroll list */}
         {bulkResults.length > 0 && (
           <div className="max-h-36 overflow-y-auto space-y-0.5 rounded border border-border bg-background/60 p-2">
             {bulkResults.map((r) => (
               <div key={r.id} className="flex items-center gap-2 text-[11px] font-mono">
-                {r.status === "matched"
-                  ? <CheckCircle2 className="size-3 shrink-0 text-green-500" />
-                  : <XCircle className="size-3 shrink-0 text-muted-foreground" />}
+                {r.status === "matched" ? <CheckCircle2 className="size-3 shrink-0 text-green-500" /> : <XCircle className="size-3 shrink-0 text-muted-foreground" />}
                 <span className="truncate text-muted-foreground">{r.title}</span>
-                <span className={`ml-auto shrink-0 ${r.status === "matched" ? "text-green-500" : "text-muted-foreground/60"}`}>
-                  {r.status === "matched" ? "matched" : "not found"}
-                </span>
+                <span className={`ml-auto shrink-0 ${r.status === "matched" ? "text-green-500" : "text-muted-foreground/60"}`}>{r.status === "matched" ? "matched" : "not found"}</span>
               </div>
             ))}
           </div>
         )}
       </div>
-
       <div className="rounded-md border border-border bg-background/40 p-4" data-testid="rom-upload-redirect">
         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Where to upload</div>
-        <p className="text-sm mt-1 max-w-prose">
-          Open a system from the sidebar —{" "}
-          <Link href={filterToPath("ps1")} className="text-primary hover:underline" data-testid="link-upload-ps1">PS1</Link>,{" "}
-          <Link href={filterToPath("snes")} className="text-primary hover:underline" data-testid="link-upload-snes">SNES</Link>, or{" "}
-          <Link href={filterToPath("nes")} className="text-primary hover:underline" data-testid="link-upload-nes">NES</Link>{" "}
-          — and you'll find an upload dropzone there.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {SYSTEMS.map((s) => (
-            <Link key={s.id} href={filterToPath(s.id)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-2.5 py-1 text-[11px] font-mono uppercase tracking-wider hover-elevate"
-              data-testid={`link-upload-system-${s.id}`}>
-              {s.shortName}<ChevronRight className="size-3" />
-            </Link>
-          ))}
-        </div>
+        <p className="text-sm mt-1 max-w-prose">Open a system from the sidebar —{" "}<Link href={filterToPath("ps1")} className="text-primary hover:underline" data-testid="link-upload-ps1">PS1</Link>,{" "}<Link href={filterToPath("snes")} className="text-primary hover:underline" data-testid="link-upload-snes">SNES</Link>, or{" "}<Link href={filterToPath("nes")} className="text-primary hover:underline" data-testid="link-upload-nes">NES</Link>{" "}— and you'll find an upload dropzone there.</p>
+        <div className="mt-3 flex flex-wrap gap-2">{SYSTEMS.map((s) => (<Link key={s.id} href={filterToPath(s.id)} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-2.5 py-1 text-[11px] font-mono uppercase tracking-wider hover-elevate" data-testid={`link-upload-system-${s.id}`}>{s.shortName}<ChevronRight className="size-3" /></Link>))}</div>
       </div>
-
       <div className="rounded-md border border-border bg-background/40 overflow-hidden">
         <div className="px-3 py-2 border-b border-border flex items-center justify-between">
           <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Uploaded library</span>
@@ -1372,21 +1114,13 @@ function RomLibrarySection() {
               <li key={rom.id} className="px-3 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3" data-testid={`row-rom-${rom.id}`}>
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate">{rom.title}</div>
-                  <div className="font-mono text-[11px] text-muted-foreground truncate">
-                    {rom.system.toUpperCase()} · {formatRomSize(rom.size)} · {rom.scrapeStatus === "matched" ? "art matched" : "no art yet"}
-                  </div>
+                  <div className="font-mono text-[11px] text-muted-foreground truncate">{rom.system.toUpperCase()} · {formatRomSize(rom.size)} · {rom.scrapeStatus === "matched" ? "art matched" : "no art yet"}</div>
                   <div className="font-mono text-[10px] text-muted-foreground truncate">cabinet_launch_{rom.slug}</div>
                 </div>
                 <div className="shrink-0 flex flex-wrap items-center justify-start sm:justify-end gap-2">
                   {rom.artUrl && <img src={rom.artUrl} alt="" className="h-10 w-8 rounded object-cover border border-border" loading="lazy" decoding="async" data-testid={`img-rom-art-${rom.id}`} />}
-                  <Button variant="outline" size="sm" onClick={() => scrape.mutate(rom)} disabled={scrape.isPending} data-testid={`button-scrape-rom-${rom.id}`}>
-                    {rom.artUrl ? "Refresh art" : "Find art"}
-                  </Button>
-                  <Button variant="outline" size="sm" disabled={deleteRom.isPending}
-                    className="text-destructive hover:text-destructive" data-testid={`button-delete-rom-${rom.id}`}
-                    onClick={() => { if (window.confirm(`Delete ${rom.title}?`)) deleteRom.mutate(rom); }}>
-                    <Trash2 className="size-3.5 mr-1" /> Delete
-                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => scrape.mutate(rom)} disabled={scrape.isPending} data-testid={`button-scrape-rom-${rom.id}`}>{rom.artUrl ? "Refresh art" : "Find art"}</Button>
+                  <Button variant="outline" size="sm" disabled={deleteRom.isPending} className="text-destructive hover:text-destructive" data-testid={`button-delete-rom-${rom.id}`} onClick={() => { if (window.confirm(`Delete ${rom.title}?`)) deleteRom.mutate(rom); }}><Trash2 className="size-3.5 mr-1" /> Delete</Button>
                 </div>
               </li>
             ))}
@@ -1399,7 +1133,6 @@ function RomLibrarySection() {
   );
 }
 
-// ── Profiles section ──────────────────────────────────────────────────────
 const PROFILE_COLORS = ["#8b5cf6","#ec4899","#06b6d4","#10b981","#f59e0b","#ef4444","#6366f1","#84cc16"];
 
 function ProfilesSection() {
@@ -1408,32 +1141,25 @@ function ProfilesSection() {
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState(PROFILE_COLORS[0]);
   const [adding, setAdding] = useState(false);
-
   const createProfile = async () => {
-    const name = newName.trim();
-    if (!name) return;
+    const name = newName.trim(); if (!name) return;
     setAdding(true);
     try {
       await apiRequest("POST", "/api/profiles", { name, color: newColor });
       await queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
       setNewName("");
       toast({ title: "Profile created", description: `"${name}" is ready to use.` });
-    } catch {
-      toast({ title: "Failed to create profile", variant: "destructive" });
-    } finally { setAdding(false); }
+    } catch { toast({ title: "Failed to create profile", variant: "destructive" }); }
+    finally { setAdding(false); }
   };
-
   const deleteProfile = async (id: number) => {
     if (id === 1) { toast({ title: "Cannot delete the default profile", variant: "destructive" }); return; }
     try {
       await apiRequest("DELETE", `/api/profiles/${id}`);
       await queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
       toast({ title: "Profile deleted" });
-    } catch {
-      toast({ title: "Failed to delete profile", variant: "destructive" });
-    }
+    } catch { toast({ title: "Failed to delete profile", variant: "destructive" }); }
   };
-
   return (
     <Section title="Player profiles" description="Create separate profiles to keep save states, cheats, and key remaps independent. Switch profiles from the library header.">
       <div className="flex flex-col gap-2">
@@ -1443,46 +1169,26 @@ function ProfilesSection() {
             <UserCircle2 className="size-4 text-muted-foreground shrink-0" />
             <span className="flex-1 font-mono text-sm">{p.name}</span>
             {p.id === 1 && <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">Default</span>}
-            {p.id !== 1 && (
-              <button type="button" onClick={() => deleteProfile(p.id)}
-                className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded"
-                title="Delete profile">
-                <X className="size-4" />
-              </button>
-            )}
+            {p.id !== 1 && (<button type="button" onClick={() => deleteProfile(p.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded" title="Delete profile"><X className="size-4" /></button>)}
           </div>
         ))}
       </div>
       <div className="flex items-end gap-2 mt-2">
         <div className="flex-1 flex flex-col gap-1">
           <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">New profile name</label>
-          <Input value={newName} onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") void createProfile(); }}
-            placeholder="e.g. Player 2" className="font-mono text-sm" data-testid="input-new-profile-name" />
+          <Input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") void createProfile(); }} placeholder="e.g. Player 2" className="font-mono text-sm" data-testid="input-new-profile-name" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Colour</label>
-          <div className="flex gap-1.5">
-            {PROFILE_COLORS.map(c => (
-              <button key={c} type="button" onClick={() => setNewColor(c)}
-                className="size-6 rounded-full border-2 transition-transform hover:scale-110"
-                style={{ background: c, borderColor: newColor === c ? "white" : "transparent" }}
-                title={c} />
-            ))}
-          </div>
+          <div className="flex gap-1.5">{PROFILE_COLORS.map(c => (<button key={c} type="button" onClick={() => setNewColor(c)} className="size-6 rounded-full border-2 transition-transform hover:scale-110" style={{ background: c, borderColor: newColor === c ? "white" : "transparent" }} title={c} />))}</div>
         </div>
-        <Button onClick={() => void createProfile()} disabled={!newName.trim() || adding}
-          className="gap-1.5" data-testid="button-create-profile">
-          {adding ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-          Add
+        <Button onClick={() => void createProfile()} disabled={!newName.trim() || adding} className="gap-1.5" data-testid="button-create-profile">
+          {adding ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Add
         </Button>
       </div>
     </Section>
   );
 }
-
-
-// ── Smart filter collection creator ──────────────────────────────────────────
 
 const ALL_SYSTEMS = [
   { id: "nes", label: "NES" }, { id: "snes", label: "SNES" },
@@ -1509,10 +1215,7 @@ function SmartFilterCollectionCreator() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [genre, setGenre] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const toggle = <T,>(arr: T[], val: T): T[] =>
-    arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
-
+  const toggle = <T,>(arr: T[], val: T): T[] => arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
   const handleCreate = async () => {
     if (!name.trim()) return;
     const rules: SmartFilterRules = {};
@@ -1522,127 +1225,63 @@ function SmartFilterCollectionCreator() {
     if (minMinutes > 0)  rules.minMinutesPlayed = minMinutes;
     if (favoritesOnly)   rules.favorites = true;
     if (genre.trim())    rules.genre = genre.trim();
-
     setSaving(true);
     try {
       const res = await apiRequest("POST", "/api/collections/smart", { name: name.trim(), rules });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? "Error");
       await queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
       toast({ title: "Smart filter created", description: `"${name.trim()}" will update automatically.` });
-      setOpen(false);
-      setName(""); setSystems([]); setStatuses([]);
-      setMinRating(0); setMinMinutes(0); setFavoritesOnly(false); setGenre("");
-    } catch (err) {
-      toast({ title: "Failed to create", description: String(err), variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+      setOpen(false); setName(""); setSystems([]); setStatuses([]); setMinRating(0); setMinMinutes(0); setFavoritesOnly(false); setGenre("");
+    } catch (err) { toast({ title: "Failed to create", description: String(err), variant: "destructive" }); }
+    finally { setSaving(false); }
   };
-
   return (
-    <Section title="Smart filter collections"
-      description="Collections that auto-populate based on rules — system, play status, rating, or playtime. They update whenever your library changes.">
+    <Section title="Smart filter collections" description="Collections that auto-populate based on rules — system, play status, rating, or playtime. They update whenever your library changes.">
       {!open ? (
-        <Button variant="outline" size="sm" onClick={() => setOpen(true)}
-          className="gap-1.5" data-testid="button-create-smart-filter">
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="gap-1.5" data-testid="button-create-smart-filter">
           <Sparkles className="size-3.5" /> New smart filter
         </Button>
       ) : (
         <div className="rounded-xl border border-border bg-black/30 p-4 space-y-4">
           <div className="space-y-1">
             <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Collection name</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Currently Playing"
-              data-testid="input-smart-filter-name"
-              className="font-mono text-sm"
-            />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Currently Playing" data-testid="input-smart-filter-name" className="font-mono text-sm" />
           </div>
-
-          {/* Systems */}
           <div className="space-y-1.5">
-            <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              Systems <span className="opacity-50">(empty = all)</span>
-            </Label>
-            <div className="flex flex-wrap gap-1.5">
-              {ALL_SYSTEMS.map(({ id, label }) => (
-                <button key={id} type="button"
-                  onClick={() => setSystems((s) => toggle(s, id))}
-                  className={`px-2.5 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-all ${
-                    systems.includes(id)
-                      ? "bg-primary/20 border-primary text-primary"
-                      : "border-border text-muted-foreground hover:border-primary/40"
-                  }`}>
-                  {label}
-                </button>
-              ))}
-            </div>
+            <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Systems <span className="opacity-50">(empty = all)</span></Label>
+            <div className="flex flex-wrap gap-1.5">{ALL_SYSTEMS.map(({ id, label }) => (<button key={id} type="button" onClick={() => setSystems((s) => toggle(s, id))} className={`px-2.5 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-all ${systems.includes(id) ? "bg-primary/20 border-primary text-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}>{label}</button>))}</div>
           </div>
-
-          {/* Play status */}
           <div className="space-y-1.5">
-            <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              Play status <span className="opacity-50">(empty = any)</span>
-            </Label>
-            <div className="flex flex-wrap gap-1.5">
-              {ALL_STATUSES.map(({ id, label }) => (
-                <button key={id} type="button"
-                  onClick={() => setStatuses((s) => toggle(s, id))}
-                  className={`px-2.5 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-all ${
-                    statuses.includes(id)
-                      ? "bg-primary/20 border-primary text-primary"
-                      : "border-border text-muted-foreground hover:border-primary/40"
-                  }`}>
-                  {label}
-                </button>
-              ))}
-            </div>
+            <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Play status <span className="opacity-50">(empty = any)</span></Label>
+            <div className="flex flex-wrap gap-1.5">{ALL_STATUSES.map(({ id, label }) => (<button key={id} type="button" onClick={() => setStatuses((s) => toggle(s, id))} className={`px-2.5 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-all ${statuses.includes(id) ? "bg-primary/20 border-primary text-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}>{label}</button>))}</div>
           </div>
-
-          {/* Row: min rating + min played */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Min rating (0 = any)</Label>
-              <select value={minRating} onChange={(e) => setMinRating(Number(e.target.value))}
-                className="w-full h-9 rounded-md border border-border bg-background/50 px-2 font-mono text-xs text-foreground"
-                data-testid="select-smart-filter-min-rating">
-                <option value={0}>Any</option>
-                {[1,2,3,4,5].map((n) => <option key={n} value={n}>{"★".repeat(n)}</option>)}
+              <select value={minRating} onChange={(e) => setMinRating(Number(e.target.value))} className="w-full h-9 rounded-md border border-border bg-background/50 px-2 font-mono text-xs text-foreground" data-testid="select-smart-filter-min-rating">
+                <option value={0}>Any</option>{[1,2,3,4,5].map((n) => <option key={n} value={n}>{"★".repeat(n)}</option>)}
               </select>
             </div>
             <div className="space-y-1">
               <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Min playtime</Label>
-              <select value={minMinutes} onChange={(e) => setMinMinutes(Number(e.target.value))}
-                className="w-full h-9 rounded-md border border-border bg-background/50 px-2 font-mono text-xs text-foreground">
-                <option value={0}>Any</option>
-                <option value={10}>10 min</option>
-                <option value={60}>1 hour</option>
-                <option value={300}>5 hours</option>
-                <option value={1200}>20 hours</option>
+              <select value={minMinutes} onChange={(e) => setMinMinutes(Number(e.target.value))} className="w-full h-9 rounded-md border border-border bg-background/50 px-2 font-mono text-xs text-foreground">
+                <option value={0}>Any</option><option value={10}>10 min</option><option value={60}>1 hour</option><option value={300}>5 hours</option><option value={1200}>20 hours</option>
               </select>
             </div>
           </div>
-
-          {/* Genre + favorites */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Genre contains</Label>
-              <Input value={genre} onChange={(e) => setGenre(e.target.value)}
-                placeholder="e.g. RPG" className="font-mono text-xs"
-                data-testid="input-smart-filter-genre" />
+              <Input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="e.g. RPG" className="font-mono text-xs" data-testid="input-smart-filter-genre" />
             </div>
             <div className="flex items-center gap-2 pt-5">
               <Switch id="sf-favorites" checked={favoritesOnly} onCheckedChange={setFavoritesOnly} />
               <Label htmlFor="sf-favorites" className="text-sm">Favorites only</Label>
             </div>
           </div>
-
           <div className="flex items-center gap-2 pt-1">
-            <Button onClick={handleCreate} disabled={!name.trim() || saving} className="gap-1.5"
-              data-testid="button-save-smart-filter">
-              {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-              Create
+            <Button onClick={handleCreate} disabled={!name.trim() || saving} className="gap-1.5" data-testid="button-save-smart-filter">
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />} Create
             </Button>
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
           </div>
@@ -1652,27 +1291,15 @@ function SmartFilterCollectionCreator() {
   );
 }
 
-
-// ── ROM scanner status ────────────────────────────────────────────────────────
-
 interface ScannerStatusData {
-  enabled: boolean;
-  watchDir: string | null;
-  lastScanAt: number | null;
-  lastScanFound: number;
-  totalScanned: number;
-  watching: boolean;
-  error: string | null;
+  enabled: boolean; watchDir: string | null; lastScanAt: number | null;
+  lastScanFound: number; totalScanned: number; watching: boolean; error: string | null;
 }
 
 function ScannerStatusSection() {
   const { toast } = useToast();
   const [scanning, setScanning] = useState(false);
-  const { data: status } = useQuery<ScannerStatusData>({
-    queryKey: ["/api/scanner/status"],
-    refetchInterval: 30_000,
-  });
-
+  const { data: status } = useQuery<ScannerStatusData>({ queryKey: ["/api/scanner/status"], refetchInterval: 30_000 });
   const handleScanNow = async () => {
     setScanning(true);
     try {
@@ -1680,58 +1307,32 @@ function ScannerStatusSection() {
       await queryClient.invalidateQueries({ queryKey: ["/api/scanner/status"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
       toast({ title: "Scan complete", description: `Found ${status?.lastScanFound ?? 0} new ROM(s).` });
-    } catch (err) {
-      toast({ title: "Scan failed", description: String(err), variant: "destructive" });
-    } finally {
-      setScanning(false);
-    }
+    } catch (err) { toast({ title: "Scan failed", description: String(err), variant: "destructive" }); }
+    finally { setScanning(false); }
   };
-
   if (!status?.enabled) {
     return (
-      <Section title="ROM scanner"
-        description="Auto-import ROMs dropped into a watched folder. Set CABINET_ROM_WATCH_DIR in your HA add-on environment to enable.">
-        <p className="text-sm text-muted-foreground">
-          Not active — set{" "}
-          <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">CABINET_ROM_WATCH_DIR</code>{" "}
-          in the add-on config to enable automatic ROM imports.
-        </p>
+      <Section title="ROM scanner" description="Auto-import ROMs dropped into a watched folder. Set CABINET_ROM_WATCH_DIR in your HA add-on environment to enable.">
+        <p className="text-sm text-muted-foreground">Not active — set{" "}<code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">CABINET_ROM_WATCH_DIR</code>{" "}in the add-on config to enable automatic ROM imports.</p>
       </Section>
     );
   }
-
   return (
-    <Section title="ROM scanner"
-      description="Auto-imports new ROM files found in the watched folder every 60 seconds.">
+    <Section title="ROM scanner" description="Auto-imports new ROM files found in the watched folder every 60 seconds.">
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-mono">
           <span className="text-muted-foreground">Watch dir:</span>
           <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{status.watchDir}</code>
-          {status.watching && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-green-400">
-              <span className="size-1.5 rounded-full bg-green-400 animate-pulse" /> Active
-            </span>
-          )}
+          {status.watching && (<span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-green-400"><span className="size-1.5 rounded-full bg-green-400 animate-pulse" /> Active</span>)}
         </div>
-
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground font-mono">
           <span>Total imported: <span className="text-foreground">{status.totalScanned}</span></span>
-          {status.lastScanAt ? (
-            <span>Last scan: <span className="text-foreground">{new Date(status.lastScanAt).toLocaleTimeString()}</span></span>
-          ) : null}
-          {(status.lastScanFound ?? 0) > 0 && (
-            <span className="text-primary">+{status.lastScanFound} last run</span>
-          )}
+          {status.lastScanAt ? (<span>Last scan: <span className="text-foreground">{new Date(status.lastScanAt).toLocaleTimeString()}</span></span>) : null}
+          {(status.lastScanFound ?? 0) > 0 && (<span className="text-primary">+{status.lastScanFound} last run</span>)}
         </div>
-
-        {status.error ? (
-          <p className="text-xs text-destructive font-mono">{status.error}</p>
-        ) : null}
-
-        <Button variant="outline" size="sm" onClick={handleScanNow} disabled={scanning}
-          className="gap-1.5" data-testid="button-scan-now">
-          {scanning ? <Loader2 className="size-3.5 animate-spin" /> : <ScanLine className="size-3.5" />}
-          Scan now
+        {status.error ? (<p className="text-xs text-destructive font-mono">{status.error}</p>) : null}
+        <Button variant="outline" size="sm" onClick={handleScanNow} disabled={scanning} className="gap-1.5" data-testid="button-scan-now">
+          {scanning ? <Loader2 className="size-3.5 animate-spin" /> : <ScanLine className="size-3.5" />} Scan now
         </Button>
       </div>
     </Section>
@@ -1739,41 +1340,17 @@ function ScannerStatusSection() {
 }
 
 function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h2 className="font-display text-base font-semibold tracking-tight">{title}</h2>
-      <p className="text-xs text-muted-foreground mt-0.5 mb-4 max-w-prose">{description}</p>
-      <div className="space-y-3">{children}</div>
-    </section>
-  );
+  return (<section><h2 className="font-display text-base font-semibold tracking-tight">{title}</h2><p className="text-xs text-muted-foreground mt-0.5 mb-4 max-w-prose">{description}</p><div className="space-y-3">{children}</div></section>);
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <Label className="text-sm font-medium">{label}</Label>
-      {hint && <p className="text-xs text-muted-foreground mt-0.5 mb-1.5">{hint}</p>}
-      {children}
-    </div>
-  );
+  return (<div><Label className="text-sm font-medium">{label}</Label>{hint && <p className="text-xs text-muted-foreground mt-0.5 mb-1.5">{hint}</p>}{children}</div>);
 }
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
-  return (
-    <li className="flex gap-3">
-      <span className="shrink-0 size-6 rounded-full bg-arcade-gradient text-white font-mono text-[12px] font-bold flex items-center justify-center">{n}</span>
-      <div className="flex-1 min-w-0">
-        <div className="font-display font-semibold text-sm">{title}</div>
-        <div className="text-sm text-muted-foreground mt-1 [&_code]:font-mono [&_code]:text-[12px] [&_code]:text-foreground/80">{children}</div>
-      </div>
-    </li>
-  );
+  return (<li className="flex gap-3"><span className="shrink-0 size-6 rounded-full bg-arcade-gradient text-white font-mono text-[12px] font-bold flex items-center justify-center">{n}</span><div className="flex-1 min-w-0"><div className="font-display font-semibold text-sm">{title}</div><div className="text-sm text-muted-foreground mt-1 [&_code]:font-mono [&_code]:text-[12px] [&_code]:text-foreground/80">{children}</div></div></li>);
 }
 
 function Code({ children }: { children: string }) {
-  return (
-    <pre className="mt-2 rounded-md border border-border bg-background/60 p-3 overflow-x-auto font-mono text-[11px] leading-relaxed text-foreground/90 max-w-full">
-      <code>{children}</code>
-    </pre>
-  );
+  return (<pre className="mt-2 rounded-md border border-border bg-background/60 p-3 overflow-x-auto font-mono text-[11px] leading-relaxed text-foreground/90 max-w-full"><code>{children}</code></pre>);
 }
