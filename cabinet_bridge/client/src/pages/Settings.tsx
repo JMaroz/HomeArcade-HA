@@ -925,18 +925,18 @@ export default function Settings() {
             <TabsContent value="ha" className="space-y-8">
               <Section title="Now Playing sensor" description="HomeArcade exposes a live endpoint so Home Assistant can display what's currently running.">
                 <p className="text-xs text-muted-foreground">Add a <code>rest</code> sensor to your <code>configuration.yaml</code>:</p>
-                <Code>{`rest:\n  - resource: http://homeassistant.local:7860/api/now-playing\n    scan_interval: 15\n    sensor:\n      - name: "HomeArcade Now Playing"\n        unique_id: homearcade_now_playing\n        value_template: >\n          {% if value_json.playing %}\n            {{ value_json.title }}\n          {% else %}\n            Idle\n          {% endif %}\n        json_attributes:\n          - playing\n          - system\n          - id`}</Code>
+                <Code>{`rest:\n  - resource: http://homeassistant.local:5000/api/now-playing\n    scan_interval: 15\n    sensor:\n      - name: "HomeArcade Now Playing"\n        unique_id: homearcade_now_playing\n        value_template: >\n          {% if value_json.playing %}\n            {{ value_json.title }}\n          {% else %}\n            Idle\n          {% endif %}\n        json_attributes:\n          - playing\n          - system\n          - id`}</Code>
                 <p className="text-xs text-muted-foreground mt-2">Optionally create an <code>input_text.homearcade_now_playing</code> helper — HomeArcade will update it automatically.</p>
                 <Code>{`input_text:\n  homearcade_now_playing:\n    name: HomeArcade Now Playing\n    max: 100`}</Code>
               </Section>
               <Section title="Lovelace card" description="Add HomeArcade as a card to your HA dashboard with now-playing status and a recent games shelf.">
                 <ol className="space-y-4 list-none p-0 m-0">
-                  <Step n={1} title="Copy the card file">Place <code>homearcade-card.js</code> in your HA <code>/config/www/</code> folder.<Code>{`wget -O /config/www/homearcade-card.js \\\n  http://homeassistant.local:7860/homearcade-card.js`}</Code></Step>
+                  <Step n={1} title="Copy the card file">Place <code>homearcade-card.js</code> in your HA <code>/config/www/</code> folder.<Code>{`wget -O /config/www/homearcade-card.js \\\n  http://homeassistant.local:5000/homearcade-card.js`}</Code></Step>
                   <Step n={2} title="Register the resource">Go to <strong>Settings → Dashboards → Resources → Add</strong>:<Code>{`URL:  /local/homearcade-card.js\nType: JavaScript Module`}</Code></Step>
-                  <Step n={3} title="Add the card"><strong>Add Card → Manual</strong>:<Code>{`type: custom:homearcade-card\ntitle: HomeArcade\nbase_url: http://homeassistant.local:7860\nmax_recent: 6`}</Code></Step>
+                  <Step n={3} title="Add the card"><strong>Add Card → Manual</strong>:<Code>{`type: custom:homearcade-card\ntitle: HomeArcade\nbase_url: http://homeassistant.local:5000\nmax_recent: 6`}</Code></Step>
                 </ol>
                 <div className="mt-3">
-                  <a href="/homearcade-card.js" download="homearcade-card.js" className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline" data-testid="link-download-card">
+                  <a href="homearcade-card.js" download="homearcade-card.js" className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline" data-testid="link-download-card">
                     <ExternalLink className="size-3.5" /> Download homearcade-card.js
                   </a>
                 </div>

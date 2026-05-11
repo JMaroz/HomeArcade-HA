@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [0.7.39] — 2026-05-11
+
+### Fix: Lovelace card download
+
+- **Public Assets** — Moved `homearcade-card.js`, `manifest.json`, and `sw.js` to a proper `public` directory to ensure they are correctly bundled by Vite.
+- **Ingress Support** — Fixed the download link in Settings to be relative, allowing it to work correctly behind Home Assistant Ingress.
+- **Port Updates** — Updated setup examples to use the default add-on port (5000).
+
+---
+
 ## [0.7.38] — 2026-05-11
 
 ### Release
