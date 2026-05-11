@@ -64,6 +64,8 @@ export const gameCollections = sqliteTable("game_collections", {
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   createdAt: integer("created_at").notNull(),
+  /** JSON-encoded SmartFilterRules. Null = manual collection. */
+  smartFilter: text("smart_filter"),
 });
 
 export const collectionItems = sqliteTable("collection_items", {
@@ -101,8 +103,26 @@ export type CollectionItem = typeof collectionItems.$inferSelect;
 export type InsertRomSaveSlot = z.infer<typeof insertRomSaveSlotSchema>;
 export type RomSaveSlot = typeof romSaveSlots.$inferSelect;
 
+/** Rules for a smart-filter collection. All fields are ANDed together. */
+export type SmartFilterRules = {
+  /** Match only these system IDs (e.g. ["nes", "snes"]). Empty = any. */
+  systems?: string[];
+  /** Match only these play statuses (e.g. ["playing", "beaten"]). Empty = any. */
+  playStatus?: string[];
+  /** Minimum star rating (0–5). */
+  minRating?: number;
+  /** Minimum minutes played. */
+  minMinutesPlayed?: number;
+  /** If true, only favorite ROMs. */
+  favorites?: boolean;
+  /** Match genre string (case-insensitive contains). */
+  genre?: string;
+};
+
 export type GameCollectionWithItems = GameCollection & {
   romIds: number[];
+  /** Present when this is a smart-filter collection. */
+  smartFilter?: SmartFilterRules;
 };
 
 export const appSettings = sqliteTable("app_settings", {
@@ -169,7 +189,7 @@ export const DEFAULT_INTEGRATION_SETTINGS: IntegrationSettings = {
   systemDisplay: {},
 };
 
-// ── User profiles (named, no passwords) ─────────────────────────────────────
+// ── User profiles (named, no passwords) ────────────────────────────────────────────
 export const userProfiles = sqliteTable("user_profiles", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
@@ -181,7 +201,7 @@ export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({ i
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type UserProfile = typeof userProfiles.$inferSelect;
 
-// ── Per-game cheat codes ─────────────────────────────────────────────────────
+// ── Per-game cheat codes ─────────────────────────────────────────────────────────────
 export const gameCheatCodes = sqliteTable("game_cheat_codes", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   romId: integer("rom_id").notNull(),
@@ -196,7 +216,7 @@ export const insertGameCheatCodeSchema = createInsertSchema(gameCheatCodes).omit
 export type InsertGameCheatCode = z.infer<typeof insertGameCheatCodeSchema>;
 export type GameCheatCode = typeof gameCheatCodes.$inferSelect;
 
-// ── Per-profile game state (favorites, ratings, play status) ─────────────────
+// ── Per-profile game state (favorites, ratings, play status) ───────────────────────────
 export const profileGameState = sqliteTable("profile_game_state", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   profileId: integer("profile_id").notNull(),
@@ -211,7 +231,7 @@ export const insertProfileGameStateSchema = createInsertSchema(profileGameState)
 export type InsertProfileGameState = z.infer<typeof insertProfileGameStateSchema>;
 export type ProfileGameState = typeof profileGameState.$inferSelect;
 
-// ── Per-profile key bindings ─────────────────────────────────────────────────
+// ── Per-profile key bindings ────────────────────────────────────────────────────────
 export const profileControlBindings = sqliteTable("profile_control_bindings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   profileId: integer("profile_id").notNull(),
@@ -222,7 +242,7 @@ export const profileControlBindings = sqliteTable("profile_control_bindings", {
 
 export type ProfileControlBinding = typeof profileControlBindings.$inferSelect;
 
-// ── Per-profile gamepad button bindings ──────────────────────────────────────
+// ── Per-profile gamepad button bindings ──────────────────────────────────────────────
 // bindings JSON: { [retropadButtonId]: gamepadButtonIndex }
 // gamepadId: navigator.getGamepads()[n].id string (or "default" for catch-all)
 export const gamepadBindings = sqliteTable("gamepad_bindings", {
@@ -235,7 +255,7 @@ export const gamepadBindings = sqliteTable("gamepad_bindings", {
 
 export type GamepadBinding = typeof gamepadBindings.$inferSelect;
 
-// ── Cheat library cache ──────────────────────────────────────────────────────
+// ── Cheat library cache ───────────────────────────────────────────────────────────────────────
 // cheat_index_cache: one row per system folder, stores the directory listing
 export const cheatIndexCache = sqliteTable("cheat_index_cache", {
   id:        integer("id").primaryKey({ autoIncrement: true }),
