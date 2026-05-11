@@ -475,6 +475,14 @@ export async function registerRoutes(
         // "default" slot covers all connected gamepads unless a specific one is saved
         return await storage.getGamepadBindings(pId, "default");
       })(),
+      controlDefaultsP2: await (async () => {
+        const pId = profileParam ? Number(profileParam) : 1;
+        return await storage.getProfileControlBindings(pId, `${core}_p2`);
+      })(),
+      gamepadBindingsP2: await (async () => {
+        const pId = profileParam ? Number(profileParam) : 1;
+        return await storage.getGamepadBindings(pId, "default_p2");
+      })(),
       userId,
       userName,
       profileId: profileParam ?? "1",
@@ -593,23 +601,27 @@ export async function registerRoutes(
   // GET  /api/profiles/:profileId/controls/:core  → { [buttonIndex]: keyName }
   // PUT  /api/profiles/:profileId/controls/:core  → save bindings
   // DELETE /api/profiles/:profileId/controls/:core → reset to global defaults
+  // ?port=0 (default) → Player 1; ?port=1 → Player 2 (stored under core_p2 key)
   app.get("/api/profiles/:profileId/controls/:core", async (req, res) => {
     const profileId = Number(req.params.profileId);
-    const core = req.params.core;
-    res.json(await storage.getProfileControlBindings(profileId, core));
+    const port = Number(req.query.port ?? 0);
+    const coreKey = port === 1 ? `${req.params.core}_p2` : req.params.core;
+    res.json(await storage.getProfileControlBindings(profileId, coreKey));
   });
   app.put("/api/profiles/:profileId/controls/:core", express.json(), async (req, res) => {
     const profileId = Number(req.params.profileId);
-    const core = req.params.core;
+    const port = Number(req.query.port ?? 0);
+    const coreKey = port === 1 ? `${req.params.core}_p2` : req.params.core;
     const bindings = req.body as Record<number, string>;
     if (typeof bindings !== "object" || bindings === null) return res.status(400).json({ message: "bindings must be an object" });
-    await storage.setProfileControlBindings(profileId, core, bindings);
+    await storage.setProfileControlBindings(profileId, coreKey, bindings);
     res.json({ ok: true });
   });
   app.delete("/api/profiles/:profileId/controls/:core", async (req, res) => {
     const profileId = Number(req.params.profileId);
-    const core = req.params.core;
-    await storage.setProfileControlBindings(profileId, core, {});
+    const port = Number(req.query.port ?? 0);
+    const coreKey = port === 1 ? `${req.params.core}_p2` : req.params.core;
+    await storage.setProfileControlBindings(profileId, coreKey, {});
     res.json({ ok: true });
   });
 
@@ -623,14 +635,19 @@ export async function registerRoutes(
     const profileId = Number(req.params.profileId);
     res.json(await storage.listGamepadBindings(profileId));
   });
+  // ?port=0 (default) → Player 1; ?port=1 → Player 2 (stored under gamepadId_p2 key)
   app.get("/api/profiles/:profileId/gamepad-bindings/:gamepadId", async (req, res) => {
     const profileId = Number(req.params.profileId);
-    const gamepadId = decodeURIComponent(req.params.gamepadId);
+    const port = Number(req.query.port ?? 0);
+    const baseId = decodeURIComponent(req.params.gamepadId);
+    const gamepadId = port === 1 ? `${baseId}_p2` : baseId;
     res.json(await storage.getGamepadBindings(profileId, gamepadId));
   });
   app.put("/api/profiles/:profileId/gamepad-bindings/:gamepadId", express.json(), async (req, res) => {
     const profileId = Number(req.params.profileId);
-    const gamepadId = decodeURIComponent(req.params.gamepadId);
+    const port = Number(req.query.port ?? 0);
+    const baseId = decodeURIComponent(req.params.gamepadId);
+    const gamepadId = port === 1 ? `${baseId}_p2` : baseId;
     const bindings = req.body as Record<number, number>;
     if (typeof bindings !== "object" || bindings === null) {
       return res.status(400).json({ message: "bindings must be an object" });
@@ -640,7 +657,9 @@ export async function registerRoutes(
   });
   app.delete("/api/profiles/:profileId/gamepad-bindings/:gamepadId", async (req, res) => {
     const profileId = Number(req.params.profileId);
-    const gamepadId = decodeURIComponent(req.params.gamepadId);
+    const port = Number(req.query.port ?? 0);
+    const baseId = decodeURIComponent(req.params.gamepadId);
+    const gamepadId = port === 1 ? `${baseId}_p2` : baseId;
     await storage.setGamepadBindings(profileId, gamepadId, {});
     res.json({ ok: true });
   });
@@ -3439,39 +3458,52 @@ const EJS_VALUE2: Record<number, string> = {
   15: "11", // Retropad R3  → Right stick    (button 11)
 };
 
-function buildEjsControls(
+function buildPlayerControls(
   core: string,
-  controlDefaults: Record<string, Record<number, string>>,
+  customKeys: Record<number, string>,
   gamepadBindings: Record<number, number> = {},
-): Record<number, Record<number, { value: string; value2?: string }>> {
+): Record<number, { value: string; value2?: string }> {
   const isPS = ["psx", "pcsx2", "ppsspp"].includes(core);
   const maxBtn = isPS ? 15 : 11;
-  const custom: Record<number, string> = {};
-  // Merge numeric keys from saved config (keys may be strings after JSON round-trip)
-  for (const [k, v] of Object.entries(controlDefaults[core] ?? {})) {
-    custom[Number(k)] = v;
-  }
-  const p1: Record<number, { value: string; value2?: string }> = {};
+  const controls: Record<number, { value: string; value2?: string }> = {};
   for (let i = 0; i <= maxBtn; i++) {
-    const key = custom[i] ?? EJS_DEFAULT_KEYS[i];
+    const key = customKeys[i] ?? EJS_DEFAULT_KEYS[i];
     if (!key) continue;
     const entry: { value: string; value2?: string } = { value: key };
-    // Custom gamepad binding (physical button index) takes priority over named default
     if (gamepadBindings[i] !== undefined) {
       entry.value2 = String(gamepadBindings[i]);
     } else if (EJS_VALUE2[i]) {
       entry.value2 = EJS_VALUE2[i];
     }
-    p1[i] = entry;
+    controls[i] = entry;
   }
   // Hotkeys (shared, still respect custom overrides)
   for (const idx of [24, 25, 26]) {
-    p1[idx] = { value: custom[idx] ?? EJS_DEFAULT_KEYS[idx] ?? String(idx - 23) };
+    controls[idx] = { value: customKeys[idx] ?? EJS_DEFAULT_KEYS[idx] ?? String(idx - 23) };
   }
-  return { 0: p1, 1: {}, 2: {}, 3: {} };
+  return controls;
 }
 
-function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults, gamepadBindings, userId, userName, profileId, cheats }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; gamepadBindings: Record<number, number>; userId: string; userName: string; profileId: string; cheats: Array<{ description: string; code: string }>; }) {
+function buildEjsControls(
+  core: string,
+  controlDefaults: Record<string, Record<number, string>>,
+  gamepadBindings: Record<number, number> = {},
+  controlDefaultsP2: Record<number, string> = {},
+  gamepadBindingsP2: Record<number, number> = {},
+): Record<number, Record<number, { value: string; value2?: string }>> {
+  // Merge numeric keys from saved config (keys may be strings after JSON round-trip)
+  const custom: Record<number, string> = {};
+  for (const [k, v] of Object.entries(controlDefaults[core] ?? {})) {
+    custom[Number(k)] = v;
+  }
+  const p1 = buildPlayerControls(core, custom, gamepadBindings);
+  // Only populate P2 if bindings have been saved for it
+  const hasP2 = Object.keys(controlDefaultsP2).length > 0 || Object.keys(gamepadBindingsP2).length > 0;
+  const p2 = hasP2 ? buildPlayerControls(core, controlDefaultsP2, gamepadBindingsP2) : {};
+  return { 0: p1, 1: p2, 2: {}, 3: {} };
+}
+
+function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2, userId, userName, profileId, cheats }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; gamepadBindings: Record<number, number>; controlDefaultsP2: Record<number, string>; gamepadBindingsP2: Record<number, number>; userId: string; userName: string; profileId: string; cheats: Array<{ description: string; code: string }>; }) {
   return `"use strict";
 // Diagnostic: immediately mark that this script is executing.
 // If the launch overlay stays at 0%, this script never ran.
@@ -5283,7 +5315,7 @@ window.EJS_rewindGranularity = 2;
 window.EJS_fastForwardSpeed = 3;
 window.EJS_controlScheme = ${JSON.stringify(core)};
 ${cheats.length > 0 ? `window.EJS_cheats = ${JSON.stringify(cheats.map(c => [c.description, c.code]))};` : "// No cheats saved for this game"}
-window.EJS_defaultControls = ${JSON.stringify(buildEjsControls(core, controlDefaults, gamepadBindings))};
+window.EJS_defaultControls = ${JSON.stringify(buildEjsControls(core, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2))};
 window.EJS_defaultOptions = {
   "save-state-location": "browser",
   "save-state-slot": 1

@@ -176,6 +176,7 @@ function ControlsTab() {
   const [selectedSystem, setSelectedSystem] = useState(SYSTEMS_WITH_CORES[0].systemId);
   const [capturing, setCapturing] = useState<number | null>(null);
   const [selectedProfileId, setSelectedProfileId] = useState<number>(currentProfileId);
+  const [playerPort, setPlayerPort] = useState(0); // 0 = Player 1, 1 = Player 2
   const { toast } = useToast();
 
   const { data: profiles = [] } = useQuery<UserProfile[]>({ queryKey: ["/api/profiles"] });
@@ -192,9 +193,9 @@ function ControlsTab() {
 
   // Profile-specific bindings override global
   const { data: profileBindings = {} } = useQuery<Record<number, string>>({
-    queryKey: ["/api/profiles", selectedProfileId, "controls", core],
+    queryKey: ["/api/profiles", selectedProfileId, "controls", core, playerPort],
     queryFn: async () => {
-      const res = await fetch(`/api/profiles/${selectedProfileId}/controls/${core}`);
+      const res = await fetch(`/api/profiles/${selectedProfileId}/controls/${core}?port=${playerPort}`);
       if (!res.ok) return {};
       return res.json();
     },
@@ -214,13 +215,13 @@ function ControlsTab() {
 
   const setKey = useCallback(async (index: number, key: string) => {
     const updated = { ...profileBindings, [index]: key };
-    await apiRequest("PUT", `/api/profiles/${selectedProfileId}/controls/${core}`, updated);
-    await queryClient.invalidateQueries({ queryKey: ["/api/profiles", selectedProfileId, "controls", core] });
-  }, [core, selectedProfileId, profileBindings]);
+    await apiRequest("PUT", `/api/profiles/${selectedProfileId}/controls/${core}?port=${playerPort}`, updated);
+    await queryClient.invalidateQueries({ queryKey: ["/api/profiles", selectedProfileId, "controls", core, playerPort] });
+  }, [core, selectedProfileId, profileBindings, playerPort]);
 
   const resetCore = async () => {
-    await apiRequest("DELETE", `/api/profiles/${selectedProfileId}/controls/${core}`);
-    await queryClient.invalidateQueries({ queryKey: ["/api/profiles", selectedProfileId, "controls", core] });
+    await apiRequest("DELETE", `/api/profiles/${selectedProfileId}/controls/${core}?port=${playerPort}`);
+    await queryClient.invalidateQueries({ queryKey: ["/api/profiles", selectedProfileId, "controls", core, playerPort] });
     toast({ title: "Reset", description: `${sys.label} bindings reset for this profile.` });
   };
 
@@ -246,6 +247,24 @@ function ControlsTab() {
           <p className="text-sm text-muted-foreground">
             Customise keyboard controls per system and per profile. Profile overrides take precedence over global defaults.
           </p>
+        </div>
+
+        {/* P1 / P2 player port selector */}
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Player:</span>
+          {[{ port: 0, label: "Player 1" }, { port: 1, label: "Player 2" }].map(({ port, label }) => (
+            <button
+              key={port}
+              onClick={() => setPlayerPort(port)}
+              className={`px-4 py-1.5 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-all ${
+                playerPort === port
+                  ? "bg-primary/20 border-primary text-primary shadow-[0_0_8px_hsl(var(--primary)/0.3)]"
+                  : "bg-background/50 border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* Profile selector */}
@@ -364,7 +383,7 @@ function ControlsTab() {
       </div>
 
       {/* Gamepad remapper */}
-      <GamepadRemapSection profileId={selectedProfileId} />
+      <GamepadRemapSection profileId={selectedProfileId} playerPort={playerPort} />
     </div>
   );
 }
@@ -411,7 +430,7 @@ function physicalButtonLabel(idx: number): string {
   return names[idx] !== undefined ? `Button ${idx} (${names[idx]})` : `Button ${idx}`;
 }
 
-function GamepadRemapSection({ profileId }: { profileId: number }) {
+function GamepadRemapSection({ profileId, playerPort = 0 }: { profileId: number; playerPort?: number }) {
   const { toast } = useToast();
   const [gamepads, setGamepads] = useState<Gamepad[]>([]);
   const [capturingBtn, setCapturingBtn] = useState<number | null>(null);
@@ -436,9 +455,9 @@ function GamepadRemapSection({ profileId }: { profileId: number }) {
     };
   }, [refreshGamepads]);
 
-  // Load saved bindings for this profile
+  // Load saved bindings for this profile + port
   React.useEffect(() => {
-    fetch(`/api/profiles/${profileId}/gamepad-bindings/default`)
+    fetch(`/api/profiles/${profileId}/gamepad-bindings/default?port=${playerPort}`)
       .then((r) => r.json())
       .then((data: Record<number, number>) => {
         if (data && typeof data === "object" && Object.keys(data).length > 0) {
@@ -448,7 +467,7 @@ function GamepadRemapSection({ profileId }: { profileId: number }) {
         }
       })
       .catch(() => setBindings({ ...DEFAULT_GAMEPAD_MAP }));
-  }, [profileId]);
+  }, [profileId, playerPort]);
 
   // Polling loop for button capture
   React.useEffect(() => {
@@ -481,7 +500,7 @@ function GamepadRemapSection({ profileId }: { profileId: number }) {
 
   const saveBindings = async () => {
     try {
-      await apiRequest("PUT", `/api/profiles/${profileId}/gamepad-bindings/default`, bindings);
+      await apiRequest("PUT", `/api/profiles/${profileId}/gamepad-bindings/default?port=${playerPort}`, bindings);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
       toast({ title: "Gamepad mapping saved", description: "Applied on next game launch." });

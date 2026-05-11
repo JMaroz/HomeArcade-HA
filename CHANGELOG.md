@@ -4,6 +4,19 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [0.7.28] — 2026-05-10
+
+### Feature: 2-player controller support
+
+- Added **Player 1 / Player 2** pill toggle at the top of Settings → Controls
+- All keyboard bindings and gamepad mappings below the toggle apply to the selected player port
+- P2 keyboard bindings stored under `{core}_p2` key; P2 gamepad bindings under `default_p2`
+- All control API endpoints (`GET/PUT/DELETE /api/profiles/:id/controls/:core` and `/api/profiles/:id/gamepad-bindings/:gamepadId`) now accept `?port=0|1` query param
+- Bootstrap JS fetches both P1 and P2 bindings at game launch — `EJS_defaultControls` is populated with `{ 0: p1Controls, 1: p2Controls, 2: {}, 3: {} }` so EmulatorJS wires up each player's gamepad automatically
+- P2 controls section omitted from `EJS_defaultControls` when no P2 bindings have been saved, preserving existing single-player behaviour
+
+---
+
 ## [0.7.27] — 2026-05-10
 
 ### Fix: save-state thumbnails no longer black
