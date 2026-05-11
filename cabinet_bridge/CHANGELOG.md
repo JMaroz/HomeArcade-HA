@@ -1,3 +1,8 @@
+## 0.7.36 – 2026-05-11
+
+- Feature: **ROM scanner** — set `CABINET_ROM_WATCH_DIR` in the HA add-on environment to auto-import ROM files dropped into a folder; polls every 60 seconds; system detected from extension (nes/snes/genesis/n64/gb/gbc/gba/nds/ps1/ps2/psp/dreamcast/arcade); Settings → Library shows watch dir, last scan time, total imported, and a "Scan now" button; run `node server/apply-scanner-patch.mjs` once from `cabinet_bridge/` to activate
+- API: `GET /api/scanner/status`, `POST /api/scanner/scan-now`
+
 ## 0.7.35 – 2026-05-11
 
 - Feature: **Smart filter collections** — dynamic collections that auto-populate from rules; create in Settings → Library with system pill toggles, play status filters, min rating, min playtime, genre keyword, and favorites-only switch; stored as JSON in `game_collections.smart_filter`; re-evaluated live on every `listCollections()` call; run `node server/apply-smart-filter-patch.mjs` once from `cabinet_bridge/` to activate
