@@ -1,3 +1,8 @@
+## 0.7.37 – 2026-05-11
+
+- Feature: **Netplay lobby UI** — "Netplay" button (id=`cabinet-netplay-open`) in the game detail dialog action row; opens a lobby showing all open rooms on this server (5s poll); host creates a new 6-char room code with one click; join by code input or by clicking any listed room; hosting view displays the code prominently with copy button and pulses when a friend joins; player launches automatically as host or client; run `node server/apply-netplay-lobby-patch.mjs` once from `cabinet_bridge/` to activate
+- API: `GET /api/netplay/rooms` — returns open (waiting) rooms as `{ code, createdAt }[]`
+
 ## 0.7.36 – 2026-05-11
 
 - Feature: **ROM scanner** — set `CABINET_ROM_WATCH_DIR` in the HA add-on environment to auto-import ROM files dropped into a folder; polls every 60 seconds; system detected from extension (nes/snes/genesis/n64/gb/gbc/gba/nds/ps1/ps2/psp/dreamcast/arcade); Settings → Library shows watch dir, last scan time, total imported, and a "Scan now" button; run `node server/apply-scanner-patch.mjs` once from `cabinet_bridge/` to activate

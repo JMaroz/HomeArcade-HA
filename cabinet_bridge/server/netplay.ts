@@ -103,3 +103,14 @@ export function attachNetplayServer(httpServer: HttpServer) {
 
   console.log("[HomeArcade] Netplay relay attached at ws://<host>/api/netplay");
 }
+
+/**
+ * Returns all rooms that are still waiting for a second player.
+ * Used by GET /api/netplay/rooms to power the lobby UI.
+ */
+export function listOpenRooms(): { code: string; createdAt: number }[] {
+  return Array.from(rooms.entries())
+    .filter(([, room]) => room.client === null)
+    .map(([code, room]) => ({ code, createdAt: room.createdAt }))
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
