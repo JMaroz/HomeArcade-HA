@@ -4,6 +4,18 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [0.7.32] — 2026-05-10
+
+### Feature: save state auto-sync from server
+
+- **On game load**, after the emulator is ready, `cabinetAutoSyncFromServer` scans server backups and compares against local IDBFS. Any slots that exist on the server but are missing locally (new browser, cleared IndexedDB) are silently restored. A toast confirms: "☁ Synced N save states from server"
+- **Does not overwrite** local saves — only restores slots that are genuinely absent in IDBFS, so intentional local-only states are preserved
+- **"☁ Sync from server" button** added to the bottom of the Save-state Manager panel for manual on-demand sync
+- Click handler wired to same `cabinetAutoSyncFromServer` function (idempotent — skips slots already present)
+- Note: auto-backup to server on each save was already in place since v0.7.26; this release closes the restore side of the sync loop
+
+---
+
 ## [0.7.31] — 2026-05-10
 
 ### Feature: controller haptics + per-system display options

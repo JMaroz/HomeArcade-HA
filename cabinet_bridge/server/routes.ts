@@ -3222,6 +3222,9 @@ function renderEmulatorPage({ title, returnTo, romHash }: { title: string; retur
         <button type="button" class="cabinet-save-close" id="cabinet-save-manager-close" aria-label="Close save-state manager" data-testid="button-close-save-manager">×</button>
       </div>
       <div class="cabinet-save-grid" id="cabinet-save-grid" data-testid="grid-save-slots"></div>
+      <div style="padding:8px 14px 12px;display:flex;justify-content:flex-end;">
+        <button type="button" id="cabinet-sync-from-server" style="appearance:none;border:1px solid rgba(99,179,237,0.35);border-radius:10px;background:rgba(99,179,237,0.08);color:#93c5fd;cursor:pointer;font:700 9px ui-monospace,monospace;letter-spacing:0.1em;padding:7px 12px;text-transform:uppercase;" data-testid="button-sync-from-server" title="Pull any server backup slots that are missing locally">☁ Sync from server</button>
+      </div>
     </section>
     <section class="cabinet-save-panel" id="cabinet-controls-panel" aria-label="Controls reference" aria-hidden="true" data-testid="panel-controls">
       <div class="cabinet-save-panel__header">
@@ -4264,6 +4267,9 @@ document.addEventListener("click", function (event) {
   if (target.id === "cabinet-save-manager-close") {
     cabinetSetSaveManagerOpen(false);
   }
+  if (target.id === "cabinet-sync-from-server") {
+    cabinetAutoSyncFromServer();
+  }
   if (target.id === "cabinet-sleep-open") {
     cabinetSetMenuOpen(false);
     cabinetSetPanelOpen("cabinet-sleep-panel", true);
@@ -4856,6 +4862,9 @@ window.addEventListener("EJS_emulator_ready", function () {
     };
   }
 
+  // Auto-sync server saves to local IDBFS (restores missing slots silently)
+  setTimeout(cabinetAutoSyncFromServer, 1500);
+
   // Wire up hold-to-rewind on the rewind button
   var rewindBtn = document.querySelector("#cabinet-rewind-toggle");
   if (rewindBtn) {
@@ -4949,6 +4958,55 @@ async function cabinetRestoreSlot(slot) {
     cabinetToast("Slot " + slot + " restored from server ☁");
   } catch (err) {
     cabinetToast("Restore failed: " + err.message);
+  }
+}
+
+// ── Auto-sync from server on game load ─────────────────────────────────────
+// Called after EJS_emulator_ready: for each server backup slot that has no
+// local IDBFS state file, silently restore it. Covers fresh browsers and
+// cleared IndexedDB without overwriting intentional local-only saves.
+async function cabinetAutoSyncFromServer() {
+  var emulator = window.EJS_emulator;
+  if (!emulator || !emulator.gameManager || !emulator.gameManager.FS) return;
+  var FS = emulator.gameManager.FS;
+  var gameId = window.EJS_gameID || "";
+
+  // Which slots have server backups?
+  await cabinetFetchServerBackups();
+  if (!cabinetServerBackups || cabinetServerBackups.length === 0) return;
+
+  // Which slots already exist locally in IDBFS?
+  var localSlots = new Set();
+  try {
+    var rootFiles = FS.readdir("/");
+    for (var i = 0; i < rootFiles.length; i++) {
+      var f = rootFiles[i];
+      // Match patterns like /{gameId}-{slot}.state or /{slot}.state
+      var m = f.match(/[-]?(\d+)(?:-quick)?\.state$/);
+      if (m) localSlots.add(Number(m[1]));
+    }
+  } catch (_e) {}
+
+  var restored = 0;
+  for (var si = 0; si < cabinetServerBackups.length; si++) {
+    var slot = cabinetServerBackups[si];
+    if (localSlots.has(slot)) continue; // already have it locally
+    try {
+      var r = await fetch("./save-backup/" + slot);
+      if (!r.ok) continue;
+      var buf = await r.arrayBuffer();
+      if (!buf || buf.byteLength === 0) continue;
+      var statePath = "/" + gameId + "-" + slot + ".state";
+      FS.writeFile(statePath, new Uint8Array(buf));
+      restored++;
+    } catch (_e) {}
+  }
+
+  if (restored > 0) {
+    if (FS.syncfs) FS.syncfs(false, function () {});
+    await cabinetFetchSaveSlots();
+    cabinetRenderSaveSlots();
+    cabinetToast("\u2601 Synced " + restored + " save state" + (restored > 1 ? "s" : "") + " from server");
   }
 }
 
