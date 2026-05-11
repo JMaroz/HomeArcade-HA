@@ -2601,6 +2601,9 @@ function renderEmulatorPage({ title, returnTo, romHash }: { title: string; retur
       #game {
         width: 100vw;
         height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       #game canvas,
       #game iframe,
@@ -3111,27 +3114,39 @@ function renderEmulatorPage({ title, returnTo, romHash }: { title: string; retur
           min-width: 62px;
         }
       }
-      /* Landscape phone — compress pad height, keep game visible */
+      /* Landscape phone — full-screen game with controls overlaid */
       @media (max-height: 500px) and (orientation: landscape) {
         body.cabinet-pad-mobile.cabinet-pad-on #game {
-          height: calc(100dvh - var(--cabinet-tray-height, 42vw)) !important;
+          height: 100dvh !important;
+          width: 100dvw !important;
+        }
+        body.cabinet-pad-mobile.cabinet-pad-on #game canvas,
+        body.cabinet-pad-mobile.cabinet-pad-on #game iframe,
+        body.cabinet-pad-mobile.cabinet-pad-on #game video {
+          max-height: 100dvh !important;
         }
         body.cabinet-pad-mobile .virtual-pad {
-          height: var(--cabinet-tray-height, max(42vw, 140px));
+          inset: 0 !important;
+          height: 100dvh !important;
+        }
+        body.cabinet-pad-mobile .virtual-pad__tray {
+          background: none !important;
+          border-top: none !important;
+          box-shadow: none !important;
         }
         .virtual-pad__dpad,
         .virtual-pad__face {
-          --cabinet-pad-cell: clamp(36px, calc((100vw - 280px) / 6), 52px);
-          bottom: max(8px, env(safe-area-inset-bottom));
+          --cabinet-pad-cell: clamp(34px, 9dvh, 48px);
+          bottom: max(6px, env(safe-area-inset-bottom));
         }
         .virtual-pad__shoulders button,
         .virtual-pad__system button {
-          min-height: 32px;
-          min-width: 60px;
+          min-height: 30px;
+          min-width: 58px;
         }
         .virtual-pad__shoulders,
         .virtual-pad__system {
-          top: 26px;
+          top: 10px;
         }
       }
       /* Haptic feedback on supported devices — pulse animation on button press */
