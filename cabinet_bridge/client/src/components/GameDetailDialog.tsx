@@ -8,7 +8,7 @@ import { useIntegration, formatRelative } from "@/lib/integration";
 import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { GameCollectionWithItems, UploadedRom, RomSaveSlot, GameCheatCode } from "@shared/schema";
-import { Heart, Play, Clock, Users, Star, Folder, Plus, ChevronDown, ChevronUp, Hash, Loader2, ImagePlus, Trash2, Save, Zap, ToggleLeft, ToggleRight, Database, Check } from "lucide-react";
+import { Heart, Play, Clock, Users, Star, Folder, Plus, ChevronDown, ChevronUp, Hash, Loader2, ImagePlus, Trash2, Save, Zap, ToggleLeft, ToggleRight, Database, Check, Wifi } from "lucide-react";
 
 export function GameDetailDialog({
   game,

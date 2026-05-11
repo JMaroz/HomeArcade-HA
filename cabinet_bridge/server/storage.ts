@@ -98,7 +98,8 @@ for (const statement of [
   "ALTER TABLE uploaded_roms ADD COLUMN wheel_art_url TEXT",
   "ALTER TABLE uploaded_roms ADD COLUMN video_url TEXT",
   "ALTER TABLE uploaded_roms ADD COLUMN ra_game_id INTEGER",
-  // Per-user save state isolation
+  "ALTER TABLE game_collections ADD COLUMN smart_filter TEXT",
+    // Per-user save state isolation
   "ALTER TABLE rom_save_slots ADD COLUMN user_id TEXT NOT NULL DEFAULT \'default\'",
   "CREATE UNIQUE INDEX IF NOT EXISTS rom_save_slots_user_idx ON rom_save_slots (rom_id, user_id, slot)",
   "CREATE TABLE IF NOT EXISTS play_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, rom_id INTEGER NOT NULL, rom_title TEXT NOT NULL, rom_system TEXT NOT NULL, started_at INTEGER NOT NULL, ended_at INTEGER, duration_seconds INTEGER)",
@@ -141,6 +142,8 @@ export interface IStorage {
     meta: Partial<Pick<InsertUploadedRom, "description" | "releaseYear" | "developer" | "publisher" | "genre" | "players" | "artUrl" | "scrapeStatus" | "scrapeMessage" | "communityScore" | "wheelArtUrl" | "videoUrl">>,
   ): Promise<UploadedRom | undefined>;
   listCollections(): Promise<GameCollectionWithItems[]>;
+  addScannedRom(rom: { title: string; system: string; slug: string; originalName: string; fileName: string; filePath: string; size: number; mimeType: string; createdAt: number }): Promise<UploadedRom>;
+  listRomFilenames(): Promise<string[]>;
   createCollection(collection: InsertGameCollection): Promise<GameCollection>;
   deleteCollection(id: number): Promise<boolean>;
   renameCollection(id: number, name: string): Promise<GameCollection | undefined>;

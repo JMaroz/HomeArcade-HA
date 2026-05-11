@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { Server } from 'node:http';
-import { storage } from "./storage";
+import { storage } from "./storage"
+import * as scanner from './scanner';
 import { dataPath } from "./data-dir";
 import express from "express";
 import path from "node:path";
@@ -870,6 +871,64 @@ export async function registerRoutes(
     res.json(updated);
   });
 
+  // ── Smart filter collections ────────────────────────────────────────────
+  const smartFilterRulesSchema = z.object({
+    systems:          z.array(z.string().max(32)).optional(),
+    playStatus:       z.array(z.string().max(32)).optional(),
+    minRating:        z.number().int().min(0).max(5).optional(),
+    minMinutesPlayed: z.number().int().min(0).optional(),
+    favorites:        z.boolean().optional(),
+    genre:            z.string().max(128).optional(),
+  });
+
+  app.post("/api/collections/smart", express.json(), async (req, res) => {
+    const parsed = z.object({
+      name:  z.string().trim().min(1).max(48),
+      rules: smartFilterRulesSchema,
+    }).safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid smart filter payload." });
+    }
+    const collection = await storage.createSmartFilterCollection(parsed.data.name, parsed.data.rules);
+    const all = await storage.listCollections();
+    const withItems = all.find((c) => c.id === collection.id) ?? { ...collection, romIds: [] };
+    return res.status(201).json(withItems);
+  });
+
+  app.patch("/api/collections/:id/smart", express.json(), async (req, res) => {
+    const id = Number(req.params.id);
+    const parsed = smartFilterRulesSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid smart filter rules." });
+    }
+    const updated = await storage.updateSmartFilterCollection(id, parsed.data);
+    if (!updated) {
+      return res.status(404).json({ message: "Collection not found." });
+    }
+    const all = await storage.listCollections();
+    const withItems = all.find((c) => c.id === id) ?? { ...updated, romIds: [] };
+    return res.json(withItems);
+  });
+
+  // ── ROM scanner ──────────────────────────────────────────────────────────────────────
+  app.get("/api/scanner/status", (_req, res) => {
+    res.json(scanner.getStatus());
+  });
+
+  app.post("/api/scanner/scan-now", async (_req, res) => {
+    try {
+      await scanner.scanNow();
+      res.json({ ok: true, status: scanner.getStatus() });
+    } catch (err) {
+      res.status(500).json({ message: String(err) });
+    }
+  });
+
+  // ── Netplay lobby ─────────────────────────────────────────────────────────────────
+  app.get("/api/netplay/rooms", (_req, res) => {
+    res.json(listOpenRooms());
+  });
+
   app.put("/api/collections/:id/roms/:romId", async (req, res) => {
     const id = Number(req.params.id);
     const romId = Number(req.params.romId);
@@ -1653,6 +1712,17 @@ export async function registerRoutes(
       res.status(400).json({ message: String(err) });
     }
   });
+
+  // ── ROM scanner init ───────────────────────────────────────────────────────────
+  const CABINET_ROM_WATCH_DIR = process.env.CABINET_ROM_WATCH_DIR;
+  if (CABINET_ROM_WATCH_DIR) {
+    scanner.initScanner(
+      CABINET_ROM_WATCH_DIR,
+      (rom) => storage.addScannedRom(rom),
+      ()    => storage.listRomFilenames(),
+    );
+    console.log(`[Scanner] Watching ${CABINET_ROM_WATCH_DIR} for new ROMs (60s poll).`);
+  }
 
   return httpServer;
 }
