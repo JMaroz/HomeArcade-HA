@@ -2,7 +2,7 @@ import { memo, useCallback, useRef, useState } from "react";
 import { GameArt } from "@/components/GameArt";
 import { SYSTEMS, type Game } from "@/data/library";
 import { formatRelative } from "@/lib/integration";
-import { Heart, Info, Star } from "lucide-react";
+import { Heart, Info, Star, Clock } from "lucide-react";
 
 /**
  * MD3 Elevated Card — 16px large shape, tonal surface, state layer on hover/press.
@@ -168,7 +168,14 @@ export const GameCard = memo(function GameCard({
             {system?.shortName ?? game.system}
           </span>
           <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
-            {game.lastPlayed ? (
+            {game.minutesPlayed && game.minutesPlayed > 0 ? (
+              <span className="flex items-center gap-0.5 md-label-small text-foreground/50 whitespace-nowrap" data-testid={`text-playtime-${game.id}`} title="Total play time">
+                <Clock className="size-2.5" />
+                {game.minutesPlayed >= 60
+                  ? `${Math.floor(game.minutesPlayed / 60)}h${game.minutesPlayed % 60 > 0 ? ` ${game.minutesPlayed % 60}m` : ""}`
+                  : `${game.minutesPlayed}m`}
+              </span>
+            ) : game.lastPlayed ? (
               <span className="md-label-small text-foreground/60 whitespace-nowrap" data-testid={`text-lastplayed-${game.id}`}>
                 {formatRelative(game.lastPlayed)}
               </span>

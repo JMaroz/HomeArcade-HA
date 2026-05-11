@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [0.7.30] — 2026-05-10
+
+### Feature: play time on game cards
+
+- **Game cards now show total play time** — a clock icon + formatted duration (e.g. `2h 34m`, `45m`) appears in the card footer when a game has been played. Takes priority over last-played date; falls back to last-played if no time has been accumulated yet.
+- Bulk art scrape and per-game stat display were already fully implemented in prior builds; confirmed working.
+
+---
+
 ## [0.7.29] — 2026-05-10
 
 ### Feature: sort/filter persistence + video previews in game detail
