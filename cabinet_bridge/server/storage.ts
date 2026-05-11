@@ -10,6 +10,7 @@ import type {
   UploadedRom,
   User,
   InsertUser,
+  SmartFilterRules,
 } from '@shared/schema';
 import { DEFAULT_INTEGRATION_SETTINGS, integrationSettingsSchema } from '@shared/schema';
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -242,8 +243,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUploadedRom(id: number): Promise<UploadedRom | undefined> {
-    const rom = await this.getUploadedRom(id);
-    if (!rom) return undefined;
+    const rom = await this.getUploadedRom(id);    if (!rom) return undefined;
 
     db.delete(collectionItems).where(eq(collectionItems.romId, id)).run();
     db.delete(romSaveSlots).where(eq(romSaveSlots.romId, id)).run();
@@ -468,7 +468,7 @@ export class DatabaseStorage implements IStorage {
     return settings;
   }
 
-  // ── Profiles ──────────────────────────────────────────────────────────────
+  // ── Profiles ─────────────────────────────────────────────────────────────────────────────
   async listProfiles() {
     const { userProfiles } = await import("../shared/schema");
     return db.select().from(userProfiles).all();
@@ -484,7 +484,7 @@ export class DatabaseStorage implements IStorage {
     return result.changes > 0;
   }
 
-  // ── Cheats ────────────────────────────────────────────────────────────────
+  // ── Cheats ────────────────────────────────────────────────────────────────────────────────
   async listCheats(romId: number, profileId: number) {
     const { gameCheatCodes } = await import("../shared/schema");
     return db.select().from(gameCheatCodes)
@@ -506,7 +506,7 @@ export class DatabaseStorage implements IStorage {
     return result.changes > 0;
   }
 
-  // ── Per-profile game state ───────────────────────────────────────────────
+  // ── Per-profile game state ───────────────────────────────────────────────────────────────────────
   async getProfileGameState(profileId: number, romId: number) {
     const row = sqlite.prepare(
       "SELECT * FROM profile_game_state WHERE profile_id=? AND rom_id=?"
@@ -535,7 +535,7 @@ export class DatabaseStorage implements IStorage {
     return sqlite.prepare("SELECT * FROM profile_game_state WHERE profile_id=?").all(profileId) as import("../shared/schema").ProfileGameState[];
   }
 
-  // ── Per-profile control bindings ─────────────────────────────────────────
+  // ── Per-profile control bindings ──────────────────────────────────────────────────────────────────────
   async getProfileControlBindings(profileId: number, core: string): Promise<Record<number, string>> {
     const row = sqlite.prepare("SELECT bindings FROM profile_control_bindings WHERE profile_id=? AND core=?").get(profileId, core) as { bindings: string } | undefined;
     if (!row) return {};
@@ -548,7 +548,7 @@ export class DatabaseStorage implements IStorage {
     ).run(profileId, core, JSON.stringify(bindings), now);
   }
 
-  // ── Gamepad bindings ──────────────────────────────────────────────────────
+  // ── Gamepad bindings ──────────────────────────────────────────────────────────────────────────────
   async getGamepadBindings(profileId: number, gamepadId: string): Promise<Record<number, number>> {
     const row = sqlite.prepare(
       "SELECT bindings FROM gamepad_bindings WHERE profile_id=? AND gamepad_id=?"
@@ -577,7 +577,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  // ── Cheat cache ────────────────────────────────────────────────────────
+  // ── Cheat cache ────────────────────────────────────────────────────────────────────────────────────
   private static CHEAT_INDEX_TTL = 7 * 24 * 60 * 60 * 1000;  // 7 days
   private static CHEAT_FILE_TTL  = 30 * 24 * 60 * 60 * 1000; // 30 days
 
@@ -615,11 +615,20 @@ export class DatabaseStorage implements IStorage {
     sqlite.exec("DELETE FROM cheat_index_cache");
     sqlite.exec("DELETE FROM cheat_file_cache");
   }
+  async addScannedRom(rom: { title: string; system: string; slug: string; originalName: string; fileName: string; filePath: string; size: number; mimeType: string; createdAt: number }): Promise<UploadedRom> {
+    return sqlite.prepare(
+      "INSERT INTO uploaded_roms (title, system, slug, original_name, file_name, file_path, size, mime_type, created_at) VALUES (?,?,?,?,?,?,?,?,?) RETURNING *"
+    ).get(rom.title, rom.system, rom.slug, rom.originalName, rom.fileName, rom.filePath, rom.size, rom.mimeType, rom.createdAt) as UploadedRom;
+  }
+
+  async listRomFilenames(): Promise<string[]> {
+    return (sqlite.prepare("SELECT file_name FROM uploaded_roms").all() as { file_name: string }[]).map((r) => r.file_name);
+  }
 }
 
 export const storage = new DatabaseStorage();
 
-// ── ProfileGameState + ProfileControlBindings (appended by v0.6.0) ───────────
+// ── ProfileGameState + ProfileControlBindings (appended by v0.6.0) ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 // Migrations run at the bottom of the existing migration block above via try/catch.
 // We call them here as a second-pass to ensure they exist even on fresh DBs.
 (function ensureV6Tables() {
