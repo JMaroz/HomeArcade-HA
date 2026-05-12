@@ -1,6 +1,8 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -52,6 +54,14 @@ async function buildAll() {
     outfile: "dist/index.cjs",
     define: {
       "process.env.NODE_ENV": '"production"',
+      // Shim import.meta.url for CJS output — fixes createRequire(undefined)
+      // crash on Node 24 when ESM packages reference import.meta.url.
+      "import.meta.url": "__importMetaUrl",
+    },
+    banner: {
+      js: [
+        "const __importMetaUrl = require('url').pathToFileURL(__filename).href;",
+      ].join("\n"),
     },
     minify: true,
     external: externals,
