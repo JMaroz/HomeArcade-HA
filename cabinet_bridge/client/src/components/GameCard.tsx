@@ -3,6 +3,7 @@ import { GameArt } from "@/components/GameArt";
 import { SYSTEMS, type Game } from "@/data/library";
 import { formatRelative } from "@/lib/integration";
 import { Heart, Info, Star, Clock } from "lucide-react";
+import { queryClient, apiUrl } from "@/lib/queryClient";
 
 // ── Play-status badge ─────────────────────────────────────────────────────────
 const STATUS_META: Record<string, { label: string; color: string }> = {
@@ -48,12 +49,39 @@ export const GameCard = memo(function GameCard({
     ? `/api/roms/${game.romId}/save-thumb/auto?t=${game.lastPlayed}`
     : null;
 
+  const prefetchData = useCallback(() => {
+    if (!game.romId) return;
+
+    // Prefetch HLTB data
+    queryClient.prefetchQuery({
+      queryKey: ["hltb", game.romId],
+      queryFn: async () => {
+        const res = await fetch(apiUrl(`/api/roms/${game.romId}/hltb`));
+        if (!res.ok) return { found: false };
+        return res.json();
+      },
+      staleTime: 1000 * 60 * 60 * 24, // 1 day
+    });
+
+    // Prefetch Save States
+    queryClient.prefetchQuery({
+      queryKey: ["save-states", game.romId],
+      queryFn: async () => {
+        const res = await fetch(apiUrl(`/api/roms/${game.romId}/save-states`));
+        if (!res.ok) return [];
+        return res.json();
+      },
+    });
+  }, [game.romId]);
+
   const handleMouseEnter = useCallback(() => {
+    prefetchData();
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
       void videoRef.current.play().catch(() => setVideoFailed(true));
     }
-  }, []);
+  }, [prefetchData]);
+
   const handleMouseLeave = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.pause();
@@ -88,8 +116,9 @@ export const GameCard = memo(function GameCard({
             ].join(" "),
       ].join(" ")}
       data-testid={`card-game-${game.id}`}
-      onMouseEnter={showVideo ? handleMouseEnter : undefined}
-      onMouseLeave={showVideo ? handleMouseLeave : undefined}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={prefetchData}
     >
       {/* ── Art / video ── */}
       <div className="aspect-[16/10] relative">

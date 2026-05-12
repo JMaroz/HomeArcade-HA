@@ -359,35 +359,52 @@ export function IntegrationProvider({ children }: { children: React.ReactNode })
       const resolved = config.endpoints[actionId] || endpoint;
       const live = config.liveMode && /^https?:\/\//i.test(resolved);
 
+      // 1. Optimistic Log Update: Queue the action immediately
       setLog((prev) => [
         { id, ts, label, endpoint: resolved, status: "queued" as CallStatus },
         ...prev,
       ].slice(0, 40));
 
-      // Simulate light-touch effects on PC state for power actions.
-      const settleFromAction = () => {
+      // 2. Optimistic PC State Update: Apply local changes immediately
+      // This is the "Edge Computing" part — assume the physical device will follow
+      // our command and update the UI instantly to avoid perception of lag.
+      setPc((p) => {
+        const next = { ...p };
         if (actionId === "sleep_pc") {
-          setPc((p) => ({ ...p, online: false, state: "sleeping", currentApp: null }));
+          next.online = false;
+          next.state = "sleeping";
+          next.currentApp = null;
         } else if (actionId === "shutdown_pc") {
-          setPc((p) => ({ ...p, online: false, state: "offline", currentApp: null }));
+          next.online = false;
+          next.state = "offline";
+          next.currentApp = null;
         } else if (actionId === "wake_pc") {
-          setPc((p) => ({ ...p, online: true, state: "starting", currentApp: null, uptimeMin: 0 }));
+          next.online = true;
+          next.state = "starting";
+          next.currentApp = null;
+          next.uptimeMin = 0;
+          // Starting transitions usually have a follow-up delay even in optimistic mode
           setTimeout(() => {
-            setPc((p) => ({ ...p, state: "online", currentApp: "Windows" }));
+            setPc((current) => (current.state === "starting" ? { ...current, state: "online", currentApp: "Windows" } : current));
           }, 1500);
         } else if (actionId === "launch_retrobat") {
-          setPc((p) => ({ ...p, online: true, state: "online", currentApp: "RetroBat" }));
+          next.online = true;
+          next.state = "online";
+          next.currentApp = "RetroBat";
         } else if (actionId === "restart_pc") {
-          setPc((p) => ({ ...p, state: "starting", currentApp: null }));
+          next.state = "starting";
+          next.currentApp = null;
           setTimeout(() => {
-            setPc((p) => ({ ...p, state: "online", currentApp: "Windows" }));
+            setPc((current) => (current.state === "starting" ? { ...current, state: "online", currentApp: "Windows" } : current));
           }, 1500);
         } else if (actionId.startsWith("launch_game:")) {
           const title = label.replace(/^Launch\s+/i, "");
-          setPc((p) => ({ ...p, online: true, state: "online", currentApp: title }));
+          next.online = true;
+          next.state = "online";
+          next.currentApp = title;
         }
-        onSettle?.();
-      };
+        return next;
+      });
 
       let status: CallStatus = "simulated";
       let detail: string | undefined;
@@ -407,19 +424,22 @@ export function IntegrationProvider({ children }: { children: React.ReactNode })
           detail = err instanceof Error ? err.message : String(err);
         }
       } else {
-        // Brief artificial latency so the UI shows the queued state.
+        // Brief artificial latency for the LOG entry only, not the PC state.
         await new Promise((r) => setTimeout(r, 320));
         detail = "Simulated — enable Live mode in Settings to call HA";
       }
 
+      // Final log status update
       setLog((prev) =>
         prev.map((entry) =>
           entry.id === id ? { ...entry, status, detail } : entry,
         ),
       );
 
+      // If it failed in Live mode, the next poll will eventually correct the PC state.
+      // But we can trigger an immediate onSettle if it was successful.
       if (status === "ok" || status === "simulated") {
-        settleFromAction();
+        onSettle?.();
       }
     },
     [config],

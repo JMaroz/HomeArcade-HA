@@ -146,6 +146,8 @@ export interface IStorage {
   listCollections(): Promise<GameCollectionWithItems[]>;
   addScannedRom(rom: { title: string; system: string; slug: string; originalName: string; fileName: string; filePath: string; size: number; mimeType: string; createdAt: number }): Promise<UploadedRom>;
   listRomFilenames(): Promise<string[]>;
+  addScannedRom(rom: { title: string; system: string; slug: string; originalName: string; fileName: string; filePath: string; size: number; mimeType: string; createdAt: number }): Promise<UploadedRom>;
+  listRomFilenames(): Promise<string[]>;
   createCollection(collection: InsertGameCollection): Promise<GameCollection>;
   deleteCollection(id: number): Promise<boolean>;
   renameCollection(id: number, name: string): Promise<GameCollection | undefined>;
