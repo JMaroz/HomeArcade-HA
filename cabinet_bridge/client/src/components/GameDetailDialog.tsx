@@ -8,7 +8,27 @@ import { useIntegration, formatRelative } from "@/lib/integration";
 import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { GameCollectionWithItems, UploadedRom, RomSaveSlot, GameCheatCode } from "@shared/schema";
-import { Heart, Play, Clock, Users, Star, Folder, Plus, ChevronDown, ChevronUp, Hash, Loader2, ImagePlus, Trash2, Save, Zap, ToggleLeft, ToggleRight, Database, Check, Wifi } from "lucide-react";
+import { Heart, Play, Clock, Users, Star, Folder, Plus, ChevronDown, ChevronUp, Hash, Loader2, ImagePlus, Trash2, Save, Zap, ToggleLeft, ToggleRight, Database, Check, Wifi, Timer } from "lucide-react";
+
+// ── HLTB helpers ──────────────────────────────────────────────────────────────────────────────────
+
+interface HltbData {
+  found: boolean;
+  hltbTitle?: string | null;
+  mainStory?: number | null;
+  mainExtra?: number | null;
+  completionist?: number | null;
+}
+
+/** Converts stored minutes → readable string, e.g. 510 → "8½h", 45 → "45m" */
+function formatHltbTime(minutes: number | null | undefined): string {
+  if (!minutes) return "—";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return m >= 45 ? `${h + 1}h` : m >= 15 ? `${h}½h` : `${h}h`;
+}
 
 export function GameDetailDialog({
   game,
@@ -51,6 +71,20 @@ export function GameDetailDialog({
     },
     enabled: !!game?.raGameId && !!config.raUsername && !!config.raToken,
   });
+
+  // ── HowLongToBeat ────────────────────────────────────────────────────────────────────────────────
+  const { data: hltbData } = useQuery<HltbData>({
+    queryKey: ["hltb", game?.romId],
+    queryFn: async () => {
+      const res = await fetch(`/api/roms/${game!.romId}/hltb`);
+      if (!res.ok) return { found: false };
+      return res.json();
+    },
+    enabled: !!game?.romId,
+    staleTime: 1000 * 60 * 60 * 24 * 7, // 7 days — matches server cache TTL
+  });
+
+  const hasHltb = hltbData?.found && (hltbData.mainStory || hltbData.mainExtra || hltbData.completionist);
 
   const { data: saveSlots = [], refetch: refetchSlots } = useQuery<RomSaveSlot[]>({
     queryKey: ["save-states", game?.romId],
@@ -366,6 +400,28 @@ export function GameDetailDialog({
               <Stat icon={<Clock className="size-3.5" />} label="Play time" value={playTimeDisplay} />
               <Stat icon={<Hash className="size-3.5" />} label="Play count" value={game.playCount != null && game.playCount > 0 ? String(game.playCount) : "—"} />
             </div>
+
+            {/* HowLongToBeat row — only shown once data is fetched and has at least one value */}
+            {hasHltb && (
+              <div className="rounded-md border border-border bg-background/50 p-3">
+                <div className="flex items-center gap-1.5 mb-2.5">
+                  <Timer className="size-3.5 text-muted-foreground" />
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    How Long to Beat
+                  </span>
+                  {hltbData?.hltbTitle && hltbData.hltbTitle !== game.title && (
+                    <span className="ml-auto font-mono text-[9px] text-muted-foreground/40 truncate max-w-[120px]" title={hltbData.hltbTitle}>
+                      matched: {hltbData.hltbTitle}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <HltbStat label="Main Story" value={formatHltbTime(hltbData?.mainStory)} />
+                  <HltbStat label="Main + Extras" value={formatHltbTime(hltbData?.mainExtra)} />
+                  <HltbStat label="Completionist" value={formatHltbTime(hltbData?.completionist)} />
+                </div>
+              </div>
+            )}
 
             {/* Your Rating */}
             <div className="rounded-md border border-border bg-background/50 p-3">
@@ -734,6 +790,17 @@ function Stat({
         <span className="font-mono text-[9px] uppercase tracking-[0.12em] truncate">{label}</span>
       </div>
       <div className="mt-1 font-mono text-xs font-semibold text-foreground truncate">{value}</div>
+    </div>
+  );
+}
+
+function HltbStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border bg-background/50 px-2.5 py-2">
+      <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground truncate mb-1">
+        {label}
+      </div>
+      <div className="font-mono text-xs font-semibold text-foreground">{value}</div>
     </div>
   );
 }
