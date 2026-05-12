@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIntegration } from "@/lib/integration";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,10 @@ import {
   Plus,
   Sparkles,
   ScanLine,
+  HelpCircle,
+  Activity,
+  Database,
+  Link2,
 } from "lucide-react";
 import type { SmartFilterRules } from "@shared/schema";
 
@@ -35,6 +40,7 @@ export default function Settings() {
   const { config, setConfig, setEndpoint, resetConfig, saveStatus } = useIntegration();
   const { toast } = useToast();
   const [copied, setCopied] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
 
   const copy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -60,6 +66,31 @@ export default function Settings() {
     setConfig({ liveMode: live });
   };
 
+  const testConnection = async () => {
+    setTesting(true);
+    try {
+      // Small artificial delay to show state
+      await new Promise(r => setTimeout(r, 800));
+      const res = await fetch(`${config.haBaseUrl}/api/config`, {
+        headers: config.haToken ? { Authorization: `Bearer ${config.haToken}` } : undefined
+      });
+      if (res.ok) {
+        toast({ title: "Connection Successful", description: "Cabinet Bridge can reach Home Assistant." });
+      } else {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Connection Failed",
+        description: err instanceof Error ? err.message : "Could not reach Home Assistant base URL."
+      });
+    } finally {
+      setTesting(true);
+      setTimeout(() => setTesting(false), 2000);
+    }
+  };
+
   return (
     <div className="flex h-full">
       <Sidebar active="settings" />
@@ -67,14 +98,14 @@ export default function Settings() {
       <main className="flex-1 min-w-0 flex flex-col bg-background/30 overflow-y-auto overscroll-y-contain">
         <MobileTopBar active="settings" />
 
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 space-y-10 sm:space-y-12 pb-24 lg:pb-12">
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 space-y-8 pb-24 lg:pb-12">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                 Integration
               </div>
-              <h1 className="font-display text-2xl font-bold leading-tight mt-1">Settings</h1>
+              <h1 className="font-display text-2xl font-bold leading-tight mt-1 text-neon">Settings</h1>
             </div>
             <div className="flex items-center gap-3">
               {saveStatus === "saving" && (
@@ -95,278 +126,300 @@ export default function Settings() {
             </div>
           </div>
 
-          <Separator className="bg-border/60" />
+          <Tabs defaultValue="connection" className="w-full">
+            <TabsList className="w-full justify-start bg-sidebar/40 border border-border/50 h-auto p-1 mb-8 overflow-x-auto scrollbar-none flex-nowrap shrink-0">
+              <TabsTrigger value="connection" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+                <Globe className="size-4" /> Connection
+              </TabsTrigger>
+              <TabsTrigger value="automation" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+                <Zap className="size-4" /> Automation
+              </TabsTrigger>
+              <TabsTrigger value="library" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+                <Database className="size-4" /> Library
+              </TabsTrigger>
+              <TabsTrigger value="help" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+                <HelpCircle className="size-4" /> Help
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Connection */}
-          <Section
-            title="Home Assistant Connection"
-            description="Configure how Cabinet Bridge talks to your Home Assistant instance. Use the internal URL if this is running as an add-on."
-          >
-            <div className="grid gap-6">
-              <Field
-                label="Base URL"
-                hint="External or internal URL including port (e.g. http://192.168.1.50:8123)"
+            <TabsContent value="connection" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Connection Section */}
+              <Section
+                title="Home Assistant Connection"
+                description="Configure how Cabinet Bridge talks to your Home Assistant instance. Use the internal URL if this is running as an add-on."
               >
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Globe className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={config.haBaseUrl}
-                      onChange={(e) => setConfig({ haBaseUrl: e.target.value })}
-                      placeholder="https://homeassistant.local:8123"
-                      className="pl-9 font-mono text-sm"
-                      data-testid="input-ha-base"
-                    />
-                  </div>
-                </div>
-              </Field>
-
-              <Field
-                label="Long-lived Access Token"
-                hint="Required for certain actions, but often not needed for simple webhooks."
-              >
-                <div className="relative">
-                  <Lock className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    value={config.haToken}
-                    onChange={(e) => setConfig({ haToken: e.target.value })}
-                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                    className="pl-9 font-mono text-sm"
-                    data-testid="input-ha-token"
-                  />
-                </div>
-              </Field>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-border bg-sidebar/40">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2 font-display font-semibold text-sm">
-                    <Zap className="size-4 text-accent" />
-                    Live Mode
-                  </div>
-                  <div className="text-xs text-muted-foreground max-w-sm">
-                    When enabled, actions will fire real network requests to Home Assistant.
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                    {config.liveMode ? "Active" : "Simulation"}
-                  </span>
-                  <Switch
-                    checked={config.liveMode}
-                    onCheckedChange={handleLiveModeToggle}
-                    data-testid="switch-live-mode"
-                  />
-                </div>
-              </div>
-
-              {!config.liveMode && (
-                <div className="flex items-start gap-3 p-4 rounded-lg border border-accent/20 bg-accent/5">
-                  <AlertTriangle className="size-4 text-accent mt-0.5 shrink-0" />
-                  <div className="text-xs text-accent/90 leading-relaxed">
-                    <strong>Cabinet is in Simulation Mode.</strong> Clicks will be logged in the
-                    activity panel but no webhooks will be fired. This is great for testing the UI
-                    without triggering hardware actions.
-                  </div>
-                </div>
-              )}
-            </div>
-          </Section>
-
-          <Separator className="bg-border/60" />
-
-          {/* Scanner */}
-          <ScannerStatusSection />
-
-          <Separator className="bg-border/60" />
-
-          {/* Smart Filters */}
-          <SmartFilterCollectionCreator />
-
-          <Separator className="bg-border/60" />
-
-          {/* PC Status Settings */}
-          <Section
-            title="PC Status Monitoring"
-            description="Link Home Assistant entities to the dashboard meters for CPU, RAM, and Online status."
-          >
-            <div className="grid sm:grid-cols-2 gap-6">
-              <Field label="PC Hostname" hint="Shown at the top of the right panel.">
-                <Input
-                  value={config.pcHostname}
-                  onChange={(e) => setConfig({ pcHostname: e.target.value })}
-                  placeholder="GAMING-PC"
-                  className="font-mono text-sm"
-                  data-testid="input-pc-hostname"
-                />
-              </Field>
-              <Field label="Online Entity ID" hint="binary_sensor showing if PC is up.">
-                <Input
-                  value={config.pcOnlineEntityId}
-                  onChange={(e) => setConfig({ pcOnlineEntityId: e.target.value })}
-                  placeholder="binary_sensor.gaming_pc_status"
-                  className="font-mono text-sm"
-                  data-testid="input-pc-online-id"
-                />
-              </Field>
-              <Field label="CPU Entity ID" hint="sensor providing percentage value.">
-                <Input
-                  value={config.pcCpuEntityId}
-                  onChange={(e) => setConfig({ pcCpuEntityId: e.target.value })}
-                  placeholder="sensor.gaming_pc_cpu_usage"
-                  className="font-mono text-sm"
-                  data-testid="input-pc-cpu-id"
-                />
-              </Field>
-              <Field label="RAM Entity ID" hint="sensor providing percentage value.">
-                <Input
-                  value={config.pcRamEntityId}
-                  onChange={(e) => setConfig({ pcRamEntityId: e.target.value })}
-                  placeholder="sensor.gaming_pc_ram_usage"
-                  className="font-mono text-sm"
-                  data-testid="input-pc-ram-id"
-                />
-              </Field>
-              <Field label="Current App Entity ID" hint="sensor showing foreground window.">
-                <Input
-                  value={config.pcAppEntityId}
-                  onChange={(e) => setConfig({ pcAppEntityId: e.target.value })}
-                  placeholder="sensor.gaming_pc_current_app"
-                  className="font-mono text-sm"
-                  data-testid="input-pc-app-id"
-                />
-              </Field>
-            </div>
-          </Section>
-
-          <Separator className="bg-border/60" />
-
-          {/* Endpoints */}
-          <Section
-            title="Webhook Endpoints"
-            description="URLs automatically generated for your Home Assistant automations. Copy these to use as Webhook triggers."
-          >
-            <div className="space-y-4">
-              <div className="p-4 rounded-lg border border-border bg-sidebar/20">
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Wifi className="size-4 text-primary" />
-                  System Actions
-                </h3>
-                <div className="grid gap-3">
-                  {[
-                    { id: "wake_pc", label: "Wake PC", default: "/api/webhook/cabinet_wake_pc" },
-                    { id: "sleep_pc", label: "Sleep PC", default: "/api/webhook/cabinet_sleep_pc" },
-                    { id: "restart_pc", label: "Restart PC", default: "/api/webhook/cabinet_restart_pc" },
-                    { id: "shutdown_pc", label: "Shutdown PC", default: "/api/webhook/cabinet_shutdown_pc" },
-                  ].map((a) => (
-                    <div key={a.id} className="space-y-1.5">
-                      <Label className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">
-                        {a.label}
-                      </Label>
-                      <div className="flex gap-2">
+                <div className="grid gap-6">
+                  <Field
+                    label="Base URL"
+                    hint="External or internal URL including port (e.g. http://192.168.1.50:8123)"
+                  >
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Globe className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                          value={config.endpoints[a.id] || a.default}
-                          onChange={(e) => setEndpoint(a.id, e.target.value)}
-                          className="font-mono text-[12px] bg-background/40"
-                          data-testid={`input-endpoint-${a.id}`}
+                          value={config.haBaseUrl}
+                          onChange={(e) => setConfig({ haBaseUrl: e.target.value })}
+                          placeholder="https://homeassistant.local:8123"
+                          className="pl-9 font-mono text-sm"
+                          data-testid="input-ha-base"
                         />
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          onClick={() => copy(config.endpoints[a.id] || a.default, a.id)}
-                          data-testid={`button-copy-${a.id}`}
-                        >
-                          {copied === a.id ? (
-                            <Check className="size-3.5 text-accent" />
-                          ) : (
-                            <Copy className="size-3.5" />
-                          )}
-                        </Button>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        onClick={testConnection}
+                        disabled={testing || !config.haBaseUrl}
+                        className="gap-2 shrink-0 min-w-[100px]"
+                      >
+                        {testing ? <Loader2 className="size-3.5 animate-spin" /> : <Link2 className="size-3.5" />}
+                        Test
+                      </Button>
+                    </div>
+                  </Field>
+
+                  <Field
+                    label="Long-lived Access Token"
+                    hint="Required for certain actions, but often not needed for simple webhooks."
+                  >
+                    <div className="relative">
+                      <Lock className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        type="password"
+                        value={config.haToken}
+                        onChange={(e) => setConfig({ haToken: e.target.value })}
+                        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        className="pl-9 font-mono text-sm"
+                        data-testid="input-ha-token"
+                      />
+                    </div>
+                  </Field>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-border bg-sidebar/40">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2 font-display font-semibold text-sm">
+                        <Zap className="size-4 text-accent" />
+                        Live Mode
+                      </div>
+                      <div className="text-xs text-muted-foreground max-w-sm">
+                        When enabled, actions will fire real network requests to Home Assistant.
                       </div>
                     </div>
-                  ))}
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {config.liveMode ? "Active" : "Simulation"}
+                      </span>
+                      <Switch
+                        checked={config.liveMode}
+                        onCheckedChange={handleLiveModeToggle}
+                        data-testid="switch-live-mode"
+                      />
+                    </div>
+                  </div>
+
+                  {!config.liveMode && (
+                    <div className="flex items-start gap-3 p-4 rounded-lg border border-accent/20 bg-accent/5">
+                      <AlertTriangle className="size-4 text-accent mt-0.5 shrink-0" />
+                      <div className="text-xs text-accent/90 leading-relaxed">
+                        <strong>Cabinet is in Simulation Mode.</strong> Clicks will be logged in the
+                        activity panel but no webhooks will be fired. This is great for testing the UI
+                        without triggering hardware actions.
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              </Section>
+            </TabsContent>
 
-              <div className="p-4 rounded-lg border border-border bg-sidebar/20">
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Terminal className="size-4 text-primary" />
-                  Sample Game Launch
-                </h3>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Each game has a unique webhook. Example for a specific title:
-                </p>
-                <div className="flex gap-2">
-                  <Input
-                    readOnly
-                    value="/api/webhook/cabinet_launch_super-mario-world"
-                    className="font-mono text-[12px] bg-background/40 opacity-70"
-                  />
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    onClick={() =>
-                      copy("/api/webhook/cabinet_launch_super-mario-world", "sample-game")
-                    }
-                  >
-                    {copied === "sample-game" ? (
-                      <Check className="size-3.5 text-accent" />
-                    ) : (
-                      <Copy className="size-3.5" />
-                    )}
-                  </Button>
+            <TabsContent value="automation" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* PC Status Settings */}
+              <Section
+                title="PC Status Monitoring"
+                description="Link Home Assistant entities to the dashboard meters for CPU, RAM, and Online status."
+              >
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <Field label="PC Hostname" hint="Shown at the top of the right panel.">
+                    <Input
+                      value={config.pcHostname}
+                      onChange={(e) => setConfig({ pcHostname: e.target.value })}
+                      placeholder="GAMING-PC"
+                      className="font-mono text-sm"
+                      data-testid="input-pc-hostname"
+                    />
+                  </Field>
+                  <Field label="Online Entity ID" hint="binary_sensor showing if PC is up.">
+                    <Input
+                      value={config.pcOnlineEntityId}
+                      onChange={(e) => setConfig({ pcOnlineEntityId: e.target.value })}
+                      placeholder="binary_sensor.gaming_pc_status"
+                      className="font-mono text-sm"
+                      data-testid="input-pc-online-id"
+                    />
+                  </Field>
+                  <Field label="CPU Entity ID" hint="sensor providing percentage value.">
+                    <Input
+                      value={config.pcCpuEntityId}
+                      onChange={(e) => setConfig({ pcCpuEntityId: e.target.value })}
+                      placeholder="sensor.gaming_pc_cpu_usage"
+                      className="font-mono text-sm"
+                      data-testid="input-pc-cpu-id"
+                    />
+                  </Field>
+                  <Field label="RAM Entity ID" hint="sensor providing percentage value.">
+                    <Input
+                      value={config.pcRamEntityId}
+                      onChange={(e) => setConfig({ pcRamEntityId: e.target.value })}
+                      placeholder="sensor.gaming_pc_ram_usage"
+                      className="font-mono text-sm"
+                      data-testid="input-pc-ram-id"
+                    />
+                  </Field>
+                  <Field label="Current App Entity ID" hint="sensor showing foreground window.">
+                    <Input
+                      value={config.pcAppEntityId}
+                      onChange={(e) => setConfig({ pcAppEntityId: e.target.value })}
+                      placeholder="sensor.gaming_pc_current_app"
+                      className="font-mono text-sm"
+                      data-testid="input-pc-app-id"
+                    />
+                  </Field>
                 </div>
-              </div>
-            </div>
-          </Section>
+              </Section>
 
-          <Separator className="bg-border/60" />
+              <Separator className="bg-border/60" />
 
-          {/* Wiring Guide */}
-          <Section
-            title="Wiring Guide"
-            description="Follow these steps to connect Cabinet Bridge to your physical hardware using Home Assistant."
-          >
-            <ul className="space-y-6">
-              <Step n={1} title="Create a Wake-on-LAN Script">
-                Define a script in HA that sends a magic packet to your PC's MAC address.
-                <Code>{`script:
+              {/* Endpoints */}
+              <Section
+                title="Webhook Endpoints"
+                description="URLs automatically generated for your Home Assistant automations. Copy these to use as Webhook triggers."
+              >
+                <div className="space-y-4">
+                  <div className="p-4 rounded-lg border border-border bg-sidebar/20">
+                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 text-neon-cyan">
+                      <Wifi className="size-4 text-accent" />
+                      System Actions
+                    </h3>
+                    <div className="grid gap-3">
+                      {[
+                        { id: "wake_pc", label: "Wake PC", default: "/api/webhook/cabinet_wake_pc" },
+                        { id: "sleep_pc", label: "Sleep PC", default: "/api/webhook/cabinet_sleep_pc" },
+                        { id: "restart_pc", label: "Restart PC", default: "/api/webhook/cabinet_restart_pc" },
+                        { id: "shutdown_pc", label: "Shutdown PC", default: "/api/webhook/cabinet_shutdown_pc" },
+                      ].map((a) => (
+                        <div key={a.id} className="space-y-1.5">
+                          <Label className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">
+                            {a.label}
+                          </Label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={config.endpoints[a.id] || a.default}
+                              onChange={(e) => setEndpoint(a.id, e.target.value)}
+                              className="font-mono text-[12px] bg-background/40"
+                              data-testid={`input-endpoint-${a.id}`}
+                            />
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              onClick={() => copy(config.endpoints[a.id] || a.default, a.id)}
+                              data-testid={`button-copy-${a.id}`}
+                            >
+                              {copied === a.id ? (
+                                <Check className="size-3.5 text-accent" />
+                              ) : (
+                                <Copy className="size-3.5" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-lg border border-border bg-sidebar/20">
+                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      <Terminal className="size-4 text-primary" />
+                      Sample Game Launch
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Each game has a unique webhook. Example for a specific title:
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        readOnly
+                        value="/api/webhook/cabinet_launch_super-mario-world"
+                        className="font-mono text-[12px] bg-background/40 opacity-70"
+                      />
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        onClick={() =>
+                          copy("/api/webhook/cabinet_launch_super-mario-world", "sample-game")
+                        }
+                      >
+                        {copied === "sample-game" ? (
+                          <Check className="size-3.5 text-accent" />
+                        ) : (
+                          <Copy className="size-3.5" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Section>
+            </TabsContent>
+
+            <TabsContent value="library" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <ScannerStatusSection />
+              <Separator className="bg-border/60" />
+              <SmartFilterCollectionCreator />
+            </TabsContent>
+
+            <TabsContent value="help" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Wiring Guide */}
+              <Section
+                title="Wiring Guide"
+                description="Follow these steps to connect Cabinet Bridge to your physical hardware using Home Assistant."
+              >
+                <ul className="space-y-6">
+                  <Step n={1} title="Create a Wake-on-LAN Script">
+                    Define a script in HA that sends a magic packet to your PC's MAC address.
+                    <Code>{`script:
   wake_gaming_pc:
     alias: "Wake Gaming PC"
     sequence:
       - service: wake_on_lan.send_magic_packet
         data:
           mac: "AA:BB:CC:DD:EE:FF"`}</Code>
-              </Step>
-              <Step n={2} title="Setup the Webhook Automation">
-                Create an automation that triggers on the `cabinet_wake_pc` webhook and runs your
-                script.
-                <Code>{`automation:
+                  </Step>
+                  <Step n={2} title="Setup the Webhook Automation">
+                    Create an automation that triggers on the \`cabinet_wake_pc\` webhook and runs your
+                    script.
+                    <Code>{`automation:
   - alias: "Cabinet: Wake PC"
     trigger:
       - platform: webhook
         webhook_id: cabinet_wake_pc
     action:
       - service: script.wake_gaming_pc`}</Code>
-              </Step>
-              <Step n={3} title="Configure PC Sensors">
-                Install the <strong>HASS.Agent</strong> or <strong>IOT Link</strong> on your Windows
-                PC to provide CPU, RAM, and Online sensors back to Home Assistant.
-              </Step>
-              <Step n={4} title="Enable Live Mode">
-                Scroll up and toggle <strong>Live Mode</strong>. Cabinet Bridge will now send a POST
-                request to your HA webhooks whenever you click an action button.
-              </Step>
-              <Step n={5} title="Add as Sidebar Item (Optional)">
-                Add this to your `configuration.yaml` to see Cabinet Bridge in the HA sidebar:
-                <Code>{`panel_iframe:
+                  </Step>
+                  <Step n={3} title="Configure PC Sensors">
+                    Install the <strong>HASS.Agent</strong> or <strong>IOT Link</strong> on your Windows
+                    PC to provide CPU, RAM, and Online sensors back to Home Assistant.
+                  </Step>
+                  <Step n={4} title="Enable Live Mode">
+                    Go to the <strong>Connection</strong> tab and toggle <strong>Live Mode</strong>. Cabinet Bridge will now send a POST
+                    request to your HA webhooks whenever you click an action button.
+                  </Step>
+                  <Step n={5} title="Add as Sidebar Item (Optional)">
+                    Add this to your \`configuration.yaml\` to see Cabinet Bridge in the HA sidebar:
+                    <Code>{`panel_iframe:
   cabinet:
     title: "Cabinet"
     icon: mdi:gamepad-variant
-    url: "${window.location.origin}${window.location.pathname}"`}</Code>
-              </Step>
-            </ul>
-          </Section>
+    url: "\${window.location.origin}\${window.location.pathname}"`}</Code>
+                  </Step>
+                </ul>
+              </Section>
+            </TabsContent>
+          </Tabs>
 
           <Separator className="bg-border/60" />
 
@@ -436,7 +489,7 @@ function SmartFilterCollectionCreator() {
       const res = await apiRequest("POST", "/api/collections/smart", { name: name.trim(), rules });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? "Error");
       await queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
-      toast({ title: "Smart filter created", description: `"${name.trim()}" will update automatically.` });
+      toast({ title: "Smart filter created", description: `"\${name.trim()}" will update automatically.` });
       setOpen(false);
       setName(""); setSystems([]); setStatuses([]);
       setMinRating(0); setMinMinutes(0); setFavoritesOnly(false); setGenre("");
@@ -476,7 +529,7 @@ function SmartFilterCollectionCreator() {
               {ALL_SYSTEMS.map(({ id, label }) => (
                 <button key={id} type="button"
                   onClick={() => setSystems((s) => toggle(s, id))}
-                  className={`px-2.5 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-all ${
+                  className={`px-2.5 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-all \${
                     systems.includes(id)
                       ? "bg-primary/20 border-primary text-primary"
                       : "border-border text-muted-foreground hover:border-primary/40"
@@ -495,7 +548,7 @@ function SmartFilterCollectionCreator() {
               {ALL_STATUSES.map(({ id, label }) => (
                 <button key={id} type="button"
                   onClick={() => setStatuses((s) => toggle(s, id))}
-                  className={`px-2.5 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-all ${
+                  className={`px-2.5 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-all \${
                     statuses.includes(id)
                       ? "bg-primary/20 border-primary text-primary"
                       : "border-border text-muted-foreground hover:border-primary/40"
@@ -580,7 +633,7 @@ function ScannerStatusSection() {
       await apiRequest("POST", "/api/scanner/scan-now");
       await queryClient.invalidateQueries({ queryKey: ["/api/scanner/status"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
-      toast({ title: "Scan complete", description: `Found ${status?.lastScanFound ?? 0} new ROM(s).` });
+      toast({ title: "Scan complete", description: `Found \${status?.lastScanFound ?? 0} new ROM(s).` });
     } catch (err) {
       toast({ title: "Scan failed", description: String(err), variant: "destructive" });
     } finally {
