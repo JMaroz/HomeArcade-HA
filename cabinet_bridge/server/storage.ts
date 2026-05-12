@@ -1,7 +1,8 @@
-import { appSettings, collectionItems, gameCollections, romSaveSlots, uploadedRoms, users } from '@shared/schema';
+import { appSettings, collectionItems, gameCollections, hltbCache, romSaveSlots, uploadedRoms, users } from '@shared/schema';
 import type {
   GameCollection,
   GameCollectionWithItems,
+  HltbCache,
   InsertGameCollection,
   InsertRomSaveSlot,
   InsertUploadedRom,
@@ -181,6 +182,9 @@ export interface IStorage {
   getCachedCheats(path: string): Promise<{ desc: string; code: string }[] | null>;
   setCachedCheats(path: string, cheats: { desc: string; code: string }[]): Promise<void>;
   clearCheatCache(): Promise<void>;
+  // HLTB cache
+  getHltbCache(romId: number): Promise<HltbCache | null>;
+  saveHltbCache(data: { romId: number; hltbTitle: string | null; mainStory: number | null; mainExtra: number | null; completionist: number | null; cachedAt: number }): Promise<void>;
 }
 
 const INTEGRATION_SETTINGS_KEY = "integration";
@@ -615,6 +619,21 @@ export class DatabaseStorage implements IStorage {
     sqlite.exec("DELETE FROM cheat_index_cache");
     sqlite.exec("DELETE FROM cheat_file_cache");
   }
+
+  // ── HLTB cache ────────────────────────────────────────────────────────────────────────────────────
+  async getHltbCache(romId: number): Promise<HltbCache | null> {
+    const row = sqlite.prepare(
+      "SELECT * FROM hltb_cache WHERE rom_id=?"
+    ).get(romId) as HltbCache | undefined;
+    return row ?? null;
+  }
+
+  async saveHltbCache(data: { romId: number; hltbTitle: string | null; mainStory: number | null; mainExtra: number | null; completionist: number | null; cachedAt: number }): Promise<void> {
+    sqlite.prepare(
+      "INSERT INTO hltb_cache (rom_id, hltb_title, main_story, main_extra, completionist, cached_at) VALUES (?,?,?,?,?,?) ON CONFLICT(rom_id) DO UPDATE SET hltb_title=excluded.hltb_title, main_story=excluded.main_story, main_extra=excluded.main_extra, completionist=excluded.completionist, cached_at=excluded.cached_at"
+    ).run(data.romId, data.hltbTitle, data.mainStory, data.mainExtra, data.completionist, data.cachedAt);
+  }
+
   async addScannedRom(rom: { title: string; system: string; slug: string; originalName: string; fileName: string; filePath: string; size: number; mimeType: string; createdAt: number }): Promise<UploadedRom> {
     return sqlite.prepare(
       "INSERT INTO uploaded_roms (title, system, slug, original_name, file_name, file_path, size, mime_type, created_at) VALUES (?,?,?,?,?,?,?,?,?) RETURNING *"
@@ -669,6 +688,15 @@ export const storage = new DatabaseStorage();
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       path TEXT NOT NULL UNIQUE,
       cheats_json TEXT NOT NULL,
+      cached_at INTEGER NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS hltb_cache (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      rom_id INTEGER NOT NULL UNIQUE,
+      hltb_title TEXT,
+      main_story INTEGER,
+      main_extra INTEGER,
+      completionist INTEGER,
       cached_at INTEGER NOT NULL
     )`,
   ];
