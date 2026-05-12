@@ -793,7 +793,7 @@ export default function Home({ filter }: { filter: Filter }) {
 }
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
-function Grid({
+const Grid = memo(function Grid({
   games,
   onOpen,
   onToggleFav,
@@ -824,10 +824,10 @@ function Grid({
       ))}
     </div>
   );
-}
+});
 
 // ─── List view ────────────────────────────────────────────────────────────────
-function ListView({
+const ListView = memo(function ListView({
   games,
   onOpen,
   onToggleFav,
@@ -1035,8 +1035,9 @@ function ContinueHero({ game, onOpen, profileId = 1 }: { game: Game; onOpen: (g:
 
   return (
     <section className="px-4 sm:px-8 pt-5">
+      {/* Container with min-height prevents CLS when the hero appears/disappears based on PC state */}
       <div
-        className="relative rounded-xl overflow-hidden border border-card-border min-h-[168px] sm:min-h-[188px]"
+        className="relative rounded-xl overflow-hidden border border-card-border min-h-[168px] sm:min-h-[188px] transition-[height] duration-300 ease-in-out"
         data-testid="hero-continue"
       >
         <div
@@ -1045,6 +1046,15 @@ function ContinueHero({ game, onOpen, profileId = 1 }: { game: Game; onOpen: (g:
             background: `linear-gradient(120deg, hsl(${game.art[0]}) 0%, hsl(${game.art[1]}) 60%, hsl(${game.art[2]}) 100%)`,
           }}
         />
+        {game.artUrl && (
+          <img
+            src={game.artUrl}
+            alt=""
+            // LCP Optimization: tell the browser to prioritize this image
+            fetchpriority="high"
+            className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay"
+          />
+        )}
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.7)_0%,rgba(0,0,0,0.4)_50%,rgba(0,0,0,0.1)_100%)]" />
         <div className="relative p-5 sm:p-7 flex flex-col gap-2.5 max-w-xl">
           <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/80">
