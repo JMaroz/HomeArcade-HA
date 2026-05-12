@@ -271,3 +271,17 @@ export const cheatFileCache = sqliteTable("cheat_file_cache", {
   cheatsJson: text("cheats_json").notNull(), // JSON: { desc, code }[]
   cachedAt:  integer("cached_at").notNull(),
 });
+
+// ── HowLongToBeat cache ───────────────────────────────────────────────────────────────────────
+// One row per ROM. Times stored as whole minutes (matching minutes_played convention).
+export const hltbCache = sqliteTable("hltb_cache", {
+  id:             integer("id").primaryKey({ autoIncrement: true }),
+  romId:          integer("rom_id").notNull().unique(),
+  hltbTitle:      text("hltb_title"),
+  mainStory:      integer("main_story"),      // minutes, null = no data
+  mainExtra:      integer("main_extra"),
+  completionist:  integer("completionist"),
+  cachedAt:       integer("cached_at").notNull(),
+});
+
+export type HltbCache = typeof hltbCache.$inferSelect;
