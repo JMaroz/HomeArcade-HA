@@ -368,22 +368,33 @@ export function IntegrationProvider({ children }: { children: React.ReactNode })
     setConfigState({ ...defaultConfig });
   }, []);
 
+  // ── Activity Log ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    const loadLogs = async () => {
+      try {
+        const res = await fetch("/api/activity-log");
+        if (res.ok) setLog(await res.json());
+      } catch (err) {
+        console.error("Failed to load activity log:", err);
+      }
+    };
+    loadLogs();
+  }, []);
+
   const dispatch = useCallback<IntegrationContextValue["dispatch"]>(
     async ({ actionId, label, endpoint, onSettle }) => {
-      const id = `call-${++logSeq}`;
       const ts = Date.now();
       const resolved = config.endpoints[actionId] || endpoint;
       const live = config.liveMode && /^https?:\/\//i.test(resolved);
 
-      // 1. Optimistic Log Update: Queue the action immediately
+      // 1. Optimistic Log Update (Local UI)
+      const tempId = `temp-${Date.now()}`;
       setLog((prev) => [
-        { id, ts, label, endpoint: resolved, status: "queued" as CallStatus },
+        { id: tempId as any, ts, label, endpoint: resolved, status: "queued" as CallStatus },
         ...prev,
-      ].slice(0, 40));
+      ].slice(0, 100));
 
-      // 2. Optimistic PC State Update: Apply local changes immediately
-      // This is the "Edge Computing" part — assume the physical device will follow
-      // our command and update the UI instantly to avoid perception of lag.
+      // 2. Optimistic PC State Update (Edge logic)
       setPc((p) => {
         const next = { ...p };
         if (actionId === "sleep_pc") {
@@ -399,7 +410,6 @@ export function IntegrationProvider({ children }: { children: React.ReactNode })
           next.state = "starting";
           next.currentApp = null;
           next.uptimeMin = 0;
-          // Starting transitions usually have a follow-up delay even in optimistic mode
           setTimeout(() => {
             setPc((current) => (current.state === "starting" ? { ...current, state: "online", currentApp: "Windows" } : current));
           }, 1500);
@@ -440,20 +450,24 @@ export function IntegrationProvider({ children }: { children: React.ReactNode })
           detail = err instanceof Error ? err.message : String(err);
         }
       } else {
-        // Brief artificial latency for the LOG entry only, not the PC state.
         await new Promise((r) => setTimeout(r, 320));
         detail = "Simulated — enable Live mode in Settings to call HA";
       }
 
-      // Final log status update
-      setLog((prev) =>
-        prev.map((entry) =>
-          entry.id === id ? { ...entry, status, detail } : entry,
-        ),
-      );
+      // 3. Persist to Server
+      try {
+        const res = await apiRequest("POST", "/api/activity-log", {
+          ts, label, endpoint: resolved, status, detail
+        });
+        if (res.ok) {
+          const saved = await res.json();
+          // Swap temp entry with real one from DB
+          setLog((prev) => prev.map((e) => (e.id as any) === tempId ? saved : e));
+        }
+      } catch (err) {
+        console.error("Failed to persist log entry:", err);
+      }
 
-      // If it failed in Live mode, the next poll will eventually correct the PC state.
-      // But we can trigger an immediate onSettle if it was successful.
       if (status === "ok" || status === "simulated") {
         onSettle?.();
       }

@@ -330,3 +330,16 @@ export type DetectedPlatform = z.infer<typeof detectedPlatformSchema>;
 export type UnmatchedFolder = z.infer<typeof unmatchedFolderSchema>;
 export type ScanLibraryRequest = z.infer<typeof scanLibraryRequestSchema>;
 export type ScanLibraryResponse = z.infer<typeof scanLibraryResponseSchema>;
+
+export const activityLog = sqliteTable("activity_log", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  ts: integer("ts").notNull(),
+  label: text("label").notNull(),
+  endpoint: text("endpoint").notNull(),
+  status: text("status").notNull(),
+  detail: text("detail"),
+});
+
+export const insertActivityLogSchema = createInsertSchema(activityLog).omit({ id: true });
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type ActivityLogEntry = typeof activityLog.$inferSelect;

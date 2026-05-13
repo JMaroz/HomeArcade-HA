@@ -13,6 +13,7 @@ import {
   insertRomSaveSlotSchema,
   insertUploadedRomSchema,
   integrationSettingsSchema,
+  insertActivityLogSchema,
 } from "@shared/schema";
 import {
   SYSTEM_IMAGES,
@@ -1713,6 +1714,32 @@ export async function registerRoutes(
       console.error("[HLTB route]", err);
       return res.status(500).json({ error: String(err) });
     }
+  });
+
+  // ── Activity Log ──────────────────────────────────────────────────────────
+  app.get("/api/activity-log", async (_req, res) => {
+    try {
+      const logs = await storage.listActivityLog(100);
+      res.json(logs);
+    } catch {
+      res.json([]);
+    }
+  });
+
+  app.post("/api/activity-log", express.json(), async (req, res) => {
+    try {
+      const parsed = insertActivityLogSchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+      const entry = await storage.addActivityLogEntry(parsed.data);
+      res.status(201).json(entry);
+    } catch (err) {
+      res.status(500).json({ message: String(err) });
+    }
+  });
+
+  app.delete("/api/activity-log", async (_req, res) => {
+    await storage.clearActivityLog();
+    res.status(204).end();
   });
 
   return httpServer;

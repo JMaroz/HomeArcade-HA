@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, useEffect, memo } from "react";
+import Fuse from "fuse.js";
 import { useLocation } from "wouter";
 import { Sidebar, type Filter } from "@/components/Sidebar";
 import { MobileTopBar } from "@/components/MobileNav";
@@ -261,17 +262,12 @@ export default function Home({ filter }: { filter: Filter }) {
     }
 
     if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      // When a search is active, break out of the current system/collection filter
-      // so the user can find games across all systems
-      list = games.filter(
-        (g) =>
-          g.title.toLowerCase().includes(q) ||
-          g.genre.toLowerCase().includes(q) ||
-          g.system.toLowerCase().includes(q) ||
-          (g.developer ?? "").toLowerCase().includes(q) ||
-          (g.publisher ?? "").toLowerCase().includes(q),
-      );
+      const fuse = new Fuse(games, {
+        keys: ["title", "genre", "system", "developer", "publisher"],
+        threshold: 0.3,
+        distance: 100,
+      });
+      list = fuse.search(query.trim()).map((r) => r.item);
     }
 
     if (genreFilter) {

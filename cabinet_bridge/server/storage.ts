@@ -187,6 +187,10 @@ export interface IStorage {
   // HLTB cache
   getHltbCache(romId: number): Promise<HltbCache | null>;
   saveHltbCache(data: { romId: number; hltbTitle: string | null; mainStory: number | null; mainExtra: number | null; completionist: number | null; cachedAt: number }): Promise<void>;
+  // Activity Log
+  listActivityLog(limit?: number): Promise<import("../shared/schema").ActivityLogEntry[]>;
+  addActivityLogEntry(entry: import("../shared/schema").InsertActivityLog): Promise<import("../shared/schema").ActivityLogEntry>;
+  clearActivityLog(): Promise<void>;
 }
 
 const INTEGRATION_SETTINGS_KEY = "integration";
@@ -645,6 +649,24 @@ export class DatabaseStorage implements IStorage {
   async listRomFilenames(): Promise<string[]> {
     return (sqlite.prepare("SELECT file_name FROM uploaded_roms").all() as { file_name: string }[]).map((r) => r.file_name);
   }
+
+  // ── Activity Log ──────────────────────────────────────────────────────────────────────────────────
+  async listActivityLog(limit = 100): Promise<import("../shared/schema").ActivityLogEntry[]> {
+    const rows = sqlite.prepare(
+      "SELECT * FROM activity_log ORDER BY ts DESC LIMIT ?"
+    ).all(limit) as import("../shared/schema").ActivityLogEntry[];
+    return rows;
+  }
+
+  async addActivityLogEntry(entry: import("../shared/schema").InsertActivityLog): Promise<import("../shared/schema").ActivityLogEntry> {
+    return sqlite.prepare(
+      "INSERT INTO activity_log (ts, label, endpoint, status, detail) VALUES (?,?,?,?,?) RETURNING *"
+    ).get(entry.ts, entry.label, entry.endpoint, entry.status, entry.detail ?? null) as import("../shared/schema").ActivityLogEntry;
+  }
+
+  async clearActivityLog(): Promise<void> {
+    sqlite.exec("DELETE FROM activity_log");
+  }
 }
 
 export const storage = new DatabaseStorage();
@@ -700,6 +722,14 @@ export const storage = new DatabaseStorage();
       main_extra INTEGER,
       completionist INTEGER,
       cached_at INTEGER NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS activity_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts INTEGER NOT NULL,
+      label TEXT NOT NULL,
+      endpoint TEXT NOT NULL,
+      status TEXT NOT NULL,
+      detail TEXT
     )`,
   ];
   for (const stmt of stmts) {
