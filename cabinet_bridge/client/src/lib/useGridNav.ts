@@ -18,6 +18,7 @@ export function useGridNav({
   gridRef,
   onActivate,
   onFav,
+  onFocusChange,
   disabled = false,
   mapping = { select: 0, favorite: 3 },
 }: {
@@ -25,6 +26,7 @@ export function useGridNav({
   gridRef: React.RefObject<HTMLElement | null>;
   onActivate: (index: number) => void;
   onFav: (index: number) => void;
+  onFocusChange?: (index: number) => void;
   disabled?: boolean;
   mapping?: { select?: number; favorite?: number };
 }) {
@@ -35,14 +37,17 @@ export function useGridNav({
   const countRef = useRef(count);
   const disabledRef = useRef(disabled);
   const mappingRef = useRef(mapping);
+  const onFocusChangeRef = useRef(onFocusChange);
   focusedRef.current = focusedIndex;
   countRef.current = count;
   disabledRef.current = disabled;
   mappingRef.current = mapping;
+  onFocusChangeRef.current = onFocusChange;
 
   // Reset focus when games list changes length (new filter, search, etc.)
   useEffect(() => {
     setFocusedIndex(-1);
+    onFocusChangeRef.current?.(-1);
   }, [count]);
 
   // ── Column count ────────────────────────────────────────────────────────────
@@ -84,6 +89,7 @@ export function useGridNav({
       }
 
       setFocusedIndex(next);
+      onFocusChangeRef.current?.(next);
       scrollIntoView(next);
     },
     [getColumns, scrollIntoView],

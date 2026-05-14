@@ -18,6 +18,33 @@ const Player = lazy(() => import("@/pages/Player"));
 const Achievements = lazy(() => import("@/pages/Achievements"));
 const History = lazy(() => import("@/pages/History"));
 
+/**
+ * Manages global visual effects driven by Integration settings.
+ */
+function VisualEffectManager() {
+  const { config } = useIntegration();
+
+  useEffect(() => {
+    // 1. CRT Effect
+    const intensity = config.crtIntensity ?? 0;
+    if (intensity > 0) {
+      document.body.classList.add("crt");
+      document.documentElement.style.setProperty("--crt-opacity", (intensity / 100).toFixed(2));
+    } else {
+      document.body.classList.remove("crt");
+    }
+
+    // 2. Adaptive Background Base (if not on Home page or no focus)
+    if (config.adaptiveBackground) {
+      document.documentElement.style.setProperty("--adaptive-opacity", "0.18");
+    } else {
+      document.documentElement.style.setProperty("--adaptive-opacity", "0");
+    }
+  }, [config.crtIntensity, config.adaptiveBackground]);
+
+  return null;
+}
+
 function PageFallback() {
   return (
     <div className="flex-1 flex items-center justify-center">
@@ -119,6 +146,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ProfileProvider>
       <IntegrationProvider>
+        <VisualEffectManager />
         <TooltipProvider>
           <Toaster />
           <Router hook={useHashLocation}>

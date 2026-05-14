@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { MobileTopBar } from "@/components/MobileNav";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,8 @@ import {
   Link2,
   Gamepad2,
   Keyboard,
+  Palette,
+  Monitor,
 } from "lucide-react";
 import type { SmartFilterRules } from "@shared/schema";
 
@@ -132,6 +134,9 @@ export default function Settings() {
             <TabsList className="w-full justify-start bg-sidebar/40 border border-border/50 h-auto p-1 mb-8 overflow-x-auto scrollbar-none flex-nowrap shrink-0">
               <TabsTrigger value="connection" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
                 <Globe className="size-4" /> Connection
+              </TabsTrigger>
+              <TabsTrigger value="display" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+                <Palette className="size-4" /> Display
               </TabsTrigger>
               <TabsTrigger value="automation" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
                 <Zap className="size-4" /> Automation
@@ -232,6 +237,10 @@ export default function Settings() {
                   )}
                 </div>
               </Section>
+            </TabsContent>
+
+            <TabsContent value="display" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <DisplaySettings />
             </TabsContent>
 
             <TabsContent value="automation" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -450,6 +459,92 @@ export default function Settings() {
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function DisplaySettings() {
+  const { config, setConfig } = useIntegration();
+
+  const presets = [
+    { label: "Off", value: 0 },
+    { label: "Soft (PVM)", value: 20 },
+    { label: "Arcade", value: 45 },
+    { label: "Vintage", value: 80 },
+  ];
+
+  return (
+    <div className="space-y-10">
+      <Section
+        title="Visual Effects"
+        description="Personalize the arcade aesthetic and immersion."
+      >
+        <div className="grid gap-6">
+          <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-sidebar/40">
+            <div className="space-y-0.5">
+              <div className="font-display font-semibold text-sm">Adaptive Backgrounds</div>
+              <div className="text-xs text-muted-foreground">Morph global gradients to match focused game artwork colors.</div>
+            </div>
+            <Switch
+              checked={config.adaptiveBackground}
+              onCheckedChange={(v) => setConfig({ adaptiveBackground: v })}
+            />
+          </div>
+
+          <div className="space-y-4 p-4 rounded-lg border border-border bg-sidebar/40">
+            <div className="space-y-0.5">
+              <div className="font-display font-semibold text-sm">CRT Scanline Intensity</div>
+              <div className="text-xs text-muted-foreground">Adjust the strength of the retro CRT tube overlay.</div>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 pt-2">
+              {presets.map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => setConfig({ crtIntensity: p.value })}
+                  className={`px-4 py-2 rounded-md font-mono text-[10px] uppercase tracking-wider border transition-all ${
+                    config.crtIntensity === p.value
+                      ? "bg-primary border-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
+                      : "bg-background/40 border-border text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-4 mt-2">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={config.crtIntensity}
+                onChange={(e) => setConfig({ crtIntensity: parseInt(e.target.value, 10) })}
+                className="flex-1 h-1.5 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
+              />
+              <span className="font-mono text-xs w-8 text-right">{config.crtIntensity}%</span>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      <Section
+        title="Dynamic Theming"
+        description="Adaptive background colors are sampled directly from the game's procedural or uploaded art."
+      >
+        <div className="grid grid-cols-3 gap-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="aspect-video rounded-lg border border-border animate-pulse"
+              style={{
+                background: `linear-gradient(135deg, hsl(var(--adaptive-1)), hsl(var(--adaptive-2)))`,
+                opacity: 0.4 + (i * 0.2)
+              }}
+            />
+          ))}
+        </div>
+      </Section>
     </div>
   );
 }
@@ -832,7 +927,7 @@ function ControlsSettings() {
                    {gp.buttons.map((_, idx) => (
                      <div
                        key={idx}
-                       className={`size-7 rounded flex items-center justify-center font-mono text-[10px] border transition-colors ${
+                       className={`size-7 rounded flex items-center justify-center font-mono text-[10px] border transition-colors \${
                          pressedButtons[gp.index]?.includes(idx)
                            ? "bg-primary border-primary text-primary-foreground scale-110 shadow-[0_0_12px_hsl(var(--primary))]"
                            : "bg-background/40 border-border text-muted-foreground"
@@ -925,7 +1020,7 @@ function RemapButton({ actionId, currentValue, onMap }: { actionId: string; curr
       variant={listening ? "default" : "outline"}
       size="sm"
       onClick={() => setListening(!listening)}
-      className={`min-w-[100px] gap-2 ${listening ? "animate-pulse ring-2 ring-primary" : ""}`}
+      className={`min-w-[100px] gap-2 \${listening ? "animate-pulse ring-2 ring-primary" : ""}`}
     >
       {listening ? (
         <>

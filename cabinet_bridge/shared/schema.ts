@@ -154,6 +154,8 @@ export const integrationSettingsSchema = z.object({
     favorite: 3, // Y
     menu: 9,     // Start
   }),
+  adaptiveBackground: z.boolean().default(true),
+  crtIntensity: z.number().int().min(0).max(100).default(30),
 });
 
 export type IntegrationSettings = z.infer<typeof integrationSettingsSchema>;
@@ -185,6 +187,8 @@ export const DEFAULT_INTEGRATION_SETTINGS: IntegrationSettings = {
     favorite: 3, // Y
     menu: 9,     // Start
   },
+  adaptiveBackground: true,
+  crtIntensity: 30,
 };
 
 export const userProfiles = sqliteTable("user_profiles", {

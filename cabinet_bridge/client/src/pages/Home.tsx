@@ -422,8 +422,25 @@ export default function Home({ filter }: { filter: Filter }) {
     return SYSTEMS.some((s) => s.id === filter) ? (filter as SystemId) : undefined;
   }, [filter]);
 
+  // ── Adaptive Background Logic ──────────────────────────────────────────────
+  const handleFocusChange = useCallback((idx: number) => {
+    if (!config.adaptiveBackground) return;
+    const game = filtered[idx];
+    if (game && game.art) {
+      document.documentElement.style.setProperty("--adaptive-1", `hsl(${game.art[0]})`);
+      document.documentElement.style.setProperty("--adaptive-2", `hsl(${game.art[1]})`);
+    } else {
+      // Default colors (miami-vice-ish)
+      document.documentElement.style.setProperty("--adaptive-1", "hsl(322 92% 30%)");
+      document.documentElement.style.setProperty("--adaptive-2", "hsl(188 90% 30%)");
+    }
+  }, [filtered, config.adaptiveBackground]);
+
   return (
     <div className="flex h-full">
+      {/* Dynamic Adaptive Background Layer */}
+      {config.adaptiveBackground && <div className="adaptive-bg" />}
+      
       <WelcomeDialog hasRoms={uploadedRoms.length > 0} />
       <Sidebar active={filter} />
 
@@ -761,10 +778,22 @@ export default function Home({ filter }: { filter: Filter }) {
                 onResetFilter={() => goToFilter("all")}
               />
             ) : viewMode === "grid" ? (
-              <Grid games={filtered} onOpen={setOpenGame} onToggleFav={toggleFav} disabled={openGame !== null} mapping={config.uiGamepadMapping} />
-            ) : (
-              <ListView games={filtered} onOpen={setOpenGame} onToggleFav={toggleFav} />
-            )}
+            <Grid
+              games={filtered}
+              onOpen={setOpenGame}
+              onToggleFav={toggleFav}
+              disabled={openGame !== null}
+              mapping={config.uiGamepadMapping}
+              onFocusChange={handleFocusChange}
+            />
+          ) : (
+            <ListView
+              games={filtered}
+              onOpen={setOpenGame}
+              onToggleFav={toggleFav}
+              onFocusChange={handleFocusChange}
+            />
+          )}
           </section>
 
           <footer className="px-4 sm:px-8 py-6 border-t border-border">
@@ -804,12 +833,14 @@ const Grid = memo(function Grid({
   games,
   onOpen,
   onToggleFav,
+  onFocusChange,
   disabled,
   mapping,
 }: {
   games: Game[];
   onOpen: (g: Game) => void;
   onToggleFav: (g: Game) => void;
+  onFocusChange?: (index: number) => void;
   disabled?: boolean;
   mapping?: { select?: number; favorite?: number };
 }) {
@@ -820,6 +851,7 @@ const Grid = memo(function Grid({
     disabled,
     onActivate: (i) => { if (games[i]) onOpen(games[i]); },
     onFav: (i) => { if (games[i]) onToggleFav(games[i]); },
+    onFocusChange,
     mapping,
   });
 
