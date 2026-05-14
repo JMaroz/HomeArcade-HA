@@ -39,6 +39,8 @@ import {
   Monitor,
 } from "lucide-react";
 import type { SmartFilterRules } from "@shared/schema";
+import { useTranslation } from "react-i18next";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Settings() {
   const { config, setConfig, setEndpoint, resetConfig, saveStatus } = useIntegration();
@@ -465,6 +467,7 @@ export default function Settings() {
 
 function DisplaySettings() {
   const { config, setConfig } = useIntegration();
+  const { t } = useTranslation();
 
   const presets = [
     { label: "Off", value: 0 },
@@ -475,6 +478,32 @@ function DisplaySettings() {
 
   return (
     <div className="space-y-10">
+      <Section
+        title={t("settings.language")}
+        description="Choose your preferred display language."
+      >
+        <div className="flex items-center gap-4">
+          <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+          <Select
+            value={config.language ?? "en"}
+            onValueChange={(val) => setConfig({ language: val })}
+          >
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">{t("languages.en")}</SelectItem>
+              <SelectItem value="es">{t("languages.es")}</SelectItem>
+              <SelectItem value="fr">{t("languages.fr")}</SelectItem>
+              <SelectItem value="de">{t("languages.de")}</SelectItem>
+              <SelectItem value="pt">{t("languages.pt")}</SelectItem>
+              <SelectItem value="ja">{t("languages.ja")}</SelectItem>
+              <SelectItem value="zh">{t("languages.zh")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Section>
+
       <Section
         title="Visual Effects"
         description="Personalize the arcade aesthetic and immersion."
