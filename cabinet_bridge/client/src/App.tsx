@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationProvider, useIntegration } from "@/lib/integration";
 import { parseFilter, parseCollectionFilter, DEFAULT_FILTER } from "@/lib/filter";
 import { MobileBottomNav } from "@/components/MobileNav";
+import i18n from "./lib/i18n";
 import Home from "@/pages/Home";
 import { ProfileProvider } from "@/lib/useProfile";
 import Dashboard from "@/pages/Dashboard";
@@ -46,6 +47,20 @@ function VisualEffectManager() {
     }
   }, [config.crtIntensity, config.adaptiveBackground]);
 
+  return null;
+}
+
+/**
+ * Syncs the i18n language when the integration language setting changes.
+ */
+function LanguageManager() {
+  const { config } = useIntegration();
+  useEffect(() => {
+    const lang = config.language ?? "en";
+    if (i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+    }
+  }, [config.language]);
   return null;
 }
 
@@ -151,6 +166,7 @@ function App() {
       <ProfileProvider>
       <IntegrationProvider>
         <VisualEffectManager />
+      <LanguageManager />
         <TooltipProvider>
           <Toaster />
           <Router hook={useHashLocation}>
