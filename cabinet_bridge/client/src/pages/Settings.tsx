@@ -538,7 +538,7 @@ function DisplaySettings() {
               key={i}
               className="aspect-video rounded-lg border border-border animate-pulse"
               style={{
-                background: `linear-gradient(135deg, hsl(var(--adaptive-1)), hsl(var(--adaptive-2)))`,
+                background: `linear-gradient(135deg, var(--adaptive-1), var(--adaptive-2))`,
                 opacity: 0.4 + (i * 0.2)
               }}
             />
