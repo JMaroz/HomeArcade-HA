@@ -1,3 +1,7 @@
+## 0.7.38 – 2026-05-13
+
+- Feature: **Internationalization (i18n)** – language switcher added to Settings → Display; supports English, Español, Français, Deutsch, Português, 日本語, and 中文 (Simplified); selection is persisted server-side via IntegrationConfig and applied instantly across the UI via react-i18next; locale JSON files live in `client/src/locales/`
+
 ## 0.7.37 – 2026-05-11
 
 - Feature: **Netplay lobby UI** — "Netplay" button (id=`cabinet-netplay-open`) in the game detail dialog action row; opens a lobby showing all open rooms on this server (5s poll); host creates a new 6-char room code with one click; join by code input or by clicking any listed room; hosting view displays the code prominently with copy button and pulses when a friend joins; player launches automatically as host or client; run `node server/apply-netplay-lobby-patch.mjs` once from `cabinet_bridge/` to activate
