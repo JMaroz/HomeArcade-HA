@@ -73,7 +73,7 @@ export default function Home({ filter }: { filter: Filter }) {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const { pc } = useIntegration();
+  const { pc, config } = useIntegration();
 
   const { data: uploadedRoms = [], isLoading: romsLoading } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
   const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({
@@ -184,45 +184,48 @@ export default function Home({ filter }: { filter: Filter }) {
 
   const games = useMemo<Game[]>(
     () => {
+      if (!uploadedRoms.length && !GAMES.length) return [];
+
       const uploadedGames = uploadedRoms.map(uploadedRomToGame);
-      const allGames = [...uploadedGames, ...GAMES].map((g) => ({
-        ...g,
-        favorite:
-          favOverrides[g.id] !== undefined ? favOverrides[g.id] :
-          (g.romId && profileStateMap.get(g.romId)?.favorite !== undefined && currentProfileId !== 1
-            ? !!profileStateMap.get(g.romId)!.favorite
-            : !!g.favorite),
-        rating:
-          ratingOverrides[g.id] !== undefined ? ratingOverrides[g.id] :
-          (g.romId && profileStateMap.get(g.romId)?.rating !== undefined && currentProfileId !== 1
-            ? profileStateMap.get(g.romId)!.rating!
-            : g.rating),
-        playStatus:
-          statusOverrides[g.id] !== undefined ? statusOverrides[g.id] :
-          (g.romId && profileStateMap.get(g.romId)?.playStatus !== undefined && currentProfileId !== 1
-            ? profileStateMap.get(g.romId)!.playStatus!
-            : (g.playStatus ?? "unset")),
-      }));
+      const allGames = [...uploadedGames, ...GAMES].map((g) => {
+        const profileState = g.romId ? profileStateMap.get(g.romId) : undefined;
+        return {
+          ...g,
+          favorite:
+            favOverrides[g.id] !== undefined ? favOverrides[g.id] :
+            (profileState?.favorite !== undefined && currentProfileId !== 1
+              ? !!profileState.favorite
+              : !!g.favorite),
+          rating:
+            ratingOverrides[g.id] !== undefined ? ratingOverrides[g.id] :
+            (profileState?.rating !== undefined && currentProfileId !== 1
+              ? profileState.rating!
+              : g.rating),
+          playStatus:
+            statusOverrides[g.id] !== undefined ? statusOverrides[g.id] :
+            (profileState?.playStatus !== undefined && currentProfileId !== 1
+              ? profileState.playStatus!
+              : (g.playStatus ?? "unset")),
+        };
+      });
 
       // Group multi-disc games
       const groups: Record<string, Game[]> = {};
       const singletons: Game[] = [];
       for (const g of allGames) {
         if (g.discGroup) {
-          if (!groups[g.discGroup]) groups[g.discGroup] = [];
-          groups[g.discGroup].push(g);
+          const groupKey = `${g.system}:${g.discGroup}`;
+          if (!groups[groupKey]) groups[groupKey] = [];
+          groups[groupKey].push(g);
         } else {
           singletons.push(g);
         }
       }
 
       const merged: Game[] = [...singletons];
-      for (const [_, discs] of Object.entries(groups)) {
-        // Order by disc number
+      for (const discs of Object.values(groups)) {
         discs.sort((a, b) => (a.discNumber ?? 1) - (b.discNumber ?? 1));
-        // Find most recently played disc
         const latest = [...discs].sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))[0];
-        // Use the first disc as the primary entry but with latest play info
         const primary = {
           ...discs[0],
           lastPlayed: latest.lastPlayed,
@@ -235,7 +238,7 @@ export default function Home({ filter }: { filter: Filter }) {
       }
       return merged;
     },
-    [favOverrides, ratingOverrides, uploadedRoms],
+    [favOverrides, ratingOverrides, statusOverrides, uploadedRoms, profileStateMap, currentProfileId],
   );
 
   const effectiveFilter = useMemo<Filter>(() => {
@@ -248,6 +251,7 @@ export default function Home({ filter }: { filter: Filter }) {
   const filtered = useMemo(() => {
     let list = games;
 
+    // Apply primary filter (System, Collection, Favorites, Recent)
     if (typeof effectiveFilter === "string" && effectiveFilter.startsWith("collection:")) {
       const collectionId = Number(effectiveFilter.replace("collection:", ""));
       const collection = collections.find((item) => item.id === collectionId);
@@ -258,30 +262,36 @@ export default function Home({ filter }: { filter: Filter }) {
     } else if (effectiveFilter === "recent") {
       list = list.filter((g) => g.lastPlayed && g.lastPlayed > 0);
     } else if (effectiveFilter !== "all") {
-      list = list.filter((g) => g.system === (effectiveFilter as SystemId));
+      // Robust system matching (supports ID and Slug)
+      const sys = SYSTEMS.find(s => s.id === effectiveFilter || s.slug === effectiveFilter);
+      const targetId = sys?.id || effectiveFilter;
+      list = list.filter((g) => g.system === targetId || g.system === effectiveFilter);
     }
 
+    // Fuzzy search (breaks out of filter to search across entire library)
     if (query.trim()) {
       const fuse = new Fuse(games, {
         keys: ["title", "genre", "system", "developer", "publisher"],
-        threshold: 0.3,
+        threshold: 0.35,
         distance: 100,
       });
       list = fuse.search(query.trim()).map((r) => r.item);
     }
 
+    // Secondary filters (Genre)
     if (genreFilter) {
       list = list.filter((g) => g.genre === genreFilter);
     }
 
-    list = [...list].sort((a, b) => {
+    // Sorting
+    const sorted = [...list].sort((a, b) => {
       switch (sort) {
         case "title":
           return a.title.localeCompare(b.title);
         case "year":
-          return a.year - b.year;
+          return (a.year || 0) - (b.year || 0);
         case "rating":
-          return b.rating - a.rating;
+          return (b.rating || 0) - (a.rating || 0);
         case "plays":
           return (b.minutesPlayed ?? 0) - (a.minutesPlayed ?? 0);
         case "recent":
@@ -290,8 +300,9 @@ export default function Home({ filter }: { filter: Filter }) {
       }
     });
 
-    return list;
-  }, [collections, games, effectiveFilter, filter, query, sort, genreFilter]);
+    console.info(`[Library] Filter: ${effectiveFilter}, Total: ${games.length}, Match: ${sorted.length}`);
+    return sorted;
+  }, [collections, games, effectiveFilter, query, sort, genreFilter]);
 
   const availableGenres = useMemo(() => {
     const seen = new Set<string>();
