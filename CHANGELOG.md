@@ -4,6 +4,27 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.1.1] — 2026-05-14
+
+### Fix: Automatic Scraping & RetroAchievements
+
+- **Settings Lookup** — Fixed a bug where service credentials (ssUserId, ssPassword, raUsername, raToken, tgdbApiKey) were being retrieved using incorrect property names in the new modular routes. This restoration fixes automatic art fetching during upload and RetroAchievements progress tracking.
+
+---
+
+## [1.1.0] — 2026-05-14
+
+### Major: Modular Architecture & Enhanced Data Integration
+
+- **Modular Backend** — Retired the 5,500-line monolithic `server/routes.ts` in favour of a clean, specialized module structure under `server/routes/`. This significantly improves maintainability and allows for faster feature development.
+- **Enriched Metadata** — The `gamelist.xml` parser now correctly extracts star ratings, play counts, and last-played timestamps for both EmulationStation and LaunchBox formats.
+- **Robust Test Isolation** — Implemented lazy database initialization and per-test data directory logic. All 135 integration tests now pass with zero shared-state pollution.
+- **Multi-Arch Docker** — Updated the `Dockerfile` to automatically support both AMD64 and ARM64 (aarch64) base images, ensuring a seamless experience on Raspberry Pi 4/5.
+- **Public Kiosk Fix** — Restored the missing `/api/kiosk` public configuration route, fixing 404 errors in kiosk mode.
+- **Gamepad Isolation Fix** — Resolved a bug where Player 1's bindings would leak into Player 2's empty configuration.
+
+---
+
 ## [0.7.39] — 2026-05-11
 
 ### Fix: Lovelace card download

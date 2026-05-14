@@ -1,3 +1,16 @@
+## 1.1.1 – 2026-05-14
+
+- **Fix**: Corrected automatic art scraping and RetroAchievements settings lookup. Fixed a bug where incorrect field names were used to retrieve service credentials, which prevented automatic art fetching during upload and RA progress tracking.
+
+## 1.1.0 – 2026-05-14
+
+- **Modular Architecture**: Retired the 5,500-line monolithic `server/routes.ts` in favour of 13 specialized route modules under `server/routes/`. This significantly improves maintainability and developer velocity.
+- **Enhanced Data Integration**: Refactored the `gamelist.xml` parser (supporting EmulationStation and LaunchBox formats) to extract enriched metadata, including star ratings, play counts, and last-played timestamps.
+- **Improved Test Isolation**: Implemented lazy database initialization and per-test data directory logic, achieving 100% passing tests with zero shared-state pollution.
+- **Multi-Architecture Support**: Updated `Dockerfile` to support both AMD64 and ARM64 (aarch64) base images automatically.
+- **Bug Fix**: Restored missing `/api/kiosk` public configuration route.
+- **Bug Fix**: Resolved gamepad binding leak between Player 1 and Player 2.
+
 ## 0.7.38 – 2026-05-13
 
 - Feature: **Internationalization (i18n)** – language switcher added to Settings → Display; supports English, Español, Français, Deutsch, Português, 日本語, and 中文 (Simplified); selection is persisted server-side via IntegrationConfig and applied instantly across the UI via react-i18next; locale JSON files live in `client/src/locales/`

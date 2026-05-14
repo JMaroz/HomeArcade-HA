@@ -89,8 +89,8 @@ export function registerRomRoutes(app: Express) {
 
       // Try ScreenScraper first (rich metadata + art), fall back to Libretro art only
       const settings = await storage.getIntegrationSettings();
-      const tgdbMeta = await fetchTheGamesDBMeta(system, title, settings.theGamesDbApiKey ?? "");
-      const ssMeta = tgdbMeta?.artUrl ? null : await fetchScreenScraperMeta(system, safeName, title, settings.screenScraperUser || "", settings.screenScraperPassword || "");
+      const tgdbMeta = await fetchTheGamesDBMeta(system, title, settings.tgdbApiKey || "");
+      const ssMeta = tgdbMeta?.artUrl ? null : await fetchScreenScraperMeta(system, safeName, title, settings.ssUserId || "", settings.ssPassword || "");
       const activeMeta = tgdbMeta ?? ssMeta;
       const libretroArt = activeMeta?.artUrl ? null : await findLibretroBoxArt(system, title);
 

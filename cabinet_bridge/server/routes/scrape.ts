@@ -267,12 +267,12 @@ export function registerScrapeRoutes(app: Express) {
     let meta: any = null;
 
     // Try ScreenScraper first
-    if (settings.screenScraperEnabled && settings.screenScraperUser && settings.screenScraperPassword) {
-      meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.screenScraperUser, settings.screenScraperPassword);
+    if (settings.ssUserId && settings.ssPassword) {
+      meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.ssUserId, settings.ssPassword);
     }
     // Try TheGamesDB second
-    if (!meta && settings.theGamesDbEnabled && settings.theGamesDbApiKey) {
-      meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.theGamesDbApiKey);
+    if (!meta && settings.tgdbApiKey) {
+      meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.tgdbApiKey);
     }
     // Fallback to Libretro
     if (!meta) {
@@ -313,11 +313,11 @@ export function registerScrapeRoutes(app: Express) {
       send({ type: "progress", current: count, total: unscraped.length, title: rom.title });
 
       let meta: any = null;
-      if (settings.screenScraperEnabled && settings.screenScraperUser && settings.screenScraperPassword) {
-        meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.screenScraperUser, settings.screenScraperPassword);
+      if (settings.ssUserId && settings.ssPassword) {
+        meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.ssUserId, settings.ssPassword);
       }
-      if (!meta && settings.theGamesDbEnabled && settings.theGamesDbApiKey) {
-        meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.theGamesDbApiKey);
+      if (!meta && settings.tgdbApiKey) {
+        meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.tgdbApiKey);
       }
       if (!meta) {
         const libretro = await findLibretroBoxArt(rom.system, rom.title);
