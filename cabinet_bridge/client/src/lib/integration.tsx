@@ -205,7 +205,7 @@ function configsEqual(a: IntegrationConfig, b: IntegrationConfig): boolean {
   if (a.gamepadRumble !== b.gamepadRumble) return false;
   if (a.adaptiveBackground !== b.adaptiveBackground) return false;
   if (a.crtIntensity !== b.crtIntensity) return false;
-    a.language === b.language &&
+  if (a.language !== b.language) return false;
 
   const aKeys = Object.keys(a.endpoints);
   const bKeys = Object.keys(b.endpoints);
