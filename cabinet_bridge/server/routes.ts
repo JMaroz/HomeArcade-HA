@@ -164,7 +164,7 @@ function titleFromFileName(filename: string): string {
 // Writes a panel_iframe entry to /config/configuration.yaml if not already
 // present, then asks HA to reload integrations so the panel appears immediately.
 // ---------------------------------------------------------------------------
-function titleFromFileName(filename: string): string {  return filename(): Promise<void> {
+async function ensurePanelIframe(): Promise<void> {
   const SUPERVISOR_TOKEN = process.env.SUPERVISOR_TOKEN;
   if (!SUPERVISOR_TOKEN) return; // not running inside HA add-on
 
