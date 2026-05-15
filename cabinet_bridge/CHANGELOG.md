@@ -1,3 +1,9 @@
+## 1.1.3 – 2026-05-14
+
+- **New**: **Bulk Scrape** — Added a "Scrape All" button in Settings → Services to refresh metadata and art for all unscraped or failed ROMs.
+- **Fix**: **Settings UI Restored** — Fixed a regression where the Services and Kiosk tabs were missing from the Settings menu.
+- **Fix**: **Build Stability** — Resolved multiple TypeScript errors and missing dependency issues to ensure a healthy production build.
+
 ## 1.1.2 – 2026-05-14
 
 - **Fix**: Art Scraping — Resolved a ReferenceError in the Libretro fallback that caused art scraping to fail for many titles.
