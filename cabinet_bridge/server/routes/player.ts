@@ -1282,7 +1282,7 @@ export function renderEmulatorPage({ title, returnTo, romHash }: { title: string
 </html>`;
 }
 
-export function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2, gamepadRumble, systemDisplay, userId, userName, profileId, cheats }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; gamepadBindings: Record<number, number>; controlDefaultsP2: Record<number, string>; gamepadBindingsP2: Record<number, number>; gamepadRumble: boolean; systemDisplay: Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>; userId: string; userName: string; profileId: string; cheats: Array<{ description: string; code: string }>; }) {
+export function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2, gamepadRumble, systemDisplay, globalAspectRatio, globalShader, userId, userName, profileId, cheats }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; gamepadBindings: Record<number, number>; controlDefaultsP2: Record<number, string>; gamepadBindingsP2: Record<number, number>; gamepadRumble: boolean; systemDisplay: Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>; globalAspectRatio: string; globalShader: string; userId: string; userName: string; profileId: string; cheats: Array<{ description: string; code: string }>; }) {
   return `"use strict";
 // Diagnostic: immediately mark that this script is executing.
 // If the launch overlay stays at 0%, this script never ran.
@@ -2639,14 +2639,14 @@ window.EJS_defaultOptions = { "save-state-location": "browser", "save-state-slot
   var sysOpts = opts[sysId] || {};
   
   // Use per-system shader or fallback to global shader
-  var shader = sysOpts.shader || ${JSON.stringify(bootstrapSettings.globalShader || "none")};
+  var shader = sysOpts.shader || ${JSON.stringify(globalShader || "none")};
   if (shader && shader !== "none") {
     window.EJS_defaultOptions["shader"] = shader;
   }
   
   // Ensure aspect ratio fallbacks to global
-  if (!sysOpts.aspectRatio && ${JSON.stringify(bootstrapSettings.globalAspectRatio)} !== "auto") {
-    sysOpts.aspectRatio = ${JSON.stringify(bootstrapSettings.globalAspectRatio)};
+  if (!sysOpts.aspectRatio && ${JSON.stringify(globalAspectRatio)} !== "auto") {
+    sysOpts.aspectRatio = ${JSON.stringify(globalAspectRatio)};
   }
   
   window.CABINET_DISPLAY_OPTS = sysOpts;

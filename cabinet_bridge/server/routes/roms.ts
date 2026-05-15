@@ -280,6 +280,8 @@ export function registerRomRoutes(app: Express) {
       })(),
       gamepadRumble: bootstrapSettings.gamepadRumble ?? true,
       systemDisplay: (bootstrapSettings.systemDisplay ?? {}) as Record<string, any>,
+      globalAspectRatio: bootstrapSettings.globalAspectRatio || "auto",
+      globalShader: bootstrapSettings.globalShader || "none",
       userId, userName, profileId: profileParam ?? "1",
       cheats: await storage.listCheats(rom.id, profileParam ? Number(profileParam) : 1).then((cs) => cs.filter((c) => c.enabled)),
     }));
