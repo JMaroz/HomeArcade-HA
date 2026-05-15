@@ -134,18 +134,21 @@
   --card: 260 40% 10%; --card-border: 300 100% 25%;
   --primary: 300 100% 60%; --secondary: 190 100% 50%; --accent: 30 100% 60%;
   --sidebar: 260 40% 8%; --sidebar-primary: 300 100% 60%;
+  --glow-primary: 0 0 10px hsl(300 100% 60% / 0.5);
+  --glow-secondary: 0 0 10px hsl(190 100% 50% / 0.5);
 }
 [data-theme="gameboy"], .dark[data-theme="gameboy"] {
   --background: 85 15% 15%; --foreground: 85 40% 70%; --border: 85 30% 25%;
   --card: 85 15% 20%; --card-border: 85 30% 30%;
   --primary: 85 45% 65%; --secondary: 85 40% 50%; --accent: 0 60% 50%;
   --sidebar: 85 15% 18%; --sidebar-primary: 85 45% 65%;
+  --dot-matrix: radial-gradient(circle, #000 1px, transparent 1px);
 }
 [data-theme="oled"], .dark[data-theme="oled"] {
   --background: 0 0% 0%; --foreground: 0 0% 90%; --border: 0 0% 15%;
-  --card: 0 0% 5%; --card-border: 0 0% 20%;
+  --card: 0 0% 0%; --card-border: 0 0% 20%;
   --primary: 0 0% 100%; --secondary: 0 0% 60%; --accent: 210 100% 50%;
-  --sidebar: 0 0% 3%;
+  --sidebar: 0 0% 0%;
 }
 [data-theme="nord"], .dark[data-theme="nord"] {
   --background: 220 16% 22%; --foreground: 218 27% 92%; --border: 220 16% 28%;
@@ -161,13 +164,14 @@
   --background: 55 100% 50%; --foreground: 0 0% 0%; --border: 0 0% 0%;
   --card: 55 100% 45%; --card-border: 0 0% 10%;
   --primary: 0 0% 0%; --secondary: 320 100% 50%; --accent: 180 100% 50%;
+  --radius: 0px;
 }
 [data-theme="miami-vice"], .dark[data-theme="miami-vice"] {
   --background: 190 100% 90%; --foreground: 320 60% 30%; --border: 320 60% 80%;
   --card: 0 0% 100%; --card-border: 320 60% 85%;
   --primary: 320 100% 65%; --secondary: 190 100% 45%; --accent: 280 100% 60%;
 }
-[data-theme="c64"], .dark[data-theme="c64"] {
+[data-theme="c64"] {
   --background: 240 60% 30%; --foreground: 240 60% 85%; --border: 240 60% 40%;
   --card: 240 60% 35%; --card-border: 240 60% 45%;
   --primary: 240 60% 80%; --secondary: 240 60% 60%; --accent: 0 0% 100%;
@@ -186,6 +190,9 @@
   --background: 180 20% 80%; --foreground: 0 0% 0%; --border: 0 0% 100%;
   --card: 0 0% 75%; --card-border: 0 0% 40%;
   --primary: 220 100% 20%; --secondary: 0 0% 50%; --accent: 0 0% 0%;
+  --radius: 0px;
+  --win-bevel-out: inset 1px 1px #fff, inset -1px -1px #808080;
+  --win-bevel-in: inset 1px 1px #808080, inset -1px -1px #fff;
 }
 [data-theme="aqua"], .dark[data-theme="aqua"] {
   --background: 200 100% 10%; --foreground: 190 100% 90%; --border: 190 100% 20%;
@@ -217,6 +224,36 @@
   --card: 120 20% 10%; --card-border: 120 40% 25%;
   --primary: 120 100% 50%; --secondary: 210 100% 50%; --accent: 60 100% 50%;
 }
+
+/* ── Theme Specific Utility Overrides ── */
+[data-theme="win95"] .bg-card, [data-theme="win95"] .bg-sidebar, [data-theme="win95"] button {
+  box-shadow: var(--win-bevel-out) !important;
+  border: 1px solid #000 !important;
+}
+[data-theme="win95"] button:active {
+  box-shadow: var(--win-bevel-in) !important;
+}
+[data-theme="synthwave"] h1, [data-theme="synthwave"] h2, [data-theme="synthwave"] .text-primary {
+  text-shadow: var(--glow-primary);
+}
+[data-theme="gameboy"] .bg-card::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image: var(--dot-matrix); background-size: 4px 4px; opacity: 0.1;
+}
+[data-theme="gameboy"] img {
+  filter: sepia(0.5) hue-rotate(60deg) saturate(2) contrast(0.9);
+}
+[data-theme="arcade"] .bg-card::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
+}
+[data-theme="oled"] .border, [data-theme="oled"] .border-t, [data-theme="oled"] .border-b {
+  border-color: hsl(var(--border) / 0.5) !important;
+}
+[data-theme="cyberpunk"] {
+  clip-path: polygon(0% 0%, 100% 0%, 100% 95%, 95% 100%, 0% 100%);
+}
+
 
 /* ─────────────────────────────────────────────────────────────
    DARK MODE — primary palette

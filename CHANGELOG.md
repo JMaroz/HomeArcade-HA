@@ -4,6 +4,19 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.1.11] — 2026-05-15
+
+### Feature: Theme Visual Polish
+
+- **Win95 Aesthetics** — Added iconic beveled borders to cards, sidebars, and buttons for the Win95 theme.
+- **Gameboy DMG Filter** — Implemented a dot-matrix texture overlay and a specialized sepia-green image filter for that classic handheld screen look.
+- **Synthwave Glow** — Added neon text shadows and glows to primary UI headers.
+- **Arcade Scanlines** — Introduced a subtle scanline overlay for library cards in the Arcade theme.
+- **Cyberpunk Sharpness** — Applied high-contrast, zero-radius angular clipping to the Cyberpunk aesthetic.
+- **OLED Optimization** — Refined OLED theme with true-black backgrounds and sharper borders.
+
+---
+
 ## [1.1.10] — 2026-05-15
 
 ### Fix: UI Themes
