@@ -10,9 +10,11 @@ import { SystemLogo } from "@/components/SystemLogo";
 export function GameArt({
   game,
   className = "",
+  priority = false,
 }: {
   game: Game;
   className?: string;
+  priority?: boolean;
 }) {
   const [a, b, c] = game.art;
   const seed = hashSeed(game.id);
@@ -35,7 +37,8 @@ export function GameArt({
           src={game.artUrl}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
           decoding="async"
           data-testid={`img-art-${game.id}`}
         />

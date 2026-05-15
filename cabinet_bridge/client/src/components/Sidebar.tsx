@@ -54,8 +54,12 @@ export function Sidebar({ active, alwaysVisible = false, onNavigate }: SidebarPr
   const { data: nowPlaying } = useQuery<{ playing: boolean; id?: number; title?: string; system?: string }>({
     queryKey: ["/api/now-playing"],
     queryFn: async () => { const res = await fetch("/api/now-playing"); return res.json(); },
-    refetchInterval: 5000,
-    staleTime: 0,
+    refetchInterval: (query) => {
+      // Don't poll if the tab is hidden or if we already have data and it's not playing
+      if (document.hidden) return false;
+      return query.state.data?.playing ? 5000 : 15000;
+    },
+    staleTime: 5000,
   });
 
   return (

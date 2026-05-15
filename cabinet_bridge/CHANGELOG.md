@@ -1,3 +1,14 @@
+## 1.1.12 – 2026-05-15
+
+- **Improved**: **Performance** — Implemented Intersection Observer for library game cards to reduce memory/CPU load.
+- **Improved**: **Load Speed** — Added fetch priority and eager loading for the first 10 items in any grid.
+- **Improved**: **Polling** — Reduced frequency of background API calls when the app is idle or hidden.
+- **Improved**: **Touch UX** — Disabled video previews on touch devices and added scroll restoration for smoother navigation.
+
+## 1.1.11 – 2026-05-15
+
+- **Feature**: **Theme Visual Polish** — Added unique aesthetics (Win95 bevels, Gameboy dot-matrix, Synthwave glows, Arcade scanlines) to specific themes.
+
 ## 1.1.10 – 2026-05-15
 
 - **Fix**: **UI Themes** — Updated CSS selectors to `.dark[data-theme="..."]` to ensure they have higher specificity and correctly override default dark mode variables.

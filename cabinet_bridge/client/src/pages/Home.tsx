@@ -842,7 +842,7 @@ const Grid = memo(function Grid({
       data-testid="grid-games"
     >
       {games.map((g, i) => (
-        <GameCard key={g.id} game={g} onOpen={onOpen} onToggleFav={onToggleFav} focused={i === focusedIndex} />
+        <GameCard key={g.id} game={g} onOpen={onOpen} onToggleFav={onToggleFav} focused={i === focusedIndex} priority={i < 10} />
       ))}
     </div>
   );

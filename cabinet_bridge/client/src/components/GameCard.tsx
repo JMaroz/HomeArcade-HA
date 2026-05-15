@@ -1,4 +1,4 @@
-import { memo, useCallback, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState, useEffect } from "react";
 import { GameArt } from "@/components/GameArt";
 import { SYSTEMS, type Game } from "@/data/library";
 import { formatRelative } from "@/lib/integration";
@@ -27,6 +27,7 @@ function PlayStatusDot({ status }: { status?: string | null }) {
 
 /**
  * MD3 Elevated Card — 16px large shape, tonal surface, state layer on hover/press.
+ * Optimized with Intersection Observer for performance.
  */
 export const GameCard = memo(function GameCard({
   game,
@@ -34,19 +35,43 @@ export const GameCard = memo(function GameCard({
   onToggleFav,
   focused = false,
   showSaveThumb = false,
+  priority = false,
 }: {
   game: Game;
   onOpen: (g: Game) => void;
   onToggleFav: (g: Game) => void;
   focused?: boolean;
   showSaveThumb?: boolean;
+  priority?: boolean;
 }) {
   const { config } = useIntegration();
   const system = SYSTEMS.find((s) => s.id === game.system);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  
+  const [isVisible, setIsVisible] = useState(priority);
   const [videoFailed, setVideoFailed] = useState(false);
   const [thumbFailed, setThumbFailed] = useState(false);
-  const showVideo = !!game.videoUrl && !videoFailed && !showSaveThumb;
+
+  // Disable video on touch devices to save battery/bandwidth
+  const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  const showVideo = !!game.videoUrl && !videoFailed && !showSaveThumb && !isTouch;
+
+  useEffect(() => {
+    if (priority || !cardRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "300px" } // Load early for smoother scrolling
+    );
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [priority]);
+
   const saveThumbUrl = game.romId
     ? `/api/roms/${game.romId}/save-thumb/auto?t=${game.lastPlayed}`
     : null;
@@ -77,12 +102,13 @@ export const GameCard = memo(function GameCard({
   }, [game.romId]);
 
   const handleMouseEnter = useCallback(() => {
+    if (isTouch) return;
     prefetchData();
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
       void videoRef.current.play().catch(() => setVideoFailed(true));
     }
-  }, [prefetchData]);
+  }, [prefetchData, isTouch]);
 
   const handleMouseLeave = useCallback(() => {
     if (videoRef.current) {
@@ -100,12 +126,13 @@ export const GameCard = memo(function GameCard({
 
   return (
     <div
+      ref={cardRef}
       role="button"
       tabIndex={0}
       onClick={handleOpen}
       onKeyDown={handleKeyDown}
       className={[
-        "group relative rounded-xl overflow-hidden bg-card",
+        "group relative rounded-xl overflow-hidden bg-card min-h-[140px]",
         "md3-state md3-state-on-surface",
         "focus:outline-none [touch-action:manipulation]",
         "transition-[box-shadow,transform] duration-150",
@@ -122,124 +149,129 @@ export const GameCard = memo(function GameCard({
       onMouseLeave={handleMouseLeave}
       onFocus={prefetchData}
     >
-      {/* ── Art / video ── */}
-      <div className="aspect-[16/10] relative">
-        {showSaveThumb && saveThumbUrl && !thumbFailed ? (
-          <img
-            src={saveThumbUrl}
-            alt={`Last session of ${game.title}`}
-            onError={() => setThumbFailed(true)}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <GameArt game={game} />
-        )}
-        {game.isMultiDisc && (
-          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md font-mono text-[9px] font-bold uppercase tracking-wider bg-black/60 text-white border border-white/20 backdrop-blur-sm">
-            Multi-Disc
-          </div>
-        )}
-        {showVideo && (
-          <video
-            ref={videoRef}
-            src={`/api/roms/${game.romId}/video`}
-            muted loop playsInline preload="none"
-            onError={() => setVideoFailed(true)}
-            className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-          />
-        )}
-      </div>
-
-      {/* ── "New" badge ── */}
-      {isNew && (
-        <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full font-mono text-[9px] font-bold uppercase tracking-wider bg-primary-container/80 text-[hsl(var(--on-primary-container))] pointer-events-none backdrop-blur-sm">
-          New
-        </div>
-      )}
-
-      {/* ── Favorite button (MD3 Icon Button — Tonal) ── */}
-      <button
-        type="button"
-        onClick={handleFav}
-        style={{ touchAction: "manipulation" }}
-        className={[
-          "absolute top-2 right-2 size-11 rounded-full flex items-center justify-center z-10",
-          "transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-          "md3-state",
-          game.favorite
-            ? "bg-primary-container text-primary md3-state-primary"
-            : "bg-black/50 backdrop-blur-sm text-white/80 md3-state-on-surface hover:bg-black/70",
-        ].join(" ")}
-        aria-label={game.favorite ? "Remove from favorites" : "Add to favorites"}
-        aria-pressed={!!game.favorite}
-        data-testid={`button-fav-${game.id}`}
-      >
-        <Heart className={`size-5 ${game.favorite ? "fill-current" : ""}`} />
-      </button>
-
-      {/* ── Hover overlay — description + details ── */}
-      {/* Hidden on touch devices via .hide-on-touch utility to avoid 'double-tap to open' frustration */}
-      <button
-        type="button"
-        onClick={handleOpen}
-        className="absolute inset-0 flex flex-col justify-between bg-black/70 opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 hide-on-touch transition-opacity focus:outline-none focus-visible:pointer-events-auto focus-visible:opacity-100 p-3"
-        data-testid={`button-details-${game.id}`}
-        aria-label={`View details for ${game.title}`}
-      >
-        {game.description ? (
-          <p className="text-white/90 text-[11px] leading-[1.4] line-clamp-4 text-left">
-            {game.description}
-          </p>
-        ) : (
-          <span />
-        )}
-        {/* MD3 Filled Tonal Button */}
-        <span className="self-center flex items-center gap-2 px-4 py-2 rounded-full bg-primary-container text-[hsl(var(--on-primary-container))] font-mono text-xs font-bold uppercase tracking-wider">
-          <Info className="size-3.5" /> Details
-        </span>
-      </button>
-
-      {/* ── Card footer — title + system/meta ── */}
-      <div className="px-3 pt-2 pb-2.5 border-t border-card-border/60 space-y-0.5">
-        <div
-          className="text-[12px] font-semibold text-foreground leading-tight line-clamp-1"
-          data-testid={`text-title-${game.id}`}
-        >
-          {game.title}
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          {/* System name + play-status dot */}
-          <span className="flex items-center gap-1.5 min-w-0 truncate">
-            <PlayStatusDot status={game.playStatus} />
-            {config.showSystemLabels && (
-              <span
-                className="md-label-small text-muted-foreground uppercase tracking-[0.08em] truncate"
-                data-testid={`text-system-${game.id}`}
-              >
-                {system?.shortName ?? game.system}
-              </span>
+      {isVisible ? (
+        <>
+          {/* ── Art / video ── */}
+          <div className="aspect-[16/10] relative">
+            {showSaveThumb && saveThumbUrl && !thumbFailed ? (
+              <img
+                src={saveThumbUrl}
+                alt={`Last session of ${game.title}`}
+                onError={() => setThumbFailed(true)}
+                className="w-full h-full object-cover"
+                loading={priority ? "eager" : "lazy"}
+                fetchPriority={priority ? "high" : "auto"}
+              />
+            ) : (
+              <GameArt game={game} priority={priority} />
             )}
-          </span>
-          <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
-            {game.minutesPlayed && game.minutesPlayed > 0 ? (
-              <span className="flex items-center gap-0.5 md-label-small text-foreground/50 whitespace-nowrap" data-testid={`text-playtime-${game.id}`} title="Total play time">
-                <Clock className="size-2.5" />
-                {game.minutesPlayed >= 60
-                  ? `${Math.floor(game.minutesPlayed / 60)}h${game.minutesPlayed % 60 > 0 ? ` ${game.minutesPlayed % 60}m` : ""}`
-                  : `${game.minutesPlayed}m`}
-              </span>
-            ) : game.lastPlayed ? (
-              <span className="md-label-small text-foreground/60 whitespace-nowrap" data-testid={`text-lastplayed-${game.id}`}>
-                {formatRelative(game.lastPlayed)}
-              </span>
-            ) : null}
-            <span className="flex items-center gap-0.5 md-label-small text-foreground/60" data-testid={`text-rating-${game.id}`}>
-              <Star className="size-3 fill-current text-chart-3" />
-              {game.rating > 0 ? game.rating : "—"}
-            </span>
+            {game.isMultiDisc && (
+              <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md font-mono text-[9px] font-bold uppercase tracking-wider bg-black/60 text-white border border-white/20 backdrop-blur-sm">
+                Multi-Disc
+              </div>
+            )}
+            {showVideo && (
+              <video
+                ref={videoRef}
+                src={`/api/roms/${game.romId}/video`}
+                muted loop playsInline preload="none"
+                onError={() => setVideoFailed(true)}
+                className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+              />
+            )}
           </div>
-        </div>
-      </div>
+
+          {/* ── "New" badge ── */}
+          {isNew && (
+            <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full font-mono text-[9px] font-bold uppercase tracking-wider bg-primary-container/80 text-[hsl(var(--on-primary-container))] pointer-events-none backdrop-blur-sm">
+              New
+            </div>
+          )}
+
+          {/* ── Favorite button ── */}
+          <button
+            type="button"
+            onClick={handleFav}
+            style={{ touchAction: "manipulation" }}
+            className={[
+              "absolute top-2 right-2 size-11 rounded-full flex items-center justify-center z-10",
+              "transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+              "md3-state",
+              game.favorite
+                ? "bg-primary-container text-primary md3-state-primary"
+                : "bg-black/50 backdrop-blur-sm text-white/80 md3-state-on-surface hover:bg-black/70",
+            ].join(" ")}
+            aria-label={game.favorite ? "Remove from favorites" : "Add to favorites"}
+            aria-pressed={!!game.favorite}
+            data-testid={`button-fav-${game.id}`}
+          >
+            <Heart className={`size-5 ${game.favorite ? "fill-current" : ""}`} />
+          </button>
+
+          {/* ── Hover overlay ── */}
+          <button
+            type="button"
+            onClick={handleOpen}
+            className="absolute inset-0 flex flex-col justify-between bg-black/70 opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 hide-on-touch transition-opacity focus:outline-none focus-visible:pointer-events-auto focus-visible:opacity-100 p-3"
+            data-testid={`button-details-${game.id}`}
+            aria-label={`View details for ${game.title}`}
+          >
+            {game.description ? (
+              <p className="text-white/90 text-[11px] leading-[1.4] line-clamp-4 text-left">
+                {game.description}
+              </p>
+            ) : (
+              <span />
+            )}
+            <span className="self-center flex items-center gap-2 px-4 py-2 rounded-full bg-primary-container text-[hsl(var(--on-primary-container))] font-mono text-xs font-bold uppercase tracking-wider">
+              <Info className="size-3.5" /> Details
+            </span>
+          </button>
+
+          {/* ── Card footer ── */}
+          <div className="px-3 pt-2 pb-2.5 border-t border-card-border/60 space-y-0.5">
+            <div
+              className="text-[12px] font-semibold text-foreground leading-tight line-clamp-1"
+              data-testid={`text-title-${game.id}`}
+            >
+              {game.title}
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5 min-w-0 truncate">
+                <PlayStatusDot status={game.playStatus} />
+                {config.showSystemLabels && (
+                  <span
+                    className="md-label-small text-muted-foreground uppercase tracking-[0.08em] truncate"
+                    data-testid={`text-system-${game.id}`}
+                  >
+                    {system?.shortName ?? game.system}
+                  </span>
+                )}
+              </span>
+              <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+                {game.minutesPlayed && game.minutesPlayed > 0 ? (
+                  <span className="flex items-center gap-0.5 md-label-small text-foreground/50 whitespace-nowrap" data-testid={`text-playtime-${game.id}`} title="Total play time">
+                    <Clock className="size-2.5" />
+                    {game.minutesPlayed >= 60
+                      ? `${Math.floor(game.minutesPlayed / 60)}h${game.minutesPlayed % 60 > 0 ? ` ${game.minutesPlayed % 60}m` : ""}`
+                      : `${game.minutesPlayed}m`}
+                  </span>
+                ) : game.lastPlayed ? (
+                  <span className="md-label-small text-foreground/60 whitespace-nowrap" data-testid={`text-lastplayed-${game.id}`}>
+                    {formatRelative(game.lastPlayed)}
+                  </span>
+                ) : null}
+                <span className="flex items-center gap-0.5 md-label-small text-foreground/60" data-testid={`text-rating-${game.id}`}>
+                  <Star className="size-3 fill-current text-chart-3" />
+                  {game.rating > 0 ? game.rating : "—"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="aspect-[16/10] bg-muted/20 animate-pulse" />
+      )}
     </div>
   );
 });

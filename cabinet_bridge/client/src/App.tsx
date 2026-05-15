@@ -16,6 +16,18 @@ import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 import { THEMES, AppTheme } from "./lib/themes";
 
+/**
+ * Ensures scroll position is reset or restored correctly on navigation.
+ */
+function ScrollRestoration() {
+  const [loc] = useHashLocation();
+  useEffect(() => {
+    // For most routes, reset scroll. Library/Home might need more complex logic but start with reset.
+    window.scrollTo(0, 0);
+  }, [loc]);
+  return null;
+}
+
 // Lazy — loaded only when navigated to
 const Settings = lazy(() => import("@/pages/Settings"));
 const Player = lazy(() => import("@/pages/Player"));
@@ -149,6 +161,7 @@ function App() {
       <IntegrationProvider>
         <VisualEffectManager />
       <LanguageManager />
+      <ScrollRestoration />
         <TooltipProvider>
           <Toaster />
           <Router hook={useHashLocation}>

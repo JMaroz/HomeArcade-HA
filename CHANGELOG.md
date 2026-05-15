@@ -4,6 +4,18 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.1.12] — 2026-05-15
+
+### Feature: Performance & Mobile Optimization
+
+- **Grid Virtualization** — Implemented Intersection Observer for library game cards. Content only renders when in or near the viewport, significantly reducing memory and CPU usage for large collections.
+- **Image Priority Loading** — The first 10 items in any grid now use high fetch priority and eager loading to improve initial paint times.
+- **Polling Efficiency** — Optimized background polling for "Now Playing" status. Frequency is reduced when idle and paused entirely when the browser tab is hidden.
+- **Touch Optimizations** — Disabled auto-playing video previews on touch devices to conserve bandwidth and battery life.
+- **Scroll Restoration** — Added automatic scroll management to ensure smooth navigation between the library and other pages.
+
+---
+
 ## [1.1.11] — 2026-05-15
 
 ### Feature: Theme Visual Polish
