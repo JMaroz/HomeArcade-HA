@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.1.18] — 2026-05-15
+
+### Fix: UI Translation Mismatches
+
+- **Corrected Keys** — Fixed missing translation keys for Dashboard game counts and "See All" links, resolving issues where raw code keys were visible in the UI.
+- **Language Sync** — Fully synchronized the new keys across all 7 supported languages.
+
+---
+
 ## [1.1.17] — 2026-05-15
 
 ### Polish: Tactile UI Feedback
