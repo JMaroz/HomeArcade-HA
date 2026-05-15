@@ -64,7 +64,7 @@ export function Sidebar({ active, alwaysVisible = false, onNavigate }: SidebarPr
 
   return (
     <aside
-      className={`${alwaysVisible ? "flex" : "hidden lg:flex"} flex-col w-full lg:w-64 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground h-full`}
+      className={`${alwaysVisible ? "flex" : "hidden lg:flex"} flex-col w-full lg:w-64 shrink-0 border-r border-sidebar-border bg-sidebar/80 backdrop-blur-md h-full`}
       data-testid="nav-sidebar"
     >
       {/* ── Drawer header ── */}

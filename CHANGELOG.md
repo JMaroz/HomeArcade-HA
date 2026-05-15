@@ -4,6 +4,36 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.1.17] — 2026-05-15
+
+### Polish: Tactile UI Feedback
+
+- **Card Hover Effects** — Added a high-end "tilt-scale" and primary-colored glow effect to game cards on hover. This provides tactile, console-like feedback when browsing with a mouse.
+- **Glassmorphism Refinement** — Further tuned the sidebar and navigation blur levels for optimal legibility across all 18 themes.
+
+---
+
+## [1.1.16] — 2026-05-15
+
+### Feature: Cinematic Glassmorphism
+
+- **Glassmorphic Navigation** — Applied a semi-transparent `backdrop-blur-md` effect to the Sidebar and Mobile Bottom Nav, allowing theme colors to bleed through for a more cohesive, high-end feel.
+- **Staggered Animations** — Integrated `framer-motion` staggered entrance animations for all Bento Grid modules, creating a premium "app boot" experience when opening the Dashboard.
+- **Visual Refinements** — Tuned the Hero section and navigation pill indicators for better contrast and legibility in glassmorphic mode.
+
+---
+
+## [1.1.15] — 2026-05-15
+
+### Feature: "Bento Box" Dashboard
+
+- **Modular Grid** — Completely redesigned the Dashboard using a responsive 12-column Bento Box layout. Content is now organized into cinematic, glassmorphic widgets that adjust perfectly to any screen size.
+- **Cinematic Hero** — Enhanced the "Continue Playing" hero with a slow Ken Burns-style zoom effect on artwork and improved information hierarchy.
+- **Glassmorphism Styling** — Applied a unified `backdrop-blur` and semi-transparent background to all dashboard modules for a high-end, modern gaming feel.
+- **Improved UX** — Refined the Recent Activity list and Highlight cards to better utilize screen space and provide easier navigation.
+
+---
+
 ## [1.1.14] — 2026-05-15
 
 ### Major: Full Localization Support

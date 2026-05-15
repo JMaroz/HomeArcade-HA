@@ -359,4 +359,14 @@
   .md-body-medium { font-size: var(--md-type-body-medium-size); line-height: var(--md-type-body-medium-line); letter-spacing: var(--md-type-body-medium-track); }
   .md-label-small { font-size: var(--md-type-label-small-size); line-height: var(--md-type-label-small-line); letter-spacing: var(--md-type-label-small-track); font-weight: var(--md-type-label-small-weight); }
   .hide-on-touch { @media (hover: none) { display: none !important; } }
+
+  .hover-tilt-scale {
+    @apply transition-all duration-300 ease-out;
+  }
+  @media (hover: hover) {
+    .hover-tilt-scale:hover {
+      @apply scale-[1.03] -translate-y-1 shadow-lg z-10;
+      box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.4);
+    }
+  }
 }

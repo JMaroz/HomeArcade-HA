@@ -88,7 +88,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-sidebar/95 backdrop-blur-md"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-sidebar/80 backdrop-blur-md"
       data-testid="nav-mobile-bottom"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
