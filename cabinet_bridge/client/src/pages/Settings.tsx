@@ -45,7 +45,7 @@ import type { SmartFilterRules, GameCollectionWithItems } from "@shared/schema";
 import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { THEMES } from "@/App";
+import { THEMES } from "@/lib/themes";
 
 export default function Settings() {
   const { config, setConfig, setEndpoint, resetConfig, saveStatus } = useIntegration();

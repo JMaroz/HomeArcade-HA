@@ -14,6 +14,8 @@ import Home from "@/pages/Home";
 import { ProfileProvider } from "@/lib/useProfile";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
+import { THEMES, AppTheme } from "./lib/themes";
+
 // Lazy — loaded only when navigated to
 const Settings = lazy(() => import("@/pages/Settings"));
 const Player = lazy(() => import("@/pages/Player"));
@@ -92,18 +94,6 @@ function PageTransition({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
-}
-
-export const THEMES = ["default", "synthwave", "gameboy", "oled", "nord", "amber", "dracula", "cyberpunk", "miami-vice", "c64", "arcade", "vaporwave", "grunge", "win95", "blockbuster", "aqua", "y2k", "halo"] as const;
-export type AppTheme = (typeof THEMES)[number];
-
-export function applyTheme(theme: AppTheme) {
-  if (theme === "default") {
-    document.documentElement.removeAttribute("data-theme");
-  } else {
-    document.documentElement.setAttribute("data-theme", theme);
-  }
-  localStorage.setItem("ha-theme", theme);
 }
 
 function AppRouter() {
