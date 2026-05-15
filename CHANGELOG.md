@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.1.10] — 2026-05-15
+
+### Fix: UI Themes
+
+- **Specificity Fix** — Updated theme CSS selectors to ensure they correctly override the default dark mode variables. Themes like Vaporwave and Gameboy will now apply instantly when selected.
+- **Integration Layer** — Synchronized the frontend integration layer with the new theme schema to ensure settings are correctly handled in the state.
+
+---
+
 ## [1.1.9] — 2026-05-15
 
 ### Fix: Emulator Bootstrap

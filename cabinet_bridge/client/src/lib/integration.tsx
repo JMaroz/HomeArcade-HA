@@ -63,12 +63,10 @@ export interface IntegrationConfig {
   gamepadRumble?: boolean;
   /** Per-system display overrides: { [core]: { aspectRatio?, integerScale?, shader? } } */
   systemDisplay?: Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>;
-  /** Custom UI navigation mapping: { [action]: buttonIndex } */
+  /** UI navigation mapping: { [action]: buttonIndex } */
   uiGamepadMapping?: Record<string, number>;
-  /** Enable dynamic adaptive backgrounds based on focused game colors */
-  adaptiveBackground?: boolean;
-  /** Intensity of the CRT scanline overlay (0-100) */
-  crtIntensity?: number;
+  /** UI theme name */
+  theme?: string;
   /** UI language (ISO 639-1 code, e.g. "en", "es") */
   language?: string;
 }
@@ -120,8 +118,7 @@ const defaultConfig: IntegrationConfig = {
   gamepadRumble: true,
   systemDisplay: {},
   uiGamepadMapping: { select: 0, back: 1, favorite: 3, menu: 9 },
-  adaptiveBackground: true,
-  crtIntensity: 30,
+  theme: "default",
   language: undefined,
 };
 
@@ -180,8 +177,7 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     uiGamepadMapping: (source.uiGamepadMapping && typeof source.uiGamepadMapping === "object")
       ? source.uiGamepadMapping as Record<string, number>
       : { select: 0, back: 1, favorite: 3, menu: 9 },
-    adaptiveBackground: typeof source.adaptiveBackground === "boolean" ? source.adaptiveBackground : true,
-    crtIntensity: typeof source.crtIntensity === "number" ? source.crtIntensity : 30,
+    theme: typeof source.theme === "string" ? source.theme : "default",
     language: typeof source.language === "string" ? source.language : undefined,
   };
 }
@@ -203,8 +199,7 @@ function configsEqual(a: IntegrationConfig, b: IntegrationConfig): boolean {
   if (a.pcRamEntityId !== b.pcRamEntityId) return false;
   if (a.pcAppEntityId !== b.pcAppEntityId) return false;
   if (a.gamepadRumble !== b.gamepadRumble) return false;
-  if (a.adaptiveBackground !== b.adaptiveBackground) return false;
-  if (a.crtIntensity !== b.crtIntensity) return false;
+  if (a.theme !== b.theme) return false;
   if (a.language !== b.language) return false;
 
   const aKeys = Object.keys(a.endpoints);

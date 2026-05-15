@@ -129,90 +129,90 @@
    THEMES
    ───────────────────────────────────────────────────────────── */
 
-[data-theme="synthwave"] {
+[data-theme="synthwave"], .dark[data-theme="synthwave"] {
   --background: 260 40% 6%; --foreground: 300 100% 92%; --border: 300 100% 20%;
   --card: 260 40% 10%; --card-border: 300 100% 25%;
   --primary: 300 100% 60%; --secondary: 190 100% 50%; --accent: 30 100% 60%;
   --sidebar: 260 40% 8%; --sidebar-primary: 300 100% 60%;
 }
-[data-theme="gameboy"] {
+[data-theme="gameboy"], .dark[data-theme="gameboy"] {
   --background: 85 15% 15%; --foreground: 85 40% 70%; --border: 85 30% 25%;
   --card: 85 15% 20%; --card-border: 85 30% 30%;
   --primary: 85 45% 65%; --secondary: 85 40% 50%; --accent: 0 60% 50%;
   --sidebar: 85 15% 18%; --sidebar-primary: 85 45% 65%;
 }
-[data-theme="oled"] {
+[data-theme="oled"], .dark[data-theme="oled"] {
   --background: 0 0% 0%; --foreground: 0 0% 90%; --border: 0 0% 15%;
   --card: 0 0% 5%; --card-border: 0 0% 20%;
   --primary: 0 0% 100%; --secondary: 0 0% 60%; --accent: 210 100% 50%;
   --sidebar: 0 0% 3%;
 }
-[data-theme="nord"] {
+[data-theme="nord"], .dark[data-theme="nord"] {
   --background: 220 16% 22%; --foreground: 218 27% 92%; --border: 220 16% 28%;
   --card: 222 16% 25%; --card-border: 220 16% 32%;
   --primary: 193 43% 67%; --secondary: 161 31% 58%; --accent: 0 35% 60%;
 }
-[data-theme="amber"] {
+[data-theme="amber"], .dark[data-theme="amber"] {
   --background: 30 100% 2%; --foreground: 30 100% 60%; --border: 30 100% 10%;
   --card: 30 100% 5%; --card-border: 30 100% 15%;
   --primary: 30 100% 65%; --secondary: 40 100% 50%; --accent: 30 100% 40%;
 }
-[data-theme="cyberpunk"] {
+[data-theme="cyberpunk"], .dark[data-theme="cyberpunk"] {
   --background: 55 100% 50%; --foreground: 0 0% 0%; --border: 0 0% 0%;
   --card: 55 100% 45%; --card-border: 0 0% 10%;
   --primary: 0 0% 0%; --secondary: 320 100% 50%; --accent: 180 100% 50%;
 }
-[data-theme="miami-vice"] {
+[data-theme="miami-vice"], .dark[data-theme="miami-vice"] {
   --background: 190 100% 90%; --foreground: 320 60% 30%; --border: 320 60% 80%;
   --card: 0 0% 100%; --card-border: 320 60% 85%;
   --primary: 320 100% 65%; --secondary: 190 100% 45%; --accent: 280 100% 60%;
 }
-[data-theme="c64"] {
+[data-theme="c64"], .dark[data-theme="c64"] {
   --background: 240 60% 30%; --foreground: 240 60% 85%; --border: 240 60% 40%;
   --card: 240 60% 35%; --card-border: 240 60% 45%;
   --primary: 240 60% 80%; --secondary: 240 60% 60%; --accent: 0 0% 100%;
 }
-[data-theme="arcade"] {
+[data-theme="arcade"], .dark[data-theme="arcade"] {
   --background: 0 0% 5%; --foreground: 0 0% 95%; --border: 0 100% 50%;
   --card: 0 0% 10%; --card-border: 60 100% 50%;
   --primary: 210 100% 50%; --secondary: 120 100% 40%; --accent: 0 100% 50%;
 }
-[data-theme="vaporwave"] {
+[data-theme="vaporwave"], .dark[data-theme="vaporwave"] {
   --background: 280 60% 15%; --foreground: 300 100% 90%; --border: 300 60% 25%;
   --card: 280 60% 20%; --card-border: 300 60% 30%;
   --primary: 180 100% 70%; --secondary: 300 100% 75%; --accent: 240 100% 80%;
 }
-[data-theme="win95"] {
+[data-theme="win95"], .dark[data-theme="win95"] {
   --background: 180 20% 80%; --foreground: 0 0% 0%; --border: 0 0% 100%;
   --card: 0 0% 75%; --card-border: 0 0% 40%;
   --primary: 220 100% 20%; --secondary: 0 0% 50%; --accent: 0 0% 0%;
 }
-[data-theme="aqua"] {
+[data-theme="aqua"], .dark[data-theme="aqua"] {
   --background: 200 100% 10%; --foreground: 190 100% 90%; --border: 190 100% 20%;
   --card: 200 100% 15%; --card-border: 190 100% 30%;
   --primary: 180 100% 50%; --secondary: 210 100% 60%; --accent: 160 100% 50%;
 }
-[data-theme="dracula"] {
+[data-theme="dracula"], .dark[data-theme="dracula"] {
   --background: 231 15% 18%; --foreground: 60 30% 96%; --border: 231 15% 25%;
   --card: 231 15% 22%; --card-border: 231 15% 30%;
   --primary: 326 100% 74%; --secondary: 191 100% 77%; --accent: 250 100% 77%;
 }
-[data-theme="grunge"] {
+[data-theme="grunge"], .dark[data-theme="grunge"] {
   --background: 30 10% 15%; --foreground: 40 20% 80%; --border: 30 10% 25%;
   --card: 30 10% 20%; --card-border: 30 10% 30%;
   --primary: 35 30% 50%; --secondary: 100 10% 40%; --accent: 20 40% 40%;
 }
-[data-theme="blockbuster"] {
+[data-theme="blockbuster"], .dark[data-theme="blockbuster"] {
   --background: 210 100% 15%; --foreground: 50 100% 50%; --border: 50 100% 30%;
   --card: 210 100% 20%; --card-border: 50 100% 40%;
   --primary: 50 100% 50%; --secondary: 210 100% 60%; --accent: 0 100% 50%;
 }
-[data-theme="y2k"] {
+[data-theme="y2k"], .dark[data-theme="y2k"] {
   --background: 180 100% 95%; --foreground: 240 100% 20%; --border: 180 100% 80%;
   --card: 0 0% 100%; --card-border: 180 100% 85%;
   --primary: 190 100% 50%; --secondary: 280 100% 70%; --accent: 150 100% 50%;
 }
-[data-theme="halo"] {
+[data-theme="halo"], .dark[data-theme="halo"] {
   --background: 120 20% 5%; --foreground: 120 40% 90%; --border: 120 40% 20%;
   --card: 120 20% 10%; --card-border: 120 40% 25%;
   --primary: 120 100% 50%; --secondary: 210 100% 50%; --accent: 60 100% 50%;

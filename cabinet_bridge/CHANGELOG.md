@@ -1,3 +1,8 @@
+## 1.1.10 – 2026-05-15
+
+- **Fix**: **UI Themes** — Updated CSS selectors to `.dark[data-theme="..."]` to ensure they have higher specificity and correctly override default dark mode variables.
+- **Improved**: **Theme Application** — Theme changes now apply instantly and reliably across the entire interface.
+
 ## 1.1.9 – 2026-05-15
 
 - **Fix**: **Emulator Bootstrap** — Resolved "bootstrap.js blocked" error by correctly passing global display settings (aspect ratio, shader) to the emulator loader script.
