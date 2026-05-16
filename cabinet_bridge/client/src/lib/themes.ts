@@ -17,6 +17,14 @@ export const THEMES = [
   "aqua",
   "y2k",
   "halo",
+  "snes",
+  "ps1",
+  "matrix",
+  "cherry-blossom",
+  "terminal",
+  "bloodmoon",
+  "deep-sea",
+  "golden-age",
 ] as const;
 
 export type AppTheme = (typeof THEMES)[number];

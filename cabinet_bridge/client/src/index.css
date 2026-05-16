@@ -225,6 +225,124 @@
   --primary: 120 100% 50%; --secondary: 210 100% 50%; --accent: 60 100% 50%;
 }
 
+/* ── NEW THEMES ──────────────────────────────────────────── */
+
+/* SNES — warm purple/grey hardware aesthetic */
+[data-theme="snes"], .dark[data-theme="snes"] {
+  --background: 265 12% 14%; --foreground: 265 8% 88%; --border: 265 12% 24%;
+  --card: 265 12% 18%; --card-border: 265 12% 28%;
+  --primary: 280 65% 62%; --secondary: 210 60% 58%; --accent: 40 90% 58%;
+  --sidebar: 265 12% 11%; --sidebar-primary: 280 65% 62%;
+  --muted: 265 10% 22%; --muted-foreground: 265 8% 55%;
+  --ring: 280 65% 62%;
+}
+
+/* PS1 — gunmetal grey with PlayStation grey-blue */
+[data-theme="ps1"], .dark[data-theme="ps1"] {
+  --background: 215 10% 10%; --foreground: 215 10% 88%; --border: 215 10% 20%;
+  --card: 215 10% 14%; --card-border: 215 10% 24%;
+  --primary: 197 65% 55%; --secondary: 345 80% 60%; --accent: 55 90% 55%;
+  --sidebar: 215 10% 8%; --sidebar-primary: 197 65% 55%;
+  --muted: 215 8% 18%; --muted-foreground: 215 8% 52%;
+  --ring: 197 65% 55%;
+}
+[data-theme="ps1"] .bg-card::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+}
+
+/* MATRIX — black on green phosphor */
+[data-theme="matrix"], .dark[data-theme="matrix"] {
+  --background: 120 100% 1%; --foreground: 120 100% 65%; --border: 120 100% 12%;
+  --card: 120 100% 3%; --card-border: 120 100% 18%;
+  --primary: 120 100% 50%; --secondary: 120 60% 35%; --accent: 120 100% 75%;
+  --sidebar: 120 100% 2%; --sidebar-primary: 120 100% 50%;
+  --muted: 120 50% 8%; --muted-foreground: 120 80% 40%;
+  --ring: 120 100% 50%;
+}
+[data-theme="matrix"] body {
+  font-family: 'Courier New', Courier, monospace !important;
+}
+[data-theme="matrix"] h1, [data-theme="matrix"] h2, [data-theme="matrix"] .text-primary {
+  text-shadow: 0 0 8px hsl(120 100% 50% / 0.7), 0 0 20px hsl(120 100% 50% / 0.3);
+}
+
+/* CHERRY BLOSSOM — soft pink sakura */
+[data-theme="cherry-blossom"], .dark[data-theme="cherry-blossom"] {
+  --background: 340 30% 8%; --foreground: 340 40% 92%; --border: 340 30% 18%;
+  --card: 340 25% 12%; --card-border: 340 30% 22%;
+  --primary: 340 80% 70%; --secondary: 290 50% 65%; --accent: 20 90% 65%;
+  --sidebar: 340 25% 7%; --sidebar-primary: 340 80% 70%;
+  --muted: 340 20% 16%; --muted-foreground: 340 20% 55%;
+  --ring: 340 80% 70%;
+}
+[data-theme="cherry-blossom"] h1, [data-theme="cherry-blossom"] h2, [data-theme="cherry-blossom"] .text-primary {
+  text-shadow: 0 0 12px hsl(340 80% 70% / 0.4);
+}
+
+/* TERMINAL — classic green-on-black CRT terminal */
+[data-theme="terminal"], .dark[data-theme="terminal"] {
+  --background: 0 0% 2%; --foreground: 140 100% 60%; --border: 140 100% 15%;
+  --card: 0 0% 4%; --card-border: 140 100% 20%;
+  --primary: 140 100% 55%; --secondary: 140 60% 35%; --accent: 0 0% 80%;
+  --sidebar: 0 0% 2%; --sidebar-primary: 140 100% 55%;
+  --muted: 0 0% 8%; --muted-foreground: 140 60% 38%;
+  --radius: 0px;
+  --ring: 140 100% 55%;
+}
+[data-theme="terminal"] body {
+  font-family: 'Courier New', Courier, monospace !important;
+}
+[data-theme="terminal"] * {
+  border-radius: 0 !important;
+}
+
+/* BLOOD MOON — deep red night sky */
+[data-theme="bloodmoon"], .dark[data-theme="bloodmoon"] {
+  --background: 0 30% 4%; --foreground: 0 20% 88%; --border: 0 40% 16%;
+  --card: 0 25% 7%; --card-border: 0 40% 20%;
+  --primary: 0 90% 52%; --secondary: 20 80% 48%; --accent: 50 100% 55%;
+  --sidebar: 0 30% 3%; --sidebar-primary: 0 90% 52%;
+  --muted: 0 20% 11%; --muted-foreground: 0 15% 50%;
+  --ring: 0 90% 52%;
+}
+[data-theme="bloodmoon"] h1, [data-theme="bloodmoon"] h2, [data-theme="bloodmoon"] .text-primary {
+  text-shadow: 0 0 10px hsl(0 90% 52% / 0.5);
+}
+
+/* DEEP SEA — dark ocean blues and bioluminescent cyan */
+[data-theme="deep-sea"], .dark[data-theme="deep-sea"] {
+  --background: 210 60% 5%; --foreground: 195 80% 88%; --border: 210 50% 14%;
+  --card: 210 55% 8%; --card-border: 210 50% 18%;
+  --primary: 190 100% 55%; --secondary: 210 80% 55%; --accent: 170 100% 60%;
+  --sidebar: 210 60% 4%; --sidebar-primary: 190 100% 55%;
+  --muted: 210 40% 12%; --muted-foreground: 195 40% 48%;
+  --ring: 190 100% 55%;
+}
+[data-theme="deep-sea"] h1, [data-theme="deep-sea"] h2, [data-theme="deep-sea"] .text-primary {
+  text-shadow: 0 0 12px hsl(190 100% 55% / 0.5);
+}
+[data-theme="deep-sea"] .bg-card::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0%, hsl(190 100% 55% / 0.04) 0%, transparent 70%);
+}
+
+/* GOLDEN AGE — warm sepia, like a vintage arcade marquee */
+[data-theme="golden-age"], .dark[data-theme="golden-age"] {
+  --background: 35 30% 7%; --foreground: 40 60% 88%; --border: 35 30% 18%;
+  --card: 35 25% 11%; --card-border: 35 30% 22%;
+  --primary: 42 100% 55%; --secondary: 20 80% 50%; --accent: 55 100% 60%;
+  --sidebar: 35 30% 5%; --sidebar-primary: 42 100% 55%;
+  --muted: 35 20% 15%; --muted-foreground: 40 20% 50%;
+  --ring: 42 100% 55%;
+}
+[data-theme="golden-age"] h1, [data-theme="golden-age"] h2, [data-theme="golden-age"] .text-primary {
+  text-shadow: 0 0 10px hsl(42 100% 55% / 0.4);
+}
+[data-theme="golden-age"] img {
+  filter: sepia(0.25) saturate(0.9);
+}
+
 /* ── Theme Specific Utility Overrides ── */
 [data-theme="win95"] .bg-card, [data-theme="win95"] .bg-sidebar, [data-theme="win95"] button {
   box-shadow: var(--win-bevel-out) !important;
