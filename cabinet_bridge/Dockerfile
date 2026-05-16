@@ -14,13 +14,16 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-# Install dependencies first (layer-cached until package files change)
+# Install dependencies
+# npm ci requires a perfectly-synced lockfile; use npm install instead
+# because bufferutil is an optional native dep whose resolved version
+# can differ across platforms/environments.
 COPY package.json package-lock.json ./
-RUN NODE_ENV=development npm ci --no-audit --no-fund --ignore-scripts
+RUN NODE_ENV=development npm install --no-audit --no-fund --ignore-scripts
 RUN npm rebuild better-sqlite3
 
 # Bust cache to force a full rebuild when source changes
-ARG CACHE_BUST=76
+ARG CACHE_BUST=77
 RUN echo "cache-bust=$CACHE_BUST"
 
 # Copy all source
