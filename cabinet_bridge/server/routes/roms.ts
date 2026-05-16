@@ -45,7 +45,7 @@ export function registerUploadRoute(app: Express) {
 
       await fs.mkdir(systemDir, { recursive: true });
 
-      // Stream the request body directly to disk
+      // Stream the request body directly to disk and calculate hash in one pass
       const hash = crypto.createHash("md5");
       let totalSize = 0;
 
@@ -60,9 +60,11 @@ export function registerUploadRoute(app: Express) {
               reject(new Error("File too large"));
               return;
             }
+            // Use the core crypto update method directly on the incoming chunk
             hash.update(chunk);
           });
 
+          // Pipe to disk
           req.pipe(writeStream);
 
           writeStream.on("finish", () => resolve());
@@ -70,8 +72,12 @@ export function registerUploadRoute(app: Express) {
           req.on("error", (err) => reject(err));
         });
       } catch (err: any) {
-        if (fsSync.existsSync(filePath)) await fs.unlink(filePath);
-        return res.status(err.message === "File too large" ? 413 : 500).json({ 
+        // Cleanup failed upload
+        if (fsSync.existsSync(filePath)) {
+           try { fsSync.unlinkSync(filePath); } catch {}
+        }
+        const status = err.message === "File too large" ? 413 : 500;
+        return res.status(status).json({ 
           message: err.message === "File too large" ? `File exceeds ${MAX_UPLOAD_MB}MB limit` : "Upload failed" 
         });
       }
@@ -89,12 +95,8 @@ export function registerUploadRoute(app: Express) {
 
       // Scrape metadata
       const settings = await storage.getIntegrationSettings();
-      const tgdbApiKey = settings.tgdbApiKey || "";
-      const ssUserId = settings.ssUserId || "";
-      const ssPassword = settings.ssPassword || "";
-      
-      const tgdbMeta = await fetchTheGamesDBMeta(system, cleanTitle, tgdbApiKey);
-      const ssMeta = tgdbMeta?.artUrl ? null : await fetchScreenScraperMeta(system, safeName, cleanTitle, ssUserId, ssPassword);
+      const tgdbMeta = await fetchTheGamesDBMeta(system, cleanTitle, settings.tgdbApiKey || "");
+      const ssMeta = tgdbMeta?.artUrl ? null : await fetchScreenScraperMeta(system, safeName, cleanTitle, settings.ssUserId || "", settings.ssPassword || "");
       const activeMeta = tgdbMeta ?? ssMeta;
       const libretroArt = activeMeta?.artUrl ? null : await findLibretroBoxArt(system, cleanTitle);
 

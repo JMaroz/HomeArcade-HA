@@ -48,7 +48,7 @@ declare module "http" {
 // These will ignore the streaming upload route registered above.
 app.use(
   express.json({
-    limit: "10mb", // Reasonable limit for JSON settings/metadata
+    limit: "10mb", 
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },

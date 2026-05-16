@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.4.8] — 2026-05-15
+
+### Major: Fix for White Screens & PS2 Upload Crashes
+
+- **Relative Asset Pathing** — Switched Vite build configuration to use `base: "./"`. This is the critical fix for the **white screen** issue, ensuring the browser correctly finds all JavaScript and CSS files when running behind the Home Assistant Ingress proxy.
+- **Streaming Upload Redesign** — Completely re-engineered the ROM upload route. It now intercepts the raw network stream **before** any other server processing, piping it directly to disk while calculating the MD5 hash in a single pass. This fixes the `RangeError: data is too long` and memory exhaustion crashes when uploading large PS2 ISOs.
+
+---
+
 ## [1.4.7] — 2026-05-15
 
 ### Fix: Production Environment Hardening
