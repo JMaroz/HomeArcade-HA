@@ -1,5 +1,4 @@
-ARG BUILD_FROM
-FROM ${BUILD_FROM}
+FROM ghcr.io/home-assistant/amd64-base:latest
 
 ENV LANG=C.UTF-8 \
     PORT=5000 \
@@ -13,10 +12,6 @@ RUN apk add --no-cache \
     node --version && npm --version
 
 WORKDIR /app
-
-# Bust cache here so the COPY + install layers are never reused from an old build
-ARG CACHE_BUST=78
-RUN echo "cache-bust=$CACHE_BUST"
 
 # Install dependencies
 # Use npm install (not ci) - bufferutil is an optional native dep whose
