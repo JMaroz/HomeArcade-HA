@@ -4,6 +4,17 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.2.3] — 2026-05-15
+
+### Polish: Landscape Mobile Optimization
+
+- **Compact Navigation** — Significantly reduced the height of the Mobile Top Bar and Bottom Nav in landscape orientation, reclaiming valuable vertical space for game browsing.
+- **Adaptive Bottom Nav** — Hidden text labels in the Bottom Nav during landscape mode, providing a cleaner, icon-only interface that maximizes the grid viewport.
+- **Hero Scaling** — Refined the height of "Continue Playing" hero sections on both Dashboard and Home pages when in landscape, ensuring the library grid is immediately visible.
+- **Gameplay Enhancements** — Verified full-screen landscape gameplay with floating virtual controls for an immersive mobile experience.
+
+---
+
 ## [1.2.2] — 2026-05-15
 
 ### Polish: Sidebar Configuration

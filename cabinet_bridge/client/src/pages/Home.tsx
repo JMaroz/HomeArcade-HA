@@ -1038,7 +1038,7 @@ function ContinueHero({ game, onOpen, profileId = 1 }: { game: Game; onOpen: (g:
   return (
     <section className="px-4 sm:px-8 pt-5">
       <div
-        className="relative rounded-xl overflow-hidden border border-card-border min-h-[168px] sm:min-h-[188px] transition-[height] duration-300 ease-in-out"
+        className="relative rounded-xl overflow-hidden border border-card-border min-h-[168px] landscape:min-h-[130px] sm:min-h-[188px] transition-[height] duration-300 ease-in-out"
         data-testid="hero-continue"
       >
         <div

@@ -552,11 +552,11 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* ... Continue Playing ... */}
+        {/* ── Continue Playing hero ── */}
         {continueGame && (
           <motion.div variants={itemVariants} className="md:col-span-12">
             <div
-              className="relative rounded-2xl overflow-hidden border border-card-border min-h-[200px] group"
+              className="relative rounded-2xl overflow-hidden border border-card-border min-h-[180px] landscape:min-h-[140px] group"
               data-testid="hero-continue"
             >
               <div
