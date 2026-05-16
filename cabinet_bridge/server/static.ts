@@ -6,9 +6,7 @@ import { log } from "./index";
 
 export function serveStatic(app: Express) {
   // distPath should be relative to the WORKDIR /app in the Docker container.
-  // The server bundled file is at /app/dist/index.cjs
-  // Static files are at /app/dist/public
-  const distPath = path.resolve(process.cwd(), "dist", "public");
+  const distPath = path.join(process.cwd(), "dist", "public");
   
   log(`Checking static assets at: ${distPath}`, "static");
   

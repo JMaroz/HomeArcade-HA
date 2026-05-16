@@ -2,7 +2,7 @@ import "dotenv/config";
 import compression from "compression";
 import express, { Response, NextFunction } from 'express';
 import type { Request } from 'express';
-import { registerRoutes } from "./routes/index";
+import { registerRoutes, registerUploadRoute } from "./routes/index";
 import { attachNetplayServer } from "./netplay";
 import { serveStatic } from "./static";
 import { createServer } from "node:http";
@@ -10,8 +10,27 @@ import { createServer } from "node:http";
 const app = express();
 const httpServer = createServer(app);
 
+// Home Assistant ingress (and a few similar reverse-proxy setups) sometimes
+// forward requests with the original ingress prefix still in the URL. Strip
+// any leading "/api/hassio_ingress/<token>" or "/api/ingress/<token>" so our
+// route table stays prefix-agnostic.
+// This MUST be the very first middleware.
+const INGRESS_PREFIX_RE = /^\/api\/(?:hassio_)?ingress\/[^/]+/;
+app.use((req, _res, next) => {
+  const match = req.url.match(INGRESS_PREFIX_RE);
+  if (match) {
+    const stripped = req.url.slice(match[0].length) || "/";
+    req.url = stripped.startsWith("/") ? stripped : `/${stripped}`;
+  }
+  next();
+});
+
+// Register streaming routes BEFORE any body-parsing middleware.
+// This ensures that multi-GB ROM uploads are piped directly to disk without
+// being buffered into RAM, preventing OOM crashes.
+registerUploadRoute(app);
+
 // Gzip all responses — ~70% bandwidth saving on JSON + static assets.
-// Skip SSE streams (scrape-all progress) since they need to flush incrementally.
 app.use(compression({
   filter: (req, res) => {
     if (req.path.endsWith("/scrape-all")) return false;
@@ -25,29 +44,17 @@ declare module "http" {
   }
 }
 
+// Body parsers for JSON and URL-encoded data. 
+// These will ignore the streaming upload route registered above.
 app.use(
   express.json({
+    limit: "10mb", // Reasonable limit for JSON settings/metadata
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
   }),
 );
-
-app.use(express.urlencoded({ extended: false }));
-
-// Home Assistant ingress (and a few similar reverse-proxy setups) sometimes
-// forward requests with the original ingress prefix still in the URL. Strip
-// any leading "/api/hassio_ingress/<token>" or "/api/ingress/<token>" so our
-// route table stays prefix-agnostic.
-const INGRESS_PREFIX_RE = /^\/api\/(?:hassio_)?ingress\/[^/]+/;
-app.use((req, _res, next) => {
-  const match = req.url.match(INGRESS_PREFIX_RE);
-  if (match) {
-    const stripped = req.url.slice(match[0].length) || "/";
-    req.url = stripped.startsWith("/") ? stripped : `/${stripped}`;
-  }
-  next();
-});
+app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -60,6 +67,7 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+// Global request logger
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -75,10 +83,9 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      if (capturedJsonResponse && res.statusCode < 400) {
+        // logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
       log(logLine);
     }
   });
@@ -90,12 +97,15 @@ app.use((req, res, next) => {
   try {
     log("Initializing server sequence...", "boot");
     
+    // Register the rest of the API routes
     await registerRoutes(httpServer, app);
-    log("Routes registered successfully", "boot");
+    log("API routes registered successfully", "boot");
     
+    // Attach WebSocket netplay relay
     attachNetplayServer(httpServer);
     log("Netplay server attached", "boot");
 
+    // Global Error Handler
     app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
@@ -109,9 +119,7 @@ app.use((req, res, next) => {
       return res.status(status).json({ message });
     });
 
-    // importantly only setup vite in development and after
-    // setting up all the other routes so the catch-all route
-    // doesn't interfere with the other routes
+    // Setup static file serving in production
     if (process.env.NODE_ENV === "production") {
       log("Production mode: setting up static server", "boot");
       serveStatic(app);
@@ -121,8 +129,6 @@ app.use((req, res, next) => {
       await setupVite(httpServer, app);
     }
 
-    // ALWAYS serve the app on the port specified in the environment variable PORT
-    // Other ports are firewalled. Default to 5000 if not specified.
     const port = parseInt(process.env.PORT || "5000", 10);
     httpServer.listen(
       {

@@ -17,18 +17,9 @@ import { insertUploadedRomSchema } from "@shared/schema";
 import { titleFromFileName, slugify } from "./utils";
 import { fetchTheGamesDBMeta, fetchScreenScraperMeta, findLibretroBoxArt } from "./scrape";
 
-export function registerRomRoutes(app: Express) {
-  const BIOS_ROOT = dataPath("bios");
-
-  app.get("/api/upload-limits", (_req, res) => {
-    res.json({
-      maxUploadMb: MAX_UPLOAD_MB,
-      maxUploadBytes: MAX_UPLOAD_BYTES,
-      allowedExtensions: ROM_EXTENSIONS,
-    });
-  });
-
-  // Streaming ROM upload handler to handle multi-GB files without OOM
+export function registerUploadRoute(app: Express) {
+  // Streaming ROM upload handler to handle multi-GB files without OOM.
+  // This must be registered BEFORE global body-parser middlewares to intercept the raw stream.
   app.post(
     "/api/roms/upload",
     async (req, res) => {
@@ -98,8 +89,12 @@ export function registerRomRoutes(app: Express) {
 
       // Scrape metadata
       const settings = await storage.getIntegrationSettings();
-      const tgdbMeta = await fetchTheGamesDBMeta(system, cleanTitle, settings.tgdbApiKey || "");
-      const ssMeta = tgdbMeta?.artUrl ? null : await fetchScreenScraperMeta(system, safeName, cleanTitle, settings.ssUserId || "", settings.ssPassword || "");
+      const tgdbApiKey = settings.tgdbApiKey || "";
+      const ssUserId = settings.ssUserId || "";
+      const ssPassword = settings.ssPassword || "";
+      
+      const tgdbMeta = await fetchTheGamesDBMeta(system, cleanTitle, tgdbApiKey);
+      const ssMeta = tgdbMeta?.artUrl ? null : await fetchScreenScraperMeta(system, safeName, cleanTitle, ssUserId, ssPassword);
       const activeMeta = tgdbMeta ?? ssMeta;
       const libretroArt = activeMeta?.artUrl ? null : await findLibretroBoxArt(system, cleanTitle);
 
@@ -139,6 +134,18 @@ export function registerRomRoutes(app: Express) {
       res.status(201).json(saved);
     },
   );
+}
+
+export function registerRomRoutes(app: Express) {
+  const BIOS_ROOT = dataPath("bios");
+
+  app.get("/api/upload-limits", (_req, res) => {
+    res.json({
+      maxUploadMb: MAX_UPLOAD_MB,
+      maxUploadBytes: MAX_UPLOAD_BYTES,
+      allowedExtensions: ROM_EXTENSIONS,
+    });
+  });
 
   app.get("/api/roms", async (_req, res) => {
     const roms = await storage.listUploadedRoms();

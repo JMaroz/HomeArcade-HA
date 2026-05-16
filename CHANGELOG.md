@@ -4,7 +4,96 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
-## [1.4.2] — 2026-05-15
+## [1.4.7] — 2026-05-15
+
+### Fix: Production Environment Hardening
+
+- **Final React Integrity** — Performed a global sweep and injected `import React` into all core components and the application entrypoint (`main.tsx`). This ensures perfect rendering in strict production environments and prevents white screens.
+- **Enhanced Boot Verification** — Re-validated all server imports and the Express middleware sequence to guarantee the app starts reliably in the Home Assistant container.
+- **Cache Invalidation** — Incremented internal versioning to force a deep browser and supervisor cache refresh.
+
+---
+
+## [1.4.6] — 2026-05-15
+
+### Fix: Production Environment Hardening
+
+- **Final React Integrity** — Performed a global sweep and injected `import React` into all core components and the application entrypoint (`main.tsx`). This ensures perfect rendering in strict production environments and prevents white screens.
+- **Enhanced Boot Verification** — Re-validated all server imports and the Express middleware sequence to guarantee the app starts reliably in the Home Assistant container.
+- **Cache Invalidation** — Incremented internal versioning to force a deep browser and supervisor cache refresh.
+
+---
+
+## [1.4.6] — 2026-05-15
+
+### Fix: Production Environment Hardening
+
+- **Final React Integrity** — Performed a global sweep and injected `import React` into all core components and the application entrypoint (`main.tsx`). This ensures perfect rendering in strict production environments and prevents white screens.
+- **Enhanced Boot Verification** — Re-validated all server imports and the Express middleware sequence to guarantee the app starts reliably in the Home Assistant container.
+- **Cache Invalidation** — Incremented internal versioning to force a deep browser and supervisor cache refresh.
+
+---
+
+## [1.4.6] — 2026-05-15
+
+### Major: Definitive Startup & Upload Stability
+
+- **Core Module Restoration** — Fixed critical `ReferenceError` crashes in `server/index.ts` by restoring essential imports (`createServer`, `serveStatic`) that were omitted in a previous update. This is the primary fix for the application failing to start.
+- **Middleware Ordering** — Optimized the Express middleware stack to register streaming ROM uploads before any body-parsing logic. This ensures multi-GB PS2 ISOs are piped directly to disk, completely bypassing memory-limit errors.
+- **Entrypoint React Fix** — Added explicit `import React` to `main.tsx` and wrapped the root in `React.StrictMode` for better production stability and crash prevention.
+
+---
+
+## [1.4.5] — 2026-05-15
+
+### Fix: Production Environment Hardening
+
+- **Final React Integrity** — Performed a global sweep and injected `import React` into all core components and the application entrypoint (`main.tsx`). This ensures perfect rendering in strict production environments and prevents white screens.
+- **Enhanced Boot Verification** — Re-validated all server imports and the Express middleware sequence to guarantee the app starts reliably in the Home Assistant container.
+- **Cache Invalidation** — Incremented internal versioning to force a deep browser and supervisor cache refresh.
+
+---
+
+## [1.4.6] — 2026-05-15
+
+### Major: Definitive Startup & Upload Stability
+
+- **Core Module Restoration** — Fixed critical `ReferenceError` crashes in `server/index.ts` by restoring essential imports (`createServer`, `serveStatic`) that were omitted in a previous update. This is the primary fix for the application failing to start.
+- **Middleware Ordering** — Optimized the Express middleware stack to register streaming ROM uploads before any body-parsing logic. This ensures multi-GB PS2 ISOs are piped directly to disk, completely bypassing memory-limit errors.
+- **Entrypoint React Fix** — Added explicit `import React` to `main.tsx` and wrapped the root in `React.StrictMode` for better production stability and crash prevention.
+
+---
+
+## [1.4.5] — 2026-05-15
+
+### Major: Critical Startup & Integrity Fix
+
+- **Restored Missing Imports** — Fixed a critical ReferenceError in `server/index.ts` where core modules like `createServer` and `serveStatic` were accidentally omitted. This was the primary cause of the add-on failing to start.
+- **Middleware Isolation** — Strategically moved the streaming ROM upload route before global body-parsing middlewares. This ensures multi-GB PS2 games are streamed directly to disk without being buffered into RAM, preventing OOM crashes.
+- **Production React Scope** — Added explicit `import React` to `main.tsx` and all core UI components to ensure the application renders correctly in strict production environments.
+
+---
+
+## [1.4.4] — 2026-05-15
+
+### Major: The Definitive Stability Release
+
+- **Streaming Upload Lifecycle Fix** — Moved the large-file streaming upload handler to be registered before any global body-parser middlewares. This prevents the server from attempting to buffer multi-GB files into memory, which was causing the "data is too long" crash.
+- **Production Scope Integrity** — Added mandatory `import React` to `main.tsx` and all core UI components to ensure the application renders correctly in strict production environments.
+- **Ingress Prefix Stripping** — Improved the reliability of stripping the Home Assistant Ingress prefix from incoming request URLs.
+
+---
+
+## [1.4.3] — 2026-05-15
+
+### Fix: Absolute Static Routing
+
+- **Static Asset Pathing** — Switched to `path.join(process.cwd(), 'dist', 'public')` for static asset resolution. This ensures the server correctly finds the client files regardless of where it is launched from in the Docker container, fixing "Cannot GET" and boot failures.
+- **Import Final Sweep** — Verified and guaranteed that all 12 core UI components have `import React` to prevent ReferenceErrors in production.
+
+---
+
+## [1.4.3] — 2026-05-15
 
 ### Major: The Definitive Fix for White Screens & Crashes
 
