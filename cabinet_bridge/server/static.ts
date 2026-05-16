@@ -2,26 +2,32 @@ import express from 'express';
 import type { Express } from 'express';
 import fs from "node:fs";
 import path from "node:path";
-import { log } from "./log";
+import { log } from "./index";
 
 export function serveStatic(app: Express) {
-  // Use process.cwd() instead of __dirname for ESM reliability
-  const distPath = path.join(process.cwd(), "dist", "public");
+  // distPath should be relative to the WORKDIR /app in the Docker container.
+  // The server bundled file is at /app/dist/index.cjs
+  // Static files are at /app/dist/public
+  const distPath = path.resolve(process.cwd(), "dist", "public");
   
-  log(`Serving static assets from: ${distPath}`, "static");
+  log(`Checking static assets at: ${distPath}`, "static");
   
   if (!fs.existsSync(distPath)) {
-    log(`CRITICAL: Static directory NOT FOUND at ${distPath}`, "static");
+    log(`ERROR: Build directory not found! Path: ${distPath}`, "static");
+    throw new Error(
+      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+    );
   }
 
-  app.use(express.static(distPath, {
-    maxAge: '1h',
-    index: false 
-  }));
+  log(`Serving static files from ${distPath}`, "static");
+  app.use(express.static(distPath));
 
-  // SPA fallback
-  app.get("*", (req, res, next) => {
-    if (req.url.startsWith("/api")) return next();
+  // fall through to index.html if the file doesn't exist
+  app.get("*", (req, res) => {
+    // Log non-api requests that fall through to index.html
+    if (!req.url.startsWith("/api")) {
+       // log(`Route fallback: ${req.url} -> index.html`, "static");
+    }
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

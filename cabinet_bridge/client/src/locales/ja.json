@@ -84,6 +84,7 @@
       "searchingScope": "全 {{total}} ゲーム中から検索中 — ",
       "results_one": "{{count}} 件の結果",
       "results_other": "{{count}} 件の結果",
+      "summary": "{{favorites}} お気に入り · 合計 {{uploaded}} タイトル",
       "clear": "クリア"
     },
     "actions": {
@@ -207,6 +208,7 @@
       "automation": "自動化",
       "controls": "コントロール",
       "library": "ライブラリ",
+      "health": "システムの状態",
       "services": "サービス",
       "kiosk": "キオスク",
       "help": "ヘルプ"

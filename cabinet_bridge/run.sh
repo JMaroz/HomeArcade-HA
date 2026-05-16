@@ -1,30 +1,21 @@
 #!/usr/bin/with-contenv bashio
 set -e
 
-bashio::log.info "Starting HomeArcade boot sequence..."
-
 cd /app
 
 export NODE_ENV=production
 export PORT=5000
 export CABINET_DATA_DIR="${CABINET_DATA_DIR:-/data}"
 
-# Use bashio to get the configuration
+# Pull the user-configurable upload ceiling out of the add-on options.
+# Falls back to a generous default so large archives upload without further tuning.
 if bashio::config.has_value 'max_upload_mb'; then
-    export CABINET_MAX_UPLOAD_MB=$(bashio::config 'max_upload_mb')
+  export CABINET_MAX_UPLOAD_MB="$(bashio::config 'max_upload_mb')"
+else
+  export CABINET_MAX_UPLOAD_MB=8192
 fi
 
-export CABINET_MAX_UPLOAD_MB="${CABINET_MAX_UPLOAD_MB:-8192}"
+mkdir -p "$CABINET_DATA_DIR"
 
-# Diagnostics
-bashio::log.info "Architecture: $(uname -m)"
-bashio::log.info "Node version: $(node --version)"
-bashio::log.info "Max upload: ${CABINET_MAX_UPLOAD_MB}MB"
-
-if [ ! -f "dist/index.cjs" ]; then
-    bashio::log.fatal "dist/index.cjs not found! The build failed to produce the server file."
-    exit 1
-fi
-
-bashio::log.info "Handing off to Node.js..."
+bashio::log.info "starting on port $PORT (data dir: $CABINET_DATA_DIR, max upload: ${CABINET_MAX_UPLOAD_MB}mb)"
 exec node dist/index.cjs

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { MobileTopBar } from "@/components/MobileNav";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,7 @@ import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { THEMES } from "@/lib/themes";
+import { BiosManager } from "@/components/BiosManager";
 
 export default function Settings() {
   const { config, setConfig, setEndpoint, resetConfig, saveStatus } = useIntegration();
@@ -104,7 +105,7 @@ export default function Settings() {
   return (
     <div className="flex h-full">
       <main className="flex-1 min-w-0 flex flex-col bg-background/30 overflow-y-auto overscroll-y-contain">
-        <MobileTopBar active="settings" />
+        <MobileTopBar />
 
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 space-y-8 pb-24 lg:pb-12">
           {/* Header */}
@@ -150,6 +151,9 @@ export default function Settings() {
               </TabsTrigger>
               <TabsTrigger value="library" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
                 <Database className="size-4" /> {t("settings.tabs.library")}
+              </TabsTrigger>
+              <TabsTrigger value="health" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+                <Activity className="size-4" /> {t("settings.tabs.health")}
               </TabsTrigger>
               <TabsTrigger value="services" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
                 <Wifi className="size-4" /> {t("settings.tabs.services")}
@@ -377,6 +381,15 @@ export default function Settings() {
               <ScannerStatusSection />
               <Separator className="bg-border/60" />
               <SmartFilterCollectionCreator />
+            </TabsContent>
+
+            <TabsContent value="health" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+               <Section
+                 title={t("settings.sections.health.title")}
+                 description={t("settings.sections.health.description")}
+               >
+                 <BiosManager />
+               </Section>
             </TabsContent>
 
             <TabsContent value="services" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">

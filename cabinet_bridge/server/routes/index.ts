@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import type { Server } from 'node:http';
-import { registerRomRoutes, registerUploadRoute } from "./roms";
+import { registerRomRoutes } from "./roms";
 import { registerProfileRoutes } from "./profiles";
 import { registerCollectionRoutes } from "./collections";
 import { registerCheatRoutes } from "./cheats";
@@ -13,8 +13,7 @@ import { registerImportRoutes } from "./import";
 import { registerScrapeRoutes } from "./scrape";
 import { registerRetroAchievementsRoutes } from "./retroachievements";
 import { registerKioskRoutes } from "./kiosk";
-
-export { registerUploadRoute };
+import { registerBiosRoutes } from "./bios";
 
 export async function registerRoutes(_httpServer: Server, app: Express) {
   registerRomRoutes(app);
@@ -30,4 +29,6 @@ export async function registerRoutes(_httpServer: Server, app: Express) {
   registerScrapeRoutes(app);
   registerRetroAchievementsRoutes(app);
   registerKioskRoutes(app);
+  registerBiosRoutes(app);
 }
+
