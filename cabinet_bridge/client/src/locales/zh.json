@@ -84,6 +84,7 @@
       "searchingScope": "正在搜索所有 {{total}} 个游戏 — ",
       "results_one": "{{count}} 个结果",
       "results_other": "{{count}} 个结果",
+      "summary": "{{favorites}} 收藏 · 共 {{uploaded}} 个标题",
       "clear": "清除"
     },
     "actions": {

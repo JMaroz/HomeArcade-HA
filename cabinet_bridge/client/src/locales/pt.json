@@ -84,6 +84,7 @@
       "searchingScope": "Pesquisando em todos os {{total}} jogos — ",
       "results_one": "{{count}} resultado",
       "results_other": "{{count}} resultados",
+      "summary": "{{favorites}} favoritos · {{uploaded}} títulos no total",
       "clear": "Limpar"
     },
     "actions": {

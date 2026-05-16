@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.2.4] — 2026-05-15
+
+### Feature: Large ROM Support & UI Fixes
+
+- **Increased Upload Limit** — Boosted the maximum ROM upload size from 2GB to **8GB (8192 MB)** to support large PlayStation 2 ISOs and multi-disc sets.
+- **Translation Restore** — Fixed the missing `home.status.summary` translation key across all 7 languages, ensuring the library footer correctly displays your total game and favorite counts.
+
+---
+
 ## [1.2.3] — 2026-05-15
 
 ### Polish: Landscape Mobile Optimization
