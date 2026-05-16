@@ -8,24 +8,18 @@ import {
 import { renderEmulatorPage, renderEmulatorBootstrap, renderPlayerError } from "./player";
 import path from "node:path";
 import fs from "node:fs/promises";
+import fsSync from "node:fs";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { insertUploadedRomSchema } from "@shared/schema";
-import { extractFirstRomFromZip, titleFromFileName, slugify } from "./utils";
+import { titleFromFileName, slugify } from "./utils";
 import { fetchTheGamesDBMeta, fetchScreenScraperMeta, findLibretroBoxArt } from "./scrape";
 
-export function registerRomRoutes(app: Express) {
-  app.get("/api/upload-limits", (_req, res) => {
-    res.json({
-      maxUploadMb: MAX_UPLOAD_MB,
-      maxUploadBytes: MAX_UPLOAD_BYTES,
-      allowedExtensions: ROM_EXTENSIONS,
-    });
-  });
-
+export function registerUploadRoute(app: Express) {
+  // Streaming ROM upload handler to handle multi-GB files without OOM.
+  // Intercepts the raw stream before any body-parsing middleware.
   app.post(
     "/api/roms/upload",
-    express.raw({ type: "*/*", limit: MAX_UPLOAD_BYTES }),
     async (req, res) => {
       const system = String(req.query.system ?? "");
       const favorite = req.query.favorite !== "0";
@@ -35,59 +29,60 @@ export function registerRomRoutes(app: Express) {
         return res.status(400).json({ message: "Choose a supported console before uploading." });
       }
 
-      let body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
-      if (body.length === 0) {
-        return res.status(400).json({ message: "Upload a ROM file before submitting." });
-      }
-
       let originalName = decodeURIComponent(
         String(req.header("x-rom-filename") ?? "uploaded.rom"),
       );
 
-      // Auto-extract ZIPs — find the first matching ROM inside
-      const rawExt = path.extname(originalName).toLowerCase();
-      if (rawExt === ".zip" && body.readUInt32LE(0) === 0x04034b50) {
-        const extracted = await extractFirstRomFromZip(body, allowedExtensions);
-        if (!extracted) {
-          return res.status(400).json({
-            message: `The ZIP archive doesn't contain any supported ${system.toUpperCase()} ROM file. Allowed extensions: ${allowedExtensions.join(", ")}`,
-          });
-        }
-        body = extracted.buffer;
-        originalName = extracted.fileName;
-      }
-
-      const extension = path.extname(originalName).toLowerCase();
-      if (!allowedExtensions.includes(extension)) {
-        return res.status(400).json({
-          message: `.${extension.replace(".", "") || "rom"} files are not configured for ${system.toUpperCase()}. Allowed: ${allowedExtensions.join(", ")}`,
-        });
-      }
-
-      const rawTitle = titleFromFileName(originalName);
-
-      // Detect multi-disc indicators like "(Disc 1)", "[Disk 2]", "CD 3", etc.
-      const discMatch = rawTitle.match(
-        /\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i,
-      );
-      const discNumber = discMatch ? parseInt(discMatch[1] ?? discMatch[2], 10) : null;
-      // Strip the disc tag from the display title
-      const title = discMatch ? rawTitle.replace(discMatch[0], "").trim() : rawTitle;
-      // disc_group is "system/base-title-slug" so all discs share the same key
-      const discGroup = discMatch ? `${system}/${slugify(title)}` : null;
-
-      const baseSlug = slugify(rawTitle);
+      const baseSlug = slugify(titleFromFileName(originalName));
       const uniqueSuffix = Date.now().toString(36);
       const slug = `${system}_${baseSlug}_${uniqueSuffix}`;
+      const extension = path.extname(originalName).toLowerCase();
       const safeName = `${slug}${extension}`;
       const systemDir = path.join(ROM_ROOT, system);
       const filePath = path.join(systemDir, safeName);
 
       await fs.mkdir(systemDir, { recursive: true });
-      await fs.writeFile(filePath, body);
-      const romHash = crypto.createHash("md5").update(body).digest("hex");
 
-      // Try ScreenScraper first (rich metadata + art), fall back to Libretro art only
+      const hash = crypto.createHash("md5");
+      let totalSize = 0;
+
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const writeStream = fsSync.createWriteStream(filePath);
+          
+          req.on("data", (chunk) => {
+            totalSize += chunk.length;
+            if (totalSize > MAX_UPLOAD_BYTES) {
+              writeStream.destroy();
+              reject(new Error("File too large"));
+              return;
+            }
+            hash.update(chunk);
+          });
+
+          req.pipe(writeStream);
+          writeStream.on("finish", () => resolve());
+          writeStream.on("error", (err) => reject(err));
+          req.on("error", (err) => reject(err));
+        });
+      } catch (err: any) {
+        if (fsSync.existsSync(filePath)) try { fsSync.unlinkSync(filePath); } catch {}
+        const status = err.message === "File too large" ? 413 : 500;
+        return res.status(status).json({ 
+          message: err.message === "File too large" ? `File exceeds ${MAX_UPLOAD_MB}MB limit` : "Upload failed" 
+        });
+      }
+
+      const romHash = hash.digest("hex");
+      const rawTitle = titleFromFileName(originalName);
+
+      // Detect multi-disc
+      const discMatch = rawTitle.match(/\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i);
+      const discNumber = discMatch ? parseInt(discMatch[1] ?? discMatch[2], 10) : null;
+      const title = discMatch ? rawTitle.replace(discMatch[0], "").trim() : rawTitle;
+      const discGroup = discMatch ? `${system}/${slugify(title)}` : null;
+
+      // Scrape
       const settings = await storage.getIntegrationSettings();
       const tgdbMeta = await fetchTheGamesDBMeta(system, title, settings.tgdbApiKey || "");
       const ssMeta = tgdbMeta?.artUrl ? null : await fetchScreenScraperMeta(system, safeName, title, settings.ssUserId || "", settings.ssPassword || "");
@@ -95,14 +90,9 @@ export function registerRomRoutes(app: Express) {
       const libretroArt = activeMeta?.artUrl ? null : await findLibretroBoxArt(system, title);
 
       const rom = insertUploadedRomSchema.parse({
-        title,
-        system,
-        slug,
-        originalName,
-        fileName: safeName,
-        filePath,
-        size: body.length,
-        mimeType: req.header("content-type") ?? "application/octet-stream",
+        title, system, slug,
+        originalName, fileName: safeName, filePath,
+        size: totalSize, mimeType: req.header("content-type") ?? "application/octet-stream",
         artUrl: activeMeta?.artUrl ?? libretroArt?.url ?? null,
         scrapeStatus: activeMeta?.scrapeStatus ?? (libretroArt?.url ? "matched" : "not_found"),
         scrapeMessage: activeMeta?.scrapeMessage ?? libretroArt?.message ?? "",
@@ -115,21 +105,24 @@ export function registerRomRoutes(app: Express) {
         communityScore: (activeMeta as any)?.communityScore ?? null,
         wheelArtUrl: (activeMeta as any)?.wheelArtUrl ?? null,
         videoUrl: (activeMeta as any)?.videoUrl ?? null,
-        favorite,
-        rating: 0,
-        lastPlayed: 0,
-        playCount: 0,
-        discNumber,
-        discGroup,
-        romHash,
-        minutesPlayed: 0,
-        createdAt: Date.now(),
+        favorite, rating: 0, lastPlayed: 0, playCount: 0,
+        discNumber, discGroup, romHash, minutesPlayed: 0, createdAt: Date.now(),
       });
 
       const saved = await storage.createUploadedRom(rom);
       res.status(201).json(saved);
     },
   );
+}
+
+export function registerRomRoutes(app: Express) {
+  app.get("/api/upload-limits", (_req, res) => {
+    res.json({
+      maxUploadMb: MAX_UPLOAD_MB,
+      maxUploadBytes: MAX_UPLOAD_BYTES,
+      allowedExtensions: ROM_EXTENSIONS,
+    });
+  });
 
   app.get("/api/roms", async (_req, res) => {
     const roms = await storage.listUploadedRoms();
@@ -139,9 +132,7 @@ export function registerRomRoutes(app: Express) {
   app.get("/api/roms/:id", async (req, res) => {
     const id = Number(req.params.id);
     const rom = await storage.getUploadedRom(id);
-    if (!rom) {
-      return res.status(404).json({ message: "Uploaded ROM not found." });
-    }
+    if (!rom) return res.status(404).json({ message: "Uploaded ROM not found." });
     res.json(rom);
   });
 
@@ -156,9 +147,7 @@ export function registerRomRoutes(app: Express) {
         headers: { "User-Agent": "CabinetBridge/0.1" },
         signal: AbortSignal.timeout(10000),
       });
-      if (!upstream.ok || !upstream.body) {
-        return res.status(502).json({ message: "Failed to fetch video." });
-      }
+      if (!upstream.ok || !upstream.body) return res.status(502).json({ message: "Failed to fetch video." });
       res.setHeader("Content-Type", upstream.headers.get("Content-Type") ?? "video/mp4");
       const cl = upstream.headers.get("Content-Length");
       if (cl) res.setHeader("Content-Length", cl);
@@ -170,41 +159,13 @@ export function registerRomRoutes(app: Express) {
     }
   });
 
-  app.get("/api/emulatorjs/*path", async (req, res) => {
-    const filePath = Array.isArray(req.params.path) ? (req.params.path as string[]).join("/") : ((req.params as any).path ?? "");
-    if (!filePath || filePath.includes("..")) {
-      return res.status(400).send("Invalid path");
-    }
-    const cdnUrl = `https://cdn.emulatorjs.org/stable/data/${filePath}`;
-    try {
-      const upstream = await fetch(cdnUrl, {
-        headers: { "User-Agent": "CabinetBridge/0.1" },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!upstream.ok || !upstream.body) {
-        return res.status(upstream.status).send("CDN error");
-      }
-      const ct = upstream.headers.get("Content-Type") ?? "application/octet-stream";
-      res.setHeader("Content-Type", ct);
-      res.setHeader("Cache-Control", "public, max-age=604800");
-      const { Readable } = await import("stream");
-      Readable.fromWeb(upstream.body as any).pipe(res);
-    } catch {
-      res.status(502).send("EmulatorJS CDN unreachable");
-    }
-  });
-
   app.get("/api/roms/:id/file", async (req, res) => {
     const id = Number(req.params.id);
     const rom = await storage.getUploadedRom(id);
-    if (!rom) {
-      return res.status(404).json({ message: "Uploaded ROM not found." });
-    }
+    if (!rom) return res.status(404).json({ message: "Uploaded ROM not found." });
     const safeRoot = `${ROM_ROOT}${path.sep}`;
     const resolved = path.resolve(rom.filePath);
-    if (!resolved.startsWith(safeRoot)) {
-      return res.status(403).json({ message: "ROM path is outside the storage directory." });
-    }
+    if (!resolved.startsWith(safeRoot)) return res.status(403).json({ message: "Access denied." });
     res.setHeader("Content-Type", rom.mimeType || "application/octet-stream");
     res.setHeader("Content-Disposition", `inline; filename="${rom.originalName.replace(/"/g, "")}"`);
     res.sendFile(resolved);
@@ -255,6 +216,7 @@ export function registerRomRoutes(app: Express) {
     const profileParam = req.query.profile ? String(req.query.profile) : null;
     const userId = profileParam ? `profile_${profileParam}` : haUserId;
     res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+
     res.send(renderEmulatorBootstrap({
       core, title: rom.title, gameId: `${rom.system}-${rom.slug}`, romId: rom.id, discs, romHash: rom.romHash ?? null,
       raUsername: bootstrapSettings.raUsername ?? "", raToken: bootstrapSettings.raToken ?? "",
@@ -290,41 +252,35 @@ export function registerRomRoutes(app: Express) {
   app.patch("/api/roms/:id/rating", async (req, res) => {
     const id = Number(req.params.id);
     const parsed = z.object({ rating: z.number().int().min(0).max(5) }).safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: "Rating must be a whole number from 0 to 5." });
+    if (!parsed.success) return res.status(400).json({ message: "Invalid rating." });
     const updated = await storage.updateUploadedRomRating(id, parsed.data.rating);
-    if (!updated) return res.status(404).json({ message: "Uploaded ROM not found." });
+    if (!updated) return res.status(404).json({ message: "ROM not found." });
     res.json(updated);
   });
 
   app.patch("/api/roms/:id/favorite", async (req, res) => {
     const id = Number(req.params.id);
     const parsed = z.object({ favorite: z.boolean() }).safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: "Favorite must be true or false." });
+    if (!parsed.success) return res.status(400).json({ message: "Invalid favorite." });
     const updated = await storage.updateUploadedRomFavorite(id, parsed.data.favorite);
-    if (!updated) return res.status(404).json({ message: "Uploaded ROM not found." });
+    if (!updated) return res.status(404).json({ message: "ROM not found." });
     res.json(updated);
   });
 
   app.patch("/api/roms/:id/play-status", async (req, res) => {
     const id = Number(req.params.id);
-    const VALID = ["unset", "backlog", "playing", "completed", "dropped"];
     const parsed = z.object({ playStatus: z.string() }).safeParse(req.body);
-    if (!parsed.success || !VALID.includes(parsed.data.playStatus)) return res.status(400).json({ message: "Invalid play status." });
+    if (!parsed.success) return res.status(400).json({ message: "Invalid status." });
     const updated = await storage.updateUploadedRomPlayStatus(id, parsed.data.playStatus);
-    if (!updated) return res.status(404).json({ message: "Uploaded ROM not found." });
+    if (!updated) return res.status(404).json({ message: "ROM not found." });
     res.json(updated);
   });
 
   app.delete("/api/roms/:id", async (req, res) => {
     const id = Number(req.params.id);
     const deleted = await storage.deleteUploadedRom(id);
-    if (!deleted) return res.status(404).json({ message: "Uploaded ROM not found." });
-    const safeRoot = `${ROM_ROOT}${path.sep}`;
-    const resolved = path.resolve(deleted.filePath);
-    let fileRemoved = false;
-    if (resolved.startsWith(safeRoot)) {
-      try { await fs.unlink(resolved); fileRemoved = true; } catch { fileRemoved = false; }
-    }
-    res.json({ deleted: true, id: deleted.id, fileRemoved });
+    if (!deleted) return res.status(404).json({ message: "ROM not found." });
+    try { await fs.unlink(deleted.filePath); } catch {}
+    res.json({ deleted: true, id: deleted.id });
   });
 }

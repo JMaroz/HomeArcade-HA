@@ -2,19 +2,26 @@ import express from 'express';
 import type { Express } from 'express';
 import fs from "node:fs";
 import path from "node:path";
+import { log } from "./log";
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(__dirname, "public");
+  // Use process.cwd() instead of __dirname for ESM reliability
+  const distPath = path.join(process.cwd(), "dist", "public");
+  
+  log(`Serving static assets from: ${distPath}`, "static");
+  
   if (!fs.existsSync(distPath)) {
-    throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
-    );
+    log(`CRITICAL: Static directory NOT FOUND at ${distPath}`, "static");
   }
 
-  app.use(express.static(distPath));
+  app.use(express.static(distPath, {
+    maxAge: '1h',
+    index: false 
+  }));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("/{*path}", (_req, res) => {
+  // SPA fallback
+  app.get("*", (req, res, next) => {
+    if (req.url.startsWith("/api")) return next();
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
