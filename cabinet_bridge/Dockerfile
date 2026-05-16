@@ -14,17 +14,16 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
+# Bust cache here so the COPY + install layers are never reused from an old build
+ARG CACHE_BUST=78
+RUN echo "cache-bust=$CACHE_BUST"
+
 # Install dependencies
-# npm ci requires a perfectly-synced lockfile; use npm install instead
-# because bufferutil is an optional native dep whose resolved version
-# can differ across platforms/environments.
+# Use npm install (not ci) - bufferutil is an optional native dep whose
+# resolved version can differ across platforms, causing npm ci to fail.
 COPY package.json package-lock.json ./
 RUN NODE_ENV=development npm install --no-audit --no-fund --ignore-scripts
 RUN npm rebuild better-sqlite3
-
-# Bust cache to force a full rebuild when source changes
-ARG CACHE_BUST=77
-RUN echo "cache-bust=$CACHE_BUST"
 
 # Copy all source
 COPY tsconfig.json vite.config.ts tailwind.config.ts postcss.config.js components.json drizzle.config.ts ./
