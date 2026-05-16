@@ -16,10 +16,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN NODE_ENV=development npm install --no-audit --no-fund
 
-ARG CACHE_BUST=68
+ARG CACHE_BUST=69
 RUN echo "cache-bust=$CACHE_BUST"
 
-# Verify native module compiled OK at build time
 RUN node -e "require('better-sqlite3'); console.log('better-sqlite3 OK');"
 
 COPY tsconfig.json vite.config.ts tailwind.config.ts postcss.config.js components.json drizzle.config.ts ./
@@ -31,15 +30,15 @@ COPY script ./script
 RUN NODE_ENV=production npm run build
 RUN npm prune --omit=dev
 
-# Verify build outputs exist
 RUN test -f dist/index.cjs && echo "dist/index.cjs OK" || (echo "ERROR: dist/index.cjs missing!" && exit 1)
 RUN test -d dist/public  && echo "dist/public OK"   || (echo "ERROR: dist/public missing!"   && exit 1)
-
-# Final runtime check: does the full bundle load without crashing?
 RUN node --check dist/index.cjs && echo "bundle syntax OK"
 
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh
+
+# Verify the shebang will actually work at runtime
+RUN head -1 /run.sh
 
 EXPOSE 5000
 CMD ["/run.sh"]
