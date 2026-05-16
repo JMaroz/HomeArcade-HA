@@ -5,7 +5,6 @@ ENV LANG=C.UTF-8 \
     PORT=5000 \
     NODE_ENV=production
 
-# Install Node 22+, build tools for native modules, and SQLite runtime libs.
 RUN apk add --no-cache \
       --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main \
       nodejs npm && \
@@ -15,15 +14,12 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-
-# Install all deps WITH scripts enabled so better-sqlite3 compiles its native
-# binary in a single pass. No separate rebuild step needed.
 RUN NODE_ENV=development npm install --no-audit --no-fund
 
-ARG CACHE_BUST=65
+ARG CACHE_BUST=66
 RUN echo "cache-bust=$CACHE_BUST"
 
-# Hard-verify the native module actually loaded before wasting time on the build.
+# Verify better-sqlite3 native module compiled successfully
 RUN node -e "require('better-sqlite3'); console.log('better-sqlite3 OK');"
 
 COPY tsconfig.json vite.config.ts tailwind.config.ts postcss.config.js components.json drizzle.config.ts ./
@@ -34,6 +30,10 @@ COPY script ./script
 
 RUN NODE_ENV=production npm run build
 RUN npm prune --omit=dev
+
+# Verify the built output exists
+RUN test -f dist/index.cjs && echo "dist/index.cjs OK" || (echo "ERROR: dist/index.cjs missing!" && exit 1)
+RUN test -d dist/public && echo "dist/public OK" || (echo "ERROR: dist/public missing!" && exit 1)
 
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh
