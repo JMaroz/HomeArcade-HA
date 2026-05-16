@@ -851,19 +851,18 @@ export default function Dashboard() {
             </div>
           </motion.div>
         </motion.div>
-      </main>
 
-      <GameDetailDialog
-        game={selectedGame}
-        onClose={closeGame}
-        onToggleFav={handleToggleFav}
-        onRate={handleRate}
-        collections={collections}
-        onCreateCollection={handleCreateCollection}
-        onToggleCollection={handleToggleCollection}
-        onSetStatus={handleSetStatus}
-      />
-      <WelcomeDialog hasRoms={roms.length > 0} />
+        <GameDetailDialog
+          game={selectedGame}
+          onClose={closeGame}
+          onToggleFav={handleToggleFav}
+          onRate={handleRate}
+          collections={collections}
+          onCreateCollection={handleCreateCollection}
+          onToggleCollection={handleToggleCollection}
+          onSetStatus={handleSetStatus}
+        />
+        <WelcomeDialog hasRoms={roms.length > 0} />
     </div>
   );
 }

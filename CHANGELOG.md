@@ -4,16 +4,6 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
-## [1.6.0] — 2026-05-15
-
-### Major: Rollback to Stable Foundation
-
-- **Complete Reversion** — Restored the entire application to the known-stable state of **v1.2.0** to resolve persistent boot failures on AMD64 hardware.
-- **Classic Interface** — Re-established the original dashboard and library layout while maintaining the professional Shadcn UI Sidebar.
-- **Infrastructure Reset** — Removed all experimental streaming, Ingress prefixing, and complex database initialization logic that contributed to environmental instability.
-
----
-
 ## [1.2.0] — 2026-05-15
 
 ### Major: Professional Shadcn Navigation
