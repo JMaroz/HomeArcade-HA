@@ -356,11 +356,14 @@ export function registerRomRoutes(app: Express) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     // Short cache: the HTML shell rarely changes but we don't want stale BIOS errors
     res.setHeader("Cache-Control", "private, max-age=60");
+    // Allow scripts, WASM, and blobs inside HA Ingress iframe which may inject restrictive CSP
+    res.setHeader("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' blob: data: https:; img-src 'self' blob: data: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline';");
     const returnTo = typeof req.query.return === "string" ? req.query.return : "";
     res.send(renderEmulatorPage({ title: rom.title, returnTo, romHash: rom.romHash ?? null }));
   });
 
   app.get("/api/roms/:id/bootstrap.js", async (req, res) => {
+    try {
     const id = Number(req.params.id);
     const rom = await storage.getUploadedRom(id);
     if (!rom) {
@@ -418,20 +421,20 @@ export function registerRomRoutes(app: Express) {
         const pId = profileParam ? Number(profileParam) : 1;
         const merged: Record<string, Record<number, string>> = { ...global };
         const profileBindings = await storage.getProfileControlBindings(pId, core);
-        if (Object.keys(profileBindings).length > 0) merged[core] = { ...(global[core] ?? {}), ...profileBindings };
+        if (profileBindings && Object.keys(profileBindings).length > 0) merged[core] = { ...(global[core] ?? {}), ...profileBindings };
         return merged;
       })(),
       gamepadBindings: await (async () => {
         const pId = profileParam ? Number(profileParam) : 1;
-        return await storage.getGamepadBindings(pId, "default");
+        return (await storage.getGamepadBindings(pId, "default")) || {};
       })(),
       controlDefaultsP2: await (async () => {
         const pId = profileParam ? Number(profileParam) : 1;
-        return await storage.getProfileControlBindings(pId, `${core}_p2`);
+        return (await storage.getProfileControlBindings(pId, `${core}_p2`)) || {};
       })(),
       gamepadBindingsP2: await (async () => {
         const pId = profileParam ? Number(profileParam) : 1;
-        return await storage.getGamepadBindings(pId, "default_p2");
+        return (await storage.getGamepadBindings(pId, "default_p2")) || {};
       })(),
       gamepadRumble: bootstrapSettings.gamepadRumble ?? true,
       systemDisplay: (bootstrapSettings.systemDisplay ?? {}) as Record<string, any>,
@@ -441,6 +444,11 @@ export function registerRomRoutes(app: Express) {
       cheats: await storage.listCheats(rom.id, profileParam ? Number(profileParam) : 1).then((cs) => cs.filter((c) => c.enabled)),
       biosUrl,
     }));
+    } catch (err: any) {
+      console.error("[HomeArcade] bootstrap.js generation error:", err);
+      res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+      res.status(500).send(`cabinetFailLaunchProgress(${JSON.stringify("Server error generating bootstrap: " + (err?.message || "unknown"))});`);
+    }
   });
 
   app.patch("/api/roms/:id/rating", async (req, res) => {
