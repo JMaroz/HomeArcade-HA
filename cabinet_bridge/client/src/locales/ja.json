@@ -216,7 +216,7 @@
     "sections": {
       "connection": {
         "title": "Home Assistant 接続",
-        "description": "Cabinet Bridge が Home Assistant インスタンスと通信する方法を設定します。アドオンとして実行している場合は、内部 URL を使用してください。"
+        "description": "HomeArcade が Home Assistant インスタンスと通信する方法を設定します。アドオンとして実行している場合は、内部 URL を使用してください。"
       },
       "display": {
         "title": "グローバル設定",
@@ -277,7 +277,7 @@
       },
       "help": {
         "title": "配線ガイド",
-        "description": "Home Assistant を使用して、Cabinet Bridge を物理ハードウェアに接続するための手順に従ってください。"
+        "description": "Home Assistant を使用して、HomeArcade を物理ハードウェアに接続するための手順に従ってください。"
       }
     },
     "fields": {

@@ -152,7 +152,7 @@ export default function Settings() {
               >
                 <ul className="space-y-6">
                   <Step n={1} title="Add as Sidebar Item (Optional)">
-                    Add this to your `configuration.yaml` to see Cabinet Bridge in the HA sidebar:
+                    Add this to your `configuration.yaml` to see HomeArcade in the HA sidebar:
                     <Code>{`panel_iframe:\n  cabinet:\n    title: "Cabinet"\n    icon: mdi:gamepad-variant\n    url: "\${window.location.origin}\${window.location.pathname}"`}</Code>
                   </Step>
                   <Step n={2} title="Configure PC Sensors">

@@ -216,7 +216,7 @@
     "sections": {
       "connection": {
         "title": "Home Assistant 连接",
-        "description": "配置 Cabinet Bridge 如何与你的 Home Assistant 实例通信。如果作为加载项运行，请使用内部 URL。"
+        "description": "配置 HomeArcade 如何与你的 Home Assistant 实例通信。如果作为加载项运行，请使用内部 URL。"
       },
       "display": {
         "title": "全局偏好设置",
@@ -277,7 +277,7 @@
       },
       "help": {
         "title": "接线指南",
-        "description": "按照以下步骤使用 Home Assistant 将 Cabinet Bridge 连接到你的物理硬件。"
+        "description": "按照以下步骤使用 Home Assistant 将 HomeArcade 连接到你的物理硬件。"
       }
     },
     "fields": {

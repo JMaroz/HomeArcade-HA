@@ -88,7 +88,7 @@ export function renderEmulatorPage({ title, returnTo, romHash }: { title: string
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${safeTitle} · Cabinet Bridge</title>
+    <title>${safeTitle} · HomeArcade</title>
     <style>
       html, body {
         width: 100%;
@@ -1232,7 +1232,7 @@ export function renderEmulatorPage({ title, returnTo, romHash }: { title: string
     <div id="game">
       <div class="loading">
         <div>Loading ${safeTitle}</div>
-        <div class="hint">If this message stays visible, the preview frame blocked the emulator loader. Use the standalone player button above, or run Cabinet Bridge locally in Home Assistant.</div>
+        <div class="hint">If this message stays visible, the preview frame blocked the emulator loader. Use the standalone player button above, or run HomeArcade locally in Home Assistant.</div>
       </div>
     </div>
     <div class="cabinet-launch-overlay" id="cabinet-launch-overlay" role="status" aria-live="polite" data-testid="overlay-launch-progress">

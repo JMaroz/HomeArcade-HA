@@ -216,7 +216,7 @@
     "sections": {
       "connection": {
         "title": "Home Assistant Verbindung",
-        "description": "Konfiguriere, wie Cabinet Bridge mit deiner Home Assistant Instanz kommuniziert. Verwende die interne URL, wenn dies als Add-on läuft."
+        "description": "Konfiguriere, wie HomeArcade mit deiner Home Assistant Instanz kommuniziert. Verwende die interne URL, wenn dies als Add-on läuft."
       },
       "display": {
         "title": "Globale Einstellungen",
@@ -281,7 +281,7 @@
       },
       "help": {
         "title": "Verkabelungsanleitung",
-        "description": "Folge diesen Schritten, um Cabinet Bridge über Home Assistant mit deiner physischen Hardware zu verbinden."
+        "description": "Folge diesen Schritten, um HomeArcade über Home Assistant mit deiner physischen Hardware zu verbinden."
       }
     },
     "fields": {

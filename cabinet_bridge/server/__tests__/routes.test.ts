@@ -1,5 +1,5 @@
 /**
- * Cabinet Bridge — integration tests for the Express API routes.
+ * HomeArcade — integration tests for the Express API routes.
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";

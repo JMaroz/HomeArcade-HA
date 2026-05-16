@@ -216,7 +216,7 @@
     "sections": {
       "connection": {
         "title": "Connexion Home Assistant",
-        "description": "Configurez la façon dont Cabinet Bridge communique avec votre instance Home Assistant. Utilisez l'URL interne si cela s'exécute en tant qu'add-on."
+        "description": "Configurez la façon dont HomeArcade communique avec votre instance Home Assistant. Utilisez l'URL interne si cela s'exécute en tant qu'add-on."
       },
       "display": {
         "title": "Préférences globales",
@@ -281,7 +281,7 @@
       },
       "help": {
         "title": "Guide de câblage",
-        "description": "Suivez ces étapes pour connecter Cabinet Bridge à votre matériel physique en utilisant Home Assistant."
+        "description": "Suivez ces étapes pour connecter HomeArcade à votre matériel physique en utilisant Home Assistant."
       }
     },
     "fields": {

@@ -1,4 +1,4 @@
-# Cabinet Bridge — Home Assistant Add-on
+# HomeArcade — Home Assistant Add-on
 
 Retro gaming frontend that runs inside Home Assistant. ROM uploads, integration
 settings, save-state metadata, and the system-image cache live under `/data` so
@@ -14,7 +14,7 @@ Source and full documentation: <https://github.com/GlerschNersch/token>
    https://github.com/GlerschNersch/token
    ```
 
-2. Find **Cabinet Bridge** in the store and click **Install** (the first build
+2. Find **HomeArcade** in the store and click **Install** (the first build
    may take several minutes).
 3. Click **Start**. The add-on listens on port 5000 internally and is exposed
    via Home Assistant Ingress (sidebar entry: **HomeArcade**, or use **Open Web
@@ -40,7 +40,7 @@ Home Assistant only surfaces an **Update** button when the add-on `version`
 changes. To check for and apply updates:
 
 1. **Settings → Add-ons → ⋮ → Check for updates**.
-2. Open **Cabinet Bridge** and click **Update** if it appears.
+2. Open **HomeArcade** and click **Update** if it appears.
 3. If you expect an update but don't see one, use **⋮ → Rebuild** to force a
    fresh build, then hard-refresh the panel (Ctrl/Cmd-Shift-R) to drop cached
    JS/CSS.
