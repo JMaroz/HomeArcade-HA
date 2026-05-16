@@ -12,6 +12,8 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import crypto from "node:crypto";
+import { Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import { z } from "zod";
 import { insertUploadedRomSchema } from "@shared/schema";
 import { extractFirstRomFromZip, titleFromFileName, slugify } from "./utils";
@@ -28,7 +30,6 @@ export function registerRomRoutes(app: Express) {
     });
   });
 
-  // Streaming ROM upload handler to handle multi-GB files without OOM
   app.post(
     "/api/roms/upload",
     async (req, res) => {
@@ -40,66 +41,53 @@ export function registerRomRoutes(app: Express) {
         return res.status(400).json({ message: "Choose a supported console before uploading." });
       }
 
-      let originalName = decodeURIComponent(
-        String(req.header("x-rom-filename") ?? "uploaded.rom"),
-      );
+      const originalName = decodeURIComponent(String(req.header("x-rom-filename") ?? "uploaded.rom"));
+      const extension = path.extname(originalName).toLowerCase();
+      if (allowedExtensions.length > 0 && !allowedExtensions.includes(extension)) {
+        return res.status(400).json({ message: `Unsupported file type for ${system}. Allowed: ${allowedExtensions.join(", ")}` });
+      }
 
       const baseSlug = slugify(titleFromFileName(originalName));
       const uniqueSuffix = Date.now().toString(36);
       const slug = `${system}_${baseSlug}_${uniqueSuffix}`;
-      const extension = path.extname(originalName).toLowerCase();
       const safeName = `${slug}${extension}`;
       const systemDir = path.join(ROM_ROOT, system);
       const filePath = path.join(systemDir, safeName);
 
       await fs.mkdir(systemDir, { recursive: true });
 
-      // Stream the request body directly to disk
       const hash = crypto.createHash("md5");
       let totalSize = 0;
 
       try {
-        await new Promise<void>((resolve, reject) => {
-          const writeStream = fsSync.createWriteStream(filePath);
-          
-          req.on("data", (chunk) => {
+        const sizeAndHashTransform = new Transform({
+          transform(chunk, _encoding, callback) {
             totalSize += chunk.length;
             if (totalSize > MAX_UPLOAD_BYTES) {
-              writeStream.destroy();
-              reject(new Error("File too large"));
+              callback(new Error("File too large"));
               return;
             }
             hash.update(chunk);
-          });
-
-          req.pipe(writeStream);
-
-          writeStream.on("finish", () => resolve());
-          writeStream.on("error", (err) => reject(err));
-          req.on("error", (err) => reject(err));
+            callback(null, chunk);
+          },
         });
+
+        const writeStream = fsSync.createWriteStream(filePath);
+        await pipeline(req, sizeAndHashTransform, writeStream);
       } catch (err: any) {
-        if (fsSync.existsSync(filePath)) await fs.unlink(filePath);
-        return res.status(err.message === "File too large" ? 413 : 500).json({ 
-          message: err.message === "File too large" ? `File exceeds ${MAX_UPLOAD_MB}MB limit` : "Upload failed" 
+        if (fsSync.existsSync(filePath)) await fs.unlink(filePath).catch(() => {});
+        return res.status(err.message === "File too large" ? 413 : 500).json({
+          message: err.message === "File too large" ? `File exceeds ${MAX_UPLOAD_MB}MB limit` : "Upload failed",
         });
       }
 
       const romHash = hash.digest("hex");
-
       const title = titleFromFileName(originalName);
-
-      // Detect multi-disc indicators like "(Disc 1)", "[Disk 2]", "CD 3", etc.
-      const discMatch = title.match(
-        /\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i,
-      );
+      const discMatch = title.match(/\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i);
       const discNumber = discMatch ? parseInt(discMatch[1] ?? discMatch[2], 10) : null;
-      // Strip the disc tag from the display title
       const cleanTitle = discMatch ? title.replace(discMatch[0], "").trim() : title;
-      // disc_group is "system/base-title-slug" so all discs share the same key
       const discGroup = discMatch ? `${system}/${slugify(cleanTitle)}` : null;
 
-      // Try ScreenScraper first (rich metadata + art), fall back to Libretro art only
       const settings = await storage.getIntegrationSettings();
       const tgdbMeta = await fetchTheGamesDBMeta(system, cleanTitle, settings.tgdbApiKey || "");
       const ssMeta = tgdbMeta?.artUrl ? null : await fetchScreenScraperMeta(system, safeName, cleanTitle, settings.ssUserId || "", settings.ssPassword || "");
@@ -268,16 +256,14 @@ export function registerRomRoutes(app: Express) {
     const userId = profileParam ? `profile_${profileParam}` : haUserId;
     res.setHeader("Content-Type", "application/javascript; charset=utf-8");
 
-    // Check for required BIOS files
     const coreBios = REQUIRED_BIOS[core] || [];
     let biosUrl: string | null = null;
     for (const filename of coreBios) {
       try {
         await fs.access(path.join(BIOS_ROOT, filename));
         biosUrl = `/api/bios/file/${filename}`;
-        break; // Use the first available BIOS for now
+        break;
       } catch {
-        // Skip if missing
       }
     }
 
