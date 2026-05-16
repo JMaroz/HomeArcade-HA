@@ -402,3 +402,19 @@ export function useIntegration() {
   if (!ctx) throw new Error("useIntegration must be used within IntegrationProvider");
   return ctx;
 }
+
+/**
+ * Format a timestamp as a human-readable relative time string.
+ */
+export function formatRelative(ts: number | null | undefined): string {
+  if (!ts) return "never";
+  const diff = Date.now() - ts;
+  const abs = Math.abs(diff);
+  const min = Math.round(abs / 60_000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const hrs = Math.round(min / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  return `${days}d ago`;
+}
