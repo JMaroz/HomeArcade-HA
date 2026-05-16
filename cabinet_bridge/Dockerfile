@@ -18,7 +18,11 @@ COPY package.json package-lock.json ./
 RUN NODE_ENV=development npm install --no-audit --no-fund --ignore-scripts
 RUN npm rebuild better-sqlite3
 
-# Copy all source
+# Cache-bust arg — increment this to force a full source re-copy and rebuild.
+# This ensures Docker never serves a stale compiled bundle from a previous layer.
+ARG CACHE_BUST=2
+
+# Copy all source (cache busted by ARG above)
 COPY tsconfig.json vite.config.ts tailwind.config.ts postcss.config.js components.json drizzle.config.ts ./
 COPY shared   ./shared
 COPY server   ./server
