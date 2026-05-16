@@ -16,7 +16,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN NODE_ENV=development npm install --no-audit --no-fund
 
-ARG CACHE_BUST=69
+ARG CACHE_BUST=70
 RUN echo "cache-bust=$CACHE_BUST"
 
 RUN node -e "require('better-sqlite3'); console.log('better-sqlite3 OK');"
