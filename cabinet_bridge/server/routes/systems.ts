@@ -28,7 +28,7 @@ export function registerSystemRoutes(app: Express) {
     try {
       const upstream = await fetch(config.url, {
         headers: SYSTEM_IMAGE_FETCH_HEADERS,
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(8000), // 8s — was 15s
       });
       if (!upstream.ok || !upstream.body) throw new Error("Upstream failed");
       const buffer = Buffer.from(await upstream.arrayBuffer());
@@ -51,12 +51,12 @@ export function registerSystemRoutes(app: Express) {
       return res.sendFile(cachePath);
     }
 
-    // Try to fetch from Libretro assets
     const playlistName = LIBRETRO_PLAYLISTS[id];
     if (playlistName) {
       try {
         const logoUrl = `https://raw.githubusercontent.com/libretro/libretro-assets/master/xmb/monochrome/png/${encodeURIComponent(playlistName)}.png`;
-        const response = await fetch(logoUrl, { signal: AbortSignal.timeout(10000) });
+        // 3s timeout — fast-fail so the client fallback (ConsoleSilhouette) kicks in quickly
+        const response = await fetch(logoUrl, { signal: AbortSignal.timeout(3000) });
         if (response.ok && response.body) {
           const buffer = Buffer.from(await response.arrayBuffer());
           await fs.mkdir(SYSTEM_LOGO_CACHE_DIR, { recursive: true });
@@ -66,7 +66,7 @@ export function registerSystemRoutes(app: Express) {
           return res.send(buffer);
         }
       } catch (err) {
-        console.error(`Failed to fetch logo for ${id}:`, err);
+        // Intentionally silent — 404 below triggers ConsoleSilhouette fallback on client
       }
     }
 

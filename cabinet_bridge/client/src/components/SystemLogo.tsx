@@ -3,11 +3,12 @@ import { ConsoleSilhouette } from "@/components/ConsoleSilhouette";
 import { apiUrl } from "@/lib/queryClient";
 
 /**
- * Official system logo, served through the same-origin /api/system-logos proxy
- * so HA Ingress CORS restrictions never block the request. Falls back to
- * ConsoleSilhouette if the server can't reach Wikimedia.
+ * Official system logo fetched through the same-origin /api/system-logos proxy
+ * so HA Ingress CORS restrictions never block the request.
+ *
+ * Falls back instantly to ConsoleSilhouette on any load error (404, timeout,
+ * network failure). No spinner — the silhouette is the graceful degradation.
  */
-
 export function SystemLogo({ systemId }: { systemId: string }) {
   const [failed, setFailed] = useState(false);
 
@@ -26,7 +27,7 @@ export function SystemLogo({ systemId }: { systemId: string }) {
           opacity: 0.85,
           WebkitFilter: "brightness(0) invert(1) drop-shadow(0 2px 8px rgba(0,0,0,0.4))",
         }}
-        loading="lazy"
+        loading="eager"
         onError={() => setFailed(true)}
       />
     </div>
