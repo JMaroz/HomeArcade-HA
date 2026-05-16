@@ -2,35 +2,54 @@ import type { Express } from "express";
 import express from "express";
 import path from "node:path";
 import fs from "node:fs/promises";
+import crypto from "node:crypto";
 import { dataPath, ensureDir } from "../data-dir";
 
-// Standard BIOS filenames expected by EmulatorJS cores
-export const REQUIRED_BIOS: Record<string, string[]> = {
-  psx: ["scph5501.bin"],
-  pcsx2: ["scph39001.bin"],
-  segaCD: ["bios_CD_U.bin"],
-  gba: ["gba_bios.bin"],
-  yabause: ["saturn_bios.bin"],
-  reicast: ["dc_boot.bin", "dc_flash.bin"],
+// Standard BIOS metadata from RetroPie / Libretro standards
+export const REQUIRED_BIOS: Record<string, Array<{ filename: string; md5: string }>> = {
+  psx: [{ filename: "scph5501.bin", md5: "8a3563914948a6058221b0665b1d4715" }],
+  pcsx2: [{ filename: "scph39001.bin", md5: "f396486008892150394e33458c9f086e" }],
+  segaCD: [{ filename: "bios_CD_U.bin", md5: "2efd74e3230d924e44c6679a0da0401f" }],
+  gba: [{ filename: "gba_bios.bin", md5: "a860e8c0b6d573d191e4ec7db1b1e4f6" }],
+  yabause: [{ filename: "saturn_bios.bin", md5: "af5828fdff51384f99b3c4926be27762" }],
+  reicast: [
+    { filename: "dc_boot.bin", md5: "e10c53c2f8b90bab96ead2d368858623" },
+    { filename: "dc_flash.bin", md5: "0a93fcd066914917646199622d64a852" },
+  ],
 };
 
 const BIOS_ROOT = path.resolve(dataPath("bios"));
+
+async function getMd5(filePath: string): Promise<string> {
+  try {
+    const buffer = await fs.readFile(filePath);
+    return crypto.createHash("md5").update(buffer).digest("hex");
+  } catch {
+    return "";
+  }
+}
 
 export function registerBiosRoutes(app: Express) {
   ensureDir(BIOS_ROOT);
 
   // Get status of all required BIOS files
   app.get("/api/bios", async (_req, res) => {
-    const status: Record<string, Array<{ filename: string; exists: boolean }>> = {};
+    const status: Record<string, Array<{ filename: string; exists: boolean; verified: boolean }>> = {};
     
     for (const [core, files] of Object.entries(REQUIRED_BIOS)) {
       status[core] = await Promise.all(
-        files.map(async (filename) => {
+        files.map(async (meta) => {
+          const filePath = path.join(BIOS_ROOT, meta.filename);
           try {
-            await fs.access(path.join(BIOS_ROOT, filename));
-            return { filename, exists: true };
+            await fs.access(filePath);
+            const actualMd5 = await getMd5(filePath);
+            return { 
+              filename: meta.filename, 
+              exists: true, 
+              verified: actualMd5 === meta.md5 
+            };
           } catch {
-            return { filename, exists: false };
+            return { filename: meta.filename, exists: false, verified: false };
           }
         })
       );

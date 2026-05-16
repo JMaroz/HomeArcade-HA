@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 interface BiosStatus {
   filename: string;
   exists: boolean;
+  verified: boolean;
 }
 
 type BiosData = Record<string, BiosStatus[]>;
@@ -124,19 +125,28 @@ export function BiosManager() {
               {files.map((file) => (
                 <div key={file.filename} className="flex items-center justify-between p-3 rounded-lg bg-background/40 border border-border/50">
                   <div className="flex items-center gap-3">
-                    {file.exists ? (
+                    {!file.exists ? (
+                      <XCircle className="size-4 text-destructive" />
+                    ) : file.verified ? (
                       <CheckCircle2 className="size-4 text-green-500" />
                     ) : (
-                      <XCircle className="size-4 text-destructive" />
+                      <AlertCircle className="size-4 text-yellow-500" />
                     )}
-                    <span className="font-mono text-xs text-foreground font-semibold">
-                      {file.filename}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="font-mono text-xs text-foreground font-semibold">
+                        {file.filename}
+                      </span>
+                      {file.exists && !file.verified && (
+                        <span className="text-[9px] text-yellow-500/80 font-mono">Invalid checksum (bad dump?)</span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span className={`text-[10px] font-mono uppercase tracking-widest ${file.exists ? "text-green-500/70" : "text-destructive/70"}`}>
-                      {file.exists ? "Installed" : "Missing"}
+                    <span className={`text-[10px] font-mono uppercase tracking-widest ${
+                      !file.exists ? "text-destructive/70" : file.verified ? "text-green-500/70" : "text-yellow-500/70"
+                    }`}>
+                      {!file.exists ? "Missing" : file.verified ? "Verified" : "Invalid"}
                     </span>
                     <div className="relative">
                       <input
