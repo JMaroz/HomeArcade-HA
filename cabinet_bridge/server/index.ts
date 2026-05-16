@@ -4,6 +4,7 @@ import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { initializeDatabase } from "./storage";
 import { registerRoutes } from "./routes/index";
@@ -69,7 +70,7 @@ app.use((req, res, next) => {
   };
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (p.startsWith("/api") && p !== "/api/health") {
+    if (p.startsWith("/api") && p !== "/api/health" && p !== "/api/debug") {
       let logLine = `${req.method} ${p} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       log(logLine);
@@ -84,11 +85,36 @@ app.get("/api/health", (_req: Request, res: Response) => {
   res.json({ status: appReady ? "ok" : "starting" });
 });
 
+// Debug endpoint - dumps runtime environment info for troubleshooting
+app.get("/api/debug", (_req: Request, res: Response) => {
+  const distPath = path.resolve(process.cwd(), "dist", "public");
+  const indexPath = path.resolve(distPath, "index.html");
+  let entryScript: string | null = null;
+  let assetList: string[] = [];
+  if (fs.existsSync(indexPath)) {
+    const content = readFileSync(indexPath, "utf-8");
+    const scriptMatch = content.match(/src="([^"]+\.js)"/);
+    entryScript = scriptMatch?.[1] ?? null;
+    const allMatches = [...content.matchAll(/src="([^"]+)"/g)];
+    assetList = allMatches.map((m) => m[1]);
+  }
+  res.json({
+    version: process.env.npm_package_version ?? "unknown",
+    nodeEnv: process.env.NODE_ENV,
+    appReady,
+    cwd: process.cwd(),
+    distExists: fs.existsSync(distPath),
+    indexExists: fs.existsSync(indexPath),
+    entryScript,
+    assetList,
+  });
+});
+
 const port = parseInt(process.env.PORT ?? "5000", 10);
 
 // Bind the port FIRST - HA ingress expects port 5000 to be open within seconds
 httpServer.listen({ port, host: "0.0.0.0" }, () => {
-  log(`listening on port ${port}`, "boot");
+  log(`HomeArcade v${process.env.npm_package_version ?? "unknown"} listening on port ${port}`, "boot");
   initApp().catch((err) => {
     console.error("FATAL: startup failed:", err);
     process.exit(1);
@@ -109,7 +135,7 @@ async function initApp() {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-    console.error("Unhandled error:", err);
+    console.error(`[error] ${status} ${message}\n${err.stack ?? ""}`);
     if (!res.headersSent) res.status(status).json({ message });
   });
 
@@ -120,6 +146,14 @@ async function initApp() {
     } else {
       serveStatic(app);
       log(`Serving static files from ${distPath}`, "boot");
+
+      // Log the entry script path from the built index.html
+      const indexPath = path.resolve(distPath, "index.html");
+      if (fs.existsSync(indexPath)) {
+        const content = readFileSync(indexPath, "utf-8");
+        const scriptMatch = content.match(/src="([^"]+\.js)"/);
+        log(`index.html entry script: ${scriptMatch?.[1] ?? "NOT FOUND"}`, "boot");
+      }
     }
   } else {
     await setupVite(httpServer, app);
