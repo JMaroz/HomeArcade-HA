@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.1.19] — 2026-05-15
+
+### Fix: Final Localization Cleanup
+
+- **Missing Keys** — Restored missing translation keys for "Status breakdown" on the Dashboard and the "System Library" headings on the Home page, resolving the final remaining raw translation keys.
+- **Global Sync** — Re-synchronized all 7 supported languages to ensure 100% translation coverage across the entire app.
+
+---
+
 ## [1.1.18] — 2026-05-15
 
 ### Fix: UI Translation Mismatches

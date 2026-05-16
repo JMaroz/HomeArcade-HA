@@ -71,6 +71,7 @@
       "continuePlaying": "プレイを続ける",
       "newThisWeek": "今週の新着",
       "collectionGames": "コレクション内のゲーム",
+      "systemLibrary": "{{system}} ライブラリ",
       "library": "ライブラリ"
     },
     "status": {
@@ -161,6 +162,7 @@
     "sections": {
       "overview": "概要",
       "libraryBreakdown": "ライブラリ内訳",
+      "statusBreakdown": "ステータス内訳",
       "highlights": "ハイライト",
       "inProgress": "プレイ中",
       "recentlyPlayed": "最近プレイ",

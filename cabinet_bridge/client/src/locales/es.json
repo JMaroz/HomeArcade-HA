@@ -71,6 +71,7 @@
       "continuePlaying": "Continuar jugando",
       "newThisWeek": "Novedades de la semana",
       "collectionGames": "Juegos de la colección",
+      "systemLibrary": "Biblioteca de {{system}}",
       "library": "Biblioteca"
     },
     "status": {
@@ -161,6 +162,7 @@
     "sections": {
       "overview": "Resumen",
       "libraryBreakdown": "Desglose de biblioteca",
+      "statusBreakdown": "Desglose de estado",
       "highlights": "Destacados",
       "inProgress": "En curso",
       "recentlyPlayed": "Jugados recientemente",

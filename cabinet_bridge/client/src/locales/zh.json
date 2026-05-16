@@ -71,6 +71,7 @@
       "continuePlaying": "继续游玩",
       "newThisWeek": "本周新游",
       "collectionGames": "合集中的游戏",
+      "systemLibrary": "{{system}} 库",
       "library": "库"
     },
     "status": {
@@ -161,6 +162,7 @@
     "sections": {
       "overview": "概览",
       "libraryBreakdown": "库分析",
+      "statusBreakdown": "状态分解",
       "highlights": "精彩回顾",
       "inProgress": "正在进行",
       "recentlyPlayed": "最近游玩",
