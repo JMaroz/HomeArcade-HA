@@ -20,6 +20,15 @@ interface BiosStatus {
 
 type BiosData = Record<string, BiosStatus[]>;
 
+async function safeJsonOrText(res: Response): Promise<{ message?: string }> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text || `Server error (${res.status})` };
+  }
+}
+
 export function BiosManager() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -41,10 +50,10 @@ export function BiosManager() {
         body: file,
       });
       if (!res.ok) {
-        const err = await res.json();
+        const err = await safeJsonOrText(res);
         throw new Error(err.message || "Upload failed");
       }
-      return res.json();
+      return safeJsonOrText(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bios"] });
