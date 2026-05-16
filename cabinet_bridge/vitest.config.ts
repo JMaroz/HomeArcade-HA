@@ -1,29 +1,22 @@
-import { defineConfig } from "vitest/config";
-import path from "node:path";
+import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
-    globals: false,
-    testTimeout: 20_000,
-    hookTimeout: 20_000,
+    environment: 'happy-dom',
+    globals: true,
     include: [
-      "server/__tests__/**/*.test.ts",
-      "shared/__tests__/**/*.test.ts",
-      "client/src/**/__tests__/**/*.test.ts",
-      "client/src/__tests__/**/*.test.ts",
+      'client/src/__tests__/**/*.test.ts',
+      'server/__tests__/**/*.test.ts',
     ],
-    benchmark: {
-      include: ["client/src/__benchmarks__/**/*.bench.ts"],
-    },
-    environmentMatchGlobs: [
-      ["client/src/**", "happy-dom"],
-    ],
-    environment: "node",
-  },
-  resolve: {
     alias: {
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@": path.resolve(import.meta.dirname, "client", "src"),
+      '@': path.resolve(__dirname, 'client/src'),
+      '@shared': path.resolve(__dirname, 'shared'),
+    },
+    coverage: {
+      reporter: ['text', 'html'],
+      include: ['server/**/*.ts', 'client/src/**/*.ts'],
+      exclude: ['**/__tests__/**', '**/node_modules/**'],
     },
   },
 });
