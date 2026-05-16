@@ -142,6 +142,10 @@ export function initializeDatabase() {
   }
 }
 
+// Auto-initialize on import so any consumer (server, tests, etc.)
+// gets a ready database without needing to call initializeDatabase() explicitly.
+initializeDatabase();
+
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
