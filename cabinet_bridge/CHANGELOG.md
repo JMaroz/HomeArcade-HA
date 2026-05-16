@@ -1,3 +1,11 @@
+## 2.3.0 – 2026-05-16
+
+- **Performance**: **EmulatorJS CDN disk cache** — EJS core assets (`.wasm`, `.js`, `.data`) are now cached to `data/ejs_cache/` on first load and served from local disk on all subsequent requests, eliminating repeated internet fetches for multi-MB cores.
+- **Performance**: **ROM range streaming** — the `/api/roms/:id/file` endpoint now handles `Range:` requests, allowing the browser to stream only the bytes it needs rather than buffering the entire ROM before emulation starts.
+- **Performance**: **`Accept-Ranges` + `immutable` cache on EJS assets** — browser skips conditional requests for cached core files entirely.
+- **Performance**: **Bootstrap script caching** — `bootstrap.js` now carries a `private, max-age=300` header; identical ROM+profile combos are served from browser cache.
+- **Performance**: **Player shell caching** — the emulator player HTML is now cached for 60 seconds to avoid re-serving the full shell on every visit.
+
 ## 1.1.14 – 2026-05-15
 
 - **Major**: **Full Localization Support** — Replaced all hardcoded English strings with dynamic translation keys across the entire application.
