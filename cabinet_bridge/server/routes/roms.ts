@@ -267,6 +267,17 @@ export function registerRomRoutes(app: Express) {
       }
     }
 
+    // BIOS gate: if this core requires a BIOS and none is present, surface a
+    // clear error in the launch overlay instead of silently hanging.
+    if (coreBios.length > 0 && !biosUrl) {
+      const missing = coreBios.join(" or ");
+      return res.status(422).send(
+        `cabinetFailLaunchProgress(${JSON.stringify(
+          `BIOS required — upload ${missing} in the BIOS tab before playing this system.`
+        )});`
+      );
+    }
+
     res.send(renderEmulatorBootstrap({
       core, title: rom.title, gameId: `${rom.system}-${rom.slug}`, romId: rom.id, discs, romHash: rom.romHash ?? null,
       raUsername: bootstrapSettings.raUsername ?? "", raToken: bootstrapSettings.raToken ?? "",
