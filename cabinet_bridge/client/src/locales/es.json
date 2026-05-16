@@ -84,7 +84,6 @@
       "searchingScope": "Buscando en {{total}} juegos — ",
       "results_one": "{{count}} resultado",
       "results_other": "{{count}} resultados",
-      "summary": "{{favorites}} favoritos · {{uploaded}} títulos en total",
       "clear": "Limpiar"
     },
     "actions": {
@@ -208,7 +207,6 @@
       "automation": "Automatización",
       "controls": "Controles",
       "library": "Biblioteca",
-      "health": "Salud",
       "services": "Servicios",
       "kiosk": "Kiosco",
       "help": "Ayuda"
@@ -270,10 +268,6 @@
       "bulk": {
         "title": "Acciones masivas",
         "description": "Procesa múltiples ROMs a la vez. Estas operaciones pueden tardar varios minutos."
-      },
-      "health": {
-        "title": "Salud del Sistema y Firmware",
-        "description": "Gestione los archivos de BIOS y firmware necesarios para la emulación de consolas de gama alta."
       },
       "kiosk": {
         "title": "Modo Kiosco",

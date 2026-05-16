@@ -7,26 +7,17 @@ export NODE_ENV=production
 export PORT=5000
 export CABINET_DATA_DIR="${CABINET_DATA_DIR:-/data}"
 
-# Robust extraction of add-on options
-if [ -f /data/options.json ]; then
-  MAX_VAL=$(grep -o '"max_upload_mb": *[0-9]*' /data/options.json | awk -F: '{print $2}' | tr -d ' ')
-  if [ ! -z "$MAX_VAL" ]; then
-    export CABINET_MAX_UPLOAD_MB="$MAX_VAL"
+# Pull the user-configurable upload ceiling out of the add-on options when
+# bashio is available. Falls back to a generous default for non-HA runs so
+# PlayStation-sized archives upload without further tuning.
+if command -v bashio >/dev/null 2>&1; then
+  if bashio::config.has_value 'max_upload_mb'; then
+    CABINET_MAX_UPLOAD_MB="$(bashio::config 'max_upload_mb')"
   fi
 fi
+export CABINET_MAX_UPLOAD_MB="${CABINET_MAX_UPLOAD_MB:-2048}"
 
-export CABINET_MAX_UPLOAD_MB="${CABINET_MAX_UPLOAD_MB:-8192}"
+mkdir -p "$CABINET_DATA_DIR"
 
-# Diagnostics
-echo "[HomeArcade] Starting boot sequence..."
-echo "[HomeArcade] Environment: NODE_ENV=$NODE_ENV, PORT=$PORT"
-echo "[HomeArcade] Architecture: $(uname -m)"
-echo "[HomeArcade] Data directory: $CABINET_DATA_DIR"
-
-if [ ! -f "dist/index.cjs" ]; then
-  echo "[HomeArcade] CRITICAL ERROR: dist/index.cjs not found! Build may have failed."
-  exit 1
-fi
-
-# Execute the application
+echo "[cabinet_bridge] starting on port $PORT (data dir: $CABINET_DATA_DIR, max upload: ${CABINET_MAX_UPLOAD_MB}mb)"
 exec node dist/index.cjs

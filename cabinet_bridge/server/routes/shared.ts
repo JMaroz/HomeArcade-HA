@@ -34,7 +34,7 @@ export const ROM_EXTENSIONS: Record<string, string[]> = {
 export const MAX_UPLOAD_MB = (() => {
   const raw = Number.parseInt(process.env.CABINET_MAX_UPLOAD_MB ?? "", 10);
   if (Number.isFinite(raw) && raw > 0) return raw;
-  return 8192; // 8 GB default
+  return 2048; // 2 GB default
 })();
 export const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 

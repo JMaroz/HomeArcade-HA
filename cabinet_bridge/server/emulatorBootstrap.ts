@@ -71,51 +71,7 @@ export function buildEjsControls(
   return { 0: p1, 1: p2, 2: {}, 3: {} };
 }
 
-export function renderEmulatorBootstrap({
-  core,
-  title,
-  gameId,
-  romId,
-  discs,
-  romHash,
-  raUsername,
-  raToken,
-  controlDefaults,
-  gamepadBindings,
-  controlDefaultsP2,
-  gamepadBindingsP2,
-  gamepadRumble,
-  systemDisplay,
-  globalAspectRatio,
-  globalShader,
-  userId,
-  userName,
-  profileId,
-  cheats,
-  biosUrl,
-}: {
-  core: string;
-  title: string;
-  gameId: string;
-  romId: number;
-  discs: Array<{ id: number; label: string }>;
-  romHash: string | null;
-  raUsername: string;
-  raToken: string;
-  controlDefaults: Record<string, Record<number, string>>;
-  gamepadBindings: Record<number, number>;
-  controlDefaultsP2: Record<number, string>;
-  gamepadBindingsP2: Record<number, number>;
-  gamepadRumble: boolean;
-  systemDisplay: Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>;
-  globalAspectRatio: string;
-  globalShader: string;
-  userId: string;
-  userName: string;
-  profileId: string;
-  cheats: Array<{ description: string; code: string }>;
-  biosUrl?: string | null;
-}) {
+export function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2, gamepadRumble, systemDisplay, globalAspectRatio, globalShader, userId, userName, profileId, cheats }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; gamepadBindings: Record<number, number>; controlDefaultsP2: Record<number, string>; gamepadBindingsP2: Record<number, number>; gamepadRumble: boolean; systemDisplay: Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>; globalAspectRatio: string; globalShader: string; userId: string; userName: string; profileId: string; cheats: Array<{ description: string; code: string }>; }) {
   return `"use strict";
 // Diagnostic: immediately mark that this script is executing.
 // If the launch overlay stays at 0%, this script never ran.
@@ -1997,7 +1953,6 @@ window.CABINET_PROFILE_ID = ${JSON.stringify(profileId)};
 ${discs.length > 1
   ? `window.EJS_discs = ${JSON.stringify(discs.map((d) => ({ fileName: `../\${d.id}/file`, label: d.label })))};`
   : `window.EJS_gameUrl = "./file";`}
-${biosUrl ? `window.EJS_biosUrl = ${JSON.stringify(biosUrl)};` : ""}
 window.EJS_pathtodata = "../../emulatorjs/";
 window.EJS_startOnLoaded = true;
 window.EJS_AdUrl = "";

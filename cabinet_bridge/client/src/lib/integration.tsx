@@ -69,12 +69,6 @@ export interface IntegrationConfig {
   theme?: string;
   /** UI language (ISO 639-1 code, e.g. "en", "es") */
   language?: string;
-  /** Show console names on game cards */
-  showSystemLabels?: boolean;
-  /** Default emulator aspect ratio */
-  globalAspectRatio?: string;
-  /** Default emulator shader */
-  globalShader?: string;
 }
 
 export type IntegrationSaveStatus = "idle" | "loading" | "saving" | "saved" | "error";
@@ -126,9 +120,6 @@ const defaultConfig: IntegrationConfig = {
   uiGamepadMapping: { select: 0, back: 1, favorite: 3, menu: 9 },
   theme: "default",
   language: undefined,
-  showSystemLabels: true,
-  globalAspectRatio: "auto",
-  globalShader: "none",
 };
 
 const defaultPc: PcStatus = {
@@ -188,9 +179,6 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
       : { select: 0, back: 1, favorite: 3, menu: 9 },
     theme: typeof source.theme === "string" ? source.theme : "default",
     language: typeof source.language === "string" ? source.language : undefined,
-    showSystemLabels: typeof source.showSystemLabels === "boolean" ? source.showSystemLabels : true,
-    globalAspectRatio: typeof source.globalAspectRatio === "string" ? source.globalAspectRatio : "auto",
-    globalShader: typeof source.globalShader === "string" ? source.globalShader : "none",
   };
 }
 
@@ -213,9 +201,6 @@ function configsEqual(a: IntegrationConfig, b: IntegrationConfig): boolean {
   if (a.gamepadRumble !== b.gamepadRumble) return false;
   if (a.theme !== b.theme) return false;
   if (a.language !== b.language) return false;
-  if (a.showSystemLabels !== b.showSystemLabels) return false;
-  if (a.globalAspectRatio !== b.globalAspectRatio) return false;
-  if (a.globalShader !== b.globalShader) return false;
 
   const aKeys = Object.keys(a.endpoints);
   const bKeys = Object.keys(b.endpoints);
@@ -519,8 +504,7 @@ export function useIntegration() {
   return ctx;
 }
 
-export function formatRelative(ts: number | null | undefined): string {
-  if (!ts) return "never";
+export function formatRelative(ts: number): string {
   const diff = Date.now() - ts;
   const abs = Math.abs(diff);
   const min = Math.round(abs / 60_000);

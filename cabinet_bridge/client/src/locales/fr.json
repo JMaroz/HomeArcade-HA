@@ -84,7 +84,6 @@
       "searchingScope": "Recherche parmi {{total}} jeux — ",
       "results_one": "{{count}} résultat",
       "results_other": "{{count}} résultats",
-      "summary": "{{favorites}} favoris · {{uploaded}} titres au total",
       "clear": "Effacer"
     },
     "actions": {
@@ -206,9 +205,8 @@
       "connection": "Connexion",
       "display": "Affichage",
       "automation": "Automatisation",
-      "controls": "Commandes",
+      "controls": "Contrôles",
       "library": "Bibliothèque",
-      "health": "Santé",
       "services": "Services",
       "kiosk": "Kiosque",
       "help": "Aide"
@@ -270,10 +268,6 @@
       "bulk": {
         "title": "Actions groupées",
         "description": "Traitez plusieurs ROM à la fois. Ces opérations peuvent prendre plusieurs minutes."
-      },
-      "health": {
-        "title": "Santé du système et firmware",
-        "description": "Gérez les fichiers BIOS et firmware requis pour l'émulation de consoles haut de gamme."
       },
       "kiosk": {
         "title": "Mode Kiosque",

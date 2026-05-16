@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { Switch, Route, Router } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
@@ -17,7 +17,6 @@ import NotFound from "@/pages/not-found";
 import { THEMES, AppTheme } from "./lib/themes";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { Sidebar } from "@/components/Sidebar";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 /**
  * Ensures scroll position is reset or restored correctly on navigation.
@@ -159,33 +158,31 @@ function App() {
   }, []);
 
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ProfileProvider>
-        <IntegrationProvider>
-          <VisualEffectManager />
-        <LanguageManager />
-        <ScrollRestoration />
-          <TooltipProvider>
-            <SidebarProvider>
-              <Toaster />
-              <Router hook={useHashLocation}>
-                <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
-                  <Sidebar />
-                  <SidebarInset className="flex flex-col min-h-0 overflow-hidden">
-                    <PageTransition>
-                      <AppRouter />
-                    </PageTransition>
-                    <MobileBottomNav />
-                  </SidebarInset>
-                </div>
-              </Router>
-            </SidebarProvider>
-          </TooltipProvider>
-        </IntegrationProvider>
-        </ProfileProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ProfileProvider>
+      <IntegrationProvider>
+        <VisualEffectManager />
+      <LanguageManager />
+      <ScrollRestoration />
+        <TooltipProvider>
+          <SidebarProvider>
+            <Toaster />
+            <Router hook={useHashLocation}>
+              <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
+                <Sidebar />
+                <SidebarInset className="flex flex-col min-h-0 overflow-hidden">
+                  <PageTransition>
+                    <AppRouter />
+                  </PageTransition>
+                  <MobileBottomNav />
+                </SidebarInset>
+              </div>
+            </Router>
+          </SidebarProvider>
+        </TooltipProvider>
+      </IntegrationProvider>
+      </ProfileProvider>
+    </QueryClientProvider>
   );
 }
 

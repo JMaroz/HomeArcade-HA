@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect, memo, useCallback } from "react";
+import { useMemo, useRef, useState, useEffect, memo, useCallback } from "react";
 import { useLocation } from "wouter";
 import Fuse from "fuse.js";
 import { type Filter } from "@/components/Sidebar";
@@ -410,366 +410,369 @@ export default function Home({ filter }: { filter: Filter }) {
   }, [filter]);
 
   return (
-    <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden" data-testid="main-content">
+    <div className="flex h-full">
       <WelcomeDialog hasRoms={uploadedRoms.length > 0} />
-      <MobileTopBar />
 
-      {/* ── Header ── */}
-      <div className="px-4 sm:px-8 pt-6 sm:pt-8 pb-4 border-b border-border">
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-          <div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              {t("home.sections.library")}
-            </div>
-            <h1
-              className="font-display text-xl sm:text-2xl font-bold leading-tight mt-1"
-              data-testid="text-heading"
-            >
-              {heading}
-            </h1>
-          </div>
+      <main className="flex-1 min-w-0 flex flex-col" data-testid="main-content">
+        <MobileTopBar active={filter} />
 
-          <div className="ml-auto flex items-center gap-2 w-full sm:w-auto">
-            {/* Search */}
-            <div className="relative flex-1 sm:w-72">
-              <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <Input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("home.search")}
-                className="pl-9 pr-8 font-mono text-sm"
-                ref={searchRef}
-                data-testid="input-search"
-                aria-label="Search games"
-                onKeyDown={(e) => { if (e.key === "Escape") { setQuery(""); searchRef.current?.blur(); } }}
-              />
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => { setQuery(""); searchRef.current?.focus(); }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Clear search"
-                >
-                  <X className="size-3.5" />
-                </button>
-              )}
+        {/* ── Header ── */}
+        <div className="px-4 sm:px-8 pt-6 sm:pt-8 pb-4 border-b border-border">
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+            <div>
+              <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                {t("home.sections.library")}
+              </div>
+              <h1
+                className="font-display text-xl sm:text-2xl font-bold leading-tight mt-1"
+                data-testid="text-heading"
+              >
+                {heading}
+              </h1>
             </div>
 
-            <SortMenu sort={sort} setSort={persistSort} />
+            <div className="ml-auto flex items-center gap-2 w-full sm:w-auto">
+              {/* Search */}
+              <div className="relative flex-1 sm:w-72">
+                <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("home.search")}
+                  className="pl-9 pr-8 font-mono text-sm"
+                  ref={searchRef}
+                  data-testid="input-search"
+                  aria-label="Search games"
+                  onKeyDown={(e) => { if (e.key === "Escape") { setQuery(""); searchRef.current?.blur(); } }}
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => { setQuery(""); searchRef.current?.focus(); }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
 
-            <button
-              type="button"
-              onClick={pickRandom}
-              title={t("home.actions.surprise")}
-              disabled={filtered.length === 0}
-              className="size-9 flex items-center justify-center rounded-md border border-border bg-background/40 text-muted-foreground hover:text-foreground hover-elevate disabled:opacity-40"
-              data-testid="button-surprise"
-            >
-              <Shuffle className="size-4" />
-            </button>
+              <SortMenu sort={sort} setSort={persistSort} />
 
-            <button
-              type="button"
-              onClick={() => setViewMode((v) => (v === "grid" ? "list" : "grid"))}
-              title={viewMode === "grid" ? t("home.view.list") : t("home.view.grid")}
-              className="size-9 flex items-center justify-center rounded-md border border-border bg-background/40 text-muted-foreground hover:text-foreground hover-elevate"
-              data-testid="button-view-toggle"
-            >
-              {viewMode === "grid" ? (
-                <LayoutList className="size-4" />
-              ) : (
-                <LayoutGrid className="size-4" />
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={pickRandom}
+                title={t("home.actions.surprise")}
+                disabled={filtered.length === 0}
+                className="size-9 flex items-center justify-center rounded-md border border-border bg-background/40 text-muted-foreground hover:text-foreground hover-elevate disabled:opacity-40"
+                data-testid="button-surprise"
+              >
+                <Shuffle className="size-4" />
+              </button>
 
+              <button
+                type="button"
+                onClick={() => setViewMode((v) => (v === "grid" ? "list" : "grid"))}
+                title={viewMode === "grid" ? t("home.view.list") : t("home.view.grid")}
+                className="size-9 flex items-center justify-center rounded-md border border-border bg-background/40 text-muted-foreground hover:text-foreground hover-elevate"
+                data-testid="button-view-toggle"
+              >
+                {viewMode === "grid" ? (
+                  <LayoutList className="size-4" />
+                ) : (
+                  <LayoutGrid className="size-4" />
+                )}
+              </button>
+
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* ── Search scope notice ── */}
-      {query.trim() && (
-        <div className="px-4 sm:px-8 py-1.5 border-b border-border flex items-center gap-2 bg-primary/5">
-          <Search className="size-3 text-primary/60 shrink-0" />
-          <span className="font-mono text-[10px] text-muted-foreground flex-1">
-            {t("home.status.searchingScope", { total: games.length })}
-            <span className="text-foreground font-semibold">{t("home.status.results", { count: filtered.length })}</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
-          >
-            {t("home.status.clear")}
-          </button>
-        </div>
-      )}
-
-      {/* ── Mobile sort bar ── */}
-      <div
-        className="sm:hidden flex items-center gap-2 px-4 py-2 border-b border-border overflow-x-auto scrollbar-none"
-        data-testid="group-sort-mobile"
-        role="radiogroup"
-        aria-label="Sort games"
-      >
-        <SlidersHorizontal className="size-3.5 text-muted-foreground shrink-0" />
-        {[
-          { id: "recent", label: t("home.sort.recent") },
-          { id: "title", label: t("home.sort.az") },
-          { id: "year", label: t("home.sort.year") },
-          { id: "rating", label: t("home.sort.rating") },
-          { id: "plays", label: t("home.sort.plays") },
-        ].map((o) => (
-          <button
-            key={o.id}
-            type="button"
-            role="radio"
-            aria-checked={sort === o.id}
-            onClick={() => persistSort(o.id as Sort)}
-            className={`shrink-0 px-3 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-colors ${
-              sort === o.id
-                ? "border-primary/60 bg-primary/15 text-primary"
-                : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
-            }`}
-            data-testid={`button-sort-mobile-${o.id}`}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Genre filter bar ── */}
-      {availableGenres.length > 0 && (
-        <div className="px-4 sm:px-8 py-2 border-b border-border flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <button
-            type="button"
-            onClick={() => persistGenre("")}
-            className={`shrink-0 px-3 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-colors ${
-              !genreFilter
-                ? "border-primary/60 bg-primary/15 text-primary"
-                : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
-            }`}
-            data-testid="button-genre-all"
-          >
-            {t("common.ui.all")}
-          </button>
-          {availableGenres.map((g) => (
+        {/* ── Search scope notice ── */}
+        {query.trim() && (
+          <div className="px-4 sm:px-8 py-1.5 border-b border-border flex items-center gap-2 bg-primary/5">
+            <Search className="size-3 text-primary/60 shrink-0" />
+            <span className="font-mono text-[10px] text-muted-foreground flex-1">
+              {t("home.status.searchingScope", { total: games.length })}
+              <span className="text-foreground font-semibold">{t("home.status.results", { count: filtered.length })}</span>
+            </span>
             <button
-              key={g}
               type="button"
-              onClick={() => persistGenre(genreFilter === g ? "" : g)}
+              onClick={() => setQuery("")}
+              className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            >
+              {t("home.status.clear")}
+            </button>
+          </div>
+        )}
+
+        {/* ── Mobile sort bar ── */}
+        <div
+          className="sm:hidden flex items-center gap-2 px-4 py-2 border-b border-border overflow-x-auto scrollbar-none"
+          data-testid="group-sort-mobile"
+          role="radiogroup"
+          aria-label="Sort games"
+        >
+          <SlidersHorizontal className="size-3.5 text-muted-foreground shrink-0" />
+          {[
+            { id: "recent", label: t("home.sort.recent") },
+            { id: "title", label: t("home.sort.az") },
+            { id: "year", label: t("home.sort.year") },
+            { id: "rating", label: t("home.sort.rating") },
+            { id: "plays", label: t("home.sort.plays") },
+          ].map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              role="radio"
+              aria-checked={sort === o.id}
+              onClick={() => persistSort(o.id as Sort)}
               className={`shrink-0 px-3 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-colors ${
-                genreFilter === g
+                sort === o.id
                   ? "border-primary/60 bg-primary/15 text-primary"
                   : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
               }`}
-              data-testid={`button-genre-${g}`}
+              data-testid={`button-sort-mobile-${o.id}`}
             >
-              {g}
+              {o.label}
             </button>
           ))}
         </div>
-      )}
 
-      {/* ── Content area ── */}
-      <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 overscroll-y-contain scroll-smooth">
-        {showHero && pc.online && recentlyPlayed[0] ? (
-          <ContinueHero game={recentlyPlayed[0]} onOpen={setOpenGame} profileId={currentProfileId} />
-        ) : null}
-
-        {recentlyPlayed.length > 0 && (filter === "favorites" || filter === "all") && !query && (
-          <section className="px-4 sm:px-8 pt-5 pb-1">
-            <SectionHeading title={t("home.sections.jumpBackIn")} action={null} />
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {recentlyPlayed.slice(0, 6).map((g) => (
-                <GameCard
-                  key={g.id}
-                  game={g}
-                  showSaveThumb={true}
-                  onOpen={setOpenGame}
-                  onToggleFav={toggleFav}
-                  priority={true}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {(filter === "favorites" || filter === "all") && !query ? (
-          <section className="px-4 sm:px-8 pt-5 pb-1">
-            <SectionHeading
-              title={t("home.sections.browseSystems")}
-              action={
-                <button
-                  type="button"
-                  onClick={() => goToFilter("all")}
-                  className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
-                  data-testid="button-see-all-systems"
-                >
-                  {t("common.ui.seeAll")} <ChevronRight className="inline size-3" />
-                </button>
-              }
-            />
-            <div
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"
-              data-testid="grid-systems"
+        {/* ── Genre filter bar ── */}
+        {availableGenres.length > 0 && (
+          <div className="px-4 sm:px-8 py-2 border-b border-border flex items-center gap-2 overflow-x-auto scrollbar-none">
+            <button
+              type="button"
+              onClick={() => persistGenre("")}
+              className={`shrink-0 px-3 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-colors ${
+                !genreFilter
+                  ? "border-primary/60 bg-primary/15 text-primary"
+                  : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
+              }`}
+              data-testid="button-genre-all"
             >
-              {SYSTEMS.map((s) => {
-                const count = systemCounts[s.id] ?? 0;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => goToFilter(s.id)}
-                    className="group relative aspect-[16/10] rounded-lg overflow-hidden border border-card-border hover-elevate active-elevate-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                    data-testid={`tile-system-${s.id}`}
-                  >
-                    <SystemTile system={s} />
-                    <div className="absolute inset-x-0 bottom-0 px-3 py-1.5 bg-gradient-to-t from-black/75 to-transparent flex items-end justify-between">
-                      <div className="font-mono text-[11px] text-white tabular-nums">
-                        {t("dashboard.stats.gamesCount", { count })}
-                      </div>
-                      <ChevronRight className="size-3.5 text-white/70 group-hover:text-white transition" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        ) : null}
+              {t("common.ui.all")}
+            </button>
+            {availableGenres.map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => persistGenre(genreFilter === g ? "" : g)}
+                className={`shrink-0 px-3 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition-colors ${
+                  genreFilter === g
+                    ? "border-primary/60 bg-primary/15 text-primary"
+                    : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
+                }`}
+                data-testid={`button-genre-${g}`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {(filter === "favorites" ||
-          filter === "all" ||
-          (typeof filter === "string" &&
-            !filter.startsWith("collection:") &&
-            filter !== "recent")) &&
-        visibleRecentlyPlayed.length > 0 &&
-        !query ? (
-          <section className="px-4 sm:px-8 pt-5 pb-1">
+        {/* ── Content area ── */}
+        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 overscroll-y-contain scroll-smooth">
+          {showHero && pc.online && recentlyPlayed[0] ? (
+            <ContinueHero game={recentlyPlayed[0]} onOpen={setOpenGame} profileId={currentProfileId} />
+          ) : null}
+
+          {recentlyPlayed.length > 0 && (filter === "favorites" || filter === "all") && !query && (
+            <section className="px-4 sm:px-8 pt-5 pb-1">
+              <SectionHeading title={t("home.sections.jumpBackIn")} action={null} />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {recentlyPlayed.slice(0, 6).map((g) => (
+                  <GameCard
+                    key={g.id}
+                    game={g}
+                    showSaveThumb={true}
+                    onOpen={setOpenGame}
+                    onToggleFav={toggleFav}
+                    priority={true}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {(filter === "favorites" || filter === "all") && !query ? (
+            <section className="px-4 sm:px-8 pt-5 pb-1">
+              <SectionHeading
+                title={t("home.sections.browseSystems")}
+                action={
+                  <button
+                    type="button"
+                    onClick={() => goToFilter("all")}
+                    className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                    data-testid="button-see-all-systems"
+                  >
+                    {t("common.ui.seeAll")} <ChevronRight className="inline size-3" />
+                  </button>
+                }
+              />
+              <div
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"
+                data-testid="grid-systems"
+              >
+                {SYSTEMS.map((s) => {
+                  const count = systemCounts[s.id] ?? 0;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => goToFilter(s.id)}
+                      className="group relative aspect-[16/10] rounded-lg overflow-hidden border border-card-border hover-elevate active-elevate-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      data-testid={`tile-system-${s.id}`}
+                    >
+                      <SystemTile system={s} />
+                      <div className="absolute inset-x-0 bottom-0 px-3 py-1.5 bg-gradient-to-t from-black/75 to-transparent flex items-end justify-between">
+                        <div className="font-mono text-[11px] text-white tabular-nums">
+                          {t("dashboard.stats.gamesCount", { count })}
+                        </div>
+                        <ChevronRight className="size-3.5 text-white/70 group-hover:text-white transition" />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          {(filter === "favorites" ||
+            filter === "all" ||
+            (typeof filter === "string" &&
+              !filter.startsWith("collection:") &&
+              filter !== "recent")) &&
+          visibleRecentlyPlayed.length > 0 &&
+          !query ? (
+            <section className="px-4 sm:px-8 pt-5 pb-1">
+              <SectionHeading
+                title={filter === "favorites" ? t("home.sections.favoritesRecentlyPlayed") : t("home.sections.recentlyPlayed")}
+                action={
+                  <button
+                    type="button"
+                    onClick={() => goToFilter("recent")}
+                    className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                    data-testid="button-see-all-recent"
+                  >
+                    {t("common.ui.seeAll")} <ChevronRight className="inline size-3" />
+                  </button>
+                }
+              />
+              <Grid games={visibleRecentlyPlayed} onOpen={setOpenGame} onToggleFav={toggleFav} mapping={config.uiGamepadMapping} />
+            </section>
+          ) : null}
+
+          {!kioskMode && (systemFilter || filter === "all") && !query ? (
+            <section className="px-4 sm:px-8 pt-5 pb-1" data-testid="section-rom-upload">
+              <RomUpload system={systemFilter} variant="inline" />
+            </section>
+          ) : null}
+
+          <section className="px-4 sm:px-8 pt-5 pb-8">
             <SectionHeading
-              title={filter === "favorites" ? t("home.sections.favoritesRecentlyPlayed") : t("home.sections.recentlyPlayed")}
+              title={
+                filter === "favorites"
+                  ? t("home.sections.favorites")
+                  : filter === "all"
+                    ? t("home.sections.allGames")
+                    : filter === "recent"
+                      ? t("home.sections.recentlyPlayed")
+                      : isCollectionFilter
+                        ? t("home.sections.collectionGames")
+                        : t("home.sections.systemLibrary", { system: SYSTEMS.find((s) => s.id === filter)?.shortName })
+              }
               action={
-                <button
-                  type="button"
-                  onClick={() => goToFilter("recent")}
-                  className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
-                  data-testid="button-see-all-recent"
-                >
-                  {t("common.ui.seeAll")} <ChevronRight className="inline size-3" />
-                </button>
+                <div className="flex items-center gap-3">
+                  {!kioskMode && (
+                    newCollectionName !== null ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          autoFocus
+                          type="text"
+                          value={newCollectionName}
+                          onChange={(e) => setNewCollectionName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") submitNewCollection();
+                            if (e.key === "Escape") setNewCollectionName(null);
+                          }}
+                          placeholder={t("home.prompts.collectionName")}
+                          className="h-6 w-32 rounded border border-border bg-background/70 px-2 font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-ring"
+                          data-testid="input-new-collection"
+                        />
+                        <button type="button" onClick={submitNewCollection}
+                          className="text-muted-foreground hover:text-foreground" data-testid="button-save-collection">
+                          <Check className="size-3.5" />
+                        </button>
+                        <button type="button" onClick={() => setNewCollectionName(null)}
+                          className="text-muted-foreground hover:text-foreground" data-testid="button-cancel-collection">
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleCreateCollection}
+                        className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                        data-testid="button-create-collection"
+                      >
+                        {t("home.actions.newCollection")}
+                      </button>
+                    )
+                  )}
+                  <span
+                    className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground"
+                    data-testid="text-result-count"
+                  >
+                    {t("home.status.results", { count: filtered.length })}
+                  </span>
+                </div>
               }
             />
-            <Grid games={visibleRecentlyPlayed} onOpen={setOpenGame} onToggleFav={toggleFav} mapping={config.uiGamepadMapping} />
-          </section>
-        ) : null}
-
-        {!kioskMode && (systemFilter || filter === "all") && !query ? (
-          <section className="px-4 sm:px-8 pt-5 pb-1" data-testid="section-rom-upload">
-            <RomUpload system={systemFilter} variant="inline" />
-          </section>
-        ) : null}
-
-        <section className="px-4 sm:px-8 pt-5 pb-8">
-          <SectionHeading
-            title={
-              filter === "favorites"
-                ? t("home.sections.favorites")
-                : filter === "all"
-                  ? t("home.sections.allGames")
-                  : filter === "recent"
-                    ? t("home.sections.recentlyPlayed")
-                    : isCollectionFilter
-                      ? t("home.sections.collectionGames")
-                      : t("home.sections.systemLibrary", { system: SYSTEMS.find((s) => s.id === filter)?.shortName })
-            }
-            action={
-              <div className="flex items-center gap-3">
-                {!kioskMode && (
-                  newCollectionName !== null ? (
-                    <div className="flex items-center gap-1">
-                      <input
-                        autoFocus
-                        type="text"
-                        value={newCollectionName}
-                        onChange={(e) => setNewCollectionName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") submitNewCollection();
-                          if (e.key === "Escape") setNewCollectionName(null);
-                        }}
-                        placeholder={t("home.prompts.collectionName")}
-                        className="h-6 w-32 rounded border border-border bg-background/70 px-2 font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-ring"
-                        data-testid="input-new-collection"
-                      />
-                      <button type="button" onClick={submitNewCollection}
-                        className="text-muted-foreground hover:text-foreground" data-testid="button-save-collection">
-                        <Check className="size-3.5" />
-                      </button>
-                      <button type="button" onClick={() => setNewCollectionName(null)}
-                        className="text-muted-foreground hover:text-foreground" data-testid="button-cancel-collection">
-                        <X className="size-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleCreateCollection}
-                      className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
-                      data-testid="button-create-collection"
-                    >
-                      {t("home.actions.newCollection")}
-                    </button>
-                  )
-                )}
-                <span
-                  className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground"
-                  data-testid="text-result-count"
-                >
-                  {t("home.status.results", { count: filtered.length })}
-                </span>
+            {romsLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+                {Array.from({ length: 12 }).map((_, i) => <GameCardSkeleton key={i} />)}
               </div>
-            }
-          />
-          {romsLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
-              {Array.from({ length: 12 }).map((_, i) => <GameCardSkeleton key={i} />)}
-            </div>
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              query={query}
-              filter={filter}
-              onResetFilter={() => goToFilter("all")}
+            ) : filtered.length === 0 ? (
+              <EmptyState
+                query={query}
+                filter={filter}
+                onResetFilter={() => goToFilter("all")}
+              />
+            ) : viewMode === "grid" ? (
+            <Grid
+              games={filtered}
+              onOpen={setOpenGame}
+              onToggleFav={toggleFav}
+              disabled={openGame !== null}
+              mapping={config.uiGamepadMapping}
             />
-          ) : viewMode === "grid" ? (
-          <Grid
-            games={filtered}
-            onOpen={setOpenGame}
-            onToggleFav={toggleFav}
-            disabled={openGame !== null}
-            mapping={config.uiGamepadMapping}
-          />
-        ) : (
-          <ListView
-            games={filtered}
-            onOpen={setOpenGame}
-            onToggleFav={toggleFav}
-          />
-        )}
-        </section>
+          ) : (
+            <ListView
+              games={filtered}
+              onOpen={setOpenGame}
+              onToggleFav={toggleFav}
+            />
+          )}
+          </section>
 
-        <footer className="px-4 sm:px-8 py-6 border-t border-border">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-muted-foreground">
-            <span>
-              {t("home.status.summary", { favorites: favorites.length, uploaded: games.length })}
-            </span>
-            <span>
-              HomeArcade ·{" "}
-              <a className="underline-offset-2 hover:underline" href="#/settings">
-                {t("nav.settings")} →
-              </a>
-            </span>
-          </div>
-        </footer>
-      </div>
+          <footer className="px-4 sm:px-8 py-6 border-t border-border">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-muted-foreground">
+              <span>
+                {t("home.status.summary", { favorites: favorites.length, uploaded: games.length })}
+              </span>
+              <span>
+                HomeArcade ·{" "}
+                <a className="underline-offset-2 hover:underline" href="#/settings">
+                  {t("nav.settings")} →
+                </a>
+              </span>
+            </div>
+          </footer>
+        </div>
+      </main>
 
       <GameDetailDialog
         game={openGame}
@@ -1038,7 +1041,7 @@ function ContinueHero({ game, onOpen, profileId = 1 }: { game: Game; onOpen: (g:
   return (
     <section className="px-4 sm:px-8 pt-5">
       <div
-        className="relative rounded-xl overflow-hidden border border-card-border min-h-[168px] landscape:min-h-[130px] sm:min-h-[188px] transition-[height] duration-300 ease-in-out"
+        className="relative rounded-xl overflow-hidden border border-card-border min-h-[168px] sm:min-h-[188px] transition-[height] duration-300 ease-in-out"
         data-testid="hero-continue"
       >
         <div
