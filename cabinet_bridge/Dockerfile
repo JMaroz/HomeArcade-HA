@@ -5,8 +5,7 @@ ENV LANG=C.UTF-8 \
     PORT=5000 \
     NODE_ENV=production
 
-# Node 22+ available in Alpine edge/main (currently ships 24).
-# npm comes from the same repo as a dependency of nodejs.
+# Install Node 22+, build tools for native modules, and SQLite runtime libs.
 RUN apk add --no-cache \
       --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main \
       nodejs npm && \
@@ -16,11 +15,16 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN NODE_ENV=development npm install --no-audit --no-fund --ignore-scripts
-RUN npm rebuild better-sqlite3
 
-ARG CACHE_BUST=63
+# Full install WITH scripts so native addons (better-sqlite3) build immediately.
+# No separate rebuild step needed.
+RUN npm ci --no-audit --no-fund
+
+ARG CACHE_BUST=64
 RUN echo "cache-bust=$CACHE_BUST"
+
+# Verify better-sqlite3 actually loads before we waste time on the full build.
+RUN node -e "require('better-sqlite3'); console.log('better-sqlite3 OK');"
 
 COPY tsconfig.json vite.config.ts tailwind.config.ts postcss.config.js components.json drizzle.config.ts ./
 COPY shared ./shared
