@@ -4,7 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
-## [1.3.0] — 2026-05-15
+## [1.3.2] — 2026-05-15
+
+### Fix: Runtime Stability
+
+- **Import Fix** — Resolved a missing icon import in the Dashboard component that caused a white screen crash in production builds.
+
+---
+
+## [1.3.1] — 2026-05-15
 
 ### Major: Advanced Power User Features
 

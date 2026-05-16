@@ -12,7 +12,7 @@ import { apiUrl } from "@/lib/queryClient";
 import { formatRelative, useIntegration } from "@/lib/integration";
 import { useGameDialogState } from "@/lib/useGameDialogState";
 import type { UploadedRom, GameCollectionWithItems } from "@shared/schema";
-import { Play, Clock, Trophy, ListTodo, TrendingUp, Star, Zap, History, Radio, Gamepad2 } from "lucide-react";
+import { Play, Clock, Trophy, ListTodo, TrendingUp, Star, Zap, History, Radio, Gamepad2, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 
