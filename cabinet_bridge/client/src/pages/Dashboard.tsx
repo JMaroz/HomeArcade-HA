@@ -12,41 +12,8 @@ import { apiUrl } from "@/lib/queryClient";
 import { formatRelative, useIntegration } from "@/lib/integration";
 import { useGameDialogState } from "@/lib/useGameDialogState";
 import type { UploadedRom, GameCollectionWithItems } from "@shared/schema";
-import { 
-  Play, 
-  Clock, 
-  Trophy, 
-  ListTodo, 
-  TrendingUp, 
-  Star, 
-  Zap, 
-  History, 
-  Radio, 
-  Gamepad2, 
-  AlertCircle 
-} from "lucide-react";
+import { Play, Clock, Trophy, ListTodo, TrendingUp, Star, Zap, History, Radio } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
-
-// ─── animation variants ───────────────────────────────────────────────────────
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { 
-    y: 0, 
-    opacity: 1,
-    transition: { duration: 0.4, ease: "easeOut" }
-  }
-};
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 function fmtHours(minutes: number, playedLabel: string) {
@@ -106,7 +73,7 @@ function SectionHeader({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center justify-between mb-3 px-1">
+    <div className="flex items-center justify-between mb-3">
       <h2 className="font-display text-base font-semibold text-foreground">{title}</h2>
       <div className="flex items-center gap-3">
         {count !== undefined && (
@@ -154,7 +121,7 @@ function HighlightCard({
     <button
       type="button"
       onClick={() => onOpen(game)}
-      className="flex-1 min-w-[180px] rounded-xl border border-border bg-card/30 backdrop-blur-md p-4 flex flex-col gap-3 text-left hover:bg-secondary/40 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent group"
+      className="flex-1 min-w-[180px] rounded-xl border border-border bg-card p-4 flex flex-col gap-3 text-left hover:bg-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent group"
     >
       <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground flex items-center gap-1.5">
         {icon}
@@ -255,15 +222,15 @@ function StatusDonut({
   });
 
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-8">
-      <svg viewBox="0 0 100 100" className="w-32 h-32 shrink-0 -rotate-90">
+    <div className="flex items-center gap-6 py-2">
+      <svg viewBox="0 0 100 100" className="w-24 h-24 shrink-0 -rotate-90">
         <circle
           cx="50"
           cy="50"
           r={r}
           fill="none"
           stroke="hsl(var(--border))"
-          strokeWidth="10"
+          strokeWidth="12"
           className="opacity-20"
         />
         {segments.map((s) =>
@@ -275,16 +242,14 @@ function StatusDonut({
               r={r}
               fill="none"
               stroke={s.color}
-              strokeWidth="10"
+              strokeWidth="12"
               strokeDasharray={`${s.dash} ${circumference - s.dash}`}
               strokeDashoffset={-s.offset}
-              strokeLinecap="round"
-              className="transition-all duration-1000 ease-in-out"
             />
           ) : null,
         )}
       </svg>
-      <div className="grid grid-cols-2 sm:flex sm:flex-col gap-2">
+      <div className="flex flex-col gap-2">
         {segments
           .filter((s) => s.key !== "unset" || s.count > 0)
           .map((s) => (
@@ -310,49 +275,51 @@ function ActivityBar({
   const max = Math.max(thisWeek, lastWeek, 1);
   const diff = thisWeek - lastWeek;
   return (
-    <div className="space-y-4 w-full max-w-[240px]">
-      <div className="flex items-end justify-around gap-6 h-24">
-        <div className="flex flex-col items-center gap-2 flex-1">
-          <div className="w-full bg-border/20 rounded-md overflow-hidden relative" style={{ height: "100%" }}>
-            <motion.div
-              initial={{ height: 0 }}
-              animate={{ height: `${(lastWeek / max) * 100}%` }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="w-full bg-muted-foreground/30 absolute bottom-0 rounded-sm"
+    <div className="space-y-4">
+      <div className="flex items-end gap-4 h-20">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 bg-border rounded-sm overflow-hidden" style={{ height: 60 }}>
+            <div
+              className="w-full bg-muted-foreground/30 rounded-sm transition-all duration-500"
+              style={{
+                height: `${(lastWeek / max) * 100}%`,
+                marginTop: `${100 - (lastWeek / max) * 100}%`,
+              }}
             />
           </div>
-          <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground text-center line-clamp-1">
+          <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
             {t("dashboard.activity.lastWeek")}
           </div>
           <div className="font-mono text-[11px] text-muted-foreground tabular-nums">{lastWeek}</div>
         </div>
-        <div className="flex flex-col items-center gap-2 flex-1">
-          <div className="w-full bg-border/20 rounded-md overflow-hidden relative" style={{ height: "100%" }}>
-            <motion.div
-              initial={{ height: 0 }}
-              animate={{ height: `${(thisWeek / max) * 100}%` }}
-              transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-              className="w-full bg-primary absolute bottom-0 rounded-sm"
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 bg-border rounded-sm overflow-hidden" style={{ height: 60 }}>
+            <div
+              className="w-full bg-primary rounded-sm transition-all duration-500"
+              style={{
+                height: `${(thisWeek / max) * 100}%`,
+                marginTop: `${100 - (thisWeek / max) * 100}%`,
+              }}
             />
           </div>
-          <div className="font-mono text-[9px] uppercase tracking-wider text-primary text-center line-clamp-1">
+          <div className="font-mono text-[9px] uppercase tracking-wider text-primary font-bold">
             {t("dashboard.activity.thisWeek")}
           </div>
           <div className="font-mono text-[11px] font-bold text-foreground tabular-nums">{thisWeek}</div>
         </div>
-      </div>
-      <div className="text-center">
-        {diff > 0 ? (
-          <div className="font-mono text-[11px] text-status-online">
-            {t("dashboard.activity.more", { count: diff })}
-          </div>
-        ) : diff < 0 ? (
-          <div className="font-mono text-[11px] text-destructive">
-            {t("dashboard.activity.fewer", { count: Math.abs(diff) })}
-          </div>
-        ) : (
-          <div className="font-mono text-[11px] text-muted-foreground">{t("dashboard.activity.same")}</div>
-        )}
+        <div className="ml-4 flex-1 pb-4">
+          {diff > 0 ? (
+            <div className="font-mono text-[11px] text-status-online">
+              {t("dashboard.activity.more", { count: diff })}
+            </div>
+          ) : diff < 0 ? (
+            <div className="font-mono text-[11px] text-destructive">
+              {t("dashboard.activity.fewer", { count: Math.abs(diff) })}
+            </div>
+          ) : (
+            <div className="font-mono text-[11px] text-muted-foreground">{t("dashboard.activity.same")}</div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -371,7 +338,7 @@ export default function Dashboard() {
     queryKey: ["/api/collections"],
   });
 
-  const { data: nowPlaying } = useQuery<{ playing: boolean; id?: number; title?: string; system?: string }>({
+  const { data: nowPlaying } = useQuery<{ playing: boolean; id?: number; title?: string; system?: string }>({   
     queryKey: ["/api/now-playing"],
     queryFn: async () => { const res = await fetch("/api/now-playing"); return res.json(); },
     refetchInterval: (query) => {
@@ -499,19 +466,7 @@ export default function Dashboard() {
     [games],
   );
 
-  // ── advanced stats ──
-  const wallOfShame = useMemo(() => {
-    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
-    return games
-      .filter((g) => g.playStatus === "playing" && g.lastPlayed && g.lastPlayed < thirtyDaysAgo)
-      .sort((a, b) => (a.lastPlayed ?? 0) - (b.lastPlayed ?? 0))
-      .slice(0, 3);
-  }, [games, now]);
-
-  const longestSession = useMemo(() => {
-    return [...sessions].sort((a, b) => (b.durationSeconds ?? 0) - (a.durationSeconds ?? 0))[0];
-  }, [sessions]);
-
+  const showHighlights = mostPlayed || highestRated || bestCommunity;
   const showSystemChart = systemBreakdown.length > 0;
 
   const launchGame = (game: Game) => {
@@ -525,399 +480,344 @@ export default function Dashboard() {
 
   return (
     <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 overscroll-y-contain">
+      {/* Mobile top bar */}
       <MobileTopBar />
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 p-5 sm:p-8"
-      >
-        {/* Now Playing live banner */}
-        {nowPlaying?.playing && nowPlaying.title && (
-          <motion.div variants={itemVariants} className="md:col-span-12">
-            <div className="relative rounded-xl overflow-hidden border border-primary/40 bg-primary/5">
-              {nowPlayingGame?.artUrl && (
-                <img
-                  src={nowPlayingGame.artUrl}
-                  alt=""
-                  className="absolute right-0 top-0 h-full w-auto object-cover opacity-15 pointer-events-none"
-                />
-              )}
-              <div className="relative flex items-center gap-4 px-5 py-4">
-                <span className="relative flex size-3 shrink-0">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 animate-ping" />
-                  <span className="relative inline-flex size-3 rounded-full bg-primary" />
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="font-mono text-[9px] uppercase tracking-[0.22em] text-primary/70 flex items-center gap-1.5">
-                    <Radio className="size-3" /> {t("dashboard.liveNow")}
-                  </div>
-                  <div className="font-display text-lg font-bold text-foreground leading-tight truncate">
-                    {nowPlaying.title}
-                  </div>
-                  {nowPlaying.system && config.showSystemLabels && (
-                    <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
-                      {SYSTEMS.find((s) => s.id === nowPlaying.system)?.shortName ?? nowPlaying.system}
-                    </div>
-                  )}
+      {/* ── Now Playing live banner ── */}
+      {nowPlaying?.playing && nowPlaying.title && (
+        <section className="px-5 sm:px-8 pt-6">
+          <div className="relative rounded-xl overflow-hidden border border-primary/40 bg-primary/5">
+            {nowPlayingGame?.artUrl && (
+              <img
+                src={nowPlayingGame.artUrl}
+                alt=""
+                className="absolute right-0 top-0 h-full w-auto object-cover opacity-15 pointer-events-none"  
+              />
+            )}
+            <div className="relative flex items-center gap-4 px-5 py-4">
+              <span className="relative flex size-3 shrink-0">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 animate-ping" />
+                <span className="relative inline-flex size-3 rounded-full bg-primary" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="font-mono text-[9px] uppercase tracking-[0.22em] text-primary/70 flex items-center gap-1.5">
+                  <Radio className="size-3" /> {t("dashboard.liveNow")}
+                </div>
+                <div className="font-display text-lg font-bold text-foreground leading-tight truncate">       
+                {nowPlaying.title}
+                </div>
+                {nowPlaying.system && config.showSystemLabels && (
+                <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">        
+                {SYSTEMS.find((s) => s.id === nowPlaying.system)?.shortName ?? nowPlaying.system}
+                </div>
+                )}
                 </div>
                 {nowPlayingGame && (
-                  <button
-                    type="button"
-                    onClick={() => openGame(nowPlayingGame)}
-                    className="shrink-0 font-mono text-[10px] uppercase tracking-wider border border-border bg-background/60 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {t("common.ui.details")}
-                  </button>
+                <button
+                type="button"
+                onClick={() => openGame(nowPlayingGame)}
+                className="shrink-0 font-mono text-[10px] uppercase tracking-wider border border-border bg-background/60 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                >
+                {t("common.ui.details")}
+                </button>
                 )}
-              </div>
-            </div>
-          </motion.div>
-        )}
+                </div>
+                </div>
+                </section>
+                )}
 
-        {/* Continue Playing hero */}
-        {continueGame && (
-          <motion.div variants={itemVariants} className="md:col-span-12">
-            <div
-              className="relative rounded-2xl overflow-hidden border border-card-border min-h-[180px] landscape:min-h-[140px] group"
-              data-testid="hero-continue"
-            >
-              <div
-                className="absolute inset-0 transition-transform duration-[10s] ease-linear group-hover:scale-110"
+                {/* ── Continue Playing hero ── */}
+                {continueGame && (
+                <section className="px-5 sm:px-8 pt-6">
+                <div
+                className="relative rounded-xl overflow-hidden border border-card-border min-h-[180px]"       
+                data-testid="hero-continue"
+                >
+                <div
+                className="absolute inset-0"
                 style={{
-                  background: `linear-gradient(120deg, hsl(${continueGame.art[0]}) 0%, hsl(${continueGame.art[1]}) 60%, hsl(${continueGame.art[2]}) 100%)`,
+                background: `linear-gradient(120deg, hsl(${continueGame.art[0]}) 0%, hsl(${continueGame.art[1]}) 60%, hsl(${continueGame.art[2]}) 100%)`,
                 }}
-              />
-              {continueGame.artUrl && (
-                <img
-                  src={continueGame.artUrl}
-                  alt=""
-                  className="absolute right-0 top-0 h-full w-auto object-cover opacity-30 pointer-events-none transition-transform duration-[10s] ease-linear group-hover:scale-110"
                 />
-              )}
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.85)_0%,rgba(0,0,0,0.4)_55%,rgba(0,0,0,0.1)_100%)]" />
-              <div className="relative p-8 sm:p-10 flex flex-col gap-3 max-w-2xl">
+                {continueGame.artUrl && (
+                <img
+                src={continueGame.artUrl}
+                alt=""
+                className="absolute right-0 top-0 h-full w-auto object-cover opacity-30 pointer-events-none"  
+                />
+                )}
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.75)_0%,rgba(0,0,0,0.4)_55%,rgba(0,0,0,0.1)_100%)]" />
+                <div className="relative p-6 sm:p-8 flex flex-col gap-2.5 max-w-xl">
                 <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/70">
-                  {t("dashboard.sections.continuePlaying")}
+                {t("dashboard.sections.continuePlaying")}
                 </div>
-                <h2 className="font-display text-3xl sm:text-4xl font-bold text-white leading-tight">
-                  {continueGame.title}
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
+                {continueGame.title}
                 </h2>
-                <div className="font-mono text-[11px] text-white/60 uppercase tracking-wider flex flex-wrap gap-x-3 gap-y-1">
-                  {config.showSystemLabels && (
-                    <span>{SYSTEMS.find((s) => s.id === continueGame.system)?.shortName}</span>
-                  )}
-                  {continueGame.lastPlayed && (
-                    <span>{t("common.lastPlayed")} {formatRelative(continueGame.lastPlayed)}</span>
-                  )}
-                  {(continueGame.minutesPlayed ?? 0) > 0 && (
-                    <span>{fmtHours(continueGame.minutesPlayed ?? 0, t("common.played"))}</span>
-                  )}
+                <div className="font-mono text-[11px] text-white/60 uppercase tracking-wider">
+                {config.showSystemLabels && (
+                <>
+                {SYSTEMS.find((s) => s.id === continueGame.system)?.shortName}
+                {" · "}
+                </>
+                )}
+                {continueGame.lastPlayed
+                ? `${t("common.lastPlayed")} ${formatRelative(continueGame.lastPlayed)}`
+                : ""}
+                {(continueGame.minutesPlayed ?? 0) > 0
+                ? ` · ${fmtHours(continueGame.minutesPlayed ?? 0, t("common.played"))}`
+                : ""}
                 </div>
-                <div className="flex flex-wrap items-center gap-3 mt-4">
-                  <Button
-                    size="lg"
-                    onClick={() => launchGame(continueGame)}
-                    className="font-mono uppercase tracking-wider ring-neon h-12 px-8 text-sm"
-                    data-testid="button-hero-launch"
-                  >
-                    <Play className="size-4 fill-current" />
-                    {t("common.ui.play")}
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={() => openGame(continueGame)}
-                    className="bg-black/50 backdrop-blur-md border-white/20 text-white hover:bg-black/70 h-12 px-8 text-sm"
-                  >
-                    {t("common.ui.details")}
-                  </Button>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                <Button
+                size="lg"
+                onClick={() => launchGame(continueGame)}
+                className="font-mono uppercase tracking-wider ring-neon"
+                data-testid="button-hero-launch"
+                >
+                <Play className="size-4 fill-current" />
+                {t("common.ui.play")}
+                </Button>
+                <Button
+                size="lg"
+                variant="outline"
+                onClick={() => openGame(continueGame)}
+                className="bg-black/70 border-white/35 text-white hover:bg-black/85"
+                >
+                {t("common.ui.details")}
+                </Button>
                 </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
+                </div>
+                </div>
+                </section>
+                )}
 
-        {/* Stats row */}
-        <motion.div variants={itemVariants} className="md:col-span-3 sm:col-span-6">
-          <StatCard
-            icon={<Clock className="size-3.5" />}
-            label={t("dashboard.stats.hoursPlayed")}
-            value={fmtHoursShort(totalMinutes)}
-            sub={t("dashboard.stats.gamesInLibrary", { count: games.length })}
-            accent="text-primary"
-          />
-        </motion.div>
-        <motion.div variants={itemVariants} className="md:col-span-3 sm:col-span-6">
-          <StatCard
-            icon={<Trophy className="size-3.5" />}
-            label={t("dashboard.stats.completed")}
-            value={String(completed)}
-            sub={t("dashboard.stats.completionRate", { count: completionRate })}
-            accent="text-status-online"
-          />
-        </motion.div>
-        <motion.div variants={itemVariants} className="md:col-span-3 sm:col-span-6">
-          <StatCard
-            icon={<ListTodo className="size-3.5" />}
-            label={t("dashboard.stats.backlog")}
-            value={String(backlog)}
-            sub={backlog > 0 ? t("dashboard.stats.backlogGames", { count: backlog }) : t("dashboard.stats.backlogClear")}
-            accent="text-chart-3"
-          />
-        </motion.div>
-        <motion.div variants={itemVariants} className="md:col-span-3 sm:col-span-6">
-          <StatCard
-            icon={<TrendingUp className="size-3.5" />}
-            label={t("dashboard.stats.thisWeek")}
-            value={String(thisWeek)}
-            sub={
-              thisWeek !== lastWeekCount
+                <div className="px-5 sm:px-8 py-6 space-y-8">
+                {/* ── Stats row ── */}
+                <section>
+                <SectionHeader title={t("dashboard.sections.overview")} />
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatCard
+                icon={<Clock className="size-3" />}
+                label={t("dashboard.stats.hoursPlayed")}
+                value={fmtHoursShort(totalMinutes)}
+                sub={t("dashboard.stats.gamesInLibrary", { count: games.length })}
+                accent="text-primary"
+                />
+                <StatCard
+                icon={<Trophy className="size-3" />}
+                label={t("dashboard.stats.completed")}
+                value={String(completed)}
+                sub={t("dashboard.stats.completionRate", { count: completionRate })}
+                accent="text-status-online"
+                />
+                <StatCard
+                icon={<ListTodo className="size-3" />}
+                label={t("dashboard.stats.backlog")}
+                value={String(backlog)}
+                sub={backlog > 0 ? t("dashboard.stats.backlogGames", { count: backlog }) : t("dashboard.stats.backlogClear")}
+                accent="text-chart-3"
+                />
+                <StatCard
+                icon={<TrendingUp className="size-3" />}
+                label={t("dashboard.stats.thisWeek")}
+                value={String(thisWeek)}
+                sub={
+                thisWeek !== lastWeekCount
                 ? t("dashboard.stats.vsLastWeek", { count: Number(thisWeek - lastWeekCount) })
                 : t("dashboard.stats.sameAsLastWeek")
-            }
-            accent="text-accent"
-          />
-        </motion.div>
+                }
+                accent="text-accent"
+                />
+                </div>
+                </section>
 
-        {/* Library Breakdown */}
-        <motion.div variants={itemVariants} className="md:col-span-4 bg-card/30 backdrop-blur-md border border-border rounded-2xl p-6 flex flex-col gap-4">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            {t("dashboard.charts.playTimeBySystem")}
-          </div>
-          <div className="space-y-4 flex-1">
-            {systemBreakdown.map(({ system, minutes }) => (
-              <SystemBar
-                key={system.id}
-                system={system}
-                minutes={minutes}
-                maxMinutes={maxSystemMinutes}
-              />
-            ))}
-            {systemBreakdown.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center text-center p-8 gap-3 opacity-40">
-                <Gamepad2 className="size-8" />
-                <p className="text-xs">{t("dashboard.status.startTracking")}</p>
-              </div>
-            )}
-          </div>
-        </motion.div>
+                {/* ── Charts: system breakdown + status donut ── */}
+                {(showSystemChart || games.length > 0) && (
+                <section>
+                <SectionHeader title={t("dashboard.sections.libraryBreakdown")} />
+                <div className="grid sm:grid-cols-2 gap-4">
+                {showSystemChart && (
+                <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
+                {t("dashboard.charts.playTimeBySystem")}
+                </div>
+                {systemBreakdown.map(({ system, minutes }) => (
+                <SystemBar
+                  key={system.id}
+                  system={system}
+                  minutes={minutes}
+                  maxMinutes={maxSystemMinutes}
+                />
+                ))}
+                {systemBreakdown.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {t("dashboard.status.startTracking")}
+                </p>
+                )}
+                </div>
+                )}
+                <div className="rounded-xl border border-border bg-card p-5">
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
+                {t("dashboard.sections.statusBreakdown")}
+                </div>
+                <StatusDonut counts={statusCounts} total={games.length} />
+                </div>
+                </div>
+                </section>
+                )}
 
-        {/* Status Breakdown */}
-        <motion.div variants={itemVariants} className="md:col-span-4 bg-card/30 backdrop-blur-md border border-border rounded-2xl p-6 flex flex-col gap-4">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            {t("dashboard.sections.statusBreakdown")}
-          </div>
-          <div className="flex-1 flex items-center justify-center py-4">
-            <StatusDonut counts={statusCounts} total={games.length} />
-          </div>
-        </motion.div>
+                {/* ── Activity ── */}
+                <section>
+                <SectionHeader title={t("dashboard.sections.activity")} />
+                <div className="rounded-xl border border-border bg-card p-5">
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
+                {t("dashboard.activity.trend")}
+                </div>
+                <ActivityBar thisWeek={thisWeek} lastWeek={lastWeekCount} />
+                </div>
+                </section>
 
-        {/* Activity Trend */}
-        <motion.div variants={itemVariants} className="md:col-span-4 bg-card/30 backdrop-blur-md border border-border rounded-2xl p-6 flex flex-col gap-4">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            {t("dashboard.activity.trend")}
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <ActivityBar thisWeek={thisWeek} lastWeek={lastWeekCount} />
-          </div>
-        </motion.div>
+                {/* ── Game highlights ── */}
+                {showHighlights && (
+                <section>
+                <SectionHeader title={t("dashboard.sections.highlights")} />
+                <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+                {mostPlayed && (
+                <HighlightCard
+                label={t("dashboard.highlights.mostPlayed")}
+                game={mostPlayed}
+                stat={fmtHoursShort(mostPlayed.minutesPlayed ?? 0)}
+                statLabel={t("common.played")}
+                icon={<Clock className="size-3" />}
+                onOpen={openGame}
+                showSystem={config.showSystemLabels}
+                />
+                )}
+                {highestRated && (
+                <HighlightCard
+                label={t("dashboard.highlights.highestRated")}
+                game={highestRated}
+                stat={`${highestRated.rating}/5`}
+                statLabel={t("dashboard.highlights.yourRating")}
+                icon={<Star className="size-3" />}
+                onOpen={openGame}
+                showSystem={config.showSystemLabels}
+                />
+                )}
+                {bestCommunity && (
+                <HighlightCard
+                label={t("dashboard.highlights.communityFav")}
+                game={bestCommunity}
+                stat={`${((bestCommunity.communityScore ?? 0) / 2).toFixed(1)}`}
+                statLabel="/ 10"
+                icon={<Zap className="size-3" />}
+                onOpen={openGame}
+                showSystem={config.showSystemLabels}
+                />
+                )}
+                </div>
+                </section>
+                )}
 
-        {/* Recent Activity */}
-        <motion.div variants={itemVariants} className="md:col-span-8 bg-card/30 backdrop-blur-md border border-border rounded-2xl p-6 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              {t("dashboard.sections.recentActivity")}
-            </div>
-            <Link href="/history" className="text-[10px] font-mono uppercase text-primary hover:underline">
-              {t("common.ui.seeAll")} →
-            </Link>
-          </div>
-          <div className="divide-y divide-border/40">
-            {sessions.slice(0, 7).map((s) => {
-              const system = SYSTEMS.find((sys) => sys.id === s.romSystem);
-              const dur = s.durationSeconds
+                {/* ── In Progress ── */}
+                {inProgress.length > 0 && (
+                  <section>
+                    <SectionHeader title={t("dashboard.sections.inProgress")} count={inProgress.length} />    
+                    <HorizontalShelf>
+                      {inProgress.map((g, i) => (
+                        <div key={g.id} className="w-44 shrink-0">
+                          <GameCard game={g} onOpen={openGame} onToggleFav={handleToggleFav} priority={i < 4} />
+                        </div>
+                      ))}
+                    </HorizontalShelf>
+                  </section>
+                )}
+
+                {recentlyPlayed.length > 0 && (
+                  <section>
+                    <SectionHeader
+                      title={t("dashboard.sections.recentlyPlayed")}
+                      href="/library/recent"
+                      count={recentlyPlayed.length}
+                    />
+                    <HorizontalShelf>
+                      {recentlyPlayed.map((g, i) => (
+                        <div key={g.id} className="w-44 shrink-0">
+                          <GameCard game={g} onOpen={openGame} onToggleFav={handleToggleFav} priority={i < 4} />
+                        </div>
+                      ))}
+                    </HorizontalShelf>
+                  </section>
+                )}
+
+                {newAdditions.length > 0 && (
+                  <section>
+                    <SectionHeader title={t("dashboard.sections.newThisWeek")} count={newAdditions.length} /> 
+                    <HorizontalShelf>
+                      {newAdditions.map((g, i) => (
+                        <div key={g.id} className="w-44 shrink-0">
+                          <GameCard game={g} onOpen={openGame} onToggleFav={handleToggleFav} priority={i < 4} />
+                        </div>
+                      ))}
+                    </HorizontalShelf>
+                  </section>
+                )}
+                {/* ── Recent Activity ── */}
+                {sessions.length > 0 && (
+                <section>
+                <SectionHeader title={t("dashboard.sections.recentActivity")} />
+                <div className="rounded-xl border border-border bg-card overflow-hidden">
+                {sessions.slice(0, 12).map((s, i) => {
+                const system = SYSTEMS.find((sys) => sys.id === s.romSystem);
+                const dur = s.durationSeconds
                 ? s.durationSeconds < 60
-                  ? `${s.durationSeconds}s`
-                  : `${Math.round(s.durationSeconds / 60)}m`
+                ? `${s.durationSeconds}s`
+                : `${Math.round(s.durationSeconds / 60)}m`
                 : null;
-              const when = formatRelative(s.startedAt);
-              return (
+                const when = formatRelative(s.startedAt);
+                return (
                 <div
-                  key={s.id}
-                  className="flex items-center gap-4 py-3 group cursor-pointer"
-                  onClick={() => {
-                    const g = games.find(game => game.romId === s.romId);
-                    if (g) openGame(g);
-                  }}
+                key={s.id}
+                className={`flex items-center gap-3 px-4 py-2.5 ${i < sessions.slice(0, 12).length - 1 ? "border-b border-border" : ""}`}
                 >
-                  <div className="size-8 rounded bg-secondary/30 flex items-center justify-center shrink-0 group-hover:bg-secondary/50 transition-colors">
-                    <History className="size-3.5 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate group-hover:text-primary transition-colors">{s.romTitle}</div>
-                    <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground/60">
-                      {config.showSystemLabels && (
-                        <span className="uppercase tracking-wider">{system?.shortName ?? s.romSystem}</span>
-                      )}
-                      {dur && <span>· {dur}</span>}
-                    </div>
-                  </div>
-                  <div className="shrink-0 font-mono text-[10px] text-muted-foreground/40">{when}</div>
+                <History className="size-3.5 text-muted-foreground shrink-0" />
+                <span className="flex-1 min-w-0 font-medium text-sm truncate">{s.romTitle}</span>
+                {config.showSystemLabels && (
+                  <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                    {system?.shortName ?? s.romSystem}
+                  </span>
+                )}
+                {dur && (
+                  <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{dur}</span>
+                )}
+                <span className="shrink-0 font-mono text-[10px] text-muted-foreground/60">{when}</span>       
                 </div>
-              );
-            })}
-            {sessions.length === 0 && (
-              <div className="py-12 text-center opacity-30 font-mono text-xs uppercase tracking-widest">
-                No recent activity
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Highlights Stack */}
-        <motion.div variants={itemVariants} className="md:col-span-4 flex flex-col gap-4">
-          {mostPlayed && (
-            <HighlightCard
-              label={t("dashboard.highlights.mostPlayed")}
-              game={mostPlayed}
-              stat={fmtHoursShort(mostPlayed.minutesPlayed ?? 0)}
-              statLabel={t("common.played")}
-              icon={<Clock className="size-3" />}
-              onOpen={openGame}
-              showSystem={config.showSystemLabels}
-            />
-          )}
-          {highestRated && (
-            <HighlightCard
-              label={t("dashboard.highlights.highestRated")}
-              game={highestRated}
-              stat={`${highestRated.rating}/5`}
-              statLabel={t("dashboard.highlights.yourRating")}
-              icon={<Star className="size-3" />}
-              onOpen={openGame}
-              showSystem={config.showSystemLabels}
-            />
-          )}
-        </motion.div>
-
-        {/* Wall of Shame */}
-        <motion.div variants={itemVariants} className="md:col-span-6 bg-card/30 backdrop-blur-md border border-border rounded-2xl p-6 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-destructive flex items-center gap-1.5">
-              <AlertCircle className="size-3" /> The Wall of Shame
-            </div>
-            <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Unplayed 30+ days</span>
-          </div>
-          <div className="space-y-4 flex-1">
-             {wallOfShame.map((g) => (
-               <div key={g.id} className="flex items-center gap-4 group cursor-pointer" onClick={() => openGame(g)}>
-                  <div className="size-12 rounded-lg overflow-hidden border border-border/50 shrink-0">
-                    {g.artUrl ? <img src={g.artUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-muted" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate group-hover:text-primary transition-colors">{g.title}</div>
-                    <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
-                      {fmtHoursShort(g.minutesPlayed ?? 0)} played · {formatRelative(g.lastPlayed)}
-                    </div>
-                  </div>
-               </div>
-             ))}
-             {wallOfShame.length === 0 && (
-               <div className="h-full flex items-center justify-center text-xs text-muted-foreground italic">
-                  Your backlog is fresh!
-               </div>
-             )}
-          </div>
-        </motion.div>
-
-        {/* Legend Status */}
-        <motion.div variants={itemVariants} className="md:col-span-6 bg-card/30 backdrop-blur-md border border-border rounded-2xl p-6 flex flex-col gap-4">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent flex items-center gap-1.5">
-            <Trophy className="size-3" /> Legend Status
-          </div>
-          {longestSession ? (
-            <div className="flex-1 flex flex-col justify-center gap-2">
-              <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Longest Session Record</div>
-              <div className="text-2xl font-display font-bold text-foreground truncate">{longestSession.romTitle}</div>
-              <div className="flex items-baseline gap-2">
-                 <span className="text-4xl font-display font-black text-accent">{Math.round((longestSession.durationSeconds ?? 0) / 60)}m</span>
-                 <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">consecutive play</span>
-              </div>
-              <div className="text-[10px] font-mono text-muted-foreground/60 uppercase mt-1">Set on {new Date(longestSession.startedAt).toLocaleDateString()}</div>
-            </div>
-          ) : (
-            <div className="h-full flex items-center justify-center text-xs text-muted-foreground italic">
-               No session data yet.
-            </div>
-          )}
-        </motion.div>
-
-        {/* Shelves */}
-        {inProgress.length > 0 && (
-          <motion.div variants={itemVariants} className="md:col-span-12 space-y-4">
-            <SectionHeader title={t("dashboard.sections.inProgress")} count={inProgress.length} />
-            <HorizontalShelf>
-              {inProgress.map((g, i) => (
-                <div key={g.id} className="w-44 shrink-0">
-                  <GameCard game={g} onOpen={openGame} onToggleFav={handleToggleFav} priority={i < 4} />
+                );
+                })}
                 </div>
-              ))}
-            </HorizontalShelf>
-          </motion.div>
-        )}
-
-        {recentlyPlayed.length > 0 && (
-          <motion.div variants={itemVariants} className="md:col-span-12 space-y-4">
-            <SectionHeader
-              title={t("dashboard.sections.recentlyPlayed")}
-              href="/library/recent"
-              count={recentlyPlayed.length}
-            />
-            <HorizontalShelf>
-              {recentlyPlayed.map((g, i) => (
-                <div key={g.id} className="w-44 shrink-0">
-                  <GameCard game={g} onOpen={openGame} onToggleFav={handleToggleFav} priority={i < 4} />
-                </div>
-              ))}
-            </HorizontalShelf>
-          </motion.div>
-        )}
-
-        {newAdditions.length > 0 && (
-          <motion.div variants={itemVariants} className="md:col-span-12 space-y-4">
-            <SectionHeader title={t("dashboard.sections.newThisWeek")} count={newAdditions.length} />
-            <HorizontalShelf>
-              {newAdditions.map((g, i) => (
-                <div key={g.id} className="w-44 shrink-0">
-                  <GameCard game={g} onOpen={openGame} onToggleFav={handleToggleFav} priority={i < 4} />
-                </div>
-              ))}
-            </HorizontalShelf>
-          </motion.div>
-        )}
-
-        {/* Browse Systems */}
-        <motion.div variants={itemVariants} className="md:col-span-12 space-y-6 pt-4">
+                </section>
+                )}
+        {/* ── Browse Systems ── */}
+        <section>
           <SectionHeader title={t("dashboard.sections.browseSystems")} href="/library/all" />
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
             {SYSTEMS.map((s) => {
               const count = roms.filter((r) => r.system === s.id).length;
               return (
                 <Link key={s.id} href={`/library/${s.id}`}>
-                  <div className="rounded-2xl overflow-hidden aspect-[4/3] cursor-pointer hover:scale-[1.03] transition-all duration-300 border border-border/50 hover:border-primary/50 shadow-sm hover:shadow-primary/10 group">
+                  <div className="rounded-xl overflow-hidden aspect-[4/3] cursor-pointer hover:scale-[1.02] transition-transform">
                     <SystemTile system={s} />
                   </div>
-                  <div className="mt-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground text-center group-hover:text-primary transition-colors">
+                  <div className="mt-1.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground text-center">
                     {s.shortName} · {count}
                   </div>
                 </Link>
               );
             })}
           </div>
-        </motion.div>
-      </motion.div>
+        </section>
+      </div>
 
       <GameDetailDialog
         game={selectedGame}

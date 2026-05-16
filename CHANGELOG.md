@@ -4,6 +4,17 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.5.0] — 2026-05-15
+
+### Major: Stable Hybrid Release (Rollback & Hardening)
+
+- **UI Rollback** — Reverted the Dashboard and Home pages to their stable pre-Bento state to ensure maximum performance and compatibility with TV browsers.
+- **Modern Navigation Foundation** — Kept the professional Shadcn UI Sidebar with collapsible "Icon Mode" for the best of both worlds.
+- **Definitive Ingress Fix** — Hardened the build system with relative pathing (`base: "./"`) and strict Express middleware ordering. This is the permanent fix for the "white screen" and "Cannot GET" errors behind Home Assistant Ingress.
+- **Zero-Memory PS2 Support** — Maintained the high-performance streaming ROM upload system. You can now upload 8GB ISOs without crashing the server.
+
+---
+
 ## [1.4.8] — 2026-05-15
 
 ### Major: Fix for White Screens & PS2 Upload Crashes

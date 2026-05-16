@@ -45,7 +45,6 @@ import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { THEMES } from "@/lib/themes";
-import { BiosManager } from "@/components/BiosManager";
 
 export default function Settings() {
   const { config, setConfig, setEndpoint, resetConfig, saveStatus } = useIntegration();
@@ -103,370 +102,356 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex h-full">
-      <main className="flex-1 min-w-0 flex flex-col bg-background/30 overflow-y-auto overscroll-y-contain">
-        <MobileTopBar />
+    <div className="flex-1 h-full min-w-0 flex flex-col bg-background/30 overflow-y-auto overscroll-y-contain scrollbar-none">
+      <MobileTopBar />
 
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 space-y-8 pb-24 lg:pb-12">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                {t("settings.header")}
-              </div>
-              <h1 className="font-display text-2xl font-bold leading-tight mt-1 text-neon">{t("settings.title")}</h1>
+      <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 space-y-8 pb-24 lg:pb-12">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+              {t("settings.header")}
             </div>
-            <div className="flex items-center gap-3">
-              {saveStatus === "saving" && (
-                <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
-                  <Loader2 className="size-3 animate-spin" /> {t("common.saveStatus.saving")}
-                </div>
-              )}
-              {saveStatus === "saved" && (
-                <div className="flex items-center gap-2 font-mono text-[10px] text-accent uppercase tracking-wider">
-                  <Check className="size-3" /> {t("common.saveStatus.saved")}
-                </div>
-              )}
-              {saveStatus === "error" && (
-                <div className="flex items-center gap-2 font-mono text-[10px] text-destructive uppercase tracking-wider">
-                  <ShieldAlert className="size-3" /> {t("common.saveStatus.error")}
-                </div>
-              )}
-            </div>
+            <h1 className="font-display text-2xl font-bold leading-tight mt-1 text-neon">{t("settings.title")}</h1>
           </div>
+          <div className="flex items-center gap-3">
+            {saveStatus === "saving" && (
+              <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+                <Loader2 className="size-3 animate-spin" /> {t("common.saveStatus.saving")}
+              </div>
+            )}
+            {saveStatus === "saved" && (
+              <div className="flex items-center gap-2 font-mono text-[10px] text-accent uppercase tracking-wider">
+                <Check className="size-3" /> {t("common.saveStatus.saved")}
+              </div>
+            )}
+            {saveStatus === "error" && (
+              <div className="flex items-center gap-2 font-mono text-[10px] text-destructive uppercase tracking-wider">
+                <ShieldAlert className="size-3" /> {t("common.saveStatus.error")}
+              </div>
+            )}
+          </div>
+        </div>
 
-          <Tabs defaultValue="connection" className="w-full">
-            <TabsList className="w-full justify-start bg-sidebar/40 border border-border/50 h-auto p-1 mb-8 overflow-x-auto scrollbar-none flex-nowrap shrink-0">
-              <TabsTrigger value="connection" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
-                <Globe className="size-4" /> {t("settings.tabs.connection")}
-              </TabsTrigger>
-              <TabsTrigger value="display" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
-                <Palette className="size-4" /> {t("settings.tabs.display")}
-              </TabsTrigger>
-              <TabsTrigger value="automation" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
-                <Zap className="size-4" /> {t("settings.tabs.automation")}
-              </TabsTrigger>
-              <TabsTrigger value="controls" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
-                <Gamepad2 className="size-4" /> {t("settings.tabs.controls")}
-              </TabsTrigger>
-              <TabsTrigger value="library" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
-                <Database className="size-4" /> {t("settings.tabs.library")}
-              </TabsTrigger>
-              <TabsTrigger value="health" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
-                <Activity className="size-4" /> {t("settings.tabs.health")}
-              </TabsTrigger>
-              <TabsTrigger value="services" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
-                <Wifi className="size-4" /> {t("settings.tabs.services")}
-              </TabsTrigger>
-              <TabsTrigger value="kiosk" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
-                <Lock className="size-4" /> {t("settings.tabs.kiosk")}
-              </TabsTrigger>
-              <TabsTrigger value="help" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
-                <HelpCircle className="size-4" /> {t("settings.tabs.help")}
-              </TabsTrigger>
-            </TabsList>
+        <Tabs defaultValue="connection" className="w-full">
+          <TabsList className="w-full justify-start bg-sidebar/40 border border-border/50 h-auto p-1 mb-8 overflow-x-auto scrollbar-none flex-nowrap shrink-0">
+            <TabsTrigger value="connection" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <Globe className="size-4" /> {t("settings.tabs.connection")}
+            </TabsTrigger>
+            <TabsTrigger value="display" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <Palette className="size-4" /> {t("settings.tabs.display")}
+            </TabsTrigger>
+            <TabsTrigger value="automation" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <Zap className="size-4" /> {t("settings.tabs.automation")}
+            </TabsTrigger>
+            <TabsTrigger value="controls" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <Gamepad2 className="size-4" /> {t("settings.tabs.controls")}
+            </TabsTrigger>
+            <TabsTrigger value="library" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <Database className="size-4" /> {t("settings.tabs.library")}
+            </TabsTrigger>
+            <TabsTrigger value="services" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <Wifi className="size-4" /> {t("settings.tabs.services")}
+            </TabsTrigger>
+            <TabsTrigger value="kiosk" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <Lock className="size-4" /> {t("settings.tabs.kiosk")}
+            </TabsTrigger>
+            <TabsTrigger value="help" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <HelpCircle className="size-4" /> {t("settings.tabs.help")}
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="connection" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <Section
-                title={t("settings.sections.connection.title")}
-                description={t("settings.sections.connection.description")}
-              >
-                <div className="grid gap-6">
-                  <Field label={t("settings.fields.haBaseUrl.label")} hint={t("settings.fields.haBaseUrl.hint")}>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Globe className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          value={config.haBaseUrl}
-                          onChange={(e) => setConfig({ haBaseUrl: e.target.value })}
-                          placeholder="https://homeassistant.local:8123"
-                          className="pl-9 font-mono text-sm"
-                        />
-                      </div>
-                      <Button
-                        variant="secondary"
-                        onClick={testConnection}
-                        disabled={testing || !config.haBaseUrl}
-                        className="gap-2 shrink-0 min-w-[100px]"
-                      >
-                        {testing ? <Loader2 className="size-3.5 animate-spin" /> : <Link2 className="size-3.5" />}
-                        {t("settings.buttons.test")}
-                      </Button>
-                    </div>
-                  </Field>
-
-                  <Field label={t("settings.fields.haToken.label")} hint={t("settings.fields.haToken.hint")}>
-                    <div className="relative">
-                      <Lock className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <TabsContent value="connection" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Section
+              title={t("settings.sections.connection.title")}
+              description={t("settings.sections.connection.description")}
+            >
+              <div className="grid gap-6">
+                <Field label={t("settings.fields.haBaseUrl.label")} hint={t("settings.fields.haBaseUrl.hint")}>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Globe className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        type="password"
-                        value={config.haToken}
-                        onChange={(e) => setConfig({ haToken: e.target.value })}
-                        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        value={config.haBaseUrl}
+                        onChange={(e) => setConfig({ haBaseUrl: e.target.value })}
+                        placeholder="https://homeassistant.local:8123"
                         className="pl-9 font-mono text-sm"
                       />
                     </div>
-                  </Field>
+                    <Button
+                      variant="secondary"
+                      onClick={testConnection}
+                      disabled={testing || !config.haBaseUrl}
+                      className="gap-2 shrink-0 min-w-[100px]"
+                    >
+                      {testing ? <Loader2 className="size-3.5 animate-spin" /> : <Link2 className="size-3.5" />}
+                      {t("settings.buttons.test")}
+                    </Button>
+                  </div>
+                </Field>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-border bg-sidebar/40">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2 font-display font-semibold text-sm">
-                        <Zap className="size-4 text-accent" />
-                        {t("settings.fields.liveMode.label")}
-                      </div>
-                      <div className="text-xs text-muted-foreground max-w-sm">
-                        {t("settings.fields.liveMode.hint")}
-                      </div>
+                <Field label={t("settings.fields.haToken.label")} hint={t("settings.fields.haToken.hint")}>
+                  <div className="relative">
+                    <Lock className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      value={config.haToken}
+                      onChange={(e) => setConfig({ haToken: e.target.value })}
+                      placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      className="pl-9 font-mono text-sm"
+                    />
+                  </div>
+                </Field>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-border bg-sidebar/40">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2 font-display font-semibold text-sm">
+                      <Zap className="size-4 text-accent" />
+                      {t("settings.fields.liveMode.label")}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                        {config.liveMode ? t("settings.fields.liveMode.active") : t("settings.fields.liveMode.simulation")}
-                      </span>
-                      <Switch
-                        checked={config.liveMode}
-                        onCheckedChange={handleLiveModeToggle}
-                      />
+                    <div className="text-xs text-muted-foreground max-w-sm">
+                      {t("settings.fields.liveMode.hint")}
                     </div>
                   </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {config.liveMode ? t("settings.fields.liveMode.active") : t("settings.fields.liveMode.simulation")}
+                    </span>
+                    <Switch
+                      checked={config.liveMode}
+                      onCheckedChange={handleLiveModeToggle}
+                    />
+                  </div>
+                </div>
 
-                  {!config.liveMode && (
-                    <div className="flex items-start gap-3 p-4 rounded-lg border border-accent/20 bg-accent/5">
-                      <AlertTriangle className="size-4 text-accent mt-0.5 shrink-0" />
-                      <div className="text-xs text-accent/90 leading-relaxed">
-                        {t("settings.fields.liveMode.notice")}
-                      </div>
+                {!config.liveMode && (
+                  <div className="flex items-start gap-3 p-4 rounded-lg border border-accent/20 bg-accent/5">
+                    <AlertTriangle className="size-4 text-accent mt-0.5 shrink-0" />
+                    <div className="text-xs text-accent/90 leading-relaxed">
+                      {t("settings.fields.liveMode.notice")}
                     </div>
-                  )}
-                </div>
-              </Section>
-            </TabsContent>
+                  </div>
+                )}
+              </div>
+            </Section>
+          </TabsContent>
 
-            <TabsContent value="display" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <DisplaySettings />
-            </TabsContent>
+          <TabsContent value="display" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <DisplaySettings />
+          </TabsContent>
 
-            <TabsContent value="automation" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <Section
-                title={t("settings.sections.automation.title")}
-                description={t("settings.sections.automation.description")}
-              >
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <Field label={t("settings.fields.pcHostname.label")} hint={t("settings.fields.pcHostname.hint")}>
-                    <Input
-                      value={config.pcHostname}
-                      onChange={(e) => setConfig({ pcHostname: e.target.value })}
-                      placeholder="GAMING-PC"
-                      className="font-mono text-sm"
-                    />
-                  </Field>
-                  <Field label={t("settings.fields.pcOnline.label")} hint={t("settings.fields.pcOnline.hint")}>
-                    <Input
-                      value={config.pcOnlineEntityId}
-                      onChange={(e) => setConfig({ pcOnlineEntityId: e.target.value })}
-                      placeholder="binary_sensor.gaming_pc_status"
-                      className="font-mono text-sm"
-                    />
-                  </Field>
-                  <Field label={t("settings.fields.pcCpu.label")} hint={t("settings.fields.pcCpu.hint")}>
-                    <Input
-                      value={config.pcCpuEntityId}
-                      onChange={(e) => setConfig({ pcCpuEntityId: e.target.value })}
-                      placeholder="sensor.gaming_pc_cpu_usage"
-                      className="font-mono text-sm"
-                    />
-                  </Field>
-                  <Field label={t("settings.fields.pcRam.label")} hint={t("settings.fields.pcRam.hint")}>
-                    <Input
-                      value={config.pcRamEntityId}
-                      onChange={(e) => setConfig({ pcRamEntityId: e.target.value })}
-                      placeholder="sensor.gaming_pc_ram_usage"
-                      className="font-mono text-sm"
-                    />
-                  </Field>
-                  <Field label={t("settings.fields.pcApp.label")} hint={t("settings.fields.pcApp.hint")}>
-                    <Input
-                      value={config.pcAppEntityId}
-                      onChange={(e) => setConfig({ pcAppEntityId: e.target.value })}
-                      placeholder="sensor.gaming_pc_current_app"
-                      className="font-mono text-sm"
-                    />
-                  </Field>
-                </div>
-              </Section>
+          <TabsContent value="automation" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Section
+              title={t("settings.sections.automation.title")}
+              description={t("settings.sections.automation.description")}
+            >
+              <div className="grid sm:grid-cols-2 gap-6">
+                <Field label={t("settings.fields.pcHostname.label")} hint={t("settings.fields.pcHostname.hint")}>
+                  <Input
+                    value={config.pcHostname}
+                    onChange={(e) => setConfig({ pcHostname: e.target.value })}
+                    placeholder="GAMING-PC"
+                    className="font-mono text-sm"
+                  />
+                </Field>
+                <Field label={t("settings.fields.pcOnline.label")} hint={t("settings.fields.pcOnline.hint")}>
+                  <Input
+                    value={config.pcOnlineEntityId}
+                    onChange={(e) => setConfig({ pcOnlineEntityId: e.target.value })}
+                    placeholder="binary_sensor.gaming_pc_status"
+                    className="font-mono text-sm"
+                  />
+                </Field>
+                <Field label={t("settings.fields.pcCpu.label")} hint={t("settings.fields.pcCpu.hint")}>
+                  <Input
+                    value={config.pcCpuEntityId}
+                    onChange={(e) => setConfig({ pcCpuEntityId: e.target.value })}
+                    placeholder="sensor.gaming_pc_cpu_usage"
+                    className="font-mono text-sm"
+                  />
+                </Field>
+                <Field label={t("settings.fields.pcRam.label")} hint={t("settings.fields.pcRam.hint")}>
+                  <Input
+                    value={config.pcRamEntityId}
+                    onChange={(e) => setConfig({ pcRamEntityId: e.target.value })}
+                    placeholder="sensor.gaming_pc_ram_usage"
+                    className="font-mono text-sm"
+                  />
+                </Field>
+                <Field label={t("settings.fields.pcApp.label")} hint={t("settings.fields.pcApp.hint")}>
+                  <Input
+                    value={config.pcAppEntityId}
+                    onChange={(e) => setConfig({ pcAppEntityId: e.target.value })}
+                    placeholder="sensor.gaming_pc_current_app"
+                    className="font-mono text-sm"
+                  />
+                </Field>
+              </div>
+            </Section>
 
-              <Separator className="bg-border/60" />
+            <Separator className="bg-border/60" />
 
-              <Section
-                title={t("settings.sections.endpoints.title")}
-                description={t("settings.sections.endpoints.description")}
-              >
-                <div className="space-y-4">
-                  <div className="p-4 rounded-lg border border-border bg-sidebar/20">
-                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 text-neon-cyan">
-                      <Wifi className="size-4 text-accent" />
-                      System Actions
-                    </h3>
-                    <div className="grid gap-3">
-                      {[
-                        { id: "wake_pc", label: "Wake PC", default: "/api/webhook/cabinet_wake_pc" },
-                        { id: "sleep_pc", label: "Sleep PC", default: "/api/webhook/cabinet_sleep_pc" },
-                        { id: "restart_pc", label: "Restart PC", default: "/api/webhook/cabinet_restart_pc" },
-                        { id: "shutdown_pc", label: "Shutdown PC", default: "/api/webhook/cabinet_shutdown_pc" },
-                      ].map((a) => (
-                        <div key={a.id} className="space-y-1.5">
-                          <Label className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">
-                            {a.label}
-                          </Label>
-                          <div className="flex gap-2">
-                            <Input
-                              value={config.endpoints[a.id] || a.default}
-                              onChange={(e) => setEndpoint(a.id, e.target.value)}
-                              className="font-mono text-[12px] bg-background/40"
-                            />
-                            <Button
-                              variant="secondary"
-                              size="icon"
-                              onClick={() => copy(config.endpoints[a.id] || a.default, a.id)}
-                            >
-                              {copied === a.id ? (
-                                <Check className="size-3.5 text-accent" />
-                              ) : (
-                                <Copy className="size-3.5" />
-                              )}
-                            </Button>
-                          </div>
+            <Section
+              title={t("settings.sections.endpoints.title")}
+              description={t("settings.sections.endpoints.description")}
+            >
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg border border-border bg-sidebar/20">
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 text-neon-cyan">
+                    <Wifi className="size-4 text-accent" />
+                    System Actions
+                  </h3>
+                  <div className="grid gap-3">
+                    {[
+                      { id: "wake_pc", label: "Wake PC", default: "/api/webhook/cabinet_wake_pc" },
+                      { id: "sleep_pc", label: "Sleep PC", default: "/api/webhook/cabinet_sleep_pc" },
+                      { id: "restart_pc", label: "Restart PC", default: "/api/webhook/cabinet_restart_pc" },
+                      { id: "shutdown_pc", label: "Shutdown PC", default: "/api/webhook/cabinet_shutdown_pc" },
+                    ].map((a) => (
+                      <div key={a.id} className="space-y-1.5">
+                        <Label className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">
+                          {a.label}
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={config.endpoints[a.id] || a.default}
+                            onChange={(e) => setEndpoint(a.id, e.target.value)}
+                            className="font-mono text-[12px] bg-background/40"
+                          />
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            onClick={() => copy(config.endpoints[a.id] || a.default, a.id)}
+                          >
+                            {copied === a.id ? (
+                              <Check className="size-3.5 text-accent" />
+                            ) : (
+                              <Copy className="size-3.5" />
+                            )}
+                          </Button>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-lg border border-border bg-sidebar/20">
-                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                      <Terminal className="size-4 text-primary" />
-                      Sample Game Launch
-                    </h3>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Each game has a unique webhook. Example for a specific title:
-                    </p>
-                    <div className="flex gap-2">
-                      <Input
-                        readOnly
-                        value="/api/webhook/cabinet_launch_super-mario-world"
-                        className="font-mono text-[12px] bg-background/40 opacity-70"
-                      />
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        onClick={() =>
-                          copy("/api/webhook/cabinet_launch_super-mario-world", "sample-game")
-                        }
-                      >
-                        {copied === "sample-game" ? (
-                          <Check className="size-3.5 text-accent" />
-                        ) : (
-                          <Copy className="size-3.5" />
-                        )}
-                      </Button>
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </Section>
-            </TabsContent>
 
-            <TabsContent value="controls" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <ControlsSettings />
-            </TabsContent>
+                <div className="p-4 rounded-lg border border-border bg-sidebar/20">
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Terminal className="size-4 text-primary" />
+                    Sample Game Launch
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Each game has a unique webhook. Example for a specific title:
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      readOnly
+                      value="/api/webhook/cabinet_launch_super-mario-world"
+                      className="font-mono text-[12px] bg-background/40 opacity-70"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      onClick={() =>
+                        copy("/api/webhook/cabinet_launch_super-mario-world", "sample-game")
+                      }
+                    >
+                      {copied === "sample-game" ? (
+                        <Check className="size-3.5 text-accent" />
+                      ) : (
+                        <Copy className="size-3.5" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Section>
+          </TabsContent>
 
-            <TabsContent value="library" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <ScannerStatusSection />
-              <Separator className="bg-border/60" />
-              <SmartFilterCollectionCreator />
-            </TabsContent>
+          <TabsContent value="controls" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <ControlsSettings />
+          </TabsContent>
 
-            <TabsContent value="health" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-               <Section
-                 title={t("settings.sections.health.title")}
-                 description={t("settings.sections.health.description")}
-               >
-                 <BiosManager />
-               </Section>
-            </TabsContent>
+          <TabsContent value="library" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <ScannerStatusSection />
+            <Separator className="bg-border/60" />
+            <SmartFilterCollectionCreator />
+          </TabsContent>
 
-            <TabsContent value="services" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <ServicesSettings />
-            </TabsContent>
+          <TabsContent value="services" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <ServicesSettings />
+          </TabsContent>
 
-            <TabsContent value="kiosk" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <KioskSettings />
-            </TabsContent>
+          <TabsContent value="kiosk" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <KioskSettings />
+          </TabsContent>
 
-            <TabsContent value="help" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <Section
-                title={t("settings.sections.help.title")}
-                description={t("settings.sections.help.description")}
-              >
-                <ul className="space-y-6">
-                  <Step n={1} title="Create a Wake-on-LAN Script">
-                    Define a script in HA that sends a magic packet to your PC's MAC address.
-                    <Code>{`script:
+          <TabsContent value="help" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Section
+              title={t("settings.sections.help.title")}
+              description={t("settings.sections.help.description")}
+            >
+              <ul className="space-y-6">
+                <Step n={1} title="Create a Wake-on-LAN Script">
+                  Define a script in HA that sends a magic packet to your PC's MAC address.
+                  <Code>{`script:
   wake_gaming_pc:
     alias: "Wake Gaming PC"
     sequence:
       - service: wake_on_lan.send_magic_packet
         data:
           mac: "AA:BB:CC:DD:EE:FF"`}</Code>
-                  </Step>
-                  <Step n={2} title="Setup the Webhook Automation">
-                    Create an automation that triggers on the \`cabinet_wake_pc\` webhook and runs your
-                    script.
-                    <Code>{`automation:
+                </Step>
+                <Step n={2} title="Setup the Webhook Automation">
+                  Create an automation that triggers on the \`cabinet_wake_pc\` webhook and runs your
+                  script.
+                  <Code>{`automation:
   - alias: "Cabinet: Wake PC"
     trigger:
       - platform: webhook
         webhook_id: cabinet_wake_pc
     action:
       - service: script.wake_gaming_pc`}</Code>
-                  </Step>
-                  <Step n={3} title="Configure PC Sensors">
-                    Install the <strong>HASS.Agent</strong> or <strong>IOT Link</strong> on your Windows
-                    PC to provide CPU, RAM, and Online sensors back to Home Assistant.
-                  </Step>
-                  <Step n={4} title="Enable Live Mode">
-                    Go to the <strong>Connection</strong> tab and toggle <strong>Live Mode</strong>. Cabinet Bridge will now send a POST
-                    request to your HA webhooks whenever you click an action button.
-                  </Step>
-                  <Step n={5} title="Add as Sidebar Item (Optional)">
-                    Add this to your \`configuration.yaml\` to see Cabinet Bridge in the HA sidebar:
-                    <Code>{`panel_iframe:
+                </Step>
+                <Step n={3} title="Configure PC Sensors">
+                  Install the <strong>HASS.Agent</strong> or <strong>IOT Link</strong> on your Windows
+                  PC to provide CPU, RAM, and Online sensors back to Home Assistant.
+                </Step>
+                <Step n={4} title="Enable Live Mode">
+                  Go to the <strong>Connection</strong> tab and toggle <strong>Live Mode</strong>. Cabinet Bridge will now send a POST
+                  request to your HA webhooks whenever you click an action button.
+                </Step>
+                <Step n={5} title="Add as Sidebar Item (Optional)">
+                  Add this to your \`configuration.yaml\` to see Cabinet Bridge in the HA sidebar:
+                  <Code>{`panel_iframe:
   cabinet:
     title: "Cabinet"
     icon: mdi:gamepad-variant
     url: "\${window.location.origin}\${window.location.pathname}"`}</Code>
-                  </Step>
-                </ul>
-              </Section>
-            </TabsContent>
-          </Tabs>
+                </Step>
+              </ul>
+            </Section>
+          </TabsContent>
+        </Tabs>
 
-          <Separator className="bg-border/60" />
+        <Separator className="bg-border/60" />
 
-          {/* Footer actions */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-              <ShieldAlert className="size-3.5" />
-              {t("settings.autoSaved")}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
-            >
-              <RotateCcw className="size-3.5" /> {t("settings.buttons.resetDefaults")}
-            </Button>
+        {/* Footer actions */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+            <ShieldAlert className="size-3.5" />
+            {t("settings.autoSaved")}
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleReset}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
+          >
+            <RotateCcw className="size-3.5" /> {t("settings.buttons.resetDefaults")}
+          </Button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
@@ -992,7 +977,7 @@ function ControlsSettings() {
 
     window.addEventListener("gamepadconnected", update);
     window.addEventListener("gamepaddisconnected", update);
-    const timer = setInterval(update, 100); // Faster poll for the tester
+    const timer = setInterval(update, 100); 
     return () => {
       window.removeEventListener("gamepadconnected", update);
       window.removeEventListener("gamepaddisconnected", update);
@@ -1344,7 +1329,7 @@ function ServicesSettings() {
 function KioskSettings() {
   const { config, setConfig } = useIntegration();
   const { t } = useTranslation();
-  const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({ queryKey: ["/api/collections"] });
+  const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({ key: ["/api/collections"] });
 
   return (
     <div className="space-y-10">
