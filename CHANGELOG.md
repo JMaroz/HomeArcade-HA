@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.4.2] — 2026-05-15
+
+### Major: The Definitive Fix for White Screens & Crashes
+
+- **Streaming Upload Infrastructure** — Implemented a true streaming upload handler that hashes ROMs incrementally from the network request. This eliminates all "data is too long" and memory exhaustion (OOM) errors during PS2 game uploads.
+- **Robust Shell Lifecycle** — Simplified the `run.sh` startup script to remove complex dependencies while still ensuring the 8GB upload limit is correctly applied from your Home Assistant options.
+- **Global Scope Integrity** — Verified every UI component to ensure the `React` core library is correctly imported, preventing ReferenceErrors that were causing the app to fail in production mode.
+
+---
+
 ## [1.4.1] — 2026-05-15
 
 ### Fix: PS2 Upload & Diagnostic Safety

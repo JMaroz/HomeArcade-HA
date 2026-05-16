@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv bashio
+#!/usr/bin/with-contenv sh
 set -e
 
 cd /app
@@ -8,14 +8,17 @@ export PORT=5000
 export CABINET_DATA_DIR="${CABINET_DATA_DIR:-/data}"
 
 # Pull the user-configurable upload ceiling out of the add-on options.
-# Falls back to a generous default so large archives upload without further tuning.
-if bashio::config.has_value 'max_upload_mb'; then
-  export CABINET_MAX_UPLOAD_MB="$(bashio::config 'max_upload_mb')"
-else
-  export CABINET_MAX_UPLOAD_MB=8192
+# We use a simple grep/sed to avoid bashio dependency issues if the environment is unstable.
+if [ -f /data/options.json ]; then
+  MAX_UPLOAD="$(grep -o '"max_upload_mb":[^,]*' /data/options.json | cut -d: -f2 | tr -d ' ')"
+  if [ ! -z "$MAX_UPLOAD" ]; then
+    export CABINET_MAX_UPLOAD_MB="$MAX_UPLOAD"
+  fi
 fi
+
+export CABINET_MAX_UPLOAD_MB="${CABINET_MAX_UPLOAD_MB:-8192}"
 
 mkdir -p "$CABINET_DATA_DIR"
 
-bashio::log.info "starting on port $PORT (data dir: $CABINET_DATA_DIR, max upload: ${CABINET_MAX_UPLOAD_MB}mb)"
+echo "[HomeArcade] starting on port $PORT (data dir: $CABINET_DATA_DIR, max upload: ${CABINET_MAX_UPLOAD_MB}mb)"
 exec node dist/index.cjs
