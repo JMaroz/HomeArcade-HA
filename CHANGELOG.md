@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.2.1] — 2026-05-15
+
+### Fix: Build Stability
+
+- **Structural Fixes** — Resolved critical JSX structural errors in the Dashboard component that prevented version 1.2.0 from successfully building and installing in Home Assistant.
+- **Improved Layout** — Refined the page wrapping logic to work seamlessly with the new Shadcn Sidebar layout.
+
+---
+
 ## [1.2.0] — 2026-05-15
 
 ### Major: Professional Shadcn Navigation
