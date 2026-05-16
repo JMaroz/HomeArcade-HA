@@ -4,6 +4,14 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.2.6] — 2026-05-15
+
+### Fix: Repository Sync
+
+- **Metadata Refresh** — Incremented version and updated add-on description to force Home Assistant to refresh its repository metadata and acknowledge the 8GB limit update.
+
+---
+
 ## [1.2.5] — 2026-05-15
 
 ### Fix: Persistent 8GB Limit
