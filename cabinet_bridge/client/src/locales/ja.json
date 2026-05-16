@@ -208,6 +208,7 @@
       "automation": "自動化",
       "controls": "コントロール",
       "library": "ライブラリ",
+      "health": "システムの状態",
       "services": "サービス",
       "kiosk": "キオスク",
       "help": "ヘルプ"

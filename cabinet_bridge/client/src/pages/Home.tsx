@@ -28,6 +28,7 @@ import { filterToPath } from "@/lib/filter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { GameCollectionWithItems, UploadedRom, ProfileGameState } from "@shared/schema";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
+import { SurpriseWheel } from "@/components/SurpriseWheel";
 import { useGridNav } from "@/lib/useGridNav";
 import { formatRelative } from "@/lib/integration";
 import { useTranslation } from "react-i18next";
@@ -43,6 +44,7 @@ export default function Home({ filter }: { filter: Filter }) {
   const [sort, setSort] = useState<Sort>(() => (localStorage.getItem("ha-sort") as Sort | null) ?? "recent");
   const [genreFilter, setGenreFilter] = useState<string>(() => localStorage.getItem("ha-genre") ?? "");
   const [openGame, setOpenGame] = useState<Game | null>(null);
+  const [showSurpriseWheel, setShowSurpriseWheel] = useState(false);
   const [favOverrides, setFavOverrides] = useState<Record<string, boolean>>({});
   const [ratingOverrides, setRatingOverrides] = useState<Record<string, number>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
@@ -460,7 +462,7 @@ export default function Home({ filter }: { filter: Filter }) {
 
             <button
               type="button"
-              onClick={pickRandom}
+              onClick={() => setShowSurpriseWheel(true)}
               title={t("home.actions.surprise")}
               disabled={filtered.length === 0}
               className="size-9 flex items-center justify-center rounded-md border border-border bg-background/40 text-muted-foreground hover:text-foreground hover-elevate disabled:opacity-40"
@@ -781,6 +783,21 @@ export default function Home({ filter }: { filter: Filter }) {
         onToggleCollection={handleToggleCollection}
         onSetStatus={setStatus}
         profileId={currentProfileId}
+      />
+
+      <SurpriseWheel
+        open={showSurpriseWheel}
+        onClose={() => setShowSurpriseWheel(false)}
+        games={filtered}
+        onLaunch={(g) => {
+          setShowSurpriseWheel(false);
+          const returnTo = encodeURIComponent(window.location.href);
+          window.location.href = apiUrl(`/api/roms/${g.romId}/player?return=${returnTo}&profile=${currentProfileId}`);
+        }}
+        onOpenDetails={(g) => {
+          setShowSurpriseWheel(false);
+          setOpenGame(g);
+        }}
       />
     </div>
   );

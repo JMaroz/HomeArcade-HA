@@ -208,6 +208,7 @@
       "automation": "Automatisierung",
       "controls": "Steuerung",
       "library": "Bibliothek",
+      "health": "Systemstatus",
       "services": "Dienste",
       "kiosk": "Kiosk",
       "help": "Hilfe"
@@ -269,6 +270,10 @@
       "bulk": {
         "title": "Massenaktionen",
         "description": "Verarbeite mehrere ROMs gleichzeitig. Diese Vorgänge können einige Minuten dauern."
+      },
+      "health": {
+        "title": "Systemstatus & Firmware",
+        "description": "Verwalten Sie BIOS- und Firmware-Dateien, die für die Emulation von High-End-Konsolen erforderlich sind."
       },
       "kiosk": {
         "title": "Kiosk-Modus",

@@ -4,6 +4,19 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [1.3.0] — 2026-05-15
+
+### Major: Advanced Power User Features
+
+- **BIOS & Firmware Manager** — Added a new "System Health" tab in Settings. You can now manage and upload original firmware files for PS1, PS2, Saturn, and Dreamcast directly from the UI, resolving the most common cause of emulator loading issues.
+- **Cinematic "Surprise Me" Wheel** — Replaced the instant random pick with a cinematic, high-energy roulette wheel. Let the fates decide your next adventure with a console-like selection animation.
+- **Enhanced Bento Widgets** — Expanded the Dashboard with new data-driven modules:
+    - **The Wall of Shame** — Highlights games you started but haven't touched in over 30 days.
+    - **Longest Session Record** — Proudly displays your most dedicated gaming session.
+- **Localization Sync** — Full 7-language support for all new firmware management and dashboard features.
+
+---
+
 ## [1.2.6] — 2026-05-15
 
 ### Fix: Repository Sync

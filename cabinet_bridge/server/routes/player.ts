@@ -1282,7 +1282,51 @@ export function renderEmulatorPage({ title, returnTo, romHash }: { title: string
 </html>`;
 }
 
-export function renderEmulatorBootstrap({ core, title, gameId, romId, discs, romHash, raUsername, raToken, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2, gamepadRumble, systemDisplay, globalAspectRatio, globalShader, userId, userName, profileId, cheats }: { core: string; title: string; gameId: string; romId: number; discs: Array<{ id: number; label: string }>; romHash: string | null; raUsername: string; raToken: string; controlDefaults: Record<string, Record<number, string>>; gamepadBindings: Record<number, number>; controlDefaultsP2: Record<number, string>; gamepadBindingsP2: Record<number, number>; gamepadRumble: boolean; systemDisplay: Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>; globalAspectRatio: string; globalShader: string; userId: string; userName: string; profileId: string; cheats: Array<{ description: string; code: string }>; }) {
+export function renderEmulatorBootstrap({
+  core,
+  title,
+  gameId,
+  romId,
+  discs,
+  romHash,
+  raUsername,
+  raToken,
+  controlDefaults,
+  gamepadBindings,
+  controlDefaultsP2,
+  gamepadBindingsP2,
+  gamepadRumble,
+  systemDisplay,
+  globalAspectRatio,
+  globalShader,
+  userId,
+  userName,
+  profileId,
+  cheats,
+  biosUrl,
+}: {
+  core: string;
+  title: string;
+  gameId: string;
+  romId: number;
+  discs: Array<{ id: number; label: string }>;
+  romHash: string | null;
+  raUsername: string;
+  raToken: string;
+  controlDefaults: Record<string, Record<number, string>>;
+  gamepadBindings: Record<number, number>;
+  controlDefaultsP2: Record<number, string>;
+  gamepadBindingsP2: Record<number, number>;
+  gamepadRumble: boolean;
+  systemDisplay: Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>;
+  globalAspectRatio: string;
+  globalShader: string;
+  userId: string;
+  userName: string;
+  profileId: string;
+  cheats: Array<{ description: string; code: string }>;
+  biosUrl?: string | null;
+}) {
   return `"use strict";
 // Diagnostic: immediately mark that this script is executing.
 // If the launch overlay stays at 0%, this script never ran.
@@ -2625,6 +2669,7 @@ window.EJS_onGameStart = function () {
 window.EJS_player = "#game"; window.EJS_core = ${JSON.stringify(core)}; window.CABINET_CORE = ${JSON.stringify(core)}; window.EJS_gameName = ${JSON.stringify(title)}; window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)}; window.CABINET_USER_ID = ${JSON.stringify(userId)}; window.CABINET_USER_NAME = ${JSON.stringify(userName)}; window.CABINET_PROFILE_ID = ${JSON.stringify(profileId)};
 (function () { var name = window.CABINET_USER_NAME || ""; var el = document.getElementById("cabinet-save-user"); if (el) el.textContent = name || "you"; var badge = document.getElementById("cabinet-user-badge"); if (badge && name && name !== "default") { badge.textContent = name; badge.removeAttribute("hidden"); } })();
 ${discs.length > 1 ? `window.EJS_discs = ${JSON.stringify(discs.map((d) => ({ fileName: `../\${d.id}/file`, label: d.label })))};` : `window.EJS_gameUrl = "./file";`}
+${biosUrl ? `window.EJS_biosUrl = ${JSON.stringify(biosUrl)};` : ""}
 window.EJS_pathtodata = "../../emulatorjs/"; window.EJS_startOnLoaded = true; window.EJS_AdUrl = "";
 (function () { var proto = window.location.protocol === "https:" ? "wss:" : "ws:"; var _p = window.location.pathname; var _i = _p.indexOf("/api/roms/"); var base = _i >= 0 ? _p.slice(0, _i) : ""; window.EJS_netplayUrl = proto + "//" + window.location.host + base + "/api/netplay"; })();
 ${raUsername && raToken ? `window.EJS_retroachievements = { username: ${JSON.stringify(raUsername)}, apiKey: ${JSON.stringify(raToken)}, hardcore: false };` : "// RetroAchievements not configured"}

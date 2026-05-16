@@ -6,7 +6,12 @@ import {
   EMULATORJS_CORES, ROM_ROOT, getUserFromRequest 
 } from "./shared";
 import { renderEmulatorPage, renderEmulatorBootstrap, renderPlayerError } from "./player";
+import { REQUIRED_BIOS } from "./bios";
+import { dataPath } from "../data-dir";
 import path from "node:path";
+
+const BIOS_ROOT = dataPath("bios");
+
 import fs from "node:fs/promises";
 import crypto from "node:crypto";
 import { z } from "zod";
@@ -255,6 +260,20 @@ export function registerRomRoutes(app: Express) {
     const profileParam = req.query.profile ? String(req.query.profile) : null;
     const userId = profileParam ? `profile_${profileParam}` : haUserId;
     res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+
+    // Check for required BIOS files
+    const coreBios = REQUIRED_BIOS[core] || [];
+    let biosUrl: string | null = null;
+    for (const filename of coreBios) {
+      try {
+        await fs.access(path.join(BIOS_ROOT, filename));
+        biosUrl = `/api/bios/file/${filename}`;
+        break; // Use the first available BIOS for now
+      } catch {
+        // Skip if missing
+      }
+    }
+
     res.send(renderEmulatorBootstrap({
       core, title: rom.title, gameId: `${rom.system}-${rom.slug}`, romId: rom.id, discs, romHash: rom.romHash ?? null,
       raUsername: bootstrapSettings.raUsername ?? "", raToken: bootstrapSettings.raToken ?? "",
@@ -284,6 +303,7 @@ export function registerRomRoutes(app: Express) {
       globalShader: bootstrapSettings.globalShader || "none",
       userId, userName, profileId: profileParam ?? "1",
       cheats: await storage.listCheats(rom.id, profileParam ? Number(profileParam) : 1).then((cs) => cs.filter((c) => c.enabled)),
+      biosUrl,
     }));
   });
 

@@ -45,6 +45,7 @@ import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { THEMES } from "@/lib/themes";
+import { BiosManager } from "@/components/BiosManager";
 
 export default function Settings() {
   const { config, setConfig, setEndpoint, resetConfig, saveStatus } = useIntegration();
@@ -150,6 +151,9 @@ export default function Settings() {
               </TabsTrigger>
               <TabsTrigger value="library" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
                 <Database className="size-4" /> {t("settings.tabs.library")}
+              </TabsTrigger>
+              <TabsTrigger value="health" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+                <Activity className="size-4" /> {t("settings.tabs.health")}
               </TabsTrigger>
               <TabsTrigger value="services" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
                 <Wifi className="size-4" /> {t("settings.tabs.services")}
@@ -377,6 +381,15 @@ export default function Settings() {
               <ScannerStatusSection />
               <Separator className="bg-border/60" />
               <SmartFilterCollectionCreator />
+            </TabsContent>
+
+            <TabsContent value="health" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+               <Section
+                 title={t("settings.sections.health.title")}
+                 description={t("settings.sections.health.description")}
+               >
+                 <BiosManager />
+               </Section>
             </TabsContent>
 
             <TabsContent value="services" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">

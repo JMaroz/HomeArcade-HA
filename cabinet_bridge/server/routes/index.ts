@@ -13,6 +13,7 @@ import { registerImportRoutes } from "./import";
 import { registerScrapeRoutes } from "./scrape";
 import { registerRetroAchievementsRoutes } from "./retroachievements";
 import { registerKioskRoutes } from "./kiosk";
+import { registerBiosRoutes } from "./bios";
 
 export async function registerRoutes(_httpServer: Server, app: Express) {
   registerRomRoutes(app);
@@ -28,5 +29,6 @@ export async function registerRoutes(_httpServer: Server, app: Express) {
   registerScrapeRoutes(app);
   registerRetroAchievementsRoutes(app);
   registerKioskRoutes(app);
+  registerBiosRoutes(app);
 }
 

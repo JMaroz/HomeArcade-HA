@@ -208,6 +208,7 @@
       "automation": "Automation",
       "controls": "Controls",
       "library": "Library",
+      "health": "Health",
       "services": "Services",
       "kiosk": "Kiosk",
       "help": "Help"
@@ -269,6 +270,10 @@
       "bulk": {
         "title": "Bulk Actions",
         "description": "Process multiple ROMs at once. These operations can take several minutes."
+      },
+      "health": {
+        "title": "System Health & Firmware",
+        "description": "Manage BIOS and firmware files required for high-end console emulation."
       },
       "kiosk": {
         "title": "Kiosk Mode",

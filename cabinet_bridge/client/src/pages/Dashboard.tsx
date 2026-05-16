@@ -487,6 +487,19 @@ export default function Dashboard() {
     [games],
   );
 
+  // ── advanced stats ──
+  const wallOfShame = useMemo(() => {
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    return games
+      .filter((g) => g.playStatus === "playing" && g.lastPlayed && g.lastPlayed < thirtyDaysAgo)
+      .sort((a, b) => (a.lastPlayed ?? 0) - (b.lastPlayed ?? 0))
+      .slice(0, 3);
+  }, [games, now]);
+
+  const longestSession = useMemo(() => {
+    return [...sessions].sort((a, b) => (b.durationSeconds ?? 0) - (a.durationSeconds ?? 0))[0];
+  }, [sessions]);
+
   const showHighlights = mostPlayed || highestRated || bestCommunity;
   const showSystemChart = systemBreakdown.length > 0;
 
@@ -752,42 +765,94 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* ── Highlights ── */}
-        <motion.div variants={itemVariants} className="md:col-span-4 flex flex-col gap-4">
-          {mostPlayed && (
-            <HighlightCard
-              label={t("dashboard.highlights.mostPlayed")}
-              game={mostPlayed}
-              stat={fmtHoursShort(mostPlayed.minutesPlayed ?? 0)}
-              statLabel={t("common.played")}
-              icon={<Clock className="size-3" />}
-              onOpen={openGame}
-              showSystem={config.showSystemLabels}
-            />
-          )}
-          {highestRated && (
-            <HighlightCard
-              label={t("dashboard.highlights.highestRated")}
-              game={highestRated}
-              stat={`${highestRated.rating}/5`}
-              statLabel={t("dashboard.highlights.yourRating")}
-              icon={<Star className="size-3" />}
-              onOpen={openGame}
-              showSystem={config.showSystemLabels}
-            />
-          )}
-          {bestCommunity && (
-            <HighlightCard
-              label={t("dashboard.highlights.communityFav")}
-              game={bestCommunity}
-              stat={`${((bestCommunity.communityScore ?? 0) / 2).toFixed(1)}`}
-              statLabel="/ 10"
-              icon={<Zap className="size-3" />}
-              onOpen={openGame}
-              showSystem={config.showSystemLabels}
-            />
-          )}
-        </motion.div>
+          {/* ── Highlights ── */}
+          <motion.div variants={itemVariants} className="md:col-span-4 flex flex-col gap-4">
+            {mostPlayed && (
+              <HighlightCard
+                label={t("dashboard.highlights.mostPlayed")}
+                game={mostPlayed}
+                stat={fmtHoursShort(mostPlayed.minutesPlayed ?? 0)}
+                statLabel={t("common.played")}
+                icon={<Clock className="size-3" />}
+                onOpen={openGame}
+                showSystem={config.showSystemLabels}
+              />
+            )}
+            {highestRated && (
+              <HighlightCard
+                label={t("dashboard.highlights.highestRated")}
+                game={highestRated}
+                stat={`${highestRated.rating}/5`}
+                statLabel={t("dashboard.highlights.yourRating")}
+                icon={<Star className="size-3" />}
+                onOpen={openGame}
+                showSystem={config.showSystemLabels}
+              />
+            )}
+            {bestCommunity && (
+              <HighlightCard
+                label={t("dashboard.highlights.communityFav")}
+                game={bestCommunity}
+                stat={`${((bestCommunity.communityScore ?? 0) / 2).toFixed(1)}`}
+                statLabel="/ 10"
+                icon={<Zap className="size-3" />}
+                onOpen={openGame}
+                showSystem={config.showSystemLabels}
+              />
+            )}
+          </motion.div>
+
+          {/* ── Wall of Shame (New) ── */}
+          <motion.div variants={itemVariants} className="md:col-span-6 bg-card/30 backdrop-blur-md border border-border rounded-2xl p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-destructive flex items-center gap-1.5">
+                <AlertCircle className="size-3" /> The Wall of Shame
+              </div>
+              <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Unplayed 30+ days</span>
+            </div>
+            <div className="space-y-4 flex-1">
+               {wallOfShame.map((g) => (
+                 <div key={g.id} className="flex items-center gap-4 group cursor-pointer" onClick={() => openGame(g)}>
+                    <div className="size-12 rounded-lg overflow-hidden border border-border/50 shrink-0">
+                      {g.artUrl ? <img src={g.artUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-muted" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate group-hover:text-primary transition-colors">{g.title}</div>
+                      <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
+                        {fmtHoursShort(g.minutesPlayed ?? 0)} played · {formatRelative(g.lastPlayed)}
+                      </div>
+                    </div>
+                 </div>
+               ))}
+               {wallOfShame.length === 0 && (
+                 <div className="h-full flex items-center justify-center text-xs text-muted-foreground italic">
+                    Your backlog is fresh!
+                 </div>
+               )}
+            </div>
+          </motion.div>
+
+          {/* ── Longest Session (New) ── */}
+          <motion.div variants={itemVariants} className="md:col-span-6 bg-card/30 backdrop-blur-md border border-border rounded-2xl p-6 flex flex-col gap-4">
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent flex items-center gap-1.5">
+              <Trophy className="size-3" /> Legend Status
+            </div>
+            {longestSession ? (
+              <div className="flex-1 flex flex-col justify-center gap-2">
+                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Longest Session Record</div>
+                <div className="text-2xl font-display font-bold text-foreground truncate">{longestSession.romTitle}</div>
+                <div className="flex items-baseline gap-2">
+                   <span className="text-4xl font-display font-black text-accent">{Math.round((longestSession.durationSeconds ?? 0) / 60)}m</span>
+                   <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">consecutive play</span>
+                </div>
+                <div className="text-[10px] font-mono text-muted-foreground/60 uppercase mt-1">Set on {new Date(longestSession.startedAt).toLocaleDateString()}</div>
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-muted-foreground italic">
+                 No session data yet.
+              </div>
+            )}
+          </motion.div>
 
         {/* ── Shelves ── */}
         {inProgress.length > 0 && (
