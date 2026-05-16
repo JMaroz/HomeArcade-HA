@@ -411,6 +411,19 @@ export default function Home({ filter }: { filter: Filter }) {
     return SYSTEMS.some((s) => s.id === filter) ? (filter as SystemId) : undefined;
   }, [filter]);
 
+  // True for any filter that represents a specific system console view —
+  // includes both known SYSTEMS entries and any unknown/custom system slugs.
+  const isSystemView = useMemo(() => {
+    if (typeof filter !== "string") return false;
+    if (filter === "favorites" || filter === "recent" || filter === "all") return false;
+    if (filter.startsWith("collection:")) return false;
+    return true;
+  }, [filter]);
+
+  // The system id/slug to pass to RomUpload. Prefers the typed SystemId when
+  // known; falls back to the raw filter string for custom system slugs.
+  const romUploadSystem = systemFilter ?? (isSystemView ? (filter as SystemId) : undefined);
+
   return (
     <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden" data-testid="main-content">
       <WelcomeDialog hasRoms={uploadedRoms.length > 0} />
@@ -665,9 +678,9 @@ export default function Home({ filter }: { filter: Filter }) {
           </section>
         ) : null}
 
-        {!kioskMode && (systemFilter || filter === "all") && !query ? (
+        {!kioskMode && (isSystemView || filter === "all") && !query ? (
           <section className="px-4 sm:px-8 pt-5 pb-1" data-testid="section-rom-upload">
-            <RomUpload system={systemFilter} variant="inline" />
+            <RomUpload system={romUploadSystem} variant="inline" />
           </section>
         ) : null}
 
