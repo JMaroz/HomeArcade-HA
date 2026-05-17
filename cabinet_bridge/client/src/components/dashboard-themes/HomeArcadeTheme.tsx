@@ -416,8 +416,13 @@ export default function HomeArcadeTheme() {
            ))}
 
            {/* Mobile Settings Access */}
-           <div className="xl:hidden absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-4">
-              <div className="h-8 w-px bg-white/5" />
+           <div className="xl:hidden absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <div className="h-8 w-px bg-white/5 mx-2" />
+              <Link href="/library/all">
+                <Button variant="ghost" size="icon" className="text-white/20 hover:text-white">
+                  <LayoutGrid className="size-5" />
+                </Button>
+              </Link>
               <Link href="/settings">
                 <Button variant="ghost" size="icon" className="text-white/20 hover:text-white">
                   <SettingsIcon className="size-5" />
