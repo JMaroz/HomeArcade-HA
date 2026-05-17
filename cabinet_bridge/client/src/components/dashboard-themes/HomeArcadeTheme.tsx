@@ -39,6 +39,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useGridNav } from "@/lib/useGridNav";
 
 // ─── sub-components ──────────────────────────────────────────────────────────
 
@@ -186,6 +187,35 @@ export default function HomeArcadeTheme() {
   
   const currentSystem = systemsWithGames[activeSystemIdx];
   const activeGame = currentSystem?.games[activeGameIdx];
+
+  // ── Grid Navigation (Keyboard + Gamepad) ───────────────────────────────────
+  const gridRef = useRef<HTMLDivElement>(null);
+  const { focusedIndex, setFocusedIndex } = useGridNav({
+    count: currentSystem?.games.length || 0,
+    gridRef,
+    disabled: !!dialogGame || (window.innerWidth < 1280 && showMobileDetails),
+    onActivate: (idx) => {
+      setActiveGameIdx(idx);
+      if (window.innerWidth < 1280) setShowMobileDetails(true);
+      else {
+        const game = currentSystem.games[idx];
+        const returnTo = encodeURIComponent(window.location.href);
+        window.location.href = apiUrl(`/api/roms/${game.romId}/player?return=${returnTo}`);
+      }
+    },
+    onFav: (idx) => {
+      const game = currentSystem.games[idx];
+      if (game) handleToggleFav(game);
+    },
+    onFocusChange: (idx) => {
+      if (idx >= 0) setActiveGameIdx(idx);
+    }
+  });
+
+  // Sync manual mouse selection back to grid nav focus
+  useEffect(() => {
+    if (activeGameIdx !== focusedIndex) setFocusedIndex(activeGameIdx);
+  }, [activeGameIdx, focusedIndex, setFocusedIndex]);
 
   // ── Management Logic ─────────────────────────────────────────────────────────
   const [scrapingArt, setScrapingArt] = useState(false);

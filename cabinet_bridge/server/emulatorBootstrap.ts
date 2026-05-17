@@ -2060,6 +2060,22 @@ window.EJS_Buttons = {
   cacheManager: true,
   exitEmulation: true
 };
+// ── Mobile / TV Optimizations ───────────────────────────────────────────────
+window.EJS_onMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+if (window.EJS_onMobile) {
+  window.EJS_virtualGamepadSettings = {
+    "type": "modern",
+    "opacity": 0.45,
+    "vibration": true,
+    "size": "large"
+  };
+}
+
+// Add overscan-safe padding for TV/Mobile browsers
+var style = document.createElement("style");
+style.textContent = "#game { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }";
+document.head.appendChild(style);
+
 var loader = document.createElement("script");
 loader.src = "../../emulatorjs/loader.js";
 loader.onload = function () {
