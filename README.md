@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.11.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.12.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -68,19 +68,28 @@ Systems are listed in release-date order.
 
 ## Changelog
 
+### v2.12.0
+- **Theme Expansion** — Added two new high-end dashboard layouts:
+  - **Alekfull NX** — A clean, Switch-inspired dashboard with a horizontal system carousel and master-detail game view.
+  - **Art Book Next** — A minimalist, magazine-style layout focusing on large artwork and asymmetric design.
+- **Enhanced OS Simulation** — Added a real-time system status bar (Clock, WiFi, Battery) to the Alekfull theme.
+
+### v2.11.0
+- **Colorful Theme** — Added a high-vibrancy, bold dashboard layout inspired by Anthony Caccese's "Colorful" series.
+- **Giant Tile Navigation** — Massive vertical box art and system-matched background gradients.
+
+### v2.10.2
+- **PlayHub Visibility Fix** — Corrected a bug that hid the game info panel on desktop screens.
+- **Dynamic Fanart Backgrounds** — PlayHub now features full-screen, cross-fading game art as you browse the grid.
+- **Improved Art Scaling** — Re-engineered box art fitting to prevent squashed images in PlayHub.
+
+### v2.10.1
+- **Theme Cleanup** — Removed the Horizon Ribbon theme to streamline the experience.
+- **Slate Theme Integration** — Fully operational Slate theme for power users.
+
 ### v2.10.0
 - **Slate Theme** — Added a new professional, high-density layout inspired by EmulationStation Desktop Edition.
 - **Improved List Navigation** — Smooth vertical scrolling and metadata panels for power users.
-
-### v2.9.1
-- **Rebranding** — Finalized transition from "Cabinet Bridge" to **HomeArcade** across all UI and documentation.
-- **Global Localization** — Updated all translation files to reflect the new HomeArcade branding.
-- **Premium Frontend Engine** — Rebuilt from the ground up with Vite + React + Tailwind v4.
-- **Dashboard** — New central landing page with recently played, stats, and activity feed.
-- **Advanced Integration** — Direct integration with RetroBat and Home Assistant webhooks for PC control.
-- **Smart Filters** — Create dynamic collections using complex rules (genre, rating, year, etc.).
-- **Netplay Lobby** — Built-in lobby for multiplayer sessions.
-- **Enhanced Performance** — Optimized server bundle and client assets for faster load times.
 
 ### v2.3.4
 - **Rebranding** — Finalized transition from "Cabinet Bridge" to **HomeArcade** across all UI and documentation.
