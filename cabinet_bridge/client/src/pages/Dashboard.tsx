@@ -99,7 +99,7 @@ function HorizontalShelf({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Console Carousel ─────────────────────────────────────────────────────────
+// ─── Console Carousel: Horizon Ribbon ────────────────────────────────────────
 
 function ConsoleCarousel({ 
   systems, 
@@ -112,25 +112,7 @@ function ConsoleCarousel({
 }) {
   const [index, setIndex] = useState(0);
   const { t } = useTranslation();
-  
-  // 3D Tilt Logic
-  const mouseX = motion.useMotionValue(0);
-  const mouseY = motion.useMotionValue(0);
-  const rotateX = motion.useTransform(mouseY, [-200, 200], [10, -10]);
-  const rotateY = motion.useTransform(mouseX, [-300, 300], [-15, 15]);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - (rect.left + rect.width / 2);
-    const y = e.clientY - (rect.top + rect.height / 2);
-    mouseX.set(x);
-    mouseY.set(y);
-  };
-
-  const handleMouseLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
-  };
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   const handleNext = () => setIndex((i) => (i + 1) % systems.length);
   const handlePrev = () => setIndex((i) => (i - 1 + systems.length) % systems.length);
@@ -150,160 +132,124 @@ function ConsoleCarousel({
   const activeCount = roms.filter(r => r.system === activeSystem.id).length;
 
   return (
-    <div 
-      className="relative w-full py-8 sm:py-16 flex flex-col items-center gap-10 sm:gap-12 overflow-hidden min-h-[550px] sm:min-h-[650px] touch-none select-none"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Background Glow */}
+    <div className="relative w-full min-h-[500px] sm:min-h-[600px] flex flex-col justify-center overflow-hidden touch-none select-none">
+      
+      {/* Immersive Dynamic Background (Horizon Style) */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSystem.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.2 }}
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
           className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `radial-gradient(circle at center, hsl(${activeSystem.art[0]}), transparent 75%)`,
-          }}
-        />
+        >
+          {/* Base Brand Gradient */}
+          <div 
+            className="absolute inset-0 opacity-40 transition-colors duration-1000"
+            style={{
+              background: `radial-gradient(circle at 50% 40%, hsl(${activeSystem.art[0]}), transparent 80%)`,
+            }}
+          />
+          
+          {/* Stylized System Pattern / Hardware Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-[0.07] grayscale contrast-150 mix-blend-overlay scale-150">
+             <SystemTile system={activeSystem} className="w-full h-full" />
+          </div>
+
+          {/* Bottom Horizon Fog */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+        </motion.div>
       </AnimatePresence>
 
-      <div className="flex items-center gap-4 sm:gap-16 relative z-10 w-full justify-center px-6 sm:px-12">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={handlePrev}
-          className="size-14 rounded-full border border-white/10 bg-white/5 backdrop-blur hover:bg-white/20 transition-all shrink-0 hidden md:flex active:scale-90"
-        >
-          <ChevronLeft className="size-7" />
-        </Button>
-
-        {/* Swipeable Container */}
-        <motion.div 
-          className="flex items-center justify-center gap-6 sm:gap-12 perspective-[1200px] cursor-grab active:cursor-grabbing"
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.25}
-          onDragEnd={(_, info) => {
-            if (info.offset.x < -60) handleNext();
-            else if (info.offset.x > 60) handlePrev();
-          }}
-        >
-          {[-1, 0, 1].map((offset) => {
-            const idx = (index + offset + systems.length) % systems.length;
-            const system = systems[idx];
-            const isActive = offset === 0;
-
-            return (
-              <div key={system.id} className="relative group">
+      {/* The Horizon Ribbon */}
+      <div className="relative z-10 w-full">
+        <div className="flex items-center justify-center gap-4 px-8 overflow-visible">
+          <motion.div 
+            className="flex items-center gap-4 sm:gap-6 px-[40vw] sm:px-[45vw]"
+            animate={{ x: index * -(window.innerWidth < 640 ? 196 : 256) }}
+            transition={{ type: "spring", stiffness: 200, damping: 28 }}
+            drag="x"
+            dragConstraints={{ left: (systems.length - 1) * -256, right: 0 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.x < -40) handleNext();
+              else if (info.offset.x > 40) handlePrev();
+            }}
+          >
+            {systems.map((system, i) => {
+              const isActive = i === index;
+              return (
                 <motion.div
+                  key={system.id}
                   animate={{
-                    scale: isActive ? 1.15 : 0.8,
-                    opacity: isActive ? 1 : 0.3,
-                    rotateY: isActive ? rotateY : offset * 35,
-                    rotateX: isActive ? rotateX : 0,
-                    x: isActive ? 0 : offset * 60,
-                    z: isActive ? 100 : 0,
-                    display: !isActive && window.innerWidth < 1024 ? "none" : "block"
+                    scale: isActive ? 1.1 : 0.85,
+                    opacity: isActive ? 1 : 0.5,
+                    y: isActive ? -10 : 0
                   }}
-                  transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                  className={`relative w-[300px] sm:w-[400px] aspect-[4/3] rounded-[2.5rem] overflow-hidden shadow-[0_35px_60px_-15px_rgba(0,0,0,0.6)] transition-shadow ${
-                    isActive ? "ring-4 ring-primary/80 shadow-primary/25" : ""
+                  whileHover={{ scale: isActive ? 1.12 : 0.9 }}
+                  className={`relative w-[180px] sm:w-[240px] aspect-square shrink-0 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                    isActive ? "ring-4 ring-white shadow-[0_0_40px_rgba(255,255,255,0.3)]" : "border border-white/5 bg-white/5 backdrop-blur-sm"
                   }`}
-                  onClick={() => isActive ? onSelect(system) : setIndex(idx)}
+                  onClick={() => isActive ? onSelect(system) : setIndex(i)}
                 >
                   <SystemTile system={system} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60" />
-                  <div className="absolute bottom-8 left-8 right-8">
-                     <div className="font-display text-2xl font-bold text-white drop-shadow-xl tracking-tight">
-                       {system.shortName}
-                     </div>
-                     <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/70">
-                       {system.era}
-                     </div>
-                  </div>
+                  <div className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isActive ? "opacity-0" : "opacity-100"}`} />
+                  
+                  {/* Glass Sheen */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
                 </motion.div>
-
-                {/* Reflection Floor (Obsidian Floor) */}
-                {isActive && (
-                  <motion.div
-                    animate={{
-                      rotateY: rotateY,
-                      rotateX: -rotateX,
-                      scale: 1.15
-                    }}
-                    className="absolute top-full left-0 right-0 h-1/2 pointer-events-none opacity-25 blur-[2px]"
-                    style={{
-                      transformOrigin: "top center",
-                      transform: "scaleY(-1) translateY(10px)",
-                      maskImage: "linear-gradient(to bottom, black, transparent)",
-                      WebkitMaskImage: "linear-gradient(to bottom, black, transparent)"
-                    }}
-                  >
-                     <SystemTile system={system} />
-                  </motion.div>
-                )}
-              </div>
-            );
-          })}
-        </motion.div>
-
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={handleNext}
-          className="size-14 rounded-full border border-white/10 bg-white/5 backdrop-blur hover:bg-white/20 transition-all shrink-0 hidden md:flex active:scale-90"
-        >
-          <ChevronRight className="size-7" />
-        </Button>
+              );
+            })}
+          </motion.div>
+        </div>
       </div>
 
-      {/* Info HUD */}
+      {/* Information HUD (Floating Plate) */}
       <motion.div 
-        key={activeSystem.id + "-info"}
-        initial={{ y: 30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="text-center space-y-3 z-10 px-8 mt-12 sm:mt-16"
+        key={activeSystem.id + "-hud"}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 flex flex-col items-center text-center mt-12 gap-1 px-8"
       >
-        <h1 className="font-display text-3xl sm:text-5xl font-black uppercase tracking-tighter text-neon leading-none filter drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+        <div className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.4em] text-white/50 mb-1">
+          System Select
+        </div>
+        <h1 className="font-display text-3xl sm:text-5xl font-black uppercase tracking-tighter text-foreground leading-none">
           {activeSystem.name}
         </h1>
-        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-muted-foreground font-mono text-xs sm:text-sm uppercase tracking-[0.2em]">
-          <span className="flex items-center gap-2"><Clock className="size-3 text-primary" /> {activeSystem.era} Era</span>
-          <span className="hidden sm:block w-1.5 h-1.5 rounded-full bg-border/40" />
-          <span className="text-foreground font-bold bg-white/5 px-3 py-1 rounded-full border border-white/10">
-             {activeCount} {t("dashboard.stats.gamesCount", { count: activeCount }).split(" ")[1] || "Games"}
-          </span>
+        <div className="flex items-center gap-4 mt-4 px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+           <span className="font-mono text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground">{activeSystem.era}</span>
+           <span className="w-1 h-1 rounded-full bg-primary/40" />
+           <span className="font-mono text-[10px] sm:text-xs uppercase tracking-widest font-bold text-primary">{activeCount} Titles</span>
         </div>
-        <div className="pt-8">
-          <Button 
-            size="lg" 
-            onClick={() => onSelect(activeSystem)}
-            className="rounded-full px-12 h-14 sm:h-16 gap-3 bg-primary hover:bg-primary/90 text-white text-base font-black uppercase tracking-[0.15em] shadow-[0_20px_40px_-10px_rgba(var(--primary),0.4)] transition-all hover:scale-105 active:scale-95"
-          >
-            Explore Library <ChevronRight className="size-5" />
-          </Button>
-        </div>
+        
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => onSelect(activeSystem)}
+          className="mt-8 px-10 h-14 rounded-xl bg-white text-black font-black uppercase tracking-widest text-sm shadow-[0_15px_30px_rgba(255,255,255,0.1)] hover:bg-white/90 transition-colors flex items-center gap-2"
+        >
+          {t("common.ui.play")} <ChevronRight className="size-4" />
+        </motion.button>
       </motion.div>
 
-      {/* Breadcrumb Indicator */}
-      <div className="flex gap-2 z-10 pt-10 overflow-x-auto max-w-[85%] scrollbar-none px-6">
-        {systems.map((_, i) => (
-          <button 
-            key={i} 
-            onClick={() => setIndex(i)}
-            className={`h-1.5 rounded-full transition-all duration-500 shrink-0 ${
-              i === index ? "w-10 bg-primary" : "w-2.5 bg-border/30 hover:bg-border/60"
-            }`}
-          />
-        ))}
+      {/* Navigation Indicators */}
+      <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-1.5 px-12 z-10">
+        <div className="flex gap-1.5 overflow-x-auto max-w-full pb-2 scrollbar-none px-4 no-scrollbar">
+           {systems.map((_, i) => (
+             <div 
+               key={i} 
+               className={`h-1 transition-all duration-500 rounded-full ${
+                 i === index ? "w-8 bg-white" : "w-1.5 bg-white/20"
+               }`}
+             />
+           ))}
+        </div>
       </div>
     </div>
   );
 }
+
 
 
 // ─── main page ─────────────────────────────────────────────────────────────────
