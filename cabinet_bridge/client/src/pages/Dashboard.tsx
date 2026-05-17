@@ -29,7 +29,7 @@ function fmtHoursShort(minutes: number) {
   return `${h % 1 === 0 ? h : h.toFixed(1)}h`;
 }
 
-// ─── main page: Nostalgia Grid ───────────────────────────────────────────────
+// ─── main page: Nostalgia Grid (Organized by Console) ───────────────────────
 export default function Dashboard() {
   const { config } = useIntegration();
   const { t } = useTranslation();
@@ -52,46 +52,82 @@ export default function Dashboard() {
 
   const games = useMemo(() => roms.map(uploadedRomToGame), [roms]);
 
-  // Display top 20 recent/favorite games in the grid
-  const gridGames = useMemo(() => {
-    return [...games]
-      .filter((g) => (g.lastPlayed && g.lastPlayed > 0) || g.favorite)
-      .sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))
-      .slice(0, 20);
+  // Group games by system
+  const systemsWithGames = useMemo(() => {
+    const groups: Record<string, Game[]> = {};
+    for (const g of games) {
+      if (!groups[g.system]) groups[g.system] = [];
+      groups[g.system].push(g);
+    }
+    
+    return SYSTEMS.map(s => ({
+      system: s,
+      games: groups[s.id] || []
+    })).filter(group => group.games.length > 0);
   }, [games]);
 
-  // If no recent games, fallback to just a list of all games to show something
-  const displayGames = gridGames.length > 0 ? gridGames : games.slice(0, 20);
+  const recentlyPlayed = useMemo(
+    () =>
+      [...games]
+        .filter((g) => g.lastPlayed && g.lastPlayed > 0)
+        .sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))
+        .slice(0, 15),
+    [games],
+  );
 
-  const [activeIndex, setActiveIndex] = useState(0);
-  const activeGame = displayGames[activeIndex];
+  // Focus state: tracks which shelf and which game index is active
+  // shelfIndex: -1 = Recent, 0+ = Systems
+  const [focus, setFocus] = useState({ shelf: recentlyPlayed.length > 0 ? -1 : 0, game: 0 });
 
-  // Keyboard navigation for the grid
+  const activeGame = useMemo(() => {
+    if (focus.shelf === -1) return recentlyPlayed[focus.game];
+    const shelf = systemsWithGames[focus.shelf];
+    return shelf?.games[focus.game];
+  }, [focus, recentlyPlayed, systemsWithGames]);
+
+  // Keyboard navigation for shelves
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!activeGame || selectedGame) return; // Disable if dialog open
-      const cols = window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 3 : 2;
+      if (!activeGame || selectedGame) return;
       
-      if (e.key === "ArrowRight") {
-        e.preventDefault();
-        setActiveIndex((i) => Math.min(i + 1, displayGames.length - 1));
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        setActiveIndex((i) => Math.max(i - 1, 0));
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setActiveIndex((i) => Math.min(i + cols, displayGames.length - 1));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setActiveIndex((i) => Math.max(i - cols, 0));
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        openGame(activeGame);
-      }
+      setFocus(prev => {
+        let { shelf, game } = prev;
+        const currentShelfGames = shelf === -1 ? recentlyPlayed : systemsWithGames[shelf].games;
+
+        if (e.key === "ArrowRight") {
+          game = Math.min(game + 1, currentShelfGames.length - 1);
+        } else if (e.key === "ArrowLeft") {
+          game = Math.max(game - 1, 0);
+        } else if (e.key === "ArrowDown") {
+          if (shelf < systemsWithGames.length - 1) {
+            shelf++;
+            const nextShelfGames = systemsWithGames[shelf].games;
+            game = Math.min(game, nextShelfGames.length - 1);
+          }
+        } else if (e.key === "ArrowUp") {
+          if (shelf > -1) {
+            if (shelf === 0 && recentlyPlayed.length > 0) {
+              shelf = -1;
+              game = Math.min(game, recentlyPlayed.length - 1);
+            } else if (shelf > 0) {
+              shelf--;
+              const nextShelfGames = systemsWithGames[shelf].games;
+              game = Math.min(game, nextShelfGames.length - 1);
+            }
+          }
+        } else if (e.key === "Enter") {
+          openGame(activeGame);
+          return prev;
+        } else {
+          return prev;
+        }
+
+        return { shelf, game };
+      });
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeGame, displayGames.length, selectedGame]);
+  }, [activeGame, recentlyPlayed, systemsWithGames, selectedGame]);
 
   const launchGame = (game: Game) => {
     if (game.romId) {
@@ -120,7 +156,7 @@ export default function Dashboard() {
             {activeGame.artUrl ? (
               <img 
                 src={activeGame.artUrl} 
-                className="w-full h-full object-cover opacity-40 blur-[8px] scale-105" 
+                className="w-full h-full object-cover opacity-40 blur-[10px] scale-105" 
                 alt="" 
               />
             ) : (
@@ -129,7 +165,6 @@ export default function Dashboard() {
                 style={{ background: `radial-gradient(circle at 70% 30%, hsl(${activeGame.art[0]}), transparent 80%)` }}
               />
             )}
-            {/* Gradient overlay to ensure text readability */}
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/80" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40" />
           </motion.div>
@@ -138,55 +173,68 @@ export default function Dashboard() {
 
       <div className="relative z-10 w-full h-full flex flex-col md:flex-row max-w-[1800px] mx-auto">
         
-        {/* Left Side: Game Grid */}
-        <div className="flex-1 h-full overflow-y-auto overflow-x-hidden p-6 sm:p-10 pb-32 scrollbar-none">
-          <div className="mb-8">
-            <h1 className="font-display text-3xl font-bold tracking-tight text-white/90">
-              {displayGames.length > 0 && gridGames.length > 0 ? "Jump Back In" : "Your Library"}
-            </h1>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-white/50 mt-2">
-              Nostalgia Grid
-            </p>
-          </div>
-
-          {displayGames.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-              {displayGames.map((game, i) => {
-                const isActive = i === activeIndex;
-                return (
-                  <motion.div
-                    key={game.id}
-                    className="relative cursor-pointer"
-                    onMouseEnter={() => setActiveIndex(i)}
-                    onClick={() => openGame(game)}
-                    animate={{
-                      scale: isActive ? 1.05 : 1,
-                      zIndex: isActive ? 10 : 1,
-                    }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  >
-                    <div 
-                      className={`relative aspect-[2/3] rounded-xl overflow-hidden transition-all duration-300 ${
-                        isActive ? "ring-4 ring-white shadow-[0_0_30px_rgba(255,255,255,0.4)]" : "ring-1 ring-white/10 shadow-lg"
+        {/* Left Side: Game Shelves */}
+        <div className="flex-1 h-full overflow-y-auto overflow-x-hidden p-6 sm:p-10 pb-32 scrollbar-none space-y-12">
+          
+          {/* Recently Played Shelf */}
+          {recentlyPlayed.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-baseline gap-3">
+                <h2 className="font-display text-xl font-bold text-white/90 uppercase tracking-tight">Jump Back In</h2>
+                <span className="font-mono text-[9px] text-white/30 tracking-[0.3em]">Recently Played</span>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none no-scrollbar">
+                {recentlyPlayed.map((game, i) => {
+                  const isActive = focus.shelf === -1 && i === focus.game;
+                  return (
+                    <motion.div
+                      key={game.id}
+                      onMouseEnter={() => setFocus({ shelf: -1, game: i })}
+                      onClick={() => openGame(game)}
+                      animate={{ scale: isActive ? 1.05 : 1 }}
+                      className={`relative w-40 shrink-0 aspect-[2/3] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                        isActive ? "ring-4 ring-white shadow-[0_0_30px_rgba(255,255,255,0.4)]" : "ring-1 ring-white/10"
                       }`}
                     >
-                      {game.artUrl ? (
-                        <img src={game.artUrl} className="w-full h-full object-cover" alt="" />
-                      ) : (
-                        <div 
-                          className="w-full h-full"
-                          style={{ background: `linear-gradient(135deg, hsl(${game.art[0]}), hsl(${game.art[1]}))` }}
-                        />
-                      )}
-                      
-                      {/* Inner sheen */}
+                      {game.artUrl ? <img src={game.artUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-muted" />}
                       <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none opacity-50" />
-                    </div>
-                  </motion.div>
-                );
-              })}
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
-          ) : (
+          )}
+
+          {/* System Shelves */}
+          {systemsWithGames.map((group, sIdx) => (
+            <div key={group.system.id} className="space-y-4">
+              <div className="flex items-baseline gap-3">
+                <h2 className="font-display text-xl font-bold text-white/90 uppercase tracking-tight">{group.system.name}</h2>
+                <span className="font-mono text-[9px] text-white/30 tracking-[0.3em]">{group.games.length} Titles</span>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none no-scrollbar">
+                {group.games.map((game, i) => {
+                  const isActive = focus.shelf === sIdx && i === focus.game;
+                  return (
+                    <motion.div
+                      key={game.id}
+                      onMouseEnter={() => setFocus({ shelf: sIdx, game: i })}
+                      onClick={() => openGame(game)}
+                      animate={{ scale: isActive ? 1.05 : 1 }}
+                      className={`relative w-40 shrink-0 aspect-[2/3] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                        isActive ? "ring-4 ring-white shadow-[0_0_30px_rgba(255,255,255,0.4)]" : "ring-1 ring-white/10"
+                      }`}
+                    >
+                      {game.artUrl ? <img src={game.artUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-muted" />}
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none opacity-50" />
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          {!roms.length && (
             <div className="flex flex-col items-center justify-center h-[50vh] opacity-50">
                <Info className="size-12 mb-4" />
                <p className="font-mono uppercase tracking-widest text-sm">Library Empty</p>
@@ -216,8 +264,6 @@ export default function Dashboard() {
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                
-                {/* Logo / Title overlay */}
                 <div className="absolute bottom-6 left-6 right-6">
                    <div className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold mb-1">
                      {SYSTEMS.find(s => s.id === activeGame.system)?.name ?? activeGame.system}
