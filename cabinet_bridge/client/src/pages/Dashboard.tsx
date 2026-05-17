@@ -93,7 +93,9 @@ function SectionHeader({
 
 function HorizontalShelf({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-none">{children}</div>
+    <div className="flex gap-6 overflow-x-auto pb-6 -mx-1 px-1 scrollbar-none overscroll-x-contain">
+      {children}
+    </div>
   );
 }
 
@@ -110,6 +112,25 @@ function ConsoleCarousel({
 }) {
   const [index, setIndex] = useState(0);
   const { t } = useTranslation();
+  
+  // 3D Tilt Logic
+  const mouseX = motion.useMotionValue(0);
+  const mouseY = motion.useMotionValue(0);
+  const rotateX = motion.useTransform(mouseY, [-200, 200], [10, -10]);
+  const rotateY = motion.useTransform(mouseX, [-300, 300], [-15, 15]);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - (rect.left + rect.width / 2);
+    const y = e.clientY - (rect.top + rect.height / 2);
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   const handleNext = () => setIndex((i) => (i + 1) % systems.length);
   const handlePrev = () => setIndex((i) => (i - 1 + systems.length) % systems.length);
@@ -129,78 +150,102 @@ function ConsoleCarousel({
   const activeCount = roms.filter(r => r.system === activeSystem.id).length;
 
   return (
-    <div className="relative w-full py-8 sm:py-12 flex flex-col items-center gap-6 sm:gap-8 overflow-hidden min-h-[450px] sm:min-h-[500px] touch-none">
+    <div 
+      className="relative w-full py-8 sm:py-16 flex flex-col items-center gap-10 sm:gap-12 overflow-hidden min-h-[550px] sm:min-h-[650px] touch-none select-none"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* Background Glow */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSystem.id}
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.15 }}
+          animate={{ opacity: 0.2 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1 }}
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: `radial-gradient(circle at center, hsl(${activeSystem.art[0]}), transparent 70%)`,
+            background: `radial-gradient(circle at center, hsl(${activeSystem.art[0]}), transparent 75%)`,
           }}
         />
       </AnimatePresence>
 
-      <div className="flex items-center gap-4 sm:gap-12 relative z-10 w-full justify-center px-4 sm:px-8">
+      <div className="flex items-center gap-4 sm:gap-16 relative z-10 w-full justify-center px-6 sm:px-12">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={handlePrev}
-          className="size-12 rounded-full border border-white/10 bg-white/5 backdrop-blur hover:bg-white/20 transition-all shrink-0 hidden md:flex"
+          className="size-14 rounded-full border border-white/10 bg-white/5 backdrop-blur hover:bg-white/20 transition-all shrink-0 hidden md:flex active:scale-90"
         >
-          <ChevronLeft className="size-6" />
+          <ChevronLeft className="size-7" />
         </Button>
 
         {/* Swipeable Container */}
         <motion.div 
-          className="flex items-center justify-center gap-4 sm:gap-10 perspective-[1000px] cursor-grab active:cursor-grabbing"
+          className="flex items-center justify-center gap-6 sm:gap-12 perspective-[1200px] cursor-grab active:cursor-grabbing"
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2}
+          dragElastic={0.25}
           onDragEnd={(_, info) => {
-            if (info.offset.x < -50) handleNext();
-            else if (info.offset.x > 50) handlePrev();
+            if (info.offset.x < -60) handleNext();
+            else if (info.offset.x > 60) handlePrev();
           }}
         >
-          {/* We show 3 consoles on desktop, 1 centered on mobile */}
           {[-1, 0, 1].map((offset) => {
             const idx = (index + offset + systems.length) % systems.length;
             const system = systems[idx];
             const isActive = offset === 0;
 
             return (
-              <motion.div
-                key={system.id}
-                animate={{
-                  scale: isActive ? 1.1 : 0.8,
-                  opacity: isActive ? 1 : 0.4,
-                  rotateY: isActive ? 0 : offset * 25,
-                  x: isActive ? 0 : offset * 40,
-                  z: isActive ? 50 : 0,
-                  // Hide side items on small mobile screens to prevent overlap/clutter
-                  display: !isActive && window.innerWidth < 640 ? "none" : "block"
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className={`relative w-[280px] sm:w-[320px] aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-shadow ${
-                  isActive ? "ring-4 ring-primary shadow-primary/30" : "hidden sm:block"
-                }`}
-                onClick={() => isActive ? onSelect(system) : setIndex(idx)}
-              >
-                <SystemTile system={system} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6">
-                   <div className="font-display text-xl font-bold text-white drop-shadow-md">
-                     {system.shortName}
-                   </div>
-                   <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/60">
-                     {system.era}
-                   </div>
-                </div>
-              </motion.div>
+              <div key={system.id} className="relative group">
+                <motion.div
+                  animate={{
+                    scale: isActive ? 1.15 : 0.8,
+                    opacity: isActive ? 1 : 0.3,
+                    rotateY: isActive ? rotateY : offset * 35,
+                    rotateX: isActive ? rotateX : 0,
+                    x: isActive ? 0 : offset * 60,
+                    z: isActive ? 100 : 0,
+                    display: !isActive && window.innerWidth < 1024 ? "none" : "block"
+                  }}
+                  transition={{ type: "spring", stiffness: 260, damping: 25 }}
+                  className={`relative w-[300px] sm:w-[400px] aspect-[4/3] rounded-[2.5rem] overflow-hidden shadow-[0_35px_60px_-15px_rgba(0,0,0,0.6)] transition-shadow ${
+                    isActive ? "ring-4 ring-primary/80 shadow-primary/25" : ""
+                  }`}
+                  onClick={() => isActive ? onSelect(system) : setIndex(idx)}
+                >
+                  <SystemTile system={system} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60" />
+                  <div className="absolute bottom-8 left-8 right-8">
+                     <div className="font-display text-2xl font-bold text-white drop-shadow-xl tracking-tight">
+                       {system.shortName}
+                     </div>
+                     <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/70">
+                       {system.era}
+                     </div>
+                  </div>
+                </motion.div>
+
+                {/* Reflection Floor (Obsidian Floor) */}
+                {isActive && (
+                  <motion.div
+                    animate={{
+                      rotateY: rotateY,
+                      rotateX: -rotateX,
+                      scale: 1.15
+                    }}
+                    className="absolute top-full left-0 right-0 h-1/2 pointer-events-none opacity-25 blur-[2px]"
+                    style={{
+                      transformOrigin: "top center",
+                      transform: "scaleY(-1) translateY(10px)",
+                      maskImage: "linear-gradient(to bottom, black, transparent)",
+                      WebkitMaskImage: "linear-gradient(to bottom, black, transparent)"
+                    }}
+                  >
+                     <SystemTile system={system} />
+                  </motion.div>
+                )}
+              </div>
             );
           })}
         </motion.div>
@@ -209,45 +254,49 @@ function ConsoleCarousel({
           variant="ghost" 
           size="icon" 
           onClick={handleNext}
-          className="size-12 rounded-full border border-white/10 bg-white/5 backdrop-blur hover:bg-white/20 transition-all shrink-0 hidden md:flex"
+          className="size-14 rounded-full border border-white/10 bg-white/5 backdrop-blur hover:bg-white/20 transition-all shrink-0 hidden md:flex active:scale-90"
         >
-          <ChevronRight className="size-6" />
+          <ChevronRight className="size-7" />
         </Button>
       </div>
 
       {/* Info HUD */}
       <motion.div 
         key={activeSystem.id + "-info"}
-        initial={{ y: 20, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="text-center space-y-2 z-10 px-6"
+        transition={{ delay: 0.1 }}
+        className="text-center space-y-3 z-10 px-8 mt-12 sm:mt-16"
       >
-        <h1 className="font-display text-2xl sm:text-3xl font-black uppercase tracking-tight text-neon leading-tight">
+        <h1 className="font-display text-3xl sm:text-5xl font-black uppercase tracking-tighter text-neon leading-none filter drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
           {activeSystem.name}
         </h1>
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-muted-foreground font-mono text-[10px] sm:text-xs uppercase tracking-widest">
-          <span>{activeSystem.era} Era</span>
-          <span className="hidden sm:block w-1 h-1 rounded-full bg-border" />
-          <span className="text-primary font-bold">{activeCount} Games Loaded</span>
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-muted-foreground font-mono text-xs sm:text-sm uppercase tracking-[0.2em]">
+          <span className="flex items-center gap-2"><Clock className="size-3 text-primary" /> {activeSystem.era} Era</span>
+          <span className="hidden sm:block w-1.5 h-1.5 rounded-full bg-border/40" />
+          <span className="text-foreground font-bold bg-white/5 px-3 py-1 rounded-full border border-white/10">
+             {activeCount} {t("dashboard.stats.gamesCount", { count: activeCount }).split(" ")[1] || "Games"}
+          </span>
         </div>
-        <div className="pt-4">
+        <div className="pt-8">
           <Button 
             size="lg" 
             onClick={() => onSelect(activeSystem)}
-            className="rounded-full px-8 h-12 sm:h-14 gap-2 bg-primary hover:bg-primary/90 text-white font-bold uppercase tracking-widest shadow-lg shadow-primary/20 transition-transform active:scale-95"
+            className="rounded-full px-12 h-14 sm:h-16 gap-3 bg-primary hover:bg-primary/90 text-white text-base font-black uppercase tracking-[0.15em] shadow-[0_20px_40px_-10px_rgba(var(--primary),0.4)] transition-all hover:scale-105 active:scale-95"
           >
-            Explore Library <ChevronRight className="size-4" />
+            Explore Library <ChevronRight className="size-5" />
           </Button>
         </div>
       </motion.div>
 
       {/* Breadcrumb Indicator */}
-      <div className="flex gap-1.5 z-10 pt-4 overflow-x-auto max-w-[80%] scrollbar-none px-4">
+      <div className="flex gap-2 z-10 pt-10 overflow-x-auto max-w-[85%] scrollbar-none px-6">
         {systems.map((_, i) => (
-          <div 
+          <button 
             key={i} 
-            className={`h-1 rounded-full transition-all duration-300 shrink-0 ${
-              i === index ? "w-8 bg-primary" : "w-2 bg-border/40"
+            onClick={() => setIndex(i)}
+            className={`h-1.5 rounded-full transition-all duration-500 shrink-0 ${
+              i === index ? "w-10 bg-primary" : "w-2.5 bg-border/30 hover:bg-border/60"
             }`}
           />
         ))}
@@ -255,6 +304,7 @@ function ConsoleCarousel({
     </div>
   );
 }
+
 
 // ─── main page ─────────────────────────────────────────────────────────────────
 export default function Dashboard() {
