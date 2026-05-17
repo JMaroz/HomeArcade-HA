@@ -196,9 +196,13 @@ export default function TltlvilusTheme() {
                 <div className="p-8 border-b border-white/5 flex items-center justify-between">
                    <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setView("systems")}>
                       <ChevronLeft className="size-5 text-white/30 group-hover:text-white transition-colors" />
-                      <span className="font-display font-black uppercase tracking-tighter italic text-white/80 group-hover:text-white">{currentSystem.system.shortName}</span>
+                      <span className="font-display font-black uppercase tracking-tighter italic text-white/80 group-hover:text-white">
+                        {currentSystem?.system.shortName || "Back"}
+                      </span>
                    </div>
-                   <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest">{currentSystem.games.length}</div>
+                   <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest">
+                     {currentSystem?.games.length || 0}
+                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto scrollbar-none no-scrollbar py-4">
                    {currentSystem?.games.map((game, i) => {
