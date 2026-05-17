@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.16.1** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.17.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -68,61 +68,27 @@ Systems are listed in release-date order.
 
 ## Changelog
 
+### v2.17.0
+- **PlayHub Refocus** — Reset the dashboard system to focus exclusively on a clean, high-performance re-implementation of the PlayHub theme.
+- **Improved Glassmorphism** — Added deep backdrop blurs and refined gradients for a premium "Switch-like" feel.
+- **Dynamic Backgrounds** — High-blur fanart backgrounds that transition smoothly as you browse.
+
+### v2.16.1
+- **Fix:** Resolved a crash in the tltlvilus theme when navigating systems with empty libraries.
+
 ### v2.16.0
 - **tltlvilus Theme** — Added a modern minimalist dashboard layout with high-impact system silhouettes and master-detail navigation.
-- **Responsive Mobile Integration** — Optimized tltlvilus theme for mobile with a drawer-style metadata panel and touch-friendly list.
 
 ### v2.15.0
-- **Final Theme Fine-Tuning** — Refined all dashboard layouts (Nostalgia Grid, PlayHub, Colorful, Alekfull, Art Book) for pixel-perfect mobile and browser display.
-- **Improved Drawer Interactions** — Enhanced mobile details drawers with spring physics and touch-friendly close targets.
-- **Dynamic Portfolios** — Art Book Next now features improved hero layouts for both system and game views.
+- **Final Theme Fine-Tuning** — Refined all dashboard layouts for pixel-perfect mobile and browser display.
 
 ### v2.14.0
 - **Libretro Deep Integration** — Professional-grade automation features powered by the Libretro database.
-- **CRC Deep Scan** — Perfect ROM identification using binary fingerprints (CRC32). Identifies games regardless of filename.
-- **Gamepad Autoconfig** — Plug-and-play controller support. Automatically fetch verified button mappings for hundreds of controllers.
-- **Improved Scraper Pipeline** — Scanner now calculates file hashes during import for instant metadata readiness.
+- **CRC Deep Scan** — Perfect ROM identification using binary fingerprints (CRC32).
+- **Gamepad Autoconfig** — Plug-and-play controller support.
 
 ### v2.13.0
-- **Global Theme Optimization** — Massive pass across all themes (Nostalgia, PlayHub, Colorful, Alekfull, Art Book) to ensure 100% mobile responsiveness.
-- **Mobile Details Drawers** — Added sleek, drawer-style info panels for small screens, replacing static sidebars.
-- **Performance Tuning** — Optimized backdrop blurs and animation frame rates for smoother browser rendering.
-- **Touch Mastery** — Re-engineered touch targets and gesture handling for handheld devices.
-
-### v2.12.1
-- **Theme Cleanup** — Removed Slate and gameOS themes to focus on fully mobile-optimized layouts.
-- **Mobile Refinement** — Improved responsiveness across all remaining dashboard styles.
-
-### v2.12.0
-- **Theme Expansion** — Added Alekfull NX (Switch Style) and Art Book Next (Magazine) themes.
-- **Enhanced OS Simulation** — Added real-time status bar to Alekfull theme.
-
-### v2.11.0
-- **Colorful Theme** — Added a high-vibrancy, bold dashboard layout inspired by Anthony Caccese's "Colorful" series.
-- **Giant Tile Navigation** — Massive vertical box art and system-matched background gradients.
-
-### v2.10.2
-- **PlayHub Visibility Fix** — Corrected a bug that hid the game info panel on desktop screens.
-- **Dynamic Fanart Backgrounds** — PlayHub now features full-screen, cross-fading game art as you browse the grid.
-- **Improved Art Scaling** — Re-engineered box art fitting to prevent squashed images in PlayHub.
-
-### v2.10.1
-- **Theme Cleanup** — Removed the Horizon Ribbon theme to streamline the experience.
-- **Slate Theme Integration** — Fully operational Slate theme for power users.
-
-### v2.10.0
-- **Slate Theme** — Added a new professional, high-density layout inspired by EmulationStation Desktop Edition.
-- **Improved List Navigation** — Smooth vertical scrolling and metadata panels for power users.
-
-### v2.3.4
-- **Rebranding** — Finalized transition from "Cabinet Bridge" to **HomeArcade** across all UI and documentation.
-- **Global Localization** — Updated all translation files to reflect the new HomeArcade branding.
-- **Premium Frontend Engine** — Rebuilt from the ground up with Vite + React + Tailwind v4.
-- **Dashboard** — New central landing page with recently played, stats, and activity feed.
-- **Advanced Integration** — Direct integration with RetroBat and Home Assistant webhooks for PC control.
-- **Smart Filters** — Create dynamic collections using complex rules (genre, rating, year, etc.).
-- **Netplay Lobby** — Built-in lobby for multiplayer sessions.
-- **Enhanced Performance** — Optimized server bundle and client assets for faster load times.
+- **Global Theme Optimization** — Massive pass across all themes to ensure 100% mobile responsiveness.
 
 ---
 

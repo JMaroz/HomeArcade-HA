@@ -6,18 +6,17 @@ import { MobileTopBar } from "@/components/MobileNav";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { Button } from "@/components/ui/button";
 import { apiUrl } from "@/lib/queryClient";
-import { formatRelative, useIntegration } from "@/lib/integration";
+import { useIntegration } from "@/lib/integration";
 import { useGameDialogState } from "@/lib/useGameDialogState";
 import type { UploadedRom, GameCollectionWithItems } from "@shared/schema";
 import { 
   Play, 
   Search,
   Settings as SettingsIcon,
-  Clock,
   Star,
-  Info,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Clock
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -88,11 +87,8 @@ export default function PlayHubTheme() {
         setActiveSystemIdx(i => (i - 1 + systemsWithGames.length) % systemsWithGames.length);
         setActiveGameIdx(0);
       } else if (e.key === "Enter" && activeGame) {
-        if (window.innerWidth < 1280) {
-          setShowMobileDetails(true);
-        } else {
-          openGame(activeGame);
-        }
+        if (window.innerWidth < 1280) setShowMobileDetails(true);
+        else openGame(activeGame);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -106,34 +102,10 @@ export default function PlayHubTheme() {
   }, []);
 
   return (
-    <div className="fixed inset-0 lg:left-0 z-[50] bg-[#0a0a0b] text-white flex flex-col select-none overflow-hidden">
-      
-      {/* Top Bar - Refined */}
-      <div className="h-16 px-4 sm:px-8 flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur-xl z-20">
-        <div className="flex items-center gap-4 sm:gap-6">
-          <div className="text-primary font-black tracking-tighter text-xl italic uppercase hidden sm:block">PlayHub</div>
-          <div className="h-4 w-px bg-white/10 hidden sm:block" />
-          <div className="flex gap-2 sm:gap-4">
-             <Link href="/library/all">
-               <Button variant="ghost" size="sm" className="text-[10px] sm:text-xs uppercase tracking-widest text-white/60 hover:text-white">Library</Button>
-             </Link>
-             <Link href="/history">
-               <Button variant="ghost" size="sm" className="text-[10px] sm:text-xs uppercase tracking-widest text-white/60 hover:text-white">Activity</Button>
-             </Link>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 sm:gap-6">
-           <div className="flex items-center gap-4 text-white/40">
-              <Search className="size-4 cursor-pointer hover:text-white transition-colors" />
-              <Link href="/settings"><SettingsIcon className="size-4 cursor-pointer hover:text-white transition-colors" /></Link>
-           </div>
-           <div className="font-mono text-xs sm:text-sm font-bold tracking-widest text-white/80 tabular-nums">
-             {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-           </div>
-        </div>
-      </div>
+    <div className="fixed inset-0 z-[50] bg-[#0c0c0c] text-white flex flex-col select-none overflow-hidden font-sans">
+      <MobileTopBar />
 
-      {/* Background Ambience & Fanart */}
+      {/* Dynamic Background Fanart (High Blur) */}
       <AnimatePresence mode="wait">
         {activeGame && (
           <motion.div
@@ -141,41 +113,63 @@ export default function PlayHubTheme() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 1 }}
             className="absolute inset-0 z-0 pointer-events-none"
           >
             {activeGame.artUrl ? (
               <img 
                 src={activeGame.artUrl} 
-                className="w-full h-full object-cover opacity-30 blur-[12px] scale-110" 
+                className="w-full h-full object-cover opacity-30 blur-[15px] scale-110" 
                 alt="" 
               />
             ) : (
               <div 
                 className="w-full h-full opacity-20"
-                style={{
-                  background: `radial-gradient(circle at 80% 20%, hsl(${activeGame.art[0]}), transparent 75%), 
-                               radial-gradient(circle at 20% 80%, hsl(${activeGame.art[1]}), transparent 75%)`
-                }}
+                style={{ background: `radial-gradient(circle at center, hsl(${activeGame.art[0]}), #000 80%)` }}
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-transparent to-[#0a0a0b]/80" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0c] via-transparent to-[#0c0c0c]/90" />
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Top Navigation Bar */}
+      <div className="h-16 px-8 flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur-2xl z-20">
+        <div className="flex items-center gap-6">
+          <div className="text-primary font-black tracking-tighter text-xl italic uppercase">PlayHub</div>
+          <div className="h-4 w-px bg-white/10" />
+          <div className="flex gap-4">
+             <Link href="/library/all">
+               <Button variant="ghost" size="sm" className="text-xs uppercase tracking-[0.2em] text-white/50 hover:text-white transition-all">Library</Button>
+             </Link>
+             <Link href="/history">
+               <Button variant="ghost" size="sm" className="text-xs uppercase tracking-[0.2em] text-white/50 hover:text-white transition-all">Activity</Button>
+             </Link>
+          </div>
+        </div>
+        <div className="flex items-center gap-6">
+           <div className="flex items-center gap-5 text-white/30">
+              <Search className="size-4 cursor-pointer hover:text-white transition-colors" />
+              <Link href="/settings"><SettingsIcon className="size-4 cursor-pointer hover:text-white transition-colors" /></Link>
+           </div>
+           <div className="font-mono text-sm font-black tracking-[0.2em] text-white/80 tabular-nums">
+             {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+           </div>
+        </div>
+      </div>
+
       <div className="flex-1 flex flex-col min-h-0 relative z-10">
         
-        {/* System Selector */}
-        <div className="flex gap-3 p-4 sm:p-8 overflow-x-auto scrollbar-none no-scrollbar h-20 sm:h-24 shrink-0 items-center border-b border-white/5 bg-black/20 backdrop-blur-md">
+        {/* System Selector (Horizontal Tabs) */}
+        <div className="flex gap-3 p-8 overflow-x-auto scrollbar-none no-scrollbar h-24 shrink-0 items-center border-b border-white/5 bg-black/10">
            {systemsWithGames.map((group, i) => (
              <button
                key={group.system.id}
                onClick={() => { setActiveSystemIdx(i); setActiveGameIdx(0); }}
-               className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full font-display text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] transition-all whitespace-nowrap ${
+               className={`px-6 py-2 rounded-full font-display text-[10px] font-black uppercase tracking-[0.25em] transition-all whitespace-nowrap ${
                  i === activeSystemIdx 
-                   ? "bg-primary text-white shadow-[0_0_25px_rgba(var(--primary),0.5)] scale-105" 
-                   : "bg-white/5 text-white/40 hover:bg-white/10"
+                   ? "bg-primary text-white shadow-[0_0_20px_rgba(var(--primary),0.4)] scale-105" 
+                   : "bg-white/5 text-white/30 hover:bg-white/10"
                }`}
              >
                {group.system.name}
@@ -184,52 +178,44 @@ export default function PlayHubTheme() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex min-h-0">
+        <div className="flex-1 flex min-h-0 overflow-hidden">
           
-          {/* Game Grid - Responsive */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-8 scrollbar-none">
-             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 sm:gap-6">
+          {/* Game Grid */}
+          <div className="flex-1 overflow-y-auto p-8 scrollbar-none overscroll-y-contain">
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-6">
                 {currentSystem?.games.map((game, i) => {
                   const isActive = i === activeGameIdx;
                   return (
                     <motion.div
                       key={game.id}
-                      animate={{ 
-                        scale: isActive ? 1.08 : 1,
-                        opacity: 1
-                      }}
+                      animate={{ scale: isActive ? 1.08 : 1 }}
                       whileHover={{ scale: 1.05 }}
-                      className={`relative aspect-[2/3] rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 ${
+                      className={`relative aspect-[2/3] rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 ${
                         isActive 
-                          ? "ring-4 ring-primary shadow-[0_0_30px_rgba(var(--primary),0.4)] z-10 active-selection" 
+                          ? "ring-4 ring-primary shadow-[0_0_40px_rgba(var(--primary),0.3)] z-10" 
                           : "ring-1 ring-white/10 opacity-70 hover:opacity-100"
                       }`}
-                      onMouseEnter={() => {
-                        if (window.innerWidth >= 1024) setActiveGameIdx(i);
-                      }}
+                      onMouseEnter={() => { if (window.innerWidth >= 1024) setActiveGameIdx(i); }}
                       onClick={() => {
                         setActiveGameIdx(i);
-                        if (window.innerWidth < 1280) {
-                          setShowMobileDetails(true);
-                        } else {
-                          openGame(game);
-                        }
+                        if (window.innerWidth < 1280) setShowMobileDetails(true);
+                        else openGame(game);
                       }}
                     >
-                      <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/50">
+                      <div className="absolute inset-0 bg-neutral-900/50 flex items-center justify-center">
                         {game.artUrl ? (
-                          <img src={game.artUrl} className="w-full h-full object-cover" />
+                          <img src={game.artUrl} className="w-full h-full object-cover" alt="" />
                         ) : (
-                          <span className="text-[10px] font-bold uppercase text-white/20 px-4 text-center">{game.title}</span>
+                          <span className="text-[10px] font-black uppercase text-white/20 px-4 text-center">{game.title}</span>
                         )}
                       </div>
                       
-                      {/* Pulse effect for active item */}
+                      {/* Pulse ring for active item */}
                       {isActive && (
                         <motion.div 
-                          animate={{ opacity: [0.3, 0.6, 0.3] }}
+                          animate={{ opacity: [0.2, 0.5, 0.2] }}
                           transition={{ repeat: Infinity, duration: 2 }}
-                          className="absolute inset-0 ring-4 ring-primary rounded-xl sm:rounded-2xl pointer-events-none" 
+                          className="absolute inset-0 ring-4 ring-primary rounded-2xl pointer-events-none" 
                         />
                       )}
 
@@ -240,82 +226,86 @@ export default function PlayHubTheme() {
              </div>
           </div>
 
-          {/* Info Panel - Desktop & Mobile Overlay */}
+          {/* Right Info Panel (The Glass Engine) */}
           <AnimatePresence>
              {(activeGame && (window.innerWidth >= 1280 || showMobileDetails)) && (
                <motion.div
                  initial={{ x: "100%", opacity: 0 }}
                  animate={{ x: 0, opacity: 1 }}
                  exit={{ x: "100%", opacity: 0 }}
-                 transition={{ type: "spring", damping: 30, stiffness: 200 }}
-                 className={`fixed right-0 top-16 bottom-12 w-full sm:w-[400px] xl:w-[450px] 2xl:w-[500px] border-l border-white/10 bg-black/60 backdrop-blur-3xl z-30 flex flex-col p-6 sm:p-10 ${!showMobileDetails && "hidden xl:flex"}`}
+                 transition={{ type: "spring", damping: 28, stiffness: 180 }}
+                 className={`fixed right-0 top-16 bottom-0 w-full sm:w-[450px] 2xl:w-[500px] border-l border-white/5 bg-black/60 backdrop-blur-3xl z-30 flex flex-col p-8 sm:p-12 ${!showMobileDetails && "hidden xl:flex"}`}
                >
-                  {/* Close button for mobile */}
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     onClick={() => setShowMobileDetails(false)}
-                    className="absolute top-4 right-4 sm:hidden text-white/40"
+                    className="absolute top-6 left-6 xl:hidden text-white/30 hover:text-white"
                   >
                     <ChevronLeft className="size-6 rotate-180" />
                   </Button>
 
-                  <div className="aspect-video rounded-2xl overflow-hidden border border-white/10 mb-8 shrink-0 relative shadow-2xl">
+                  {/* Header Area */}
+                  <div className="aspect-video rounded-3xl overflow-hidden border border-white/10 mb-10 shrink-0 relative shadow-2xl">
                      {activeGame.artUrl ? (
-                       <img src={activeGame.artUrl} className="w-full h-full object-cover opacity-80" />
+                       <img src={activeGame.artUrl} className="w-full h-full object-cover opacity-80" alt="" />
                      ) : (
                        <div className="w-full h-full bg-neutral-900" />
                      )}
                      <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
-                     <div className="absolute bottom-6 left-6 right-6">
-                        <div className="font-display text-2xl font-black uppercase tracking-tight text-white drop-shadow-2xl">{activeGame.title}</div>
+                     <div className="absolute bottom-6 left-8 right-8">
+                        <div className="font-display text-2xl font-black uppercase tracking-tight text-white drop-shadow-2xl leading-none">{activeGame.title}</div>
                      </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-3 mb-8">
-                     <div className="px-4 py-1 rounded-lg bg-white/5 border border-white/10 font-mono text-[11px] uppercase tracking-widest text-white/60">{activeGame.year || '----'}</div>
-                     <div className="px-4 py-1 rounded-lg bg-white/5 border border-white/10 font-mono text-[11px] uppercase tracking-widest text-primary font-bold">{currentSystem.system.name}</div>
+                  {/* Metadata Tags */}
+                  <div className="flex flex-wrap gap-3 mb-10">
+                     <div className="px-4 py-1.5 rounded-xl bg-white/5 border border-white/10 font-mono text-[10px] uppercase tracking-widest text-white/50">{activeGame.year || '----'}</div>
+                     <div className="px-4 py-1.5 rounded-xl bg-white/5 border border-white/10 font-mono text-[10px] uppercase tracking-widest text-primary font-black italic">{currentSystem.system.name}</div>
                      {activeGame.rating > 0 && (
-                        <div className="px-4 py-1 rounded-lg bg-white/5 border border-white/10 flex items-center gap-1.5 text-yellow-500 font-bold font-mono text-[11px]">
+                        <div className="px-4 py-1.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-1.5 text-yellow-500 font-black font-mono text-[10px] tracking-widest">
                            <Star className="size-3 fill-current" /> {activeGame.rating}/5
                         </div>
                      )}
                   </div>
 
-                  <div className="space-y-8 flex-1 overflow-y-auto scrollbar-none">
+                  {/* Description Section */}
+                  <div className="space-y-8 flex-1 overflow-y-auto scrollbar-none no-scrollbar">
                      <div className="space-y-3">
-                        <div className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/30">Description</div>
-                        <p className="text-sm sm:text-base text-white/70 leading-relaxed font-medium">{activeGame.description || "No mission brief available for this title."}</p>
+                        <div className="text-[10px] font-mono uppercase tracking-[0.5em] text-white/20">Mission Briefing</div>
+                        <p className="text-base text-white/60 leading-relaxed font-medium italic">{activeGame.description || "The definitive experience is ready. Software integrity confirmed. Initialize to begin."}</p>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                        <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
-                           <div className="text-[10px] font-mono uppercase tracking-widest text-white/30">Time Logged</div>
-                           <div className="font-mono text-xl font-bold">{fmtHoursShort(activeGame.minutesPlayed ?? 0)}</div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-1">
+                           <div className="text-[10px] font-mono uppercase tracking-widest text-white/20">Time Logged</div>
+                           <div className="font-mono text-2xl font-black text-white/90 tabular-nums">{fmtHoursShort(activeGame.minutesPlayed ?? 0)}</div>
                         </div>
-                        <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
-                           <div className="text-[10px] font-mono uppercase tracking-widest text-white/30">Status</div>
-                           <div className="font-mono text-xs font-bold uppercase tracking-wider text-primary">{activeGame.playStatus || 'Unplayed'}</div>
+                        <div className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-1">
+                           <div className="text-[10px] font-mono uppercase tracking-widest text-white/20">Status</div>
+                           <div className="font-mono text-xs font-black uppercase tracking-[0.2em] text-primary">{activeGame.playStatus || 'Active'}</div>
                         </div>
                      </div>
                   </div>
 
-                  <div className="pt-8 flex flex-col gap-3">
+                  {/* Actions */}
+                  <div className="pt-12 flex flex-col gap-4">
                      <Button 
+                       size="lg"
                        onClick={() => {
                          const returnTo = encodeURIComponent(window.location.href);
                          window.location.href = apiUrl(`/api/roms/${activeGame.romId}/player?return=${returnTo}`);
                        }}
-                       className="w-full h-16 rounded-2xl bg-white hover:bg-neutral-200 text-black font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-transform active:scale-95"
+                       className="w-full h-16 rounded-2xl bg-white hover:bg-neutral-200 text-black font-black uppercase tracking-[0.3em] text-sm shadow-[0_20px_50px_rgba(255,255,255,0.1)] transition-transform active:scale-95"
                      >
-                       <Play className="size-5 mr-3 fill-current" /> Initialize Game
+                       <Play className="size-5 mr-3 fill-current" /> Initialize
                      </Button>
                      <Button 
                        variant="outline"
                        onClick={() => openGame(activeGame)}
-                       className="w-full h-14 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest sm:hidden"
+                       className="w-full h-14 rounded-2xl border-white/10 bg-white/5 text-white font-black uppercase tracking-[0.2em] text-xs hover:bg-white/10"
                      >
-                       Edit Metadata
+                       Detailed Stats
                      </Button>
                   </div>
                </motion.div>
@@ -324,24 +314,23 @@ export default function PlayHubTheme() {
         </div>
       </div>
 
-      {/* Bottom Bar - Mobile Friendly */}
-      <div className="h-12 px-4 sm:px-8 border-t border-white/5 bg-black/60 backdrop-blur-xl flex items-center justify-between z-20">
-         <div className="flex items-center gap-4 sm:gap-8">
-           <div className="flex items-center gap-2">
-              <div className="size-5 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] font-bold">A</div>
-              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-white/40">Select</span>
+      {/* Bottom Interface Hints */}
+      <div className="h-12 px-8 border-t border-white/5 bg-black/60 backdrop-blur-2xl flex items-center justify-between z-20 shrink-0">
+         <div className="flex items-center gap-8">
+           <div className="flex items-center gap-3">
+              <div className="size-6 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] font-black">A</div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-white/30">Select</span>
            </div>
-           <div className="flex items-center gap-2">
-              <div className="size-5 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] font-bold">B</div>
-              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-white/40">Back</span>
+           <div className="flex items-center gap-3">
+              <div className="size-6 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] font-black">B</div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-white/30">Back</span>
            </div>
-           <div className="hidden sm:flex items-center gap-2">
-              <div className="size-5 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] font-bold">X</div>
-              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-white/40">Favorite</span>
+           <div className="hidden sm:flex items-center gap-3">
+              <div className="size-6 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] font-black">X</div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-white/30">Favorite</span>
            </div>
          </div>
-         <div className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/10 hidden sm:block">HomeArcade v2.9.1</div>
-         <div className="sm:hidden text-[9px] font-mono uppercase tracking-widest text-white/20">PlayHub Mobile</div>
+         <div className="text-[10px] font-mono uppercase tracking-[0.5em] text-white/10 italic">PlayHub Engine v2.17</div>
       </div>
 
       <GameDetailDialog
@@ -355,19 +344,6 @@ export default function PlayHubTheme() {
         onSetStatus={handleSetStatus}
       />
       <WelcomeDialog hasRoms={roms.length > 0} />
-      
-      <style dangerouslySetInnerHTML={{ __html: `
-        .scrollbar-none::-webkit-scrollbar { display: none; }
-        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes active-pulse {
-          0% { box-shadow: 0 0 0 0 rgba(var(--primary), 0.4); }
-          70% { box-shadow: 0 0 0 15px rgba(var(--primary), 0); }
-          100% { box-shadow: 0 0 0 0 rgba(var(--primary), 0); }
-        }
-        .active-selection {
-          animation: active-pulse 2s infinite;
-        }
-      `}} />
     </div>
   );
 }

@@ -1,13 +1,5 @@
-import React, { lazy, Suspense } from "react";
-import { useIntegration } from "@/lib/integration";
-
-// Lazy load themes to keep the initial bundle small
-const NostalgiaTheme = lazy(() => import("@/components/dashboard-themes/NostalgiaTheme"));
-const PlayHubTheme = lazy(() => import("@/components/dashboard-themes/PlayHubTheme"));
-const ColorfulTheme = lazy(() => import("@/components/dashboard-themes/ColorfulTheme"));
-const AlekfullNXTheme = lazy(() => import("@/components/dashboard-themes/AlekfullNXTheme"));
-const ArtBookNextTheme = lazy(() => import("@/components/dashboard-themes/ArtBookNextTheme"));
-const TltlvilusTheme = lazy(() => import("@/components/dashboard-themes/TltlvilusTheme"));
+import React, { Suspense } from "react";
+import PlayHubTheme from "@/components/dashboard-themes/PlayHubTheme";
 
 function ThemeFallback() {
   return (
@@ -18,17 +10,9 @@ function ThemeFallback() {
 }
 
 export default function Dashboard() {
-  const { config } = useIntegration();
-  const theme = config.dashboardTheme || "nostalgia";
-
   return (
     <Suspense fallback={<ThemeFallback />}>
-      {theme === "playhub" && <PlayHubTheme />}
-      {theme === "colorful" && <ColorfulTheme />}
-      {theme === "alekfull-nx" && <AlekfullNXTheme />}
-      {theme === "art-book" && <ArtBookNextTheme />}
-      {theme === "tltlvilus" && <TltlvilusTheme />}
-      {(theme === "nostalgia" || !["playhub", "colorful", "alekfull-nx", "art-book", "tltlvilus"].includes(theme)) && <NostalgiaTheme />}
+      <PlayHubTheme />
     </Suspense>
   );
 }

@@ -247,27 +247,7 @@ function DisplaySettings() {
             </div>
           </Field>
 
-          <Field label="Dashboard Layout" hint="Choose the visual style of your landing page.">
-            <div className="flex items-center gap-4">
-              <LayoutGrid className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Select
-                value={config.dashboardTheme || "nostalgia"}
-                onValueChange={(val) => setConfig({ dashboardTheme: val })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="nostalgia">Nostalgia Grid (Shelves)</SelectItem>
-                  <SelectItem value="playhub">PlayHub (Clean Dashboard)</SelectItem>
-                  <SelectItem value="colorful">Colorful (High Vibrancy)</SelectItem>
-                  <SelectItem value="alekfull-nx">Alekfull NX (Switch Style)</SelectItem>
-                  <SelectItem value="art-book">Art Book Next (Magazine)</SelectItem>
-                  <SelectItem value="tltlvilus">tltlvilus (Modern Minimalist)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </Field>
+          <div />
 
           <Field label={t("settings.fields.aspectRatio.label")} hint={t("settings.fields.aspectRatio.hint")}>
             <Select
