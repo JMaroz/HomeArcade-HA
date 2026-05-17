@@ -400,7 +400,7 @@ export default function HomeArcadeTheme() {
       <div className="flex-1 flex flex-col min-h-0 relative z-10">
         
         {/* System Selector (Horizontal Tabs) */}
-        <div className="flex gap-3 p-8 overflow-x-auto scrollbar-none no-scrollbar h-24 shrink-0 items-center border-b border-white/5 bg-black/10">
+        <div className="flex gap-3 p-8 overflow-x-auto scrollbar-none no-scrollbar h-24 shrink-0 items-center border-b border-white/5 bg-black/10 pr-20 relative">
            {systemsWithGames.map((group, i) => (
              <button
                key={group.system.id}
@@ -414,6 +414,16 @@ export default function HomeArcadeTheme() {
                {group.system.name}
              </button>
            ))}
+
+           {/* Mobile Settings Access */}
+           <div className="xl:hidden absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-4">
+              <div className="h-8 w-px bg-white/5" />
+              <Link href="/settings">
+                <Button variant="ghost" size="icon" className="text-white/20 hover:text-white">
+                  <SettingsIcon className="size-5" />
+                </Button>
+              </Link>
+           </div>
         </div>
 
         {/* Main Content Area */}
