@@ -6,6 +6,7 @@ const NostalgiaTheme = lazy(() => import("@/components/dashboard-themes/Nostalgi
 const PlayHubTheme = lazy(() => import("@/components/dashboard-themes/PlayHubTheme"));
 const GameOSTheme = lazy(() => import("@/components/dashboard-themes/GameOSTheme"));
 const SlateTheme = lazy(() => import("@/components/dashboard-themes/SlateTheme"));
+const ColorfulTheme = lazy(() => import("@/components/dashboard-themes/ColorfulTheme"));
 
 function ThemeFallback() {
   return (
@@ -24,7 +25,8 @@ export default function Dashboard() {
       {theme === "playhub" && <PlayHubTheme />}
       {theme === "gameos" && <GameOSTheme />}
       {theme === "slate" && <SlateTheme />}
-      {(theme === "nostalgia" || !["playhub", "gameos", "slate"].includes(theme)) && <NostalgiaTheme />}
+      {theme === "colorful" && <ColorfulTheme />}
+      {(theme === "nostalgia" || !["playhub", "gameos", "slate", "colorful"].includes(theme)) && <NostalgiaTheme />}
     </Suspense>
   );
 }

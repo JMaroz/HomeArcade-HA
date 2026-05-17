@@ -262,6 +262,7 @@ function DisplaySettings() {
                   <SelectItem value="playhub">PlayHub (Clean Dashboard)</SelectItem>
                   <SelectItem value="gameos">gameOS (Cinematic Hero)</SelectItem>
                   <SelectItem value="slate">Slate (Desktop Edition)</SelectItem>
+                  <SelectItem value="colorful">Colorful (High Vibrancy)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
