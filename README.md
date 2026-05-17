@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.22.11** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.22.12** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -68,8 +68,13 @@ Systems are listed in release-date order.
 
 ## Changelog
 
+### v2.22.12
+- **Scraper Enhancement:** Improved TheGamesDB matching logic with fuzzy title fallbacks. Descriptions and release dates are now much more likely to populate for existing games.
+- **Data Integrity:** Refined metadata update logic to ensure all fields are correctly cleared or updated in the database during scraper fallbacks.
+- **Improved Monitoring:** Added server-side logs to track scraper performance and matching success rates.
+
 ### v2.22.11
-- **Enhanced Mobile Navigation:** Redesigned the system selector bar to include a pinned "Quick Actions" overlay. The Library and Settings icons are now consistently visible and easier to tap, featuring improved contrast and a subtle background gradient to prevent content overlap.
+- **Enhanced Mobile Navigation:** Redesigned the system selector bar to include a pinned "Quick Actions" overlay. The Library and Settings icons are now consistently visible and easier to tap.
 
 ### v2.22.10
 - **Fix:** Resolved a `ReferenceError: LayoutGrid is not defined` crashing the mobile dashboard.

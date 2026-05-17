@@ -47,7 +47,14 @@ export async function fetchTheGamesDBMeta(system: string, title: string, apiKey:
     if (!Array.isArray(games) || games.length === 0) return null;
 
     const titleLower = title.toLowerCase();
-    const game = games.find((g) => String(g.game_title ?? "").toLowerCase() === titleLower) ?? games[0];
+    const normalizedTarget = normalizeSearchTitle(title);
+    
+    // 1. Try exact match
+    // 2. Try match after normalization (removing noise like region tags)
+    // 3. Fallback to first result
+    const game = games.find((g) => String(g.game_title ?? "").toLowerCase() === titleLower) 
+              ?? games.find((g) => normalizeSearchTitle(String(g.game_title ?? "")) === normalizedTarget)
+              ?? games[0];
 
     const description = String(game.overview ?? "").trim() || null;
     const players = game.players ? String(game.players) : null;
@@ -266,20 +273,40 @@ export function registerScrapeRoutes(app: Express) {
     const settings = await storage.getIntegrationSettings();
     let meta: any = null;
 
-    // Try ScreenScraper first
+    // Try ScreenScraper first (most detailed)
     if (settings.ssUserId && settings.ssPassword) {
+      console.log(`[Scrape] Trying ScreenScraper for ${rom.title} (${rom.fileName})...`);
       meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.ssUserId, settings.ssPassword);
+      if (meta) console.log(`[Scrape] ScreenScraper matched ${rom.title}`);
     }
+
     // Try TheGamesDB second
     if (!meta && settings.tgdbApiKey) {
+      console.log(`[Scrape] Trying TheGamesDB for ${rom.title}...`);
       meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.tgdbApiKey);
+      if (meta) console.log(`[Scrape] TheGamesDB matched ${rom.title}`);
     }
-    // Fallback to Libretro
+
+    // Fallback to Libretro (art only)
     if (!meta) {
+      console.log(`[Scrape] Falling back to Libretro for ${rom.title}...`);
       const libretro = await findLibretroBoxArt(rom.system, rom.title);
       if (libretro.url) {
-        meta = { artUrl: libretro.url, scrapeStatus: "matched", scrapeMessage: libretro.message };
+        meta = { 
+          artUrl: libretro.url, 
+          scrapeStatus: "matched", 
+          scrapeMessage: libretro.message,
+          // Explicitly set null to clear/ensure empty for missing detail fields
+          description: null,
+          releaseYear: null,
+          developer: null,
+          publisher: null,
+          genre: null,
+          players: null
+        };
+        console.log(`[Scrape] Libretro matched ${rom.title}`);
       } else {
+        console.log(`[Scrape] No match found for ${rom.title}: ${libretro.message}`);
         await storage.updateUploadedRomArt(id, { artUrl: null, scrapeStatus: "failed", scrapeMessage: libretro.message });
         return res.json({ success: false, message: libretro.message });
       }

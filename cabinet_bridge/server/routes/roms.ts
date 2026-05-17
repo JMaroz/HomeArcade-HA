@@ -100,10 +100,21 @@ export function registerRomRoutes(app: Express) {
       const discGroup = discMatch ? `${system}/${slugify(cleanTitle)}` : null;
 
       const settings = await storage.getIntegrationSettings();
-      const tgdbMeta = await fetchTheGamesDBMeta(system, cleanTitle, settings.tgdbApiKey || "");
-      const ssMeta = tgdbMeta?.artUrl ? null : await fetchScreenScraperMeta(system, safeName, cleanTitle, settings.ssUserId || "", settings.ssPassword || "");
-      const activeMeta = tgdbMeta ?? ssMeta;
-      const libretroArt = activeMeta?.artUrl ? null : await findLibretroBoxArt(system, cleanTitle);
+      let activeMeta: any = null;
+
+      // Try High-Detail Scrapers first
+      if (settings.ssUserId && settings.ssPassword) {
+        activeMeta = await fetchScreenScraperMeta(system, safeName, cleanTitle, settings.ssUserId, settings.ssPassword);
+      }
+      if (!activeMeta && settings.tgdbApiKey) {
+        activeMeta = await fetchTheGamesDBMeta(system, cleanTitle, settings.tgdbApiKey);
+      }
+
+      // Fallback to Libretro (art only)
+      let libretroArt: { url: string | null; message: string } | null = null;
+      if (!activeMeta) {
+        libretroArt = await findLibretroBoxArt(system, cleanTitle);
+      }
 
       const rom = insertUploadedRomSchema.parse({
         title: cleanTitle,
