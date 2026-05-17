@@ -143,7 +143,7 @@ function fmtHoursShort(minutes: number) {
   return `${h % 1 === 0 ? h : h.toFixed(1)}h`;
 }
 
-export default function PlayHubTheme() {
+export default function HomeArcadeTheme() {
   const { config } = useIntegration();
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -379,7 +379,7 @@ export default function PlayHubTheme() {
       {/* Top Navigation Bar */}
       <div className="h-16 px-8 flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur-2xl z-20">
         <div className="flex items-center gap-6">
-          <div className="text-primary font-black tracking-tighter text-xl italic uppercase">PlayHub</div>
+          <div className="text-primary font-black tracking-tighter text-xl italic uppercase">HomeArcade</div>
           <div className="h-4 w-px bg-white/10" />
           <div className="flex gap-4">
              <Link href="/library/all">
@@ -648,7 +648,7 @@ export default function PlayHubTheme() {
                                          return (
                                            <button 
                                              key={c.id} 
-                                             onClick={() => onToggleCollection(c.id, activeGame, !isMember)}
+                                             onClick={() => handleToggleCollection(c.id, activeGame, !isMember)}
                                              className={`px-4 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all ${isMember ? "bg-primary/20 border-primary text-primary" : "bg-white/5 border-transparent text-white/30"}`}
                                            >
                                               {c.name}
@@ -676,7 +676,7 @@ export default function PlayHubTheme() {
                        }}
                        className="w-full h-16 rounded-2xl bg-white hover:bg-neutral-200 text-black font-black uppercase tracking-[0.3em] text-sm shadow-[0_20px_50px_rgba(255,255,255,0.1)] transition-transform active:scale-95"
                      >
-                       <Play className="size-5 mr-3 fill-current" /> Initialize Sequence
+                       <Play className="size-5 mr-3 fill-current" /> Play Game
                      </Button>
                   </div>
                </motion.div>
@@ -687,18 +687,8 @@ export default function PlayHubTheme() {
 
 
       {/* Bottom Interface Hints */}
-      <div className="h-12 px-8 border-t border-white/5 bg-black/60 backdrop-blur-2xl flex items-center justify-between z-20 shrink-0 mb-[64px] sm:mb-0">
-         <div className="flex items-center gap-8">
-           <div className="flex items-center gap-3">
-              <div className="size-6 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] font-black text-white/40">A</div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-white/30">Select</span>
-           </div>
-           <div className="flex items-center gap-3">
-              <div className="size-6 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] font-black text-white/40">B</div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-white/30">Back</span>
-           </div>
-         </div>
-         <div className="text-[10px] font-mono uppercase tracking-[0.5em] text-white/10 italic">PlayHub OS v2.21</div>
+      <div className="h-12 px-8 border-t border-white/5 bg-black/60 backdrop-blur-2xl flex items-center justify-end z-20 shrink-0 mb-[64px] sm:mb-0">
+         <div className="text-[10px] font-mono uppercase tracking-[0.5em] text-white/10 italic">HomeArcade OS v2.22.1</div>
       </div>
 
       <WelcomeDialog hasRoms={roms.length > 0} />

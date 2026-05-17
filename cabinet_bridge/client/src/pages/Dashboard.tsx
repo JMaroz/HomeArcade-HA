@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import PlayHubTheme from "@/components/dashboard-themes/PlayHubTheme";
+import HomeArcadeTheme from "@/components/dashboard-themes/HomeArcadeTheme";
 
 function ThemeFallback() {
   return (
@@ -12,7 +12,7 @@ function ThemeFallback() {
 export default function Dashboard() {
   return (
     <Suspense fallback={<ThemeFallback />}>
-      <PlayHubTheme />
+      <HomeArcadeTheme />
     </Suspense>
   );
 }
