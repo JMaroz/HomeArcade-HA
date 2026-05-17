@@ -29,7 +29,7 @@ import {
   Info
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 
 // ─── animation variants ───────────────────────────────────────────────────────
 const containerVariants = {
@@ -114,8 +114,24 @@ function ConsoleCarousel({
   const { t } = useTranslation();
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  const handleNext = () => setIndex((i) => (i + 1) % systems.length);
-  const handlePrev = () => setIndex((i) => (i - 1 + systems.length) % systems.length);
+  // Correct hook usage:
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const rotateX = useTransform(mouseY, [-200, 200], [10, -10]);
+  const rotateY = useTransform(mouseX, [-300, 300], [-15, 15]);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - (rect.left + rect.width / 2);
+    const y = e.clientY - (rect.top + rect.height / 2);
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   // Keyboard navigation
   useEffect(() => {
