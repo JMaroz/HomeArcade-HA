@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.13.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.14.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -67,6 +67,12 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.14.0
+- **Libretro Deep Integration** — Professional-grade automation features powered by the Libretro database.
+- **CRC Deep Scan** — Perfect ROM identification using binary fingerprints (CRC32). Identifies games regardless of filename.
+- **Gamepad Autoconfig** — Plug-and-play controller support. Automatically fetch verified button mappings for hundreds of controllers.
+- **Improved Scraper Pipeline** — Scanner now calculates file hashes during import for instant metadata readiness.
 
 ### v2.13.0
 - **Global Theme Optimization** — Massive pass across all themes (Nostalgia, PlayHub, Colorful, Alekfull, Art Book) to ensure 100% mobile responsiveness.

@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIntegration } from "@/lib/integration";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -715,8 +715,34 @@ function Code({ children }: { children: string }) {
 function ControlsSettings() {
   const { config, setConfig } = useIntegration();
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [gamepads, setGamepads] = useState<Gamepad[]>([]);
   const [pressedButtons, setPressedButtons] = useState<Record<number, number[]>>({});
+  const [fetchingAutoconfig, setFetchingAutoconfig] = useState<string | null>(null);
+
+  const fetchAutoconfig = async (gp: Gamepad) => {
+    setFetchingAutoconfig(gp.id);
+    try {
+      const res = await fetch(apiUrl(`/api/gamepad/autoconfig?id=${encodeURIComponent(gp.id)}`));
+      if (!res.ok) throw new Error("No configuration found for this controller.");
+      const data = await res.json();
+      
+      const newMapping: Record<string, number> = { ...(config.uiGamepadMapping || {}) };
+      const cfg = data.mapping;
+
+      if (cfg.input_a_btn) newMapping.select = parseInt(cfg.input_a_btn);
+      if (cfg.input_b_btn) newMapping.back = parseInt(cfg.input_b_btn);
+      if (cfg.input_x_btn) newMapping.favorite = parseInt(cfg.input_x_btn);
+      if (cfg.input_start_btn) newMapping.menu = parseInt(cfg.input_start_btn);
+
+      setConfig({ uiGamepadMapping: newMapping });
+      toast({ title: "Autoconfig Applied", description: `Applied settings from "${data.source}".` });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Autoconfig Failed", description: String(err) });
+    } finally {
+      setFetchingAutoconfig(null);
+    }
+  };
 
   useEffect(() => {
     const update = () => {
@@ -791,9 +817,16 @@ function ControlsSettings() {
                       <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{gp.buttons.length} Buttons</span>
                     </div>
                   </div>
-                  <div className="px-3 py-1 rounded bg-green-500/10 text-green-500 font-mono text-[10px] font-bold uppercase tracking-wider">
-                    Connected
-                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 gap-2 font-mono text-[10px] uppercase tracking-wider"
+                    onClick={() => fetchAutoconfig(gp)}
+                    disabled={!!fetchingAutoconfig}
+                  >
+                    {fetchingAutoconfig === gp.id ? <Loader2 className="size-3 animate-spin" /> : <Database className="size-3" />}
+                    Fetch Autoconfig
+                  </Button>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
