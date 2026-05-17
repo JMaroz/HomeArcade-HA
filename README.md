@@ -68,7 +68,15 @@ Systems are listed in release-date order.
 
 ## Changelog
 
+### v2.12.1
+- **Theme Cleanup** — Removed Slate and gameOS themes to focus on fully mobile-optimized layouts.
+- **Mobile Refinement** — Improved responsiveness across all remaining dashboard styles.
+
 ### v2.12.0
+- **Theme Expansion** — Added Alekfull NX (Switch Style) and Art Book Next (Magazine) themes.
+- **Enhanced OS Simulation** — Added real-time status bar to Alekfull theme.
+
+### v2.11.0
 - **Theme Expansion** — Added two new high-end dashboard layouts:
   - **Alekfull NX** — A clean, Switch-inspired dashboard with a horizontal system carousel and master-detail game view.
   - **Art Book Next** — A minimalist, magazine-style layout focusing on large artwork and asymmetric design.
