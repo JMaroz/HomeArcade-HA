@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.12.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.13.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -68,6 +68,12 @@ Systems are listed in release-date order.
 
 ## Changelog
 
+### v2.13.0
+- **Global Theme Optimization** — Massive pass across all themes (Nostalgia, PlayHub, Colorful, Alekfull, Art Book) to ensure 100% mobile responsiveness.
+- **Mobile Details Drawers** — Added sleek, drawer-style info panels for small screens, replacing static sidebars.
+- **Performance Tuning** — Optimized backdrop blurs and animation frame rates for smoother browser rendering.
+- **Touch Mastery** — Re-engineered touch targets and gesture handling for handheld devices.
+
 ### v2.12.1
 - **Theme Cleanup** — Removed Slate and gameOS themes to focus on fully mobile-optimized layouts.
 - **Mobile Refinement** — Improved responsiveness across all remaining dashboard styles.
@@ -75,12 +81,6 @@ Systems are listed in release-date order.
 ### v2.12.0
 - **Theme Expansion** — Added Alekfull NX (Switch Style) and Art Book Next (Magazine) themes.
 - **Enhanced OS Simulation** — Added real-time status bar to Alekfull theme.
-
-### v2.11.0
-- **Theme Expansion** — Added two new high-end dashboard layouts:
-  - **Alekfull NX** — A clean, Switch-inspired dashboard with a horizontal system carousel and master-detail game view.
-  - **Art Book Next** — A minimalist, magazine-style layout focusing on large artwork and asymmetric design.
-- **Enhanced OS Simulation** — Added a real-time system status bar (Clock, WiFi, Battery) to the Alekfull theme.
 
 ### v2.11.0
 - **Colorful Theme** — Added a high-vibrancy, bold dashboard layout inspired by Anthony Caccese's "Colorful" series.
@@ -108,71 +108,6 @@ Systems are listed in release-date order.
 - **Smart Filters** — Create dynamic collections using complex rules (genre, rating, year, etc.).
 - **Netplay Lobby** — Built-in lobby for multiplayer sessions.
 - **Enhanced Performance** — Optimized server bundle and client assets for faster load times.
-
-### v2.3.3
-- **Premium Frontend Engine** — Rebuilt from the ground up with Vite + React + Tailwind v4.
-- **Dashboard** — New central landing page with recently played, stats, and activity feed.
-- **Advanced Integration** — Direct integration with RetroBat and Home Assistant webhooks for PC control.
-- **Smart Filters** — Create dynamic collections using complex rules (genre, rating, year, etc.).
-- **Netplay Lobby** — Built-in lobby for multiplayer sessions.
-- **Enhanced Performance** — Optimized server bundle and client assets for faster load times.
-
-### v0.7.38
-- Bump version to trigger Home Assistant update
-
-### v0.7.37
-- **Netplay lobby UI** — Create or join rooms via the library header; view active rooms and join with a code
-
-### v0.7.36
-- **ROM scanner** — Auto-import ROMs from a watched folder on the host
-
-### v0.7.35
-- **Smart filter collections** — Dynamic game lists based on rules (system, genre, etc.)
-
-### v0.7.34
-- **Appearance settings** — New theme picker in Settings
-
-### v0.7.33
-- **Play status & Live timer** — Status badges on cards and real-time playtime updates
-
-### v0.6.0
-- **TheGamesDB scraper** — new primary metadata source (box art, descriptions, genre, developer, publisher); add your free API key in Settings → Services. Falls through to ScreenScraper then Libretro thumbnails if unmatched
-- **Play History page** — dedicated `/history` route showing all sessions grouped by day with per-game playtime bars, total playtime stat, and most-played game summary
-- **Per-profile favorites, ratings, and play status** — non-default profiles maintain their own favorites, star ratings, and backlog/playing/completed status independently of the global library
-- **Per-profile key bindings** — Settings → Controls now has a profile selector; each profile stores its own keyboard overrides on top of global defaults, loaded at game launch
-- **Mobile landscape mode** — on-screen pad compresses correctly in landscape orientation; button press feedback animation on touch devices
-- **Touch responsiveness** — `touch-action: manipulation` on game cards eliminates the 300 ms tap delay on iOS/Android; scroll containers use `overscroll-contain` for native feel
-
-### v0.5.3
-- ROM upload progress bar with per-file and overall percentage using `XMLHttpRequest`
-
-### v0.5.2 (hotfix)
-- Fixed `Unexpected token 'var'` crash caused by regex backslash consumption inside TypeScript template literals; replaced with `indexOf`/`slice` URL derivation
-
-### v0.5.1
-- Fixed netplay relay URL derivation behind HA Ingress prefix
-
-### v0.5.0
-- **Named player profiles** — create profiles in Settings → Player Profiles; switch from the library header; save states, cheats, and key remaps are isolated per profile
-- **Cheat codes panel** — full slide-in panel to add, toggle, and delete cheat codes per game per profile
-- **Three new shader presets** — Scanlines, LCD (pixel-perfect), Phosphor (green glow)
-- **Netplay** — WebSocket relay server; create or join a room code to play with a friend
-
-### v0.4.12
-- **Named player profiles** — create profiles in Settings → Player profiles; switch from the library header; save states, cheats, and key remaps are isolated per profile
-- **Cheat codes panel** — full slide-in panel to add, toggle, and delete cheat codes per game per profile (replaces non-functional stub)
-- **Three new shader presets** — Scanlines (scanline overlay), LCD (pixel-perfect high-contrast), Phosphor (green monochrome glow)
-
-### v0.4.12
-- Display settings (aspect ratio and filters) now reliably override EmulatorJS canvas styles via CSS `!important`
-
-### v0.4.11
-- Systems sidebar sorted by console release date
-
-### v0.4.10 – v0.4.8
-- Fixed Express 5 wildcard route crash
-- Fixed games stuck at 0% (Content-Length / gzip mismatch)
-- Fixed template literal syntax error in bootstrap JS
 
 ---
 

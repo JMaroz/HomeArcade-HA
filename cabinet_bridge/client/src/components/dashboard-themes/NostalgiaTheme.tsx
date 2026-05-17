@@ -13,7 +13,8 @@ import {
   Play, 
   Clock, 
   Star,
-  Info
+  Info,
+  ChevronRight
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,7 +34,7 @@ export default function NostalgiaTheme() {
   });
 
   const {
-    selectedGame,
+    selectedGame: dialogGame,
     openGame,
     closeGame,
     handleToggleFav,
@@ -68,6 +69,7 @@ export default function NostalgiaTheme() {
   );
 
   const [focus, setFocus] = useState({ shelf: recentlyPlayed.length > 0 ? -1 : 0, game: 0 });
+  const [showMobileDetails, setShowMobileDetails] = useState(false);
 
   const activeGame = useMemo(() => {
     if (focus.shelf === -1) return recentlyPlayed[focus.game];
@@ -75,9 +77,10 @@ export default function NostalgiaTheme() {
     return shelf?.games[focus.game];
   }, [focus, recentlyPlayed, systemsWithGames]);
 
+  // Navigation Logic
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!activeGame || selectedGame) return;
+      if (!activeGame || dialogGame) return;
       
       setFocus(prev => {
         let { shelf, game } = prev;
@@ -105,7 +108,8 @@ export default function NostalgiaTheme() {
             }
           }
         } else if (e.key === "Enter") {
-          openGame(activeGame);
+          if (window.innerWidth < 1024) setShowMobileDetails(true);
+          else openGame(activeGame);
           return prev;
         } else {
           return prev;
@@ -116,7 +120,7 @@ export default function NostalgiaTheme() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeGame, recentlyPlayed, systemsWithGames, selectedGame]);
+  }, [activeGame, recentlyPlayed, systemsWithGames, dialogGame]);
 
   const launchGame = (game: Game) => {
     if (game.romId) {
@@ -128,7 +132,7 @@ export default function NostalgiaTheme() {
   };
 
   return (
-    <div className="flex-1 h-full overflow-hidden bg-black text-white relative select-none">
+    <div className="fixed inset-0 lg:left-0 z-[50] bg-black text-white flex flex-col select-none overflow-hidden">
       <MobileTopBar />
 
       <AnimatePresence mode="wait">
@@ -144,7 +148,7 @@ export default function NostalgiaTheme() {
             {activeGame.artUrl ? (
               <img 
                 src={activeGame.artUrl} 
-                className="w-full h-full object-cover opacity-40 blur-[10px] scale-105" 
+                className="w-full h-full object-cover opacity-40 blur-[12px] scale-105" 
                 alt="" 
               />
             ) : (
@@ -153,35 +157,42 @@ export default function NostalgiaTheme() {
                 style={{ background: `radial-gradient(circle at 70% 30%, hsl(${activeGame.art[0]}), transparent 80%)` }}
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/80" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-black" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40" />
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 w-full h-full flex flex-col md:flex-row max-w-[1800px] mx-auto">
-        <div className="flex-1 h-full overflow-y-auto overflow-x-hidden p-6 sm:p-10 pb-32 scrollbar-none space-y-12">
+      <div className="relative z-10 w-full h-full flex flex-col lg:flex-row max-w-[1920px] mx-auto">
+        
+        {/* Left Side: Game Shelves */}
+        <div className="flex-1 h-full overflow-y-auto overflow-x-hidden p-6 sm:p-12 pb-32 scrollbar-none space-y-10 sm:space-y-16">
+          
           {recentlyPlayed.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-4 sm:space-y-6">
               <div className="flex items-baseline gap-3">
-                <h2 className="font-display text-xl font-bold text-white/90 uppercase tracking-tight">Jump Back In</h2>
-                <span className="font-mono text-[9px] text-white/30 tracking-[0.3em]">Recently Played</span>
+                <h2 className="font-display text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">Jump Back In</h2>
+                <span className="font-mono text-[9px] sm:text-[10px] text-white/30 tracking-[0.4em] uppercase hidden sm:inline">Recently Played</span>
               </div>
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none no-scrollbar">
+              <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scrollbar-none no-scrollbar overscroll-x-contain">
                 {recentlyPlayed.map((game, i) => {
                   const isActive = focus.shelf === -1 && i === focus.game;
                   return (
                     <motion.div
                       key={game.id}
-                      onMouseEnter={() => setFocus({ shelf: -1, game: i })}
-                      onClick={() => openGame(game)}
+                      onMouseEnter={() => { if (window.innerWidth >= 1024) setFocus({ shelf: -1, game: i }); }}
+                      onClick={() => {
+                        setFocus({ shelf: -1, game: i });
+                        if (window.innerWidth < 1024) setShowMobileDetails(true);
+                        else openGame(game);
+                      }}
                       animate={{ scale: isActive ? 1.05 : 1 }}
-                      className={`relative w-40 shrink-0 aspect-[2/3] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${
-                        isActive ? "ring-4 ring-white shadow-[0_0_30px_rgba(255,255,255,0.4)]" : "ring-1 ring-white/10"
+                      className={`relative w-36 sm:w-48 shrink-0 aspect-[2/3] rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                        isActive ? "ring-4 ring-white shadow-[0_0_40px_rgba(255,255,255,0.4)] z-10" : "ring-1 ring-white/10 opacity-70 hover:opacity-100"
                       }`}
                     >
-                      {game.artUrl ? <img src={game.artUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-muted" />}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none opacity-50" />
+                      {game.artUrl ? <img src={game.artUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-neutral-900" />}
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none opacity-50" />
                     </motion.div>
                   );
                 })}
@@ -190,26 +201,30 @@ export default function NostalgiaTheme() {
           )}
 
           {systemsWithGames.map((group, sIdx) => (
-            <div key={group.system.id} className="space-y-4">
+            <div key={group.system.id} className="space-y-4 sm:space-y-6">
               <div className="flex items-baseline gap-3">
-                <h2 className="font-display text-xl font-bold text-white/90 uppercase tracking-tight">{group.system.name}</h2>
-                <span className="font-mono text-[9px] text-white/30 tracking-[0.3em]">{group.games.length} Titles</span>
+                <h2 className="font-display text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">{group.system.name}</h2>
+                <span className="font-mono text-[9px] sm:text-[10px] text-white/30 tracking-[0.4em] uppercase hidden sm:inline">{group.games.length} Titles</span>
               </div>
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none no-scrollbar">
+              <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scrollbar-none no-scrollbar overscroll-x-contain">
                 {group.games.map((game, i) => {
                   const isActive = focus.shelf === sIdx && i === focus.game;
                   return (
                     <motion.div
                       key={game.id}
-                      onMouseEnter={() => setFocus({ shelf: sIdx, game: i })}
-                      onClick={() => openGame(game)}
+                      onMouseEnter={() => { if (window.innerWidth >= 1024) setFocus({ shelf: sIdx, game: i }); }}
+                      onClick={() => {
+                        setFocus({ shelf: sIdx, game: i });
+                        if (window.innerWidth < 1024) setShowMobileDetails(true);
+                        else openGame(game);
+                      }}
                       animate={{ scale: isActive ? 1.05 : 1 }}
-                      className={`relative w-40 shrink-0 aspect-[2/3] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${
-                        isActive ? "ring-4 ring-white shadow-[0_0_30px_rgba(255,255,255,0.4)]" : "ring-1 ring-white/10"
+                      className={`relative w-36 sm:w-48 shrink-0 aspect-[2/3] rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                        isActive ? "ring-4 ring-white shadow-[0_0_40px_rgba(255,255,255,0.4)] z-10" : "ring-1 ring-white/10 opacity-70 hover:opacity-100"
                       }`}
                     >
-                      {game.artUrl ? <img src={game.artUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-muted" />}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none opacity-50" />
+                      {game.artUrl ? <img src={game.artUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-neutral-900" />}
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none opacity-50" />
                     </motion.div>
                   );
                 })}
@@ -225,67 +240,72 @@ export default function NostalgiaTheme() {
           )}
         </div>
 
-        <AnimatePresence mode="wait">
-          {activeGame && (
+        {/* Right Side: Frosted Glass Info Panel (Fixed or Overlay) */}
+        <AnimatePresence>
+          {(activeGame && (window.innerWidth >= 1024 || showMobileDetails)) && (
             <motion.div 
               key={activeGame.id + "panel"}
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: "100%" }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="hidden md:flex w-[350px] lg:w-[450px] shrink-0 h-full border-l border-white/10 bg-black/40 backdrop-blur-2xl flex-col"
+              exit={{ opacity: 0, x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 200 }}
+              className={`fixed lg:relative right-0 top-16 bottom-0 lg:top-0 w-full sm:w-[400px] xl:w-[500px] shrink-0 border-l border-white/10 bg-black/70 lg:bg-black/40 backdrop-blur-3xl z-[100] flex flex-col ${!showMobileDetails && "hidden lg:flex"}`}
             >
+              {/* Close for mobile overlay */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowMobileDetails(false)}
+                className="absolute top-4 left-4 lg:hidden text-white/40 z-50"
+              >
+                <ChevronRight className="size-6 rotate-180" />
+              </Button>
+
               <div className="relative w-full aspect-video border-b border-white/10 bg-black/20 overflow-hidden shrink-0">
                 {activeGame.artUrl ? (
                   <img src={activeGame.artUrl} className="w-full h-full object-cover opacity-60" alt="" />
                 ) : (
-                  <div 
-                    className="w-full h-full opacity-30"
-                    style={{ background: `linear-gradient(135deg, hsl(${activeGame.art[0]}), hsl(${activeGame.art[1]}))` }}
-                  />
+                  <div className="w-full h-full bg-neutral-900" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6">
-                   <div className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold mb-1">
+                <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
+                <div className="absolute bottom-6 left-8 right-8">
+                   <div className="font-mono text-[10px] text-primary uppercase tracking-[0.3em] font-bold mb-1">
                      {SYSTEMS.find(s => s.id === activeGame.system)?.name ?? activeGame.system}
                    </div>
-                   <h2 className="font-display text-2xl lg:text-3xl font-bold leading-tight text-white drop-shadow-md line-clamp-2">
+                   <h2 className="font-display text-2xl lg:text-4xl font-black leading-none text-white uppercase tracking-tighter italic">
                      {activeGame.title}
                    </h2>
                 </div>
               </div>
 
-              <div className="p-6 lg:p-8 flex flex-col flex-1 overflow-y-auto scrollbar-none">
-                <div className="flex items-center gap-4 mb-6">
+              <div className="p-8 lg:p-12 flex flex-col flex-1 overflow-y-auto scrollbar-none">
+                <div className="flex items-center gap-4 mb-8">
                   {activeGame.year > 0 && (
-                    <span className="px-3 py-1 rounded bg-white/10 font-mono text-[11px] font-bold text-white/80">
+                    <span className="px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 font-mono text-[11px] font-black text-white/80 uppercase">
                       {activeGame.year}
                     </span>
                   )}
                   {activeGame.rating > 0 && (
-                    <div className="flex items-center gap-1 text-yellow-500">
+                    <div className="flex items-center gap-1.5 text-yellow-500 bg-yellow-500/5 px-3 py-1.5 rounded-lg border border-yellow-500/10 font-mono text-xs font-black">
                        <Star className="size-4 fill-current" />
-                       <span className="font-mono text-xs font-bold pt-0.5">{activeGame.rating}/5</span>
+                       <span className="pt-0.5">{activeGame.rating}/5</span>
                     </div>
                   )}
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
-                    {activeGame.genre}
-                  </span>
                 </div>
 
-                <div className="text-sm text-white/70 leading-relaxed line-clamp-6 mb-8 font-medium">
-                  {activeGame.description || "No description available."}
+                <div className="text-base text-white/60 leading-relaxed line-clamp-8 mb-10 font-medium italic">
+                  {activeGame.description || "The definitive retro gaming experience is ready for deployment. Finalizing initialization sequence..."}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-                     <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 mb-1">Time Played</div>
-                     <div className="font-mono font-bold text-lg">{fmtHoursShort(activeGame.minutesPlayed ?? 0)}</div>
+                <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-10">
+                  <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                     <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/20">Time Logged</div>
+                     <div className="font-mono font-black text-2xl text-primary/80">{fmtHoursShort(activeGame.minutesPlayed ?? 0)}</div>
                   </div>
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-                     <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 mb-1">Last Played</div>
-                     <div className="font-mono font-bold text-sm leading-tight pt-1">
-                       {activeGame.lastPlayed ? formatRelative(activeGame.lastPlayed) : "Never"}
+                  <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                     <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/20">Mission Status</div>
+                     <div className="font-mono font-bold text-xs uppercase tracking-widest pt-2">
+                        {activeGame.lastPlayed ? "Active" : "Unplayed"}
                      </div>
                   </div>
                 </div>
@@ -294,17 +314,17 @@ export default function NostalgiaTheme() {
                   <Button 
                     size="lg" 
                     onClick={() => launchGame(activeGame)}
-                    className="w-full h-14 rounded-xl bg-white hover:bg-white/90 text-black font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                    className="w-full h-16 rounded-2xl bg-white hover:bg-neutral-200 text-black font-black uppercase tracking-[0.2em] text-sm shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-transform active:scale-95"
                   >
-                    <Play className="size-5 mr-2" /> Play Now
+                    <Play className="size-5 mr-3 fill-current" /> Execute Sequence
                   </Button>
                   <Button 
                     size="lg" 
                     variant="outline"
                     onClick={() => openGame(activeGame)}
-                    className="w-full h-14 rounded-xl border-white/20 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest"
+                    className="w-full h-14 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-[0.1em] text-xs"
                   >
-                    View Details
+                    Technical Specs
                   </Button>
                 </div>
               </div>
@@ -314,7 +334,7 @@ export default function NostalgiaTheme() {
       </div>
 
       <GameDetailDialog
-        game={selectedGame}
+        game={dialogGame}
         onClose={closeGame}
         onToggleFav={handleToggleFav}
         onRate={handleRate}
@@ -324,6 +344,11 @@ export default function NostalgiaTheme() {
         onSetStatus={handleSetStatus}
       />
       <WelcomeDialog hasRoms={roms.length > 0} />
+      
+      <style dangerouslySetInnerHTML={{ __html: `
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+      `}} />
     </div>
   );
 }
