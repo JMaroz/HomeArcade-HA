@@ -106,12 +106,12 @@ export default function ArtBookNextTheme() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col items-center justify-center relative p-6 sm:p-20"
+            className="flex-1 flex flex-col items-center justify-center relative p-6 sm:p-20 overflow-hidden"
           >
              {/* System Hero Section */}
-             <div className="flex-1 w-full flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-20">
+             <div className="flex-1 w-full flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-20 overflow-hidden">
                 <div className="flex-1 space-y-4 sm:space-y-8 text-center lg:text-left">
-                   <div className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.4em] text-gray-300">Portfolio v2.13</div>
+                   <div className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.4em] text-gray-300">Portfolio v2.15</div>
                    <h1 className="text-5xl sm:text-8xl font-black uppercase tracking-tighter leading-none text-black drop-shadow-sm">
                       {currentSystem?.system.name}
                    </h1>
@@ -126,13 +126,13 @@ export default function ArtBookNextTheme() {
                       </div>
                    </div>
                    <div className="pt-8 sm:pt-12">
-                      <Button onClick={() => setView("games")} className="h-14 sm:h-16 px-8 sm:px-12 rounded-none bg-black text-white font-black uppercase tracking-[0.2em] text-xs sm:text-sm hover:bg-gray-800 shadow-xl">
+                      <Button onClick={() => setView("games")} className="h-14 sm:h-16 px-8 sm:px-12 rounded-none bg-black text-white font-black uppercase tracking-[0.2em] text-xs sm:text-sm hover:bg-gray-800 shadow-xl active:scale-95 transition-transform">
                          Open Collection
                       </Button>
                    </div>
                 </div>
                 
-                <div className="w-full sm:w-2/3 lg:flex-1 h-64 lg:h-full relative group">
+                <div className="w-full sm:w-2/3 lg:flex-1 h-48 sm:h-64 lg:h-full relative group shrink-0">
                    <div className="absolute inset-0 bg-gray-50 -rotate-3 scale-105 transition-transform group-hover:rotate-0" />
                    <div className="absolute inset-0 border-[10px] sm:border-[20px] border-white shadow-2xl relative bg-gray-100 flex items-center justify-center overflow-hidden">
                       <Gamepad2 className="size-32 sm:size-64 text-white opacity-50" />
@@ -142,7 +142,7 @@ export default function ArtBookNextTheme() {
              </div>
 
              {/* Horizontal System Ribbon */}
-             <div className="w-full h-16 sm:h-24 border-t border-gray-100 flex items-center gap-6 sm:gap-10 overflow-x-auto scrollbar-none no-scrollbar mt-8 sm:mt-0">
+             <div className="w-full h-16 sm:h-24 border-t border-gray-100 flex items-center gap-6 sm:gap-10 overflow-x-auto scrollbar-none no-scrollbar mt-8 sm:mt-0 px-4">
                 {systemsWithGames.map((group, i) => (
                   <button
                     key={group.system.id}
@@ -165,11 +165,11 @@ export default function ArtBookNextTheme() {
             className="flex-1 flex min-h-0 overflow-hidden"
           >
              {/* Left Content Area */}
-             <div className="flex-1 h-full p-6 sm:p-12 lg:p-20 flex flex-col overflow-hidden">
-                <div className="flex items-center justify-between mb-10 sm:mb-20 shrink-0">
-                   <div className="flex items-center gap-4 cursor-pointer" onClick={() => setView("systems")}>
-                      <ChevronLeft className="size-5 text-gray-300" />
-                      <span className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.4em] text-gray-400">Back</span>
+             <div className="flex-1 h-full p-6 sm:p-12 lg:p-20 flex flex-col overflow-hidden relative">
+                <div className="flex items-center justify-between mb-8 sm:mb-20 shrink-0">
+                   <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setView("systems")}>
+                      <ChevronLeft className="size-5 text-gray-300 group-hover:text-black transition-colors" />
+                      <span className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.4em] text-gray-400 group-hover:text-black transition-colors">Back</span>
                    </div>
                    <div className="text-[10px] font-black uppercase tracking-widest text-primary italic hidden sm:block">Art Book Next Edition</div>
                 </div>
@@ -199,7 +199,7 @@ export default function ArtBookNextTheme() {
                                        <Star className="size-4 sm:size-5 fill-current" />
                                        <span className="text-lg">{activeGame.rating || '-'}/5</span>
                                     </div>
-                                    <div className="font-mono text-xs uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                    <div className="font-mono text-sm uppercase tracking-widest text-gray-400 flex items-center gap-2">
                                        <Calendar className="size-4" /> {activeGame.year || '----'}
                                     </div>
                                  </div>
@@ -209,7 +209,7 @@ export default function ArtBookNextTheme() {
                                  {activeGame.description || "A masterpiece of digital design. Curated for the modern collector."}
                               </p>
 
-                              <div className="pt-10 flex gap-6">
+                              <div className="pt-10 flex gap-6 mt-auto">
                                  <Button 
                                    onClick={() => {
                                      const returnTo = encodeURIComponent(window.location.href);
@@ -226,7 +226,7 @@ export default function ArtBookNextTheme() {
                    </div>
 
                    {/* Artwork Column (Master) */}
-                   <div className="flex-1 lg:w-[500px] lg:shrink-0 relative overflow-hidden">
+                   <div className="flex-1 h-full relative overflow-hidden flex items-center justify-center">
                       <AnimatePresence mode="wait">
                          {activeGame && (
                            <motion.div
@@ -234,10 +234,13 @@ export default function ArtBookNextTheme() {
                              initial={{ opacity: 0, scale: 0.95 }}
                              animate={{ opacity: 1, scale: 1 }}
                              exit={{ opacity: 0, scale: 0.95 }}
-                             className="w-full h-full relative"
+                             className="w-full max-w-[500px] aspect-[2/3] relative"
+                             onClick={() => {
+                                if (window.innerWidth < 1024) setShowMobileDetails(true);
+                             }}
                            >
                               <div className="absolute inset-0 bg-gray-100 rotate-2 scale-105" />
-                              <div className="absolute inset-0 border-[15px] sm:border-[30px] border-white shadow-2xl bg-white overflow-hidden relative">
+                              <div className="absolute inset-0 border-[10px] sm:border-[20px] lg:border-[30px] border-white shadow-2xl bg-white overflow-hidden relative">
                                  {activeGame.artUrl ? (
                                    <img src={activeGame.artUrl} className="w-full h-full object-cover" />
                                  ) : (
@@ -245,6 +248,10 @@ export default function ArtBookNextTheme() {
                                       <Gamepad2 className="size-20 sm:size-32 text-gray-100" />
                                    </div>
                                  )}
+                              </div>
+                              {/* Mobile Hint */}
+                              <div className="absolute bottom-4 right-4 lg:hidden bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
+                                 Tap for Specs
                               </div>
                            </motion.div>
                          )}
@@ -254,9 +261,9 @@ export default function ArtBookNextTheme() {
              </div>
 
              {/* Right Index List */}
-             <div className="w-24 sm:w-80 h-full border-l border-gray-100 bg-gray-50/50 flex flex-col p-4 sm:p-10 shrink-0">
-                <div className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.4em] text-gray-400 mb-6 sm:mb-10 text-center sm:text-left">Index</div>
-                <div className="flex-1 overflow-y-auto scrollbar-none no-scrollbar space-y-4 sm:space-y-6">
+             <div className="w-16 sm:w-24 lg:w-80 h-full border-l border-gray-100 bg-gray-50/50 flex flex-col py-6 sm:py-10 shrink-0 overflow-hidden">
+                <div className="font-mono text-[8px] sm:text-[10px] uppercase tracking-[0.4em] text-gray-400 mb-6 sm:mb-10 text-center sm:text-left px-2 sm:px-10 shrink-0">Index</div>
+                <div className="flex-1 overflow-y-auto scrollbar-none no-scrollbar space-y-4 sm:space-y-6 px-2 sm:px-10">
                    {currentSystem?.games.map((game, i) => {
                      const isActive = i === activeGameIdx;
                      return (
@@ -288,7 +295,7 @@ export default function ArtBookNextTheme() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-x-0 bottom-0 top-20 bg-white z-[100] p-8 border-t border-gray-200 flex flex-col gap-8 rounded-t-[2.5rem] shadow-2xl"
+              className="fixed inset-x-0 bottom-0 top-20 bg-white z-[100] p-6 sm:p-8 border-t border-gray-200 flex flex-col gap-6 sm:gap-8 rounded-t-[2.5rem] shadow-[0_-20px_60px_rgba(0,0,0,0.15)]"
             >
                <Button 
                  variant="ghost" 
@@ -302,17 +309,17 @@ export default function ArtBookNextTheme() {
                <div className="flex-1 overflow-y-auto scrollbar-none no-scrollbar space-y-6 mt-4">
                   <div className="space-y-2">
                      <div className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">{currentSystem.system.name}</div>
-                     <h2 className="text-4xl font-black uppercase tracking-tighter leading-[0.9]">{activeGame.title}</h2>
+                     <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tighter leading-[0.9] text-black">{activeGame.title}</h2>
                   </div>
-                  <p className="text-lg text-gray-500 leading-relaxed font-medium">{activeGame.description || "The art of digital play."}</p>
-                  <div className="flex gap-6 border-t border-gray-100 pt-6">
+                  <p className="text-base sm:text-lg text-gray-500 leading-relaxed font-medium">{activeGame.description || "The art of digital play."}</p>
+                  <div className="flex gap-8 border-t border-gray-100 pt-6">
                      <div>
-                        <div className="text-[9px] font-mono uppercase text-gray-300">Rating</div>
-                        <div className="font-bold text-xl">{activeGame.rating || '-'}/5</div>
+                        <div className="text-[9px] font-mono uppercase text-gray-300 tracking-widest">Rating</div>
+                        <div className="font-black text-xl">{activeGame.rating || '-'}/5</div>
                      </div>
                      <div>
-                        <div className="text-[9px] font-mono uppercase text-gray-300">Released</div>
-                        <div className="font-bold text-xl">{activeGame.year || '----'}</div>
+                        <div className="text-[9px] font-mono uppercase text-gray-300 tracking-widest">Released</div>
+                        <div className="font-black text-xl">{activeGame.year || '----'}</div>
                      </div>
                   </div>
                </div>
@@ -322,7 +329,7 @@ export default function ArtBookNextTheme() {
                    const returnTo = encodeURIComponent(window.location.href);
                    window.location.href = apiUrl(`/api/roms/${activeGame.romId}/player?return=${returnTo}`);
                  }}
-                 className="h-16 rounded-none bg-black text-white font-black uppercase tracking-[0.2em] text-sm shadow-xl"
+                 className="h-16 rounded-none bg-black text-white font-black uppercase tracking-[0.2em] text-sm shadow-xl active:scale-95 transition-transform"
                >
                   Initialize Software
                </Button>
