@@ -393,10 +393,10 @@ export function registerRomRoutes(app: Express) {
 
     const coreBios = REQUIRED_BIOS[core] || [];
     let biosUrl: string | null = null;
-    for (const filename of coreBios) {
+    for (const meta of coreBios) {
       try {
-        await fs.access(path.join(BIOS_ROOT, filename));
-        biosUrl = `/api/bios/file/${filename}`;
+        await fs.access(path.join(BIOS_ROOT, meta.filename));
+        biosUrl = `/api/bios/file/${meta.filename}`;
         break;
       } catch {
       }
@@ -404,9 +404,10 @@ export function registerRomRoutes(app: Express) {
 
     // BIOS gate: if this core requires a BIOS and none is present, surface a
     // clear error in the launch overlay instead of silently hanging.
+    // Return 200 so the script actually executes and shows the error message.
     if (coreBios.length > 0 && !biosUrl) {
-      const missing = coreBios.join(" or ");
-      return res.status(422).send(
+      const missing = coreBios.map(m => m.filename).join(" or ");
+      return res.send(
         `cabinetFailLaunchProgress(${JSON.stringify(
           `BIOS required — upload ${missing} in the BIOS tab before playing this system.`
         )});`

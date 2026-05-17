@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.22.4** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.22.5** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -16,20 +16,20 @@ HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a fu
 
 **1. Add the repository**
 
-In Home Assistant: **Settings → Apps → Add-ons → ⋮ → Repositories**, paste:
-```
-https://github.com/GlerschNersch/token
-```
+ In Home Assistant: **Settings → Apps → Add-ons → ⋮ → Repositories**, paste:
+ ```
+ https://github.com/GlerschNersch/token
+ ```
 
 **2. Install and start**
 
-Find **HomeArcade** in the store, click **Install**, wait for the build to finish (2–5 minutes), then click **Start**. Enable **Show in sidebar**.
+ Find **HomeArcade** in the store, click **Install**, wait for the build to finish (2–5 minutes), then click **Start**. Enable **Show in sidebar**.
 
 **3. Upload a ROM and play**
 
-Open HomeArcade from the sidebar, click a system (e.g. NES), drop a ROM file onto the upload zone, then click the game card → **Play**.
+ Open HomeArcade from the sidebar, click a system (e.g. NES), drop a ROM file onto the upload zone, then click the game card → **Play**.
 
-That's it. No port forwarding, no reverse proxy, no extra software.
+ That's it. No port forwarding, no reverse proxy, no extra software.
 
 ---
 
@@ -67,6 +67,10 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.22.5
+- **Fix:** Resolved "bootstrap.js blocked" error on systems requiring a BIOS (PS1, PS2, SegaCD, GBA, etc.).
+- **Improved Error Reporting:** Bootstrap script now returns descriptive error messages (e.g., missing BIOS filenames) instead of generic browser blocking errors.
 
 ### v2.22.4
 - **Layout Optimization** — Reduced redundant headers and improved vertical spacing on mobile devices for a more compact UI.
