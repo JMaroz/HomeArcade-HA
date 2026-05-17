@@ -80,6 +80,7 @@ export const romSaveSlots = sqliteTable("rom_save_slots", {
   slot: integer("slot").notNull(),
   label: text("label").notNull(),
   updatedAt: integer("updated_at").notNull(),
+  romHash: text("rom_hash"),
 });
 
 export const insertGameCollectionSchema = createInsertSchema(gameCollections).omit({

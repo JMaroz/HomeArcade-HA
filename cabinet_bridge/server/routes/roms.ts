@@ -149,6 +149,12 @@ export function registerRomRoutes(app: Express) {
       });
 
       const saved = await storage.createUploadedRom(rom);
+
+      // Re-sync progress if this exact ROM file was uploaded before
+      if (romHash) {
+        await storage.relinkSaveSlotsByHash(saved.id, romHash);
+      }
+
       res.status(201).json(saved);
     },
   );

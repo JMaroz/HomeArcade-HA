@@ -187,6 +187,7 @@ export function registerProfileRoutes(app: Express) {
         slot,
         label: parsed.data.label || `Slot ${slot}`,
         updatedAt: Date.now(),
+        romHash: rom.romHash,
       });
       const saved = await storage.upsertRomSaveSlot(saveSlot);
       res.json(saved);

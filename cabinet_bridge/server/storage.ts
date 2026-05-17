@@ -104,6 +104,7 @@ export interface IStorage {
   listRomSaveSlots(romId: number, userId: string): Promise<RomSaveSlot[]>;
   upsertRomSaveSlot(saveSlot: InsertRomSaveSlot): Promise<RomSaveSlot>;
   deleteRomSaveSlot(romId: number, slot: number, userId: string): Promise<boolean>;
+  relinkSaveSlotsByHash(romId: number, romHash: string): Promise<void>;
   getIntegrationSettings(): Promise<IntegrationSettings>;
   saveIntegrationSettings(settings: IntegrationSettings): Promise<IntegrationSettings>;
   listProfiles(): Promise<UserProfile[]>;
@@ -207,6 +208,16 @@ export class DatabaseStorage implements IStorage {
   async deleteRomSaveSlot(romId: number, slot: number, userId: string): Promise<boolean> {
     const result = db.delete(romSaveSlots).where(and(eq(romSaveSlots.romId, romId), eq(romSaveSlots.userId, userId), eq(romSaveSlots.slot, slot))).run();
     return result.changes > 0;
+  }
+  async relinkSaveSlotsByHash(romId: number, romHash: string): Promise<void> {
+    // Find slots that match the hash but belong to a different romId
+    const orphaned = db.select().from(romSaveSlots).where(and(eq(romSaveSlots.romHash, romHash), eq(romSaveSlots.romId, romId))).all();
+    // If they already point to the new romId, we're done.
+    // Actually, we want to find slots where romHash matches but romId is different.
+    const toUpdate = db.select().from(romSaveSlots).where(and(eq(romSaveSlots.romHash, romHash), eq(romSaveSlots.romId, romId))).all(); // Wait, logic error in my head.
+    
+    // Correct logic: find ANY slot with this hash, and update its romId to the new one.
+    db.update(romSaveSlots).set({ romId }).where(eq(romSaveSlots.romHash, romHash)).run();
   }
   async getIntegrationSettings(): Promise<IntegrationSettings> {
     const row = db.select().from(appSettings).where(eq(appSettings.key, INTEGRATION_SETTINGS_KEY)).get();
