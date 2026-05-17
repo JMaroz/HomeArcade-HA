@@ -470,7 +470,6 @@ export default function HomeArcadeTheme() {
                           ? "ring-4 ring-primary shadow-[0_0_40px_rgba(var(--primary),0.3)] z-10" 
                           : "ring-1 ring-white/10 opacity-70 hover:opacity-100"
                       }`}
-                      onMouseEnter={() => { if (window.innerWidth >= 1024) setActiveGameIdx(i); }}
                       onClick={() => {
                         setActiveGameIdx(i);
                         if (window.innerWidth < 1280) setShowMobileDetails(true);

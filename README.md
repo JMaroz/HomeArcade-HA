@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.23.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.23.1** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -67,6 +67,10 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.23.1
+- **Fix: Warp QR Code:** Added error handling and visual fallbacks for the Warp Link QR code generation.
+- **Improved Dashboard UX:** Selection now strictly requires a click. Moving the mouse no longer changes the active game, making it much easier to select a title and move the cursor to the action buttons without accidental switching.
 
 ### v2.23.0
 - **Feature: Warp Link Handoff:** Seamlessly transition gameplay from PC to mobile. Save your game on one device and scan a QR code to continue instantly on another.

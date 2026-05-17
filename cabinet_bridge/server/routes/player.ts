@@ -1241,6 +1241,10 @@ export function renderEmulatorPage({ title, returnTo, romHash }: { title: string
         <div id="cabinet-warp-qr" style="padding:16px;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,0.5);">
           <div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#000;font:800 10px ui-monospace,monospace;letter-spacing:0.1em;text-transform:uppercase;">Warping...</div>
         </div>
+        <div id="cabinet-warp-manual" style="display:none;flex-direction:column;gap:8px;">
+          <div style="font:600 11px ui-monospace,monospace;color:rgba(248,250,252,0.6);letter-spacing:0.05em;">QR generation failed. Manual warp link:</div>
+          <input id="cabinet-warp-url" type="text" readonly style="background:#1a1a2e;border:1px solid rgba(248,250,252,0.15);border-radius:8px;color:#f8fafc;font:600 10px ui-monospace,monospace;padding:8px 10px;width:100%;box-sizing:border-box;" />
+        </div>
         <div style="max-width:280px;color:rgba(248,250,252,0.6);font:600 11px ui-monospace,monospace;letter-spacing:0.05em;line-height:1.5;">
           Your current game state will be saved and synced automatically to a dedicated handoff slot.
         </div>
@@ -2030,6 +2034,8 @@ function cabinetSetupWarp() {
   var closeBtn = document.querySelector("#cabinet-warp-close");
   var panel = document.querySelector("#cabinet-warp-panel");
   var qrContainer = document.querySelector("#cabinet-warp-qr");
+  var manualSection = document.querySelector("#cabinet-warp-manual");
+  var urlInput = document.querySelector("#cabinet-warp-url");
   
   if (!openBtn || !panel) return;
 
@@ -2037,45 +2043,64 @@ function cabinetSetupWarp() {
     cabinetSetMenuOpen(false);
     cabinetSetPanelOpen("cabinet-warp-panel", true);
     
-    if (qrContainer) qrContainer.innerHTML = '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#000;font:800 10px ui-monospace,monospace;letter-spacing:0.1em;text-transform:uppercase;">Warping...</div>';
-
-    // 1. Trigger quick save to slot 99 (Handoff slot)
-    var slot = 99;
-    cabinetSetEmulatorSaveSlot(slot);
-    var emulator = window.EJS_emulator;
-    var saved = false;
-    if (emulator && emulator.gameManager && typeof emulator.gameManager.quickSave === "function") {
-      try {
-        saved = !!emulator.gameManager.quickSave(String(slot));
-      } catch (_error) {
-        saved = false;
-      }
-    }
-    if (!saved) {
-      cabinetSendInput(24, "1"); // Hotkey fallback
+    if (manualSection) manualSection.style.display = "none";
+    if (qrContainer) {
+      qrContainer.style.display = "flex";
+      qrContainer.innerHTML = '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#000;font:800 10px ui-monospace,monospace;letter-spacing:0.1em;text-transform:uppercase;">Warping...</div>';
     }
 
-    // Wait for save to complete and upload
-    setTimeout(async function() {
-      await cabinetCaptureThumb(slot);
-      await cabinetBackupSlot(slot);
-      await cabinetRecordSaveSlot(slot);
-
-      // 2. Generate Warp URL
-      var currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set("loadSlot", String(slot));
-      currentUrl.searchParams.set("warp", "true");
-      var warpUrl = currentUrl.toString();
-
-      // 3. Show QR Code using public API
-      if (qrContainer) {
-        var qrSize = 200;
-        var qrApi = "https://api.qrserver.com/v1/create-qr-code/?size=" + qrSize + "x" + qrSize + "&data=" + encodeURIComponent(warpUrl);
-        qrContainer.innerHTML = '<img src="' + qrApi + '" width="' + qrSize + '" height="' + qrSize + '" style="display:block;border-radius:4px;" alt="Warp QR Code" />';
+    try {
+      // 1. Trigger quick save to slot 99 (Handoff slot)
+      var slot = 99;
+      cabinetSetEmulatorSaveSlot(slot);
+      var emulator = window.EJS_emulator;
+      var saved = false;
+      if (emulator && emulator.gameManager && typeof emulator.gameManager.quickSave === "function") {
+        try { saved = !!emulator.gameManager.quickSave(String(slot)); } catch (_error) { saved = false; }
       }
-      
-      cabinetToast("Warp point synchronized \\u2728");
-    }, 1000);
+      if (!saved) { cabinetSendInput(24, "1"); }
+
+      // Wait for save to complete and upload
+      setTimeout(async function() {
+        try {
+          await cabinetCaptureThumb(slot);
+          await cabinetBackupSlot(slot);
+          await cabinetRecordSaveSlot(slot);
+
+          // 2. Generate Warp URL
+          var currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set("loadSlot", String(slot));
+          currentUrl.searchParams.set("warp", "true");
+          var warpUrl = currentUrl.toString();
+
+          // 3. Show QR Code using public API
+          if (qrContainer) {
+            var qrSize = 200;
+            var qrApi = "https://api.qrserver.com/v1/create-qr-code/?size=" + qrSize + "x" + qrSize + "&data=" + encodeURIComponent(warpUrl);
+            var img = new Image();
+            img.width = qrSize; img.height = qrSize;
+            img.style.display = "block"; img.style.borderRadius = "4px";
+            img.alt = "Warp QR Code";
+            img.onload = function() { qrContainer.innerHTML = ""; qrContainer.appendChild(img); cabinetToast("Warp point synchronized \\u2728"); };
+            img.onerror = function() {
+              qrContainer.style.display = "none";
+              if (manualSection && urlInput) {
+                manualSection.style.display = "flex";
+                urlInput.value = warpUrl;
+                cabinetToast("QR generation failed, showing manual link");
+              }
+            };
+            img.src = qrApi;
+          }
+        } catch (e) {
+           console.error("[Warp] Save/Upload failed:", e);
+           cabinetToast("Warp failed: could not sync save");
+        }
+      }, 1200);
+    } catch (e) {
+      console.error("[Warp] Error:", e);
+      cabinetToast("Warp failed");
+    }
   });
 
   if (closeBtn) closeBtn.addEventListener("click", function() { cabinetSetPanelOpen("cabinet-warp-panel", false); });
@@ -2612,7 +2637,7 @@ function cabinetSetupGamepadPanel() {
           return '<span style="display:inline-block;min-width:28px;padding:3px 5px;margin:2px;border-radius:6px;font:700 9px ui-monospace,monospace;text-align:center;background:' + (pressed ? "#22c55e" : "rgba(248,250,252,0.08)") + ';color:' + (pressed ? "#fff" : "rgba(248,250,252,0.4)") + ';" title="Button ' + i + '">' + i + '</span>';
         }).join("");
         var axisHtml = (gp.axes || []).map(function (v, i) { return '<span style="display:inline-block;margin:2px 4px;font:600 9px ui-monospace,monospace;color:rgba(248,250,252,0.6);">A' + i + ':<b style="color:#f8fafc;">' + v.toFixed(2) + '</b></span>'; }).join("");
-        return '<div style="background:rgba(248,250,252,0.04);border:1px solid rgba(248,250,252,0.1);border-radius:12px;padding:10px 14px;margin-bottom:6px;">' + '<div style="font:700 11px ui-monospace,monospace;color:#f8fafc;margin-bottom:6px;">' + (gp.id || "Unknown Controller") + '</div>' + '<div style="margin-bottom:4px;">' + (btnHtml || "<em style='font-style:italic;color:rgba(248,250,252,0.3);font-size:10px;'>No buttons</em>") + '</div>' + '<div>' + (axisHtml || "") + '</div>' + '</div>';
+        return '<div style="background:rgba(248,250,252,0.04);border:1px solid rgba(248,250,252,0.1);border-radius:12px;padding:10px 14px;margin-bottom:6px;">' + '<div style="font:700 11px ui-monospace,monospace;color:#f8fafc;margin-bottom:6px;">' + (gp.id || "Unknown Controller") + '</div>' + '<div style="margin-bottom:4px;">' + (btnHtml || "<em style='font-style:italic;color:rgba(248,250,252,0.3);font-size:10px;'>No buttons</em>") + '</div>' + '<div style="max-width:280px;color:rgba(248,250,252,0.6);font:600 11px ui-monospace,monospace;letter-spacing:0.05em;line-height:1.5;">' + 'Your current game state will be saved and synced automatically to a dedicated handoff slot.' + '</div>' + '</div>';
       }).join("");
     }
     if (panel.getAttribute("aria-hidden") !== "true") gpRaf = requestAnimationFrame(renderGamepads);
@@ -2703,6 +2728,8 @@ function cabinetSetupWarp() {
   var closeBtn = document.querySelector("#cabinet-warp-close");
   var panel = document.querySelector("#cabinet-warp-panel");
   var qrContainer = document.querySelector("#cabinet-warp-qr");
+  var manualSection = document.querySelector("#cabinet-warp-manual");
+  var urlInput = document.querySelector("#cabinet-warp-url");
   
   if (!openBtn || !panel) return;
 
@@ -2710,45 +2737,64 @@ function cabinetSetupWarp() {
     cabinetSetMenuOpen(false);
     cabinetSetPanelOpen("cabinet-warp-panel", true);
     
-    if (qrContainer) qrContainer.innerHTML = '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#000;font:800 10px ui-monospace,monospace;letter-spacing:0.1em;text-transform:uppercase;">Warping...</div>';
-
-    // 1. Trigger quick save to slot 99 (Handoff slot)
-    var slot = 99;
-    cabinetSetEmulatorSaveSlot(slot);
-    var emulator = window.EJS_emulator;
-    var saved = false;
-    if (emulator && emulator.gameManager && typeof emulator.gameManager.quickSave === "function") {
-      try {
-        saved = !!emulator.gameManager.quickSave(String(slot));
-      } catch (_error) {
-        saved = false;
-      }
-    }
-    if (!saved) {
-      cabinetSendInput(24, "1"); // Hotkey fallback
+    if (manualSection) manualSection.style.display = "none";
+    if (qrContainer) {
+      qrContainer.style.display = "flex";
+      qrContainer.innerHTML = '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#000;font:800 10px ui-monospace,monospace;letter-spacing:0.1em;text-transform:uppercase;">Warping...</div>';
     }
 
-    // Wait for save to complete and upload
-    setTimeout(async function() {
-      await cabinetCaptureThumb(slot);
-      await cabinetBackupSlot(slot);
-      await cabinetRecordSaveSlot(slot);
-
-      // 2. Generate Warp URL
-      var currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set("loadSlot", String(slot));
-      currentUrl.searchParams.set("warp", "true");
-      var warpUrl = currentUrl.toString();
-
-      // 3. Show QR Code using public API
-      if (qrContainer) {
-        var qrSize = 200;
-        var qrApi = "https://api.qrserver.com/v1/create-qr-code/?size=" + qrSize + "x" + qrSize + "&data=" + encodeURIComponent(warpUrl);
-        qrContainer.innerHTML = '<img src="' + qrApi + '" width="' + qrSize + '" height="' + qrSize + '" style="display:block;border-radius:4px;" alt="Warp QR Code" />';
+    try {
+      // 1. Trigger quick save to slot 99 (Handoff slot)
+      var slot = 99;
+      cabinetSetEmulatorSaveSlot(slot);
+      var emulator = window.EJS_emulator;
+      var saved = false;
+      if (emulator && emulator.gameManager && typeof emulator.gameManager.quickSave === "function") {
+        try { saved = !!emulator.gameManager.quickSave(String(slot)); } catch (_error) { saved = false; }
       }
-      
-      cabinetToast("Warp point synchronized \u2728");
-    }, 1000);
+      if (!saved) { cabinetSendInput(24, "1"); }
+
+      // Wait for save to complete and upload
+      setTimeout(async function() {
+        try {
+          await cabinetCaptureThumb(slot);
+          await cabinetBackupSlot(slot);
+          await cabinetRecordSaveSlot(slot);
+
+          // 2. Generate Warp URL
+          var currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set("loadSlot", String(slot));
+          currentUrl.searchParams.set("warp", "true");
+          var warpUrl = currentUrl.toString();
+
+          // 3. Show QR Code using public API
+          if (qrContainer) {
+            var qrSize = 200;
+            var qrApi = "https://api.qrserver.com/v1/create-qr-code/?size=" + qrSize + "x" + qrSize + "&data=" + encodeURIComponent(warpUrl);
+            var img = new Image();
+            img.width = qrSize; img.height = qrSize;
+            img.style.display = "block"; img.style.borderRadius = "4px";
+            img.alt = "Warp QR Code";
+            img.onload = function() { qrContainer.innerHTML = ""; qrContainer.appendChild(img); cabinetToast("Warp point synchronized \\u2728"); };
+            img.onerror = function() {
+              qrContainer.style.display = "none";
+              if (manualSection && urlInput) {
+                manualSection.style.display = "flex";
+                urlInput.value = warpUrl;
+                cabinetToast("QR generation failed, showing manual link");
+              }
+            };
+            img.src = qrApi;
+          }
+        } catch (e) {
+           console.error("[Warp] Save/Upload failed:", e);
+           cabinetToast("Warp failed: could not sync save");
+        }
+      }, 1200);
+    } catch (e) {
+      console.error("[Warp] Error:", e);
+      cabinetToast("Warp failed");
+    }
   });
 
   if (closeBtn) closeBtn.addEventListener("click", function() { cabinetSetPanelOpen("cabinet-warp-panel", false); });
