@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { uploadedRomToGame, SYSTEMS, type Game, type System } from "@/data/library";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
