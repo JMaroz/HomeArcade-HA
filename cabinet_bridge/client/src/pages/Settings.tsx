@@ -263,6 +263,7 @@ function DisplaySettings() {
                   <SelectItem value="colorful">Colorful (High Vibrancy)</SelectItem>
                   <SelectItem value="alekfull-nx">Alekfull NX (Switch Style)</SelectItem>
                   <SelectItem value="art-book">Art Book Next (Magazine)</SelectItem>
+                  <SelectItem value="tltlvilus">tltlvilus (Modern Minimalist)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
