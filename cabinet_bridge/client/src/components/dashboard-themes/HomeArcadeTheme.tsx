@@ -686,11 +686,6 @@ export default function HomeArcadeTheme() {
       </div>
 
 
-      {/* Bottom Interface Hints */}
-      <div className="h-12 px-8 border-t border-white/5 bg-black/60 backdrop-blur-2xl flex items-center justify-end z-20 shrink-0 mb-[64px] sm:mb-0">
-         <div className="text-[10px] font-mono uppercase tracking-[0.5em] text-white/10 italic">HomeArcade OS v2.22.1</div>
-      </div>
-
       <WelcomeDialog hasRoms={roms.length > 0} />
     </div>
   );
