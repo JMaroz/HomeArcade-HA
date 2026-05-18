@@ -1,3 +1,9 @@
+## 2.24.8 – 2026-05-17
+
+- **Feature**: **Warp to Mobile (Pre-launch)** — Added the ability to generate a Warp QR code directly from the game detail dialog and dashboard.
+- **Feature**: **Automatic Save-State Warping** — Warp links now automatically include the latest save state if available, allowing for seamless session hand-offs.
+- **Improved**: **Warp UI** — New instructions and visual feedback during Warp Link generation.
+
 ## 2.3.0 – 2026-05-16
 
 - **Performance**: **EmulatorJS CDN disk cache** — EJS core assets (`.wasm`, `.js`, `.data`) are now cached to `data/ejs_cache/` on first load and served from local disk on all subsequent requests, eliminating repeated internet fetches for multi-MB cores.

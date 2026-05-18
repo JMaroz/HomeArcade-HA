@@ -34,7 +34,9 @@ import {
   Info,
   LayoutGrid,
   Camera,
-  QrCode
+  QrCode,
+  Smartphone,
+  Wifi
 } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useTranslation } from "react-i18next";
@@ -43,6 +45,7 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useGridNav } from "@/lib/useGridNav";
+import { WarpLinkDialog } from "@/components/WarpLinkDialog";
 
 // ─── sub-components ──────────────────────────────────────────────────────────
 
@@ -241,6 +244,7 @@ export default function HomeArcadeTheme() {
   const [activeGameIdx, setActiveGameIdx] = useState(0);
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showWarpDialog, setShowWarpDialog] = useState(false);
   
   const currentSystem = systemsWithGames[activeSystemIdx];
   const activeGame = currentSystem?.games[activeGameIdx];
@@ -785,16 +789,27 @@ export default function HomeArcadeTheme() {
                          <History className="size-4 text-primary" /> Resume {latestSave.label}
                        </Button>
                      )}
-                     <Button 
-                       size="lg"
-                       onClick={() => {
-                         const returnTo = encodeURIComponent(window.location.href);
-                         window.location.href = apiUrl(`/api/roms/${activeGame.romId}/player?return=${returnTo}`);
-                       }}
-                       className="w-full h-16 rounded-2xl bg-white hover:bg-neutral-200 text-black font-black uppercase tracking-[0.3em] text-sm shadow-[0_20px_50px_rgba(255,255,255,0.1)] transition-transform active:scale-95"
-                     >
-                       <Play className="size-5 mr-3 fill-current" /> Play Game
-                     </Button>
+                     <div className="flex gap-3">
+                        <Button 
+                          size="lg"
+                          onClick={() => {
+                            const returnTo = encodeURIComponent(window.location.href);
+                            window.location.href = apiUrl(`/api/roms/${activeGame.romId}/player?return=${returnTo}`);
+                          }}
+                          className="flex-[2] h-16 rounded-2xl bg-white hover:bg-neutral-200 text-black font-black uppercase tracking-[0.3em] text-sm shadow-[0_20px_50px_rgba(255,255,255,0.1)] transition-transform active:scale-95"
+                        >
+                          <Play className="size-5 mr-3 fill-current" /> Play
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={() => setShowWarpDialog(true)}
+                          className="flex-1 h-16 rounded-2xl border-white/10 bg-white/5 text-white font-black uppercase tracking-[0.2em] text-xs hover:bg-white/10 transition-all active:scale-95 flex flex-col items-center justify-center gap-1"
+                        >
+                           <QrCode className="size-4 text-primary" />
+                           <span className="text-[9px]">Warp</span>
+                        </Button>
+                     </div>
                   </div>
                </motion.div>
              )}
@@ -804,6 +819,11 @@ export default function HomeArcadeTheme() {
 
 
       <WelcomeDialog hasRoms={roms.length > 0} />
+      <WarpLinkDialog 
+        game={showWarpDialog ? activeGame : null}
+        slot={latestSave?.slot}
+        onClose={() => setShowWarpDialog(false)}
+      />
 
       {showScanner && (
         <WarpScanner 

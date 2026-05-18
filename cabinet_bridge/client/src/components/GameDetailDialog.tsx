@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { GameArt } from "@/components/GameArt";
+import { WarpLinkDialog } from "@/components/WarpLinkDialog";
 import { SYSTEMS, type Game, gameLaunchEndpoint } from "@/data/library";
 import { useIntegration, formatRelative } from "@/lib/integration";
 import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { GameCollectionWithItems, UploadedRom, RomSaveSlot, GameCheatCode } from "@shared/schema";
-import { Heart, Play, Clock, Users, Star, Folder, Plus, ChevronDown, ChevronUp, Hash, Loader2, ImagePlus, Trash2, Save, Zap, ToggleLeft, ToggleRight, Database, Check, Wifi, Timer } from "lucide-react";
+import { Heart, Play, Clock, Users, Star, Folder, Plus, ChevronDown, ChevronUp, Hash, Loader2, ImagePlus, Trash2, Save, Zap, ToggleLeft, ToggleRight, Database, Check, Wifi, Timer, QrCode } from "lucide-react";
 
 // ── HLTB helpers ──────────────────────────────────────────────────────────────────────────────────
 
@@ -58,7 +59,8 @@ export function GameDetailDialog({
   const [descExpanded, setDescExpanded] = useState(false);
   const [scrapingArt, setScrapingArt] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
-  useEffect(() => { setVideoPlaying(false); }, [game?.id]);
+  const [showWarp, setShowWarp] = useState(false);
+  useEffect(() => { setVideoPlaying(false); setShowWarp(false); }, [game?.id]);
   const [selectedRomId, setSelectedRomId] = useState<number | null>(null);
 
   const { data: raProgress, isLoading: loadingRa } = useQuery({
@@ -95,6 +97,10 @@ export function GameDetailDialog({
     },
     enabled: !!game?.romId,
   });
+
+  const latestSave = saveSlots.length > 0 
+    ? saveSlots.reduce((prev, curr) => (prev.updatedAt > curr.updatedAt ? prev : curr))
+    : null;
 
   const deleteSlot = async (slot: number) => {
     if (!game?.romId) return;
@@ -752,6 +758,15 @@ export function GameDetailDialog({
               <Button
                 size="lg"
                 variant="outline"
+                onClick={() => setShowWarp(true)}
+                className="font-mono uppercase tracking-wider gap-2"
+                data-testid="button-detail-warp"
+              >
+                <QrCode className="size-4" /> Warp
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
                 onClick={() => onToggleFav(game)}
                 data-testid="button-detail-fav"
                 aria-pressed={!!game.favorite}
@@ -770,6 +785,11 @@ export function GameDetailDialog({
           </div>
         </div>
       </DialogContent>
+      <WarpLinkDialog
+        game={showWarp ? game : null}
+        slot={latestSave?.slot}
+        onClose={() => setShowWarp(false)}
+      />
     </Dialog>
   );
 }
