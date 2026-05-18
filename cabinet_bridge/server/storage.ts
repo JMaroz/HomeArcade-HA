@@ -200,10 +200,17 @@ export class DatabaseStorage implements IStorage {
   }
   async upsertRomSaveSlot(saveSlot: InsertRomSaveSlot): Promise<RomSaveSlot> {
     const existing = db.select().from(romSaveSlots).where(and(eq(romSaveSlots.romId, saveSlot.romId), eq(romSaveSlots.userId, saveSlot.userId), eq(romSaveSlots.slot, saveSlot.slot))).get();
+    const now = Date.now();
     if (existing) {
-      return db.update(romSaveSlots).set({ label: saveSlot.label, updatedAt: Date.now() }).where(eq(romSaveSlots.id, existing.id)).returning().get();
+      db.update(romSaveSlots).set({ 
+        label: saveSlot.label, 
+        updatedAt: now,
+        romHash: saveSlot.romHash || existing.romHash 
+      }).where(eq(romSaveSlots.id, existing.id)).run();
+      return { ...existing, label: saveSlot.label, updatedAt: now };
     }
-    return db.insert(romSaveSlots).values({ ...saveSlot, updatedAt: Date.now() }).returning().get();
+    const inserted = db.insert(romSaveSlots).values({ ...saveSlot, updatedAt: now }).returning().get();
+    return inserted;
   }
   async deleteRomSaveSlot(romId: number, slot: number, userId: string): Promise<boolean> {
     const result = db.delete(romSaveSlots).where(and(eq(romSaveSlots.romId, romId), eq(romSaveSlots.userId, userId), eq(romSaveSlots.slot, slot))).run();

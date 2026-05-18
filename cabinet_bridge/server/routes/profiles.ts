@@ -176,8 +176,8 @@ export function registerProfileRoutes(app: Express) {
       if (!rom) return res.status(404).json({ message: "Uploaded ROM not found." });
 
       const parsed = z.object({ label: z.string().trim().min(1).max(48).optional() }).safeParse(req.body ?? {});
-      if (!Number.isInteger(slot) || slot < 1 || slot > 9 || !parsed.success) {
-        return res.status(400).json({ message: "Save slot must be 1-9." });
+      if (!Number.isInteger(slot) || slot < 0 || slot > 9 || !parsed.success) {
+        return res.status(400).json({ message: "Save slot must be 0-9." });
       }
 
       const { userId } = getUserFromRequest(req);
