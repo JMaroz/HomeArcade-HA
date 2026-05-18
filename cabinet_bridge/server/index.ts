@@ -48,6 +48,12 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+// Global security headers to ensure assets load correctly under HA Ingress
+app.use((_req, res, next) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  next();
+});
+
 // Strip HA ingress prefix so routes work under the ingress proxy
 const INGRESS_PREFIX_RE = /^\/api\/(?:hassio_)?ingress\/[^/]+/;
 app.use((req, _res, next) => {

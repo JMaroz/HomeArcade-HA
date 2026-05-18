@@ -663,14 +663,20 @@ function cabinetSetupWarp() {
         var url = new URL(window.location.href);
         url.searchParams.set("loadSlot", "9");
         url.searchParams.set("warp", "true");
-        // Use our local QR generator endpoint to avoid COEP/CSP blocks
-        var qrUrl = "../../roms/warp-qr?url=" + encodeURIComponent(url.toString());
-        qr.innerHTML = '<img src="'+qrUrl+'" style="display:block;margin:0 auto;max-width:100%;height:auto;" />';
-        cabinetToast("Warp Point Ready ✨");
+        
+        // Fetch the Base64 QR directly from our API
+        var response = await fetch("../../roms/warp-qr?url=" + encodeURIComponent(url.toString()));
+        var data = await response.json();
+        if (data.dataUrl) {
+          qr.innerHTML = '<img src="'+data.dataUrl+'" style="display:block;margin:0 auto;max-width:100%;height:auto;border-radius:8px;box-shadow:0 0 20px rgba(0,0,0,0.2);" />';
+          cabinetToast("Warp Point Ready ✨");
+        } else {
+          throw new Error("No QR data");
+        }
       } catch(e) {
         if (attempt < 6) setTimeout(check, 1500);
         else {
-          qr.innerHTML = "Warp failed - could not sync save";
+          qr.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:20px;">Warp failed - could not generate secure QR.<br><br>Check Home Assistant logs.</div>';
           cabinetToast("Warp failed");
         }
       }

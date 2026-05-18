@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.24.2] — 2026-05-17
+
+### Fix: Firewall-Proof Warp Links
+
+- **Embedded QR Delivery** — Refactored QR code delivery to use embedded Base64 strings. This completely bypasses `net:ERR_blocked_by_response` errors caused by Home Assistant's strict security policies (COEP/CORP).
+- **Global Security Headers** — Added server-wide `Cross-Origin-Resource-Policy` headers to improve reliability for cross-origin assets like emulator cores and WASM modules.
+
+---
+
 ## [2.24.0] — 2026-05-17
 
 ### Major Feature: In-App Warp Scanner
