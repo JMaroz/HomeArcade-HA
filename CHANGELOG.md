@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.24.7] — 2026-05-17
+
+### Stability: Warp Link Release Candidate
+
+- **Finalized Warp Logic** — Consolidated recent stability fixes for Warp Link into a stable release candidate.
+- **Universal Slot Compatibility** — Confirmed Slot 9 as the primary handoff point with Slot 0 fallback support for legacy cores.
+- **Improved QR Resiliency** — Base64 QR delivery is now the default, ensuring functionality even behind restrictive Home Assistant ingress policies.
+
+---
+
 ## [2.24.4] — 2026-05-17
 
 ### Fix: Warp Link Save Discovery
