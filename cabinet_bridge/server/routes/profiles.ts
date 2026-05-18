@@ -203,7 +203,7 @@ export function registerProfileRoutes(app: Express) {
       const slot = Number(req.params.slot);
       const rom = await storage.getUploadedRom(romId);
       if (!rom) return res.status(404).json({ message: "Uploaded ROM not found." });
-      if (!Number.isInteger(slot) || slot < 1 || slot > 9) return res.status(400).json({ message: "Save slot must be 1-9." });
+      if (!Number.isInteger(slot) || slot < 0 || slot > 9) return res.status(400).json({ message: "Save slot must be 0-9." });
 
       const { userId: delUserId } = getUserFromRequest(req);
       await storage.deleteRomSaveSlot(romId, slot, delUserId);
@@ -239,7 +239,10 @@ export function registerProfileRoutes(app: Express) {
       const { userId } = getUserFromRequest(req);
       const resolved = path.resolve(path.join(SAVE_BACKUP_DIR, userId, String(romId), `slot-${slot}.state`));
       
-      if (!resolved.startsWith(path.resolve(SAVE_BACKUP_DIR))) return res.status(403).json({ message: "Access denied." });
+      if (!resolved.startsWith(path.resolve(SAVE_BACKUP_DIR))) {
+        console.warn(`[Profiles] Access denied to path: ${resolved}`);
+        return res.status(403).json({ message: "Access denied." });
+      }
       res.sendFile(resolved);
     } catch (err: any) {
       console.error("GET /api/roms/:id/save-backup/:slot error:", err);
@@ -260,10 +263,14 @@ export function registerProfileRoutes(app: Express) {
       const filePath = path.join(dir, `slot-${slot}.state`);
 
       const buf = req.body;
-      if (!Buffer.isBuffer(buf) || buf.length === 0) return res.status(400).json({ message: "No data." });
+      if (!Buffer.isBuffer(buf) || buf.length === 0) {
+        console.warn(`[Profiles] Empty backup payload received for ROM ${id} slot ${slot}`);
+        return res.status(400).json({ message: "No data." });
+      }
       if (buf.length > 64 * 1024 * 1024) return res.status(413).json({ message: "Backup too large." });
       
       await fs.writeFile(filePath, buf);
+      console.log(`[Profiles] Saved backup for ROM ${id} slot ${slot} (${buf.length} bytes)`);
       res.json({ ok: true, slot, size: buf.length });
     } catch (err: any) {
       console.error("PUT /api/roms/:id/save-backup/:slot error:", err);
@@ -288,6 +295,7 @@ export function registerProfileRoutes(app: Express) {
       
       const base64 = dataUrl.split(",")[1];
       await fs.writeFile(filePath, Buffer.from(base64, "base64"));
+      console.log(`[Profiles] Saved thumbnail for ROM ${id} slot ${slot}`);
       res.json({ ok: true });
     } catch (err: any) {
       console.error("PUT /api/roms/:id/save-thumb/:slot error:", err);

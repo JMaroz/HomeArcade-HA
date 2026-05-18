@@ -606,15 +606,25 @@ function cabinetSetEmulatorSaveSlot(slot) {
   }
 }
 async function cabinetRecordSaveSlot(slot) {
-  await fetch("./save-states/" + slot, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({label: "Slot "+slot}) });
+  try {
+    var res = await fetch("./save-states/" + slot, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({label: "Slot "+slot}) });
+    if (!res.ok) {
+       var err = await res.json().catch(function(){return {message:"Metadata update failed"};});
+       throw new Error(err.message);
+    }
+  } catch(e) {
+    console.error("[Record] Failed:", e);
+    throw e;
+  }
 }
 async function cabinetBackupSlot(slot) {
   var emu = window.EJS_emulator;
-  if (!emu || !emu.gameManager || !emu.gameManager.FS) throw new Error("Emulator not fully initialized");
+  if (!emu || !emu.gameManager || !emu.gameManager.FS) throw new Error("Emulator filesystem not ready");
   var FS = emu.gameManager.FS;
   if (typeof FS.syncfs === "function") {
     await new Promise(function(resolve) { FS.syncfs(false, resolve); });
   }
+  
   var data = null;
   var gId = ${JSON.stringify(userId + "_" + gameId)};
   var paths = [
@@ -623,12 +633,33 @@ async function cabinetBackupSlot(slot) {
     "/" + gId + "/auto.state",
     "/auto.state"
   ];
+
+  try {
+    var files = FS.readdir("/");
+    console.log("[Warp] Files on virtual disk:", files);
+  } catch(e) {}
+
   for (var i=0; i<paths.length; i++) {
-    try { data = FS.readFile(paths[i]); if (data && data.length > 0) break; } catch(e) {}
+    try { 
+      data = FS.readFile(paths[i]); 
+      if (data && data.length > 0) {
+        console.log("[Warp] Found save data at " + paths[i]);
+        break; 
+      }
+    } catch(e) {}
   }
-  if (!data) throw new Error("Save state file not ready on virtual disk");
-  var res = await fetch("./save-backup/" + slot, { method: "PUT", body: data });
-  if (!res.ok) throw new Error("Server rejected save backup");
+
+  if (!data || data.length === 0) throw new Error("Save file not found on virtual disk");
+  
+  var res = await fetch("./save-backup/" + slot, { 
+    method: "PUT", 
+    headers: { "Content-Type": "application/octet-stream" },
+    body: data 
+  });
+  if (!res.ok) {
+    var errBody = await res.json().catch(function(){ return {message:"Server rejected backup ("+res.status+")"}; });
+    throw new Error(errBody.message);
+  }
 }
 function cabinetSetPanelOpen(id, open) {
   var el = document.getElementById(id);
@@ -645,21 +676,21 @@ function cabinetSetupWarp() {
     if (menu) menu.classList.remove("is-open");
     cabinetSetPanelOpen("cabinet-warp-panel", true);
     var qr = document.querySelector("#cabinet-warp-qr");
-    qr.innerHTML = "Warping...";
+    qr.innerHTML = '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#000;font:800 10px ui-monospace,monospace;letter-spacing:0.1em;text-transform:uppercase;text-align:center;padding:20px;">Warping...</div>';
     var slot = 9;
     
-    // 1. Trigger the save using the proven logic
     cabinetSetEmulatorSaveSlot(slot);
     var emu = window.EJS_emulator;
     var saved = false;
     
+    console.log("[Warp] Triggering save...");
     if (emu && emu.gameManager && typeof emu.gameManager.quickSave === "function") {
       try { saved = !!emu.gameManager.quickSave(String(slot)); } catch(e) { saved = false; }
     }
     if (!saved && emu && typeof emu.saveState === "function") {
       try { emu.saveState(); saved = true; } catch(e) { saved = false; }
     }
-    if (!saved) { cabinetSendInput(24, "1"); } // Hotkey fallback
+    if (!saved) { cabinetSendInput(24, "1"); }
     
     var attempt = 0;
     var check = async function() {
@@ -671,19 +702,19 @@ function cabinetSetupWarp() {
         url.searchParams.set("loadSlot", "9");
         url.searchParams.set("warp", "true");
         
-        // Fetch the Base64 QR directly from our API
         var response = await fetch("../../roms/warp-qr?url=" + encodeURIComponent(url.toString()));
         var data = await response.json();
         if (data.dataUrl) {
           qr.innerHTML = '<img src="'+data.dataUrl+'" style="display:block;margin:0 auto;max-width:100%;height:auto;border-radius:8px;box-shadow:0 0 20px rgba(0,0,0,0.2);" />';
           cabinetToast("Warp Point Ready ✨");
         } else {
-          throw new Error("No QR data");
+          throw new Error("QR Generation Failed");
         }
       } catch(e) {
-        if (attempt < 6) setTimeout(check, 1500);
+        console.warn("[Warp] Sync attempt " + attempt + " failed: " + e.message);
+        if (attempt < 8) setTimeout(check, 1500);
         else {
-          qr.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:20px;">Warp failed - could not generate secure QR.<br><br>Check Home Assistant logs.</div>';
+          qr.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:20px;text-transform:uppercase;font-weight:900;">Warp Failed</div><div style="font-size:9px;opacity:0.6;padding:0 10px;">' + e.message + '</div>';
           cabinetToast("Warp failed");
         }
       }
