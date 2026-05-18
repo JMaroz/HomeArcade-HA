@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.23.5] — 2026-05-17
+
+### Fix: Bootstrap recovery & Hardened Warp Link
+
+- **Bootstrap Recovery** — Resolved a syntax error in the dynamically generated `bootstrap.js` script that was causing the emulator to hang during the final loading stage (96%).
+- **Hardened Warp Link (Slot 9)** — Moved the handoff logic to Slot 9 to prevent conflicts with auto-saves and added a retry loop with explicit virtual-filesystem flushing to ensure saves are fully ready before QR generation.
+- **Enhanced Save Search** — Updated the save-search logic to support a wider range of core-specific filename patterns.
+
+---
+
 ## [2.23.3] — 2026-05-17
 
 ### Fix: Warp Link Reliability & Dashboard UX
