@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import Fuse from "fuse.js";
+import { useQuery } from "@tanstack/react-query";
 import { uploadedRomToGame, GAMES, SYSTEMS, type Game, type System, type SystemId } from "@/data/library";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { MobileTopBar } from "@/components/MobileNav";
