@@ -661,6 +661,40 @@ async function cabinetBackupSlot(slot) {
     throw new Error(errBody.message);
   }
 }
+async function cabinetRestoreBackup(slot) {
+  var emu = window.EJS_emulator;
+  if (!emu || !emu.gameManager || !emu.gameManager.FS) return;
+  var FS = emu.gameManager.FS;
+  
+  console.log("[Warp] Restoring backup for slot " + slot + "...");
+  var res = await fetch("./save-backup/" + slot);
+  if (!res.ok) {
+    console.log("[Warp] No remote backup found for slot " + slot);
+    return;
+  }
+  
+  var data = new Uint8Array(await res.arrayBuffer());
+  var gId = ${JSON.stringify(userId + "_" + gameId)};
+  var paths = [
+    "/" + gId + "-" + slot + ".state", 
+    "/" + slot + "-quick.state",
+    "/" + gId + "/auto.state",
+    "/auto.state"
+  ];
+  
+  try { FS.mkdir("/" + gId); } catch(e) {}
+  
+  for (var i=0; i<paths.length; i++) {
+    try {
+       FS.writeFile(paths[i], data);
+       console.log("[Warp] Restored backup to " + paths[i]);
+    } catch(e) {}
+  }
+
+  if (typeof FS.syncfs === "function") {
+    await new Promise(function(resolve) { FS.syncfs(false, resolve); });
+  }
+}
 function cabinetSetPanelOpen(id, open) {
   var el = document.getElementById(id);
   var backdrop = document.getElementById("cabinet-menu-backdrop");
@@ -677,7 +711,7 @@ function cabinetSetupWarp() {
     cabinetSetPanelOpen("cabinet-warp-panel", true);
     var qr = document.querySelector("#cabinet-warp-qr");
     qr.innerHTML = '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#000;font:800 10px ui-monospace,monospace;letter-spacing:0.1em;text-transform:uppercase;text-align:center;padding:20px;">Warping...</div>';
-    var slot = 9;
+    var slot = 0; // Universal Auto-save slot
     
     cabinetSetEmulatorSaveSlot(slot);
     var emu = window.EJS_emulator;
@@ -699,7 +733,7 @@ function cabinetSetupWarp() {
         await cabinetBackupSlot(slot);
         await cabinetRecordSaveSlot(slot);
         var url = new URL(window.location.href);
-        url.searchParams.set("loadSlot", "9");
+        url.searchParams.set("loadSlot", String(slot));
         url.searchParams.set("warp", "true");
         
         var response = await fetch("../../roms/warp-qr?url=" + encodeURIComponent(url.toString()));
@@ -744,8 +778,16 @@ window.EJS_onGameStart = function() {
   cabinetSetLaunchProgress(100, "Ready");
   setTimeout(function() { document.getElementById("cabinet-launch-overlay").classList.add("is-hidden"); }, 500);
   var params = new URLSearchParams(window.location.search);
-  if (params.get("loadSlot")) {
-    setTimeout(function() { window.EJS_emulator.loadState(Number(params.get("loadSlot"))); }, 2000);
+  var loadSlot = params.get("loadSlot");
+  if (loadSlot) {
+    (async function() {
+      try {
+        await cabinetRestoreBackup(Number(loadSlot));
+        setTimeout(function() { window.EJS_emulator.loadState(Number(loadSlot)); }, 2000);
+      } catch(e) {
+        console.error("[Warp] Restore failed:", e);
+      }
+    })();
   }
 };
 cabinetSetupSystemMenu();
