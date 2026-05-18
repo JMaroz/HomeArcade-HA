@@ -1,3 +1,8 @@
+## 2.24.37 – 2026-05-18
+
+- **UX**: **Recently Played — collapsible, below Browse Systems** — Moved Recently Played below the Browse Systems grid and made it collapsible via a toggle header with chevron icon.
+- **UX**: **Settings icon visible on mobile** — Fixed settings icon on mobile top bar so it always renders in `text-primary` regardless of active route.
+
 ## 2.24.33 – 2026-05-18
 
 - **Feature**: **Dashboard unified — Library merged into Dashboard** — The Dashboard (`/`) is now the primary game browsing surface. Includes: real-time fuzzy search (Fuse.js, searches title/system/genre/developer/publisher), sort bar (Recent / Title / Year / Rating / Plays), Recently Played horizontal strip, Browse Systems grid (click filters by system), and a unified All Games grid. Library page (`/library`) is deprecated and redirects to `/`.
