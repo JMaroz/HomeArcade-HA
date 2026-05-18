@@ -38,12 +38,7 @@ export function MobileTopBar() {
         </button>
         <Link
           href="/settings"
-          className={[
-            "size-10 landscape:size-9 rounded-full flex items-center justify-center transition-all md3-state",
-            onSettingsRoute
-              ? "bg-primary-container text-primary md3-state-primary"
-              : "text-primary hover:bg-white/[0.08] md3-state-on-surface",
-          ].join(" ")}
+          className="size-10 landscape:size-9 rounded-full flex items-center justify-center text-primary hover:bg-white/[0.08] transition-all"
           aria-label="Settings"
           data-testid="link-settings-topbar"
         >
