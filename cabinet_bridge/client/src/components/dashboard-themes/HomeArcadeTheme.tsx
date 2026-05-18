@@ -295,6 +295,16 @@ export default function HomeArcadeTheme() {
   const [activeGameIdx, setActiveGameIdx] = useState(0);
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+
+  // Handle ?scan=warp query param (mobile scanner shortcut)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("scan") === "warp") {
+      setShowScanner(true);
+      // Clean the URL without reloading
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
   const [showWarpDialog, setShowWarpDialog] = useState(false);
 
   const activeGame = filteredGames[activeGameIdx];

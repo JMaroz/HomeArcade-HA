@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { Wordmark } from "@/components/Logo";
-import { LayoutDashboard, Gamepad2, Trophy, Settings, History } from "lucide-react";
+import { LayoutDashboard, Gamepad2, Trophy, Settings, History, QrCode } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export function MobileTopBar() {
@@ -26,20 +26,30 @@ export function MobileTopBar() {
         <Wordmark />
       </Link>
 
-      {/* MD3 Icon Button — Settings */}
-      <Link
-        href="/settings"
-        className={[
-          "size-10 landscape:size-9 rounded-full flex items-center justify-center transition-all md3-state",
-          onSettingsRoute
-            ? "bg-primary-container text-primary md3-state-primary"
-            : "text-foreground/70 hover:bg-white/[0.08] md3-state-on-surface",
-        ].join(" ")}
-        aria-label="Settings"
-        data-testid="link-settings-topbar"
-      >
-        <Settings className="size-5 landscape:size-4" />
-      </Link>
+      {/* QR Scanner + Settings */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => window.location.href = "/?scan=warp"}
+          className="size-10 landscape:size-9 rounded-full flex items-center justify-center hover:bg-white/[0.08] transition-colors text-primary"
+          aria-label="Scan Warp Link"
+          title="Scan Warp Link"
+        >
+          <QrCode className="size-5 landscape:size-4" />
+        </button>
+        <Link
+          href="/settings"
+          className={[
+            "size-10 landscape:size-9 rounded-full flex items-center justify-center transition-all md3-state",
+            onSettingsRoute
+              ? "bg-primary-container text-primary md3-state-primary"
+              : "text-foreground/70 hover:bg-white/[0.08] md3-state-on-surface",
+          ].join(" ")}
+          aria-label="Settings"
+          data-testid="link-settings-topbar"
+        >
+          <Settings className="size-5 landscape:size-4" />
+        </Link>
+      </div>
     </div>
   );
 }
