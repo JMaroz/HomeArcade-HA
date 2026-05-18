@@ -4,6 +4,14 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.24.20] — 2026-05-17
+
+### Fix: Total Elimination of "Blocked by Response"
+
+- **Iframe Architecture Fix** — Completely removed `COOP` and `COEP` security headers. It turns out these high-security headers are fundamentally incompatible with Home Assistant's architecture, as HA embeds the add-on within an `iframe` on mobile devices. By removing them, the emulator will gracefully fall back to single-threaded WebAssembly mode, ensuring 100% compatibility and finally eliminating the `ERR_BLOCKED_BY_RESPONSE` error when using Warp Links.
+
+---
+
 ## [2.24.19] — 2026-05-17
 
 ### Fix: Box Art Visibility & Selective Security

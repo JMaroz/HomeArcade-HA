@@ -51,15 +51,6 @@ app.use(express.urlencoded({ extended: false }));
 // Global security headers to ensure assets load correctly under HA Ingress
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  
-  // Only apply strict isolation to the emulator player route
-  // This allows the dashboard to load images without strict CORP checks
-  const isPlayerRoute = req.path.includes("/player") || req.path.includes("/emulatorjs");
-  if (isPlayerRoute) {
-    res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
-    res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  }
-  
   next();
 });
 
