@@ -1,6 +1,5 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Wordmark } from "@/components/Logo";
 import { LayoutDashboard, Gamepad2, Trophy, Settings, History } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -14,7 +13,14 @@ export function MobileTopBar() {
       className="lg:hidden flex items-center justify-between px-4 h-14 landscape:h-12 border-b border-border bg-sidebar/80 backdrop-blur-md sticky top-0 z-30 transition-[height]"
       data-testid="bar-mobile-top"
     >
-      <SidebarTrigger className="size-10 landscape:size-9 rounded-full" />
+      {/* Mobile home button — replaces SidebarTrigger */}
+      <Link
+        href="/"
+        className="size-10 landscape:size-9 rounded-full flex items-center justify-center hover:bg-white/[0.08] transition-colors"
+        aria-label="Home"
+      >
+        <LayoutDashboard className="size-5 landscape:size-4" />
+      </Link>
 
       <Link href="/" className="flex items-center landscape:scale-90 transition-transform" data-testid="link-home-mobile">
         <Wordmark />
