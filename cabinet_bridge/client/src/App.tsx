@@ -1,12 +1,11 @@
 import React, { lazy, Suspense, useEffect, useRef } from "react";
-import { Switch, Route, Router } from "wouter";
+import { Switch, Route, Router, Redirect } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationProvider, useIntegration } from "@/lib/integration";
-import { parseFilter, parseCollectionFilter, DEFAULT_FILTER } from "@/lib/filter";
 import { MobileBottomNav } from "@/components/MobileNav";
 import i18n from "./lib/i18n";
 import { useTranslation } from "react-i18next";
@@ -113,17 +112,13 @@ function AppRouter() {
           <Dashboard />
         </Route>
         <Route path="/library">
-          <Home filter={DEFAULT_FILTER} />
+          <Redirect to="/" />
         </Route>
         <Route path="/library/collection/:id">
-          {(params) => (
-            <Home filter={parseCollectionFilter(params.id)} />
-          )}
+          <Redirect to="/" />
         </Route>
         <Route path="/library/:filter">
-          {(params) => (
-            <Home filter={parseFilter(params.filter)} />
-          )}
+          <Redirect to="/" />
         </Route>
         <Route path="/settings">
           <Suspense fallback={<PageFallback />}><Settings /></Suspense>

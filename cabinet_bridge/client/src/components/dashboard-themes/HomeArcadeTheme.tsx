@@ -460,7 +460,7 @@ export default function HomeArcadeTheme() {
           <div className="text-primary font-black tracking-tighter text-xl italic uppercase">HomeArcade</div>
           <div className="h-4 w-px bg-white/10" />
           <div className="flex gap-4">
-             <Link href="/library/all">
+             <Link href="/">
                <Button variant="ghost" size="sm" className="text-xs uppercase tracking-[0.2em] text-white/50 hover:text-white transition-all">Library</Button>
              </Link>
              <Link href="/history">
@@ -523,7 +523,7 @@ export default function HomeArcadeTheme() {
                 >
                   <QrCode className="size-5" />
                 </Button>
-                <Link href="/library/all">
+                <Link href="/">
                   <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
                     <LayoutGrid className="size-5" />
                   </Button>

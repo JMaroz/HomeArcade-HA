@@ -1,6 +1,6 @@
-## 2.24.31 – 2026-05-18
+## 2.24.32 – 2026-05-18
 
-- **Fix**: **Demo game art CORS** — Added `GET /api/art?url=<encoded>` server-side proxy for demo/seeded game art (Libretro thumbnails, TheGamesDB boxart, ScreenScraper). All art requests now route through the server, bypassing CORS restrictions. Art is cached to `data/art-cache/` on first fetch.
+- **UX**: **Library page deprecated** — `/library`, `/library/:filter`, `/library/collection/:id` now redirect to Dashboard (`/`). The separate Library page will be merged into the Dashboard in a future update.
 
 - **UX**: **Full-width layout** — Removed the sidebar from the app shell. All navigation now routes through the top bar (Dashboard, Library, Activity) and the Dashboard's system tabs. The sidebar nav was redundant with the Browse Systems grid.
 - **UX**: **System tabs — color + count** — Each dashboard system tab now shows a color swatch matching the system's gradient, and a game count badge. Active tab uses the system gradient as its background.

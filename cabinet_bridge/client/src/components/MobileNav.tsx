@@ -56,7 +56,6 @@ export function MobileBottomNav() {
 
   const tabs = [
     { href: "/",            icon: LayoutDashboard, label: t("nav.home") || "Home"     },
-    { href: "/library",     icon: Gamepad2,        label: t("nav.library") || "Library"  },
     { href: "/history",     icon: History,         label: t("nav.history") || "History"  },
     { href: "/achievements",icon: Trophy,          label: t("nav.achievements") || "Awards"   },
     { href: "/settings",    icon: Settings,        label: t("nav.settings") || "Settings" },
