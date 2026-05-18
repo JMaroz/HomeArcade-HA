@@ -51,6 +51,8 @@ app.use(express.urlencoded({ extended: false }));
 // Global security headers to ensure assets load correctly under HA Ingress
 app.use((_req, res, next) => {
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
   next();
 });
 

@@ -4,6 +4,14 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.24.17] — 2026-05-17
+
+### Fix: Security Header Blocking
+
+- **COOP/COEP Isolation** — Added global `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers. This resolves the `ERR_BLOCKED_BY_RESPONSE` error when opening Warp Links on mobile devices by ensuring the browser provides the necessary security context for the emulator's `SharedArrayBuffer` usage.
+
+---
+
 ## [2.24.16] — 2026-05-17
 
 ### Fix: Hardened Warp State Loading
