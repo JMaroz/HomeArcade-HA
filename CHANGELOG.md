@@ -4,12 +4,11 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
-## [2.23.6] — 2026-05-17
+## [2.23.7] — 2026-05-17
 
 ### Stability: Player Logic Restoration
 
-- **Restored Player Logic** — Fixed a regression that caused the "Warp Link" button to become inactive.
-- **Synchronized Bootstrap** — Ensured the emulator loader and handoff scripts are perfectly aligned to resolve the 96% loading hang.
+- **Stability Core** — Performed a complete surgical rewrite of the internal player routing logic. This resolves the "inactive button" regression and ensures the Warp Link feature correctly triggers, saves, and generates QR codes across all systems.
 
 ---
 
