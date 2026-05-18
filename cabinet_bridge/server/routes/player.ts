@@ -531,6 +531,10 @@ export function renderEmulatorPage({ title, returnTo, romHash }: { title: string
       <div style="padding:24px;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;">
         <p style="font-weight:900;text-transform:uppercase;letter-spacing:0.1em;">Warp Link</p>
         <div id="cabinet-warp-qr">Warping...</div>
+        <div style="max-width:280px;color:rgba(248,250,252,0.6);font:600 11px ui-monospace,monospace;letter-spacing:0.05em;line-height:1.5;">
+          Scan to continue on your phone. <br>
+          <span style="color:rgba(236, 72, 153, 0.9);">Make sure you are logged into Home Assistant in your phone's browser!</span>
+        </div>
         <div id="cabinet-warp-manual" style="display:none;width:100%;">
           <p style="font-size:10px;opacity:0.6;">Manual link:</p>
           <input id="cabinet-warp-url" type="text" readonly style="width:100%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:8px;border-radius:8px;" />

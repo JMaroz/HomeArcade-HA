@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.23.8** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.23.9** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -68,12 +68,13 @@ Systems are listed in release-date order.
 
 ## Changelog
 
+### v2.23.9
+- **Warp Link Mobile UX:** Added a "Login Reminder" to the Warp Link panel. To prevent "401 Unauthorized" errors, ensure you are logged into Home Assistant in your phone's browser before scanning the code.
+- **Improved QR Layout:** Refined the QR code display for better visibility and added a cache-buster to handoff URLs.
+
 ### v2.23.8
 - **Fix: Warp Link save method:** Fixed a `TypeError` by using the proven `quickSave` method for handoff saves, ensuring compatibility with NES and other cores.
 - **Improved Sync:** Increased the synchronization timeout to ensure handoff saves are fully uploaded before the QR code is displayed.
-
-### v2.23.7
-- **Stability Core:** Performed a complete surgical rewrite of the internal player routing logic. This resolves the "inactive button" regression and ensures the Warp Link feature correctly triggers, saves, and generates QR codes across all systems.
 
 ### v2.23.4
 - **Maintenance:** Synchronized all project changelogs and manifests to ensure consistent update tracking for Home Assistant.
