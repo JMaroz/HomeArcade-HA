@@ -4,6 +4,14 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.24.3] — 2026-05-17
+
+### Fix: Build Error
+
+- **Missing Dependency** — Corrected a missing server dependency (`qrcode`) that was preventing the add-on from building correctly in Home Assistant.
+
+---
+
 ## [2.24.2] — 2026-05-17
 
 ### Fix: Firewall-Proof Warp Links
