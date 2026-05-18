@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.24.18] — 2026-05-17
+
+### Fix: Box Art & Cross-Origin Performance
+
+- **Refined Security Context** — Switched to `credentialless` mode for the `Cross-Origin-Embedder-Policy`. This satisfies the emulator's requirement for `SharedArrayBuffer` (fixing the "Blocked by response" error) while allowing dashboard box art and external assets to load correctly.
+- **Improved Navigation Isolation** — Updated `Cross-Origin-Opener-Policy` to `same-origin-allow-popups` for better compatibility with external links and redirects.
+
+---
+
 ## [2.24.17] — 2026-05-17
 
 ### Fix: Security Header Blocking
