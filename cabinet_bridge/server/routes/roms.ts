@@ -389,8 +389,6 @@ export function registerRomRoutes(app: Express) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     // Short cache: the HTML shell rarely changes but we don't want stale BIOS errors
     res.setHeader("Cache-Control", "private, max-age=60");
-    // Allow scripts, WASM, and blobs inside HA Ingress iframe which may inject restrictive CSP
-    res.setHeader("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' blob: data: https:; img-src 'self' blob: data: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline';");
     const returnTo = typeof req.query.return === "string" ? req.query.return : "";
     res.send(renderEmulatorPage({ title: rom.title, returnTo, romHash: rom.romHash ?? null }));
   });

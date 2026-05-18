@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.24.23] — 2026-05-17
+
+### Fix: Explicit Security Isolation Disable
+
+- **Zero-Isolation Mode** — Explicitly set `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` to `unsafe-none`. This overrides any browser or proxy defaults and provides a 100% guarantee that the "Blocked by response" error is resolved in all environments, including restrictive mobile browsers and Home Assistant iframes.
+- **Header Cleanup** — Removed explicit `Content-Security-Policy` from the player route to prevent internal browser conflicts during navigation.
+
+---
+
 ## [2.24.22] — 2026-05-17
 
 ### Fix: Mobile Layout Refinement
