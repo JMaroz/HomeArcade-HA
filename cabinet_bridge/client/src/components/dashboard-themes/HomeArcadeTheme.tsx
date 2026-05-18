@@ -1,16 +1,17 @@
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { uploadedRomToGame, SYSTEMS, type Game, type System } from "@/data/library";
+import Fuse from "fuse.js";
+import { uploadedRomToGame, GAMES, SYSTEMS, type Game, type System, type SystemId } from "@/data/library";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { MobileTopBar } from "@/components/MobileNav";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { apiUrl } from "@/lib/queryClient";
 import { useIntegration } from "@/lib/integration";
 import { useGameDialogState } from "@/lib/useGameDialogState";
 import type { UploadedRom, GameCollectionWithItems, RomSaveSlot, GameCheatCode } from "@shared/schema";
-import { 
-  Play, 
+import {
+  Play,
   Search,
   Settings as SettingsIcon,
   Star,
@@ -36,7 +37,9 @@ import {
   Camera,
   QrCode,
   Smartphone,
-  Wifi
+  Wifi,
+  SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useTranslation } from "react-i18next";
@@ -116,8 +119,8 @@ function WarpScanner({
 }) {
   useEffect(() => {
     const scanner = new Html5Qrcode("warp-scanner-viewport");
-    const config = { 
-      fps: 20, 
+    const config = {
+      fps: 20,
       qrbox: { width: 280, height: 280 },
       aspectRatio: 1.0
     };
@@ -153,9 +156,9 @@ function WarpScanner({
       <p className="mt-8 text-white/60 text-xs font-bold uppercase tracking-widest text-center max-w-[240px]">
         Scan the Warp Link on your PC to continue playing
       </p>
-      <Button 
-        onClick={onClose} 
-        variant="outline" 
+      <Button
+        onClick={onClose}
+        variant="outline"
         className="mt-12 w-full max-w-xs h-14 rounded-2xl border-white/10 bg-white/5 font-black uppercase tracking-widest"
       >
         Cancel Scan
@@ -228,51 +231,91 @@ export default function HomeArcadeTheme() {
     handleSetStatus,
   } = useGameDialogState();
 
-  const games = useMemo(() => roms.map(uploadedRomToGame), [roms]);
+  // ── All Games (demo + uploaded) ───────────────────────────────────────────────
+  const allGames = useMemo(() => {
+    const uploaded = roms.map(uploadedRomToGame);
+    return [...uploaded, ...GAMES];
+  }, [roms]);
 
-  // Group games by system
-  const systemsWithGames = useMemo(() => {
-    const groups: Record<string, Game[]> = {};
-    for (const g of games) {
-      if (!groups[g.system]) groups[g.system] = [];
-      groups[g.system].push(g);
+  // ── Search + Sort ─────────────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sort, setSort] = useState<"recent" | "title" | "year" | "rating" | "plays">("recent");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcut: / or Ctrl+K to focus search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key === "k")) {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const filteredGames = useMemo(() => {
+    let list = allGames;
+    const systemFilter = searchQuery.startsWith("filter:") ? searchQuery.slice(7).trim() : "";
+    if (systemFilter) {
+      list = list.filter((g) => g.system === systemFilter);
+    } else if (searchQuery.trim()) {
+      const fuse = new Fuse(allGames, {
+        keys: ["title", "system", "genre", "developer", "publisher"],
+        threshold: 0.35,
+        distance: 100,
+      });
+      list = fuse.search(searchQuery.trim()).map((r) => r.item);
     }
-    
-    return SYSTEMS.map(s => ({
-      system: s,
-      games: groups[s.id] || []
-    })).filter(group => group.games.length > 0);
-  }, [games]);
+    return [...list].sort((a, b) => {
+      switch (sort) {
+        case "title": return a.title.localeCompare(b.title);
+        case "year": return (a.year || 0) - (b.year || 0);
+        case "rating": return (b.rating || 0) - (a.rating || 0);
+        case "plays": return (b.minutesPlayed ?? 0) - (a.minutesPlayed ?? 0);
+        case "recent":
+        default: return (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0);
+      }
+    });
+  }, [allGames, searchQuery, sort]);
 
-  const [activeSystemIdx, setActiveSystemIdx] = useState(0);
+  const recentlyPlayed = useMemo(
+    () =>
+      [...allGames]
+        .filter((g) => g.lastPlayed && g.lastPlayed > 0)
+        .sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))
+        .slice(0, 6),
+    [allGames],
+  );
+
   const [activeGameIdx, setActiveGameIdx] = useState(0);
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [showWarpDialog, setShowWarpDialog] = useState(false);
-  
-  const currentSystem = systemsWithGames[activeSystemIdx];
-  const activeGame = currentSystem?.games[activeGameIdx];
+
+  const activeGame = filteredGames[activeGameIdx];
 
   // ── Grid Navigation (Keyboard + Gamepad) ───────────────────────────────────
   const gridRef = useRef<HTMLDivElement>(null);
   const { focusedIndex, setFocusedIndex } = useGridNav({
-    count: currentSystem?.games.length || 0,
+    count: filteredGames.length,
     gridRef,
     disabled: !!dialogGame || (window.innerWidth < 1280 && showMobileDetails),
     onActivate: (idx) => {
       if (activeGameIdx === idx) {
-        // Already active -> Launch
-        const game = currentSystem.games[idx];
+        const game = filteredGames[idx];
         const returnTo = encodeURIComponent(window.location.href);
         window.location.href = apiUrl(`/api/roms/${game.romId}/player?return=${returnTo}`);
       } else {
-        // Not active -> Select
         setActiveGameIdx(idx);
         if (window.innerWidth < 1280) setShowMobileDetails(true);
       }
     },
     onFav: (idx) => {
-      const game = currentSystem.games[idx];
+      const game = filteredGames[idx];
       if (game) handleToggleFav(game);
     },
     onFocusChange: (idx) => {
@@ -438,13 +481,13 @@ export default function HomeArcadeTheme() {
             className="absolute inset-0 z-0 pointer-events-none"
           >
             {activeGame.artUrl ? (
-              <img 
-                src={activeGame.artUrl} 
-                className="w-full h-full object-cover opacity-30 blur-[15px] scale-110" 
-                alt="" 
+              <img
+                src={activeGame.artUrl}
+                className="w-full h-full object-cover opacity-30 blur-[15px] scale-110"
+                alt=""
               />
             ) : (
-              <div 
+              <div
                 className="w-full h-full opacity-20"
                 style={{ background: `radial-gradient(circle at center, hsl(${activeGame.art[0]}), #000 80%)` }}
               />
@@ -460,90 +503,139 @@ export default function HomeArcadeTheme() {
           <div className="text-primary font-black tracking-tighter text-xl italic uppercase">HomeArcade</div>
           <div className="h-4 w-px bg-white/10" />
           <div className="flex gap-4">
-             <Link href="/">
-               <Button variant="ghost" size="sm" className="text-xs uppercase tracking-[0.2em] text-white/50 hover:text-white transition-all">Library</Button>
-             </Link>
              <Link href="/history">
                <Button variant="ghost" size="sm" className="text-xs uppercase tracking-[0.2em] text-white/50 hover:text-white transition-all">Activity</Button>
              </Link>
           </div>
         </div>
         <div className="flex items-center gap-6">
-           <div className="flex items-center gap-5 text-white/30">
-              <Search className="size-4 cursor-pointer hover:text-white transition-colors" />
-              <Link href="/settings"><SettingsIcon className="size-4 cursor-pointer hover:text-white transition-colors" /></Link>
-           </div>
-           <div className="font-mono text-sm font-black tracking-[0.2em] text-white/80 tabular-nums">
-             {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-           </div>
+          {/* Search */}
+          <div className="relative">
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+            <Input
+              ref={searchRef}
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search games... (press /)"
+              className="pl-9 pr-8 w-64 bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm font-mono"
+              aria-label="Search games"
+              onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); searchRef.current?.blur(); } }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+          {/* Sort */}
+          <div className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 p-1">
+            <SlidersHorizontal className="size-3.5 text-white/30 ml-1.5 mr-0.5" />
+            {(["recent", "title", "year", "rating", "plays"] as const).map((o) => (
+              <button
+                key={o}
+                type="button"
+                onClick={() => setSort(o)}
+                className={`px-2 py-1 rounded font-mono text-[11px] uppercase tracking-wider ${
+                  sort === o ? "bg-primary text-white" : "text-white/30 hover:text-white"
+                }`}
+              >
+                {o === "recent" ? "Recent" : o === "az" ? "A-Z" : o.charAt(0).toUpperCase() + o.slice(1)}
+              </button>
+            ))}
+          </div>
+          <Link href="/settings"><SettingsIcon className="size-4 cursor-pointer hover:text-white transition-colors text-white/30" /></Link>
+          <div className="font-mono text-sm font-black tracking-[0.2em] text-white/80 tabular-nums">
+            {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
         </div>
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 relative z-10">
-        
-        {/* System Selector (Horizontal Tabs) */}
-        <div className="relative h-24 shrink-0 border-b border-white/5 bg-black/10">
-           <div className="flex gap-3 p-8 overflow-x-auto scrollbar-none no-scrollbar items-center h-full pr-28">
-              {systemsWithGames.map((group, i) => (
+
+        {/* Recently Played */}
+        {recentlyPlayed.length > 0 && !searchQuery && (
+          <div className="shrink-0 border-b border-white/5 px-8 py-4">
+            <div className="font-display text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-3">Recently Played</div>
+            <div className="flex gap-4 overflow-x-auto scrollbar-none pb-1">
+              {recentlyPlayed.map((game) => (
                 <button
-                  key={group.system.id}
-                  onClick={() => { setActiveSystemIdx(i); setActiveGameIdx(0); }}
-                  className={`px-5 py-2 rounded-full font-display text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap flex items-center gap-2 ${
-                    i === activeSystemIdx
-                      ? "text-white shadow-[0_0_24px_rgba(var(--primary),0.4)]"
-                      : "bg-white/5 text-white/30 hover:bg-white/10 hover:text-white/60"
-                  }`}
-                  style={i === activeSystemIdx ? {
-                    background: `linear-gradient(135deg, hsl(${group.system.art[0]}), hsl(${group.system.art[1]}))`,
-                    boxShadow: `0 0 20px hsl(${group.system.art[0]}/0.4)`,
-                  } : {}}
+                  key={game.id}
+                  type="button"
+                  onClick={() => {
+                    const idx = filteredGames.findIndex((g) => g.id === game.id);
+                    if (idx >= 0) setActiveGameIdx(idx);
+                    if (window.innerWidth < 1280) setShowMobileDetails(true);
+                  }}
+                  className="shrink-0 w-28 aspect-[2/3] rounded-xl overflow-hidden bg-neutral-900/50 group flex flex-col items-center"
                 >
-                  <span
-                    className="inline-block size-2 rounded-full shrink-0"
-                    style={{ background: `linear-gradient(135deg, hsl(${group.system.art[0]}), hsl(${group.system.art[1]}))` }}
-                  />
-                  {group.system.shortName}
-                  <span className={`text-[9px] opacity-60 font-mono ${i === activeSystemIdx ? "text-white/70" : ""}`}>
-                    {group.games.length}
-                  </span>
+                  <div className="relative w-full h-full flex-1">
+                    {game.artUrl ? (
+                      <img src={game.artUrl} className="w-full h-full object-cover" alt="" />
+                    ) : (
+                      <div className="w-full h-full" style={{ background: `linear-gradient(135deg, hsl(${game.art[0]}), hsl(${game.art[1]}))` }} />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  </div>
+                  <div className="w-full bg-white/5 px-1.5 py-1 text-center">
+                    <div className="text-[9px] font-bold truncate text-white/80 leading-tight">{game.title}</div>
+                    <div className="text-[8px] text-white/30 uppercase">{game.system.toUpperCase()}</div>
+                  </div>
                 </button>
               ))}
-           </div>
+            </div>
+          </div>
+        )}
 
-           {/* Mobile Quick Actions (Pinned to right) */}
-           <div className="xl:hidden absolute right-0 top-0 bottom-0 flex items-center px-4 bg-gradient-to-l from-[#0c0c0c] via-[#0c0c0c]/80 to-transparent z-20">
-              <div className="h-8 w-px bg-white/10 mr-2" />
-              <div className="flex items-center gap-0.5">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setShowScanner(true)}
-                  className="text-primary hover:text-primary/80"
-                  title="Scan Warp Link"
+        {/* Browse Systems */}
+        <div className="shrink-0 border-b border-white/5 px-8 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-display text-[10px] font-black uppercase tracking-[0.3em] text-white/30">Browse Systems</div>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
+            {SYSTEMS.filter((s) => s.count > 0).map((system) => {
+              const count = allGames.filter((g) => g.system === system.id).length;
+              if (count === 0) return null;
+              return (
+                <button
+                  key={system.id}
+                  type="button"
+                  onClick={() => setSearchQuery("filter:" + system.id)}
+                  className="relative aspect-video rounded-xl overflow-hidden border border-white/10 group hover:border-white/30 transition-all"
+                  style={{ background: `linear-gradient(140deg, hsl(${system.art[0]}) 0%, hsl(${system.art[1]}) 100%)` }}
                 >
-                  <QrCode className="size-5" />
-                </Button>
-                <Link href="/">
-                  <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
-                    <LayoutGrid className="size-5" />
-                  </Button>
-                </Link>
-                <Link href="/settings">
-                  <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
-                    <SettingsIcon className="size-5" />
-                  </Button>
-                </Link>
-              </div>
-           </div>
+                  <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                    <div className="text-2xl font-black text-white">{system.mono}</div>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                  <div className="absolute bottom-1.5 left-2 right-2">
+                    <div className="text-[9px] font-black uppercase truncate text-white">{system.shortName}</div>
+                    <div className="text-[8px] text-white/50 font-mono">{count} titles</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex min-h-0 overflow-hidden">
-          
-          {/* Game Grid */}
-          <div className="flex-1 overflow-y-auto p-8 scrollbar-none overscroll-y-contain pb-24 lg:pb-8">
+        {/* All Games Grid */}
+        <div
+          ref={gridRef}
+          className="flex-1 overflow-y-auto p-8 scrollbar-none overscroll-y-contain pb-24 lg:pb-8"
+        >
+          {filteredGames.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-48 text-white/30">
+              <Search className="size-8 mb-3" />
+              <div className="font-display text-sm font-black uppercase tracking-widest">No games found</div>
+              {searchQuery && <div className="text-xs mt-1">Try a different search</div>}
+            </div>
+          ) : (
              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-6">
-                {currentSystem?.games.map((game, i) => {
+                {filteredGames.map((game, i) => {
                   const isActive = i === activeGameIdx;
                   return (
                     <motion.div
@@ -551,8 +643,8 @@ export default function HomeArcadeTheme() {
                       animate={{ scale: isActive ? 1.08 : 1 }}
                       whileHover={{ scale: 1.05 }}
                       className={`relative aspect-[2/3] rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 ${
-                        isActive 
-                          ? "ring-4 ring-primary shadow-[0_0_40px_rgba(var(--primary),0.3)] z-10" 
+                        isActive
+                          ? "ring-4 ring-primary shadow-[0_0_40px_rgba(var(--primary),0.3)] z-10"
                           : "ring-1 ring-white/10 opacity-70 hover:opacity-100"
                       }`}
                       onClick={() => {
@@ -567,13 +659,12 @@ export default function HomeArcadeTheme() {
                           <span className="text-[10px] font-black uppercase text-white/20 px-4 text-center">{game.title}</span>
                         )}
                       </div>
-                      
-                      {/* Pulse ring for active item */}
+
                       {isActive && (
-                        <motion.div 
+                        <motion.div
                           animate={{ opacity: [0.2, 0.5, 0.2] }}
                           transition={{ repeat: Infinity, duration: 2 }}
-                          className="absolute inset-0 ring-4 ring-primary rounded-2xl pointer-events-none" 
+                          className="absolute inset-0 ring-4 ring-primary rounded-2xl pointer-events-none"
                         />
                       )}
 
@@ -582,7 +673,7 @@ export default function HomeArcadeTheme() {
                   );
                 })}
              </div>
-          </div>
+          )}
 
           {/* Right Info Panel (The Glass Hub) */}
           <AnimatePresence>
@@ -594,9 +685,9 @@ export default function HomeArcadeTheme() {
                  transition={{ type: "spring", damping: 28, stiffness: 180 }}
                  className={`fixed right-0 top-0 sm:top-16 bottom-0 w-full sm:w-[450px] 2xl:w-[500px] border-l border-white/10 bg-black/80 backdrop-blur-3xl z-[60] flex flex-col p-6 sm:p-12 ${!showMobileDetails && "hidden xl:flex"}`}
                >
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowMobileDetails(false)}
                     className="absolute top-6 left-6 xl:hidden text-white/50 hover:text-white z-[70]"
                   >
@@ -628,8 +719,8 @@ export default function HomeArcadeTheme() {
                          key={tab.id}
                          onClick={() => setActiveTab(tab.id as any)}
                          className={`flex-1 min-w-[85px] flex flex-col items-center py-3 rounded-xl border transition-all ${
-                           activeTab === tab.id 
-                             ? "bg-white/15 border-white/30 text-white shadow-[0_0_20px_rgba(255,255,255,0.1)]" 
+                           activeTab === tab.id
+                             ? "bg-white/15 border-white/30 text-white shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                              : "bg-white/[0.04] border-white/5 text-white/40 hover:text-white/60"
                          }`}
                        >
@@ -657,7 +748,7 @@ export default function HomeArcadeTheme() {
                                 <div className="text-[10px] font-mono uppercase tracking-[0.5em] text-white/20">Game Description</div>
                                 <p className="text-base text-white/60 leading-relaxed font-medium">{activeGame.description || "No description available for this title."}</p>
                              </div>
-                             
+
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-1">
                                    <div className="text-[10px] font-mono uppercase tracking-widest text-white/20">Play Time</div>
@@ -700,14 +791,14 @@ export default function HomeArcadeTheme() {
                                    {fetchingCheats ? <Loader2 className="size-4 animate-spin" /> : <Database className="size-4" />}
                                 </button>
                              </div>
-                             
+
                              {fetchedCheats && (
                                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-4">
                                    <div className="text-[10px] font-mono uppercase tracking-widest text-primary font-bold">Cloud Codes Found</div>
                                    <div className="max-h-48 overflow-y-auto space-y-2 pr-2 scrollbar-none">
                                       {fetchedCheats.map((c, i) => (
-                                         <button 
-                                           key={i} 
+                                         <button
+                                           key={i}
                                            onClick={() => setFetchedCheats(p => p?.map((x, j) => j === i ? { ...x, selected: !x.selected } : x) ?? null)}
                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all border ${c.selected ? "bg-primary/20 border-primary/40" : "bg-white/5 border-transparent opacity-60 hover:opacity-100"}`}
                                          >
@@ -756,21 +847,21 @@ export default function HomeArcadeTheme() {
                         {activeTab === "meta" && (
                           <motion.div key="meta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
                              <div className="text-[10px] font-mono uppercase tracking-[0.5em] text-white/20">Management</div>
-                             
+
                              <div className="space-y-4">
                                 <Button onClick={refreshArt} disabled={scrapingArt} variant="outline" className="w-full h-14 rounded-2xl border-white/5 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white uppercase tracking-widest text-[10px] font-black gap-3">
                                    {scrapingArt ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
                                    Refresh Cover Art
                                 </Button>
-                                
+
                                 <div className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-4">
                                    <div className="text-[10px] font-mono uppercase tracking-widest text-white/20">Game Collections</div>
                                    <div className="flex flex-wrap gap-2">
                                       {collections.map(c => {
                                          const isMember = c.romIds.includes(activeGame.romId!);
                                          return (
-                                           <button 
-                                             key={c.id} 
+                                           <button
+                                             key={c.id}
                                              onClick={() => handleToggleCollection(c.id, activeGame, !isMember)}
                                              className={`px-4 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all ${isMember ? "bg-primary/20 border-primary text-primary" : "bg-white/5 border-transparent text-white/30"}`}
                                            >
@@ -792,7 +883,7 @@ export default function HomeArcadeTheme() {
                   {/* Actions (Pinned to bottom) */}
                   <div className="pt-8 pb-12 sm:pb-0 flex flex-col gap-4 shrink-0">
                      {latestSave && (
-                       <Button 
+                       <Button
                          variant="outline"
                          size="lg"
                          onClick={() => {
@@ -805,7 +896,7 @@ export default function HomeArcadeTheme() {
                        </Button>
                      )}
                      <div className="flex gap-3">
-                        <Button 
+                        <Button
                           size="lg"
                           onClick={() => {
                             const returnTo = encodeURIComponent(window.location.href);
@@ -834,14 +925,14 @@ export default function HomeArcadeTheme() {
 
 
       <WelcomeDialog hasRoms={roms.length > 0} />
-      <WarpLinkDialog 
+      <WarpLinkDialog
         game={showWarpDialog ? activeGame : null}
         slot={latestSave?.slot}
         onClose={() => setShowWarpDialog(false)}
       />
 
       {showScanner && (
-        <WarpScanner 
+        <WarpScanner
           onClose={() => setShowScanner(false)}
           onScan={(url) => {
             setShowScanner(false);

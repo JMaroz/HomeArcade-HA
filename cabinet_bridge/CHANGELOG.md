@@ -1,3 +1,8 @@
+## 2.24.33 – 2026-05-18
+
+- **Feature**: **Dashboard unified — Library merged into Dashboard** — The Dashboard (`/`) is now the primary game browsing surface. Includes: real-time fuzzy search (Fuse.js, searches title/system/genre/developer/publisher), sort bar (Recent / Title / Year / Rating / Plays), Recently Played horizontal strip, Browse Systems grid (click filters by system), and a unified All Games grid. Library page (`/library`) is deprecated and redirects to `/`.
+- **Fix**: **Keyboard shortcuts** — Added `/` and `Ctrl+K` global shortcuts to focus the search bar; `Escape` clears search and blurs the input.
+
 ## 2.24.32 – 2026-05-18
 
 - **UX**: **Library page deprecated** — `/library`, `/library/:filter`, `/library/collection/:id` now redirect to Dashboard (`/`). The separate Library page will be merged into the Dashboard in a future update.
