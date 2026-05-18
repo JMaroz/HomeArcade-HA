@@ -113,37 +113,46 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 
 function AppRouter() {
   return (
-    <Switch>
-      <Route path="/">
-        <Dashboard />
+    <>
+      <Switch>
+        <Route path="/">
+          <Dashboard />
+        </Route>
+        <Route path="/library">
+          <Home filter={DEFAULT_FILTER} />
+        </Route>
+        <Route path="/library/collection/:id">
+          {(params) => (
+            <Home filter={parseCollectionFilter(params.id)} />
+          )}
+        </Route>
+        <Route path="/library/:filter">
+          {(params) => (
+            <Home filter={parseFilter(params.filter)} />
+          )}
+        </Route>
+        <Route path="/settings">
+          <Suspense fallback={<PageFallback />}><Settings /></Suspense>
+        </Route>
+        <Route path="/play/:id">
+          {(params) => <Suspense fallback={<PageFallback />}><Player id={params.id} /></Suspense>}
+        </Route>
+        <Route path="/history">
+          <Suspense fallback={<PageFallback />}><History /></Suspense>
+        </Route>
+        <Route path="/achievements">
+          <Suspense fallback={<PageFallback />}><Achievements /></Suspense>
+        </Route>
+        <Route component={NotFound} />
+      </Switch>
+      <Route path="/:rest*">
+        {(params) => {
+          // Hide bottom nav when in player
+          if (params.rest?.startsWith("play/")) return null;
+          return <MobileBottomNav />;
+        }}
       </Route>
-      <Route path="/library">
-        <Home filter={DEFAULT_FILTER} />
-      </Route>
-      <Route path="/library/collection/:id">
-        {(params) => (
-          <Home filter={parseCollectionFilter(params.id)} />
-        )}
-      </Route>
-      <Route path="/library/:filter">
-        {(params) => (
-          <Home filter={parseFilter(params.filter)} />
-        )}
-      </Route>
-      <Route path="/settings">
-        <Suspense fallback={<PageFallback />}><Settings /></Suspense>
-      </Route>
-      <Route path="/play/:id">
-        {(params) => <Suspense fallback={<PageFallback />}><Player id={params.id} /></Suspense>}
-      </Route>
-      <Route path="/history">
-        <Suspense fallback={<PageFallback />}><History /></Suspense>
-      </Route>
-      <Route path="/achievements">
-        <Suspense fallback={<PageFallback />}><Achievements /></Suspense>
-      </Route>
-      <Route component={NotFound} />
-    </Switch>
+    </>
   );
 }
 
@@ -183,7 +192,6 @@ function App() {
                     <PageTransition>
                       <AppRouter />
                     </PageTransition>
-                    <MobileBottomNav />
                   </SidebarInset>
                 </div>
               </Router>

@@ -424,7 +424,7 @@ export default function HomeArcadeTheme() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[50] bg-[#0c0c0c] text-white flex flex-col select-none overflow-hidden font-sans">
+    <div className="fixed inset-0 z-[50] bg-[#0c0c0c] text-white flex flex-col select-none overflow-hidden font-sans pb-20 lg:pb-0">
 
       {/* Dynamic Background Fanart (High Blur) */}
       <AnimatePresence mode="wait">

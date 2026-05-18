@@ -442,7 +442,7 @@ export default function Home({ filter }: { filter: Filter }) {
     !query;
 
   return (
-    <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden" data-testid="main-content">
+    <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden pb-20 lg:pb-0" data-testid="main-content">
       <WelcomeDialog hasRoms={uploadedRoms.length > 0} />
       <MobileTopBar />
 

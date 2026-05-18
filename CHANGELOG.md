@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.24.21] — 2026-05-17
+
+### UX: Global Mobile Navigation
+
+- **Persistent Bottom Nav** — Promoted the mobile navigation bar to a top-level component, making it visible across all sections of the app (Dashboard, Library, History, etc.) for a more native feel.
+- **Smart Hiding** — The navigation bar automatically hides during active gameplay to maximize screen space.
+- **Improved Page Layouts** — Updated all main pages with proper bottom padding to ensure content is never obscured by the navigation bar on mobile devices.
+
+---
+
 ## [2.24.20] — 2026-05-17
 
 ### Fix: Total Elimination of "Blocked by Response"
