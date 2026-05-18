@@ -610,18 +610,25 @@ async function cabinetRecordSaveSlot(slot) {
 }
 async function cabinetBackupSlot(slot) {
   var emu = window.EJS_emulator;
-  if (!emu || !emu.gameManager || !emu.gameManager.FS) throw new Error("No FS");
+  if (!emu || !emu.gameManager || !emu.gameManager.FS) throw new Error("Emulator not fully initialized");
   var FS = emu.gameManager.FS;
   if (typeof FS.syncfs === "function") {
     await new Promise(function(resolve) { FS.syncfs(false, resolve); });
   }
   var data = null;
-  var paths = ["/" + ${JSON.stringify(userId + "_" + gameId)} + "-" + slot + ".state", "/" + slot + "-quick.state"];
+  var gId = ${JSON.stringify(userId + "_" + gameId)};
+  var paths = [
+    "/" + gId + "-" + slot + ".state", 
+    "/" + slot + "-quick.state",
+    "/" + gId + "/auto.state",
+    "/auto.state"
+  ];
   for (var i=0; i<paths.length; i++) {
-    try { data = FS.readFile(paths[i]); if (data) break; } catch(e) {}
+    try { data = FS.readFile(paths[i]); if (data && data.length > 0) break; } catch(e) {}
   }
-  if (!data) throw new Error("Save file not found");
-  await fetch("./save-backup/" + slot, { method: "PUT", body: data });
+  if (!data) throw new Error("Save state file not ready on virtual disk");
+  var res = await fetch("./save-backup/" + slot, { method: "PUT", body: data });
+  if (!res.ok) throw new Error("Server rejected save backup");
 }
 function cabinetSetPanelOpen(id, open) {
   var el = document.getElementById(id);

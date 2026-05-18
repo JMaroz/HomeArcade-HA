@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.24.4] — 2026-05-17
+
+### Fix: Warp Link Save Discovery
+
+- **Robust Save Search** — Updated `cabinetBackupSlot` to search for save files in more locations, including core-specific auto-save paths. This ensures Warp Link works reliably across all cores, including NES and multi-disc systems.
+- **Improved Feedback** — Added more detailed error messages to the Warp Link panel to help diagnose sync failures (e.g., distinguishing between a save failure and a server error).
+
+---
+
 ## [2.24.3] — 2026-05-17
 
 ### Fix: Build Error
