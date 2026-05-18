@@ -15,18 +15,14 @@ import { ProfileProvider } from "@/lib/useProfile";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 import { THEMES, AppTheme } from "./lib/themes";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { Sidebar } from "@/components/Sidebar";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { NowPlayingBar } from "@/components/NowPlayingBar";
 
 /**
- * Ensures scroll position is reset or restored correctly on navigation.
+ * Ensures scroll position is reset or restore correctly on navigation.
  */
 function ScrollRestoration() {
   const [loc] = useHashLocation();
   useEffect(() => {
-    // For most routes, reset scroll. Library/Home might need more complex logic but start with reset.
     window.scrollTo(0, 0);
   }, [loc]);
   return null;
@@ -45,7 +41,6 @@ function VisualEffectManager() {
   const { config } = useIntegration();
 
   useEffect(() => {
-    // Apply theme
     const theme = config.theme || "default";
     if (theme === "default") {
       document.documentElement.removeAttribute("data-theme");
@@ -84,8 +79,6 @@ function PageFallback() {
 
 /**
  * Fades the route area in whenever the hash location changes.
- * Uses the Web Animations API so we avoid adding a full animation library.
- * The container never remounts — only the inner Switch swaps children.
  */
 function PageTransition({ children }: { children: React.ReactNode }) {
   const [loc] = useHashLocation();
@@ -148,7 +141,6 @@ function AppRouter() {
       </Switch>
       <Route path="/:rest*">
         {(params) => {
-          // Hide bottom nav when in player
           if (params.rest?.startsWith("play/")) return null;
           return <MobileBottomNav />;
         }}
@@ -158,51 +150,35 @@ function AppRouter() {
 }
 
 function App() {
-  // Dark is the default — this is a TV/cabinet UI.
   useEffect(() => {
     document.documentElement.classList.add("dark");
-    // Restore saved theme on mount
     const saved = localStorage.getItem("ha-theme") as AppTheme | null;
     if (saved && saved !== "default") {
       document.documentElement.setAttribute("data-theme", saved);
     }
   }, []);
 
-  const [sidebarFocused, setSidebarFocused] = React.useState(false);
-
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ProfileProvider>
+    <QueryClientProvider client={queryClient}>
+      <ProfileProvider>
         <IntegrationProvider>
           <VisualEffectManager />
-        <LanguageManager />
-        <ScrollRestoration />
+          <LanguageManager />
+          <ScrollRestoration />
           <TooltipProvider>
-            <SidebarProvider>
-              <Toaster />
-              <Router hook={useHashLocation}>
-                <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
-                  <Sidebar onReturnToGrid={() => {
-                    const grid = document.querySelector('[data-testid="grid-games"]') as HTMLElement;
-                    grid?.focus();
-                    // We need a way to tell the Home page to re-enable grid navigation
-                    window.dispatchEvent(new CustomEvent("homearcade:focus-grid"));
-                  }} />
-                  <SidebarInset className="flex flex-col min-h-0 overflow-hidden">
-                    <PageTransition>
-                      <AppRouter />
-                    </PageTransition>
-                  </SidebarInset>
-                </div>
-              </Router>
-              <NowPlayingBar />
-            </SidebarProvider>
+            <Toaster />
+            <Router hook={useHashLocation}>
+              <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
+                <PageTransition>
+                  <AppRouter />
+                </PageTransition>
+              </div>
+            </Router>
+            <NowPlayingBar />
           </TooltipProvider>
         </IntegrationProvider>
-        </ProfileProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+      </ProfileProvider>
+    </QueryClientProvider>
   );
 }
 

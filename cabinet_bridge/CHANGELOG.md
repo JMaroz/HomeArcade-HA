@@ -1,6 +1,7 @@
 ## 2.24.28 – 2026-05-18
 
-- **UX**: **Sidebar de-clutter — systems moved to Dashboard grid** — Removed the 25-item system list from the sidebar. Library section now contains only Favorites, Recently Played, All Games, Backlog (if non-zero), and Completed (if non-zero). Systems are browsed exclusively via the "Browse Systems" grid on the Dashboard, eliminating redundancy and visual overload.
+- **UX**: **Full-width layout** — Removed the sidebar from the app shell. All navigation now routes through the top bar (Dashboard, Library, Activity) and the Dashboard's system tabs. The sidebar nav was redundant with the Browse Systems grid.
+- **UX**: **System tabs — color + count** — Each dashboard system tab now shows a color swatch matching the system's gradient, and a game count badge. Active tab uses the system gradient as its background.
 
 ## 2.24.27 – 2026-05-18
 

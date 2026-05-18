@@ -488,13 +488,24 @@ export default function HomeArcadeTheme() {
                 <button
                   key={group.system.id}
                   onClick={() => { setActiveSystemIdx(i); setActiveGameIdx(0); }}
-                  className={`px-6 py-2 rounded-full font-display text-[10px] font-black uppercase tracking-[0.25em] transition-all whitespace-nowrap ${
-                    i === activeSystemIdx 
-                      ? "bg-primary text-white shadow-[0_0_20px_rgba(var(--primary),0.4)] scale-105" 
-                      : "bg-white/5 text-white/30 hover:bg-white/10"
+                  className={`px-5 py-2 rounded-full font-display text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap flex items-center gap-2 ${
+                    i === activeSystemIdx
+                      ? "text-white shadow-[0_0_24px_rgba(var(--primary),0.4)]"
+                      : "bg-white/5 text-white/30 hover:bg-white/10 hover:text-white/60"
                   }`}
+                  style={i === activeSystemIdx ? {
+                    background: `linear-gradient(135deg, hsl(${group.system.art[0]}), hsl(${group.system.art[1]}))`,
+                    boxShadow: `0 0 20px hsl(${group.system.art[0]}/0.4)`,
+                  } : {}}
                 >
-                  {group.system.name}
+                  <span
+                    className="inline-block size-2 rounded-full shrink-0"
+                    style={{ background: `linear-gradient(135deg, hsl(${group.system.art[0]}), hsl(${group.system.art[1]}))` }}
+                  />
+                  {group.system.shortName}
+                  <span className={`text-[9px] opacity-60 font-mono ${i === activeSystemIdx ? "text-white/70" : ""}`}>
+                    {group.games.length}
+                  </span>
                 </button>
               ))}
            </div>
