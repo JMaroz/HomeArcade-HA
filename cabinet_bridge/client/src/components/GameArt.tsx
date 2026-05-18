@@ -33,10 +33,10 @@ export function GameArt({
       }}
     >
       {/*
-       * artUrl is proxied through /api/roms/:id/art to avoid CORS.
-       * uploaded games use the server-side proxy; demo/seeded games
-       * (no romId) use artUrl directly since those are static.
-       * On proxy error the img is hidden so the gradient fallback shows.
+       * All art goes through /api/art proxy to avoid CORS.
+       * Uploaded games use /api/roms/:id/art (server already does this).
+       * Demo/seeded games use /api/art?url=<encoded_artUrl>.
+       * On error the img is hidden so the gradient fallback shows.
        */}
       {game.romId ? (
         <img
@@ -53,13 +53,12 @@ export function GameArt({
         />
       ) : game.artUrl ? (
         <img
-          src={game.artUrl}
+          src={`/api/art?url=${encodeURIComponent(game.artUrl)}`}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
           decoding="async"
-          crossOrigin="anonymous"
           data-testid={`img-art-${game.id}`}
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";

@@ -34,6 +34,69 @@ async function ensureEjsCacheDir() {
 export function registerRomRoutes(app: Express) {
   const BIOS_ROOT = dataPath("bios");
 
+  // ── Generic art proxy — bypasses CORS for any artUrl, caches to disk ───────
+  // Used for demo/seeded games whose artUrl points to Libretro/ScreenScraper.
+  app.get("/api/art", async (req, res) => {
+    const artUrl = String(req.query.url ?? "");
+    if (!artUrl) return res.status(400).send("No art URL provided");
+
+    // Sanity-check: only allow known art CDN origins
+    const allowedOrigins = [
+      "cdn.thegamesdb.net",
+      "thumbnails.libretro.com",
+      "mediaspeed.libretro.com",
+      "www.screenscraper.fr",
+    ];
+    let origin: string | null = null;
+    try { origin = new URL(artUrl).host; } catch {}
+    if (!origin || !allowedOrigins.some((o) => origin === o)) {
+      return res.status(400).send("Disallowed art origin");
+    }
+
+    const cacheDir = dataPath("art-cache");
+    const safeName = Buffer.from(artUrl).toString("base64url").slice(0, 80) + ".jpg";
+    const cachePath = path.join(cacheDir, safeName);
+
+    try {
+      const exists = await fs.access(cachePath).then(() => true).catch(() => false);
+      if (exists) {
+        res.setHeader("Content-Type", "image/jpeg");
+        res.setHeader("Cache-Control", "public, max-age=86400, immutable");
+        return res.sendFile(cachePath);
+      }
+    } catch {}
+
+    try {
+      const upstream = await fetch(artUrl, {
+        headers: { "User-Agent": "CabinetBridge/0.1", Referer: artUrl },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!upstream.ok || !upstream.body) return res.status(502).json({ message: "Failed to fetch art." });
+
+
+      const ct = upstream.headers.get("Content-Type") ?? "image/jpeg";
+      res.setHeader("Content-Type", ct);
+      res.setHeader("Cache-Control", "public, max-age=86400");
+
+
+      await fs.mkdir(cacheDir, { recursive: true }).catch(() => {});
+      const { Readable } = await import("stream");
+      const chunks: Buffer[] = [];
+
+
+      for await (const chunk of Readable.fromWeb(upstream.body as any)) {
+        res.write(chunk);
+        chunks.push(Buffer.from(chunk));
+      }
+      res.end();
+
+      fs.writeFile(cachePath, Buffer.concat(chunks)).catch(() => {});
+    } catch (err) {
+      console.error("[Art] Generic proxy failed:", artUrl, err);
+      res.status(502).json({ message: "Art fetch error." });
+    }
+  });
+
   app.get("/api/roms/warp-qr", async (req, res) => {
     const url = String(req.query.url ?? "");
     if (!url) return res.status(400).send("No URL provided");
