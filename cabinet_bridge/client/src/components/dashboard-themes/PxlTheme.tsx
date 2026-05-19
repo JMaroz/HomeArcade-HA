@@ -190,7 +190,7 @@ export default function PxlTheme() {
   });
 
   return (
-    <div className="fixed inset-0 z-[50] bg-[#1a1a1a] pixel-bg text-black flex flex-col select-none overflow-hidden font-mono">
+    <div className="fixed inset-0 z-[40] bg-[#1a1a1a] pixel-bg text-black flex flex-col select-none overflow-hidden font-mono">
       <div className="shrink-0">
         <MobileTopBar />
       </div>
@@ -296,7 +296,7 @@ export default function PxlTheme() {
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 30, stiffness: 200 }}
-                className="fixed inset-0 sm:relative sm:inset-auto sm:w-[400px] 2xl:w-[450px] z-[60] flex flex-col"
+                className="fixed inset-0 sm:relative sm:inset-auto sm:w-[400px] 2xl:w-[450px] z-[55] flex flex-col"
               >
                 <PxlWindow 
                   title={`GAME_INFO: ${activeGame.title}`} 

@@ -61,7 +61,7 @@ export default function NesTheme() {
   useEffect(() => { if (activeGameIdx !== focusedIndex) setFocusedIndex(activeGameIdx); }, [activeGameIdx, focusedIndex]);
 
   return (
-    <div className="fixed inset-0 z-[50] bg-white text-black flex flex-col select-none overflow-hidden font-pixel p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div className="fixed inset-0 z-[40] bg-white text-black flex flex-col select-none overflow-hidden font-pixel p-4 sm:p-6 lg:p-8 overflow-y-auto">
       <div className="shrink-0">
         <MobileTopBar />
       </div>
@@ -167,7 +167,7 @@ export default function NesTheme() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="fixed inset-4 sm:inset-auto sm:right-8 sm:top-24 sm:bottom-8 sm:w-[450px] z-[60] flex flex-col"
+                className="fixed inset-4 sm:inset-auto sm:right-8 sm:top-24 sm:bottom-8 sm:w-[450px] z-[55] flex flex-col"
               >
                 <div className="nes-container with-title is-rounded bg-white border-4 border-black h-full flex flex-col shadow-2xl">
                   <p className="title text-[10px] uppercase bg-white px-2">Game Info</p>
