@@ -533,7 +533,9 @@ export function registerRomRoutes(app: Express) {
     const bootstrapSettings = await storage.getIntegrationSettings();
     const { userId: haUserId, userName } = getUserFromRequest(req);
     const profileParam = req.query.profile ? String(req.query.profile) : null;
+    const pId = profileParam && !isNaN(Number(profileParam)) ? Number(profileParam) : 1;
     const userId = profileParam ? `profile_${profileParam}` : haUserId;
+
     res.setHeader("Content-Type", "application/javascript; charset=utf-8");
     // Bootstrap content is stable for a given ROM+profile combination;
     // a short cache avoids regenerating it on every page reload.
@@ -567,36 +569,33 @@ export function registerRomRoutes(app: Express) {
       raUsername: bootstrapSettings.raUsername ?? "", raToken: bootstrapSettings.raToken ?? "",
       controlDefaults: await (async () => {
         const global = (bootstrapSettings.controlDefaults ?? {}) as Record<string, Record<number, string>>;
-        const pId = profileParam ? Number(profileParam) : 1;
         const merged: Record<string, Record<number, string>> = { ...global };
         const profileBindings = await storage.getProfileControlBindings(pId, core);
         if (profileBindings && Object.keys(profileBindings).length > 0) merged[core] = { ...(global[core] ?? {}), ...profileBindings };
         return merged;
       })(),
       gamepadBindings: await (async () => {
-        const pId = profileParam ? Number(profileParam) : 1;
         return (await storage.getGamepadBindings(pId, "default")) || {};
       })(),
       controlDefaultsP2: await (async () => {
-        const pId = profileParam ? Number(profileParam) : 1;
         return (await storage.getProfileControlBindings(pId, `${core}_p2`)) || {};
       })(),
       gamepadBindingsP2: await (async () => {
-        const pId = profileParam ? Number(profileParam) : 1;
         return (await storage.getGamepadBindings(pId, "default_p2")) || {};
       })(),
       gamepadRumble: bootstrapSettings.gamepadRumble ?? true,
       systemDisplay: (bootstrapSettings.systemDisplay ?? {}) as Record<string, any>,
       globalAspectRatio: bootstrapSettings.globalAspectRatio || "auto",
       globalShader: bootstrapSettings.globalShader || "none",
-      userId, userName, profileId: profileParam ?? "1",
-      cheats: await storage.listCheats(rom.id, profileParam ? Number(profileParam) : 1).then((cs) => cs.filter((c) => c.enabled)),
+      userId, userName, profileId: String(pId),
+      cheats: await storage.listCheats(rom.id, pId).then((cs) => cs.filter((c) => c.enabled)),
       biosUrl,
     }));
     } catch (err: any) {
-      console.error("[HomeArcade] bootstrap.js generation error:", err);
+      console.error(`[HomeArcade] bootstrap.js error for ROM ${req.params.id}:`, err);
       res.setHeader("Content-Type", "application/javascript; charset=utf-8");
-      res.status(500).send(`cabinetFailLaunchProgress(${JSON.stringify("Server error generating bootstrap: " + (err?.message || "unknown"))});`);
+      // Return 200 so the browser actually executes the script and shows the failure state
+      res.status(200).send(`cabinetFailLaunchProgress(${JSON.stringify("Server error: " + (err?.message || "Internal failure"))});`);
     }
   });
 
