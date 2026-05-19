@@ -195,19 +195,47 @@ export function useGridNav({
         }
       }
 
-      const m = mappingRef.current;
+  const m = mappingRef.current;
 
-      // Select button → open
-      const selectIdx = m.select ?? 0;
-      const curSelect = gp.buttons[selectIdx]?.pressed ?? false;
-      if (curSelect && !prevSelect && focusedRef.current >= 0) onActivateRef.current?.(focusedRef.current);
-      prevSelect = curSelect;
+      // Resolve select button — support both old number and new entry format
+      const selectEntry = m?.select;
+      const selectBtnIdx = typeof selectEntry === "number"
+        ? selectEntry
+        : selectEntry?.kind === "button" ? selectEntry.buttonIndex
+        : 0;
+      const selectAxisIdx = typeof selectEntry !== "number" && selectEntry?.kind === "axis" ? selectEntry.axisIndex : undefined;
+      const selectAxisDir = typeof selectEntry !== "number" && selectEntry?.kind === "axis" ? selectEntry.direction : undefined;
 
-      // Favorite button → favourite
-      const favIdx = m.favorite ?? 3;
-      const curFav = gp.buttons[favIdx]?.pressed ?? false;
-      if (curFav && !prevFav && focusedRef.current >= 0) onFavRef.current?.(focusedRef.current);
-      prevFav = curFav;
+      // Resolve favorite button
+      const favEntry = m?.favorite;
+      const favBtnIdx = typeof favEntry === "number"
+        ? favEntry
+        : favEntry?.kind === "button" ? favEntry.buttonIndex
+        : 3;
+      const favAxisIdx = typeof favEntry !== "number" && favEntry?.kind === "axis" ? favEntry.axisIndex : undefined;
+      const favAxisDir = typeof favEntry !== "number" && favEntry?.kind === "axis" ? favEntry.direction : undefined;
+
+      // Check button for select
+      const selectPressed = gp.buttons[selectBtnIdx ?? 0]?.pressed ?? false;
+      // Check axis for select
+      const selectAxisPressed = selectAxisIdx !== undefined && selectAxisDir !== undefined
+        ? (selectAxisDir > 0 ? gp.axes[selectAxisIdx] > 0.5 : gp.axes[selectAxisIdx] < -0.5)
+        : false;
+      if ((selectPressed || selectAxisPressed) && !prevSelect && focusedRef.current >= 0) {
+        onActivateRef.current?.(focusedRef.current);
+      }
+      prevSelect = selectPressed || selectAxisPressed;
+
+      // Check button for favorite
+      const favPressed = gp.buttons[favBtnIdx ?? 3]?.pressed ?? false;
+      // Check axis for favorite
+      const favAxisPressed = favAxisIdx !== undefined && favAxisDir !== undefined
+        ? (favAxisDir > 0 ? gp.axes[favAxisIdx] > 0.5 : gp.axes[favAxisIdx] < -0.5)
+        : false;
+      if ((favPressed || favAxisPressed) && !prevFav && focusedRef.current >= 0) {
+        onFavRef.current?.(focusedRef.current);
+      }
+      prevFav = favPressed || favAxisPressed;
     };
 
     rafId = requestAnimationFrame(tick);

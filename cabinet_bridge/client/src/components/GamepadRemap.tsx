@@ -2,10 +2,21 @@ import { useState, useEffect, useCallback } from "react";
 
 export type ActionId = "select" | "back" | "favorite" | "menu";
 
+export type MappingEntry =
+  | { kind: "button"; buttonIndex: number }
+  | { kind: "axis"; axisIndex: number; direction: -1 | 1 };
+
+export type ActionMapping = Record<string, MappingEntry | undefined>;
+
 export interface ButtonState {
   index: number;
   label: string;
   pressed: boolean;
+}
+
+export interface AxisState {
+  index: number;
+  value: number;
 }
 
 export interface GamepadButtonInfo {
@@ -80,17 +91,37 @@ export function useGamepadRemap() {
     if (!listeningAction) return;
 
     let rafId = 0;
+    const DEAD_ZONE = 0.5;
     const tick = () => {
       const gps = navigator.getGamepads?.();
       for (const gp of gps ?? []) {
         if (!gp) continue;
+        // Check buttons first (they take priority for actions like select/back)
         const btn = getPrimaryPressedButton(gp);
         if (btn !== null) {
           setListenedBtn(btn);
-          // Look up display name
           const info = XBOX_LAYOUT.find(b => b.index === btn);
           setLastPressedLabel(info?.displayName ?? `BTN ${btn}`);
           break;
+        }
+        // Check axes for analog stick directions
+        for (let i = 0; i < gp.axes.length; i++) {
+          const val = gp.axes[i];
+          if (Math.abs(val) > DEAD_ZONE) {
+            const direction = val > 0 ? 1 : -1;
+            // Negative axis values (Left stick X/Y): -axis means positive direction
+            // We encode axis entries as: buttonIndex = axisIndex * 2 + (direction > 0 ? 1 : 0)
+            // But for display, we show the direction
+            setListenedBtn(i * 2 + (direction > 0 ? 1 : 0));
+            const AXIS_LABELS: Record<number, string> = {
+              0: val > 0 ? "Right Stick →" : "Left Stick ←",
+              1: val > 0 ? "Right Stick ↓" : "Left Stick ↑",
+              2: val > 0 ? "R2/LT →" : "R2/LT ←",
+              3: val > 0 ? "R Stick ↓" : "R Stick ↑",
+            };
+            setLastPressedLabel(AXIS_LABELS[i] ?? `Axis ${i} ${direction > 0 ? "+" : "-"}`);
+            break;
+          }
         }
       }
       rafId = requestAnimationFrame(tick);

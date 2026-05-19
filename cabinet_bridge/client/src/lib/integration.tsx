@@ -60,7 +60,7 @@ export interface IntegrationConfig {
   /** Per-system display overrides: { [core]: { aspectRatio?, integerScale?, shader? } } */
   systemDisplay?: Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>;
   /** UI navigation mapping: { [action]: buttonIndex } */
-  uiGamepadMapping?: Record<string, number>;
+  uiGamepadMapping?: Record<string, { kind: "button" | "axis"; buttonIndex?: number; axisIndex?: number; direction?: -1 | 1 }>;
   /** UI theme name */
   theme?: string;
   /** UI language (ISO 639-1 code, e.g. "en", "es") */
@@ -116,7 +116,12 @@ const defaultConfig: IntegrationConfig = {
   controlDefaults: {},
   gamepadRumble: true,
   systemDisplay: {},
-  uiGamepadMapping: { select: 0, back: 1, favorite: 3, menu: 9 },
+  uiGamepadMapping: {
+    select:   { kind: "button", buttonIndex: 0 },
+    back:     { kind: "button", buttonIndex: 1 },
+    favorite: { kind: "button", buttonIndex: 3 },
+    menu:     { kind: "button", buttonIndex: 9 },
+  },
   theme: "default",
   language: undefined,
   showSystemLabels: true,
@@ -174,7 +179,7 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
       ? source.systemDisplay as Record<string, { aspectRatio?: string; integerScale?: boolean; shader?: string }>
       : {},
     uiGamepadMapping: (source.uiGamepadMapping && typeof source.uiGamepadMapping === "object")
-      ? source.uiGamepadMapping as Record<string, number>
+      ? source.uiGamepadMapping as Record<string, { kind: "button" | "axis"; buttonIndex?: number; axisIndex?: number; direction?: -1 | 1 }>
       : { select: 0, back: 1, favorite: 3, menu: 9 },
     theme: typeof source.theme === "string" ? source.theme : "default",
     language: typeof source.language === "string" ? source.language : undefined,

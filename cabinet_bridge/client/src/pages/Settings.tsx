@@ -711,13 +711,13 @@ function ControlsSettings() {
       if (!res.ok) throw new Error("No configuration found for this controller.");
       const data = await res.json();
       
-      const newMapping: Record<string, number> = { ...(config.uiGamepadMapping || {}) };
+      const newMapping = { ...(config.uiGamepadMapping || {}) };
       const cfg = data.mapping;
 
-      if (cfg.input_a_btn) newMapping.select = parseInt(cfg.input_a_btn);
-      if (cfg.input_b_btn) newMapping.back = parseInt(cfg.input_b_btn);
-      if (cfg.input_x_btn) newMapping.favorite = parseInt(cfg.input_x_btn);
-      if (cfg.input_start_btn) newMapping.menu = parseInt(cfg.input_start_btn);
+      if (cfg.input_a_btn) newMapping.select = { kind: "button", buttonIndex: parseInt(cfg.input_a_btn) };
+      if (cfg.input_b_btn) newMapping.back = { kind: "button", buttonIndex: parseInt(cfg.input_b_btn) };
+      if (cfg.input_x_btn) newMapping.favorite = { kind: "button", buttonIndex: parseInt(cfg.input_x_btn) };
+      if (cfg.input_start_btn) newMapping.menu = { kind: "button", buttonIndex: parseInt(cfg.input_start_btn) };
 
       setConfig({ uiGamepadMapping: newMapping });
       toast({ title: "Autoconfig Applied", description: `Applied settings from "${data.source}".` });
@@ -769,17 +769,30 @@ function ControlsSettings() {
           listenedBtn={null}
           lastPressedLabel=""
           onRemapAction={(actionId) => {
-            // Poll for the next button press to assign
+            // Poll for the next button or axis press to assign
             let resolved = false;
+            const DEAD_ZONE = 0.5;
             const rafTick = () => {
               if (resolved) return;
               const gps = navigator.getGamepads?.();
               for (const gp of gps ?? []) {
                 if (!gp) continue;
+                // Check buttons first
                 for (let i = 0; i < gp.buttons.length; i++) {
                   if (gp.buttons[i].pressed) {
                     const mapping = { ...(config.uiGamepadMapping || {}) };
-                    mapping[actionId] = i;
+                    mapping[actionId] = { kind: "button", buttonIndex: i };
+                    setConfig({ uiGamepadMapping: mapping });
+                    resolved = true;
+                    return;
+                  }
+                }
+                // Check axes
+                for (let i = 0; i < gp.axes.length; i++) {
+                  const val = gp.axes[i];
+                  if (Math.abs(val) > DEAD_ZONE) {
+                    const mapping = { ...(config.uiGamepadMapping || {}) };
+                    mapping[actionId] = { kind: "axis", axisIndex: i, direction: val > 0 ? 1 : -1 };
                     setConfig({ uiGamepadMapping: mapping });
                     resolved = true;
                     return;
@@ -907,12 +920,20 @@ function ControlsSettings() {
               { id: "favorite", label: "Toggle Favorite" },
               { id: "menu",     label: "System Menu" },
             ] as const).map((action) => {
-              const btnIdx = config.uiGamepadMapping?.[action.id];
+              const entry = config.uiGamepadMapping?.[action.id];
               const XBOX_LABELS: Record<number, string> = {
                 0: "A", 1: "B", 2: "X", 3: "Y", 4: "LB", 5: "RB",
                 6: "Menu", 7: "View", 8: "L3", 9: "R3",
                 10: "↑", 11: "↓", 12: "←", 13: "→",
               };
+              const AXIS_LABELS: Record<number, string> = {
+                0: "L←→", 1: "L↑↓", 2: "R←→", 3: "R↑↓",
+              };
+              const label = entry?.kind === "button" && entry.buttonIndex !== undefined
+                ? `→ ${XBOX_LABELS[entry.buttonIndex] ?? `BTN ${entry.buttonIndex}`}`
+                : entry?.kind === "axis" && entry.axisIndex !== undefined
+                ? `→ ${AXIS_LABELS[entry.axisIndex] ?? `A${entry.axisIndex}`}${entry.direction === -1 ? "-" : "+"}`
+                : "Not set";
               return (
                 <button
                   key={action.id}
@@ -921,9 +942,7 @@ function ControlsSettings() {
                 >
                   <div className="flex-1">
                     <div className="text-xs font-semibold">{action.label}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono uppercase">
-                      {btnIdx !== undefined ? `→ ${XBOX_LABELS[btnIdx] ?? `BTN ${btnIdx}`}` : "Not set"}
-                    </div>
+                    <div className="text-[10px] text-muted-foreground font-mono uppercase">{label}</div>
                   </div>
                   <ChevronRight className="size-4 text-muted-foreground" />
                 </button>

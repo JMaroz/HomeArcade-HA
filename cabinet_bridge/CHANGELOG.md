@@ -1,3 +1,7 @@
+## 2.24.39 – 2026-05-18
+
+- **Feature**: **Visual Controller Remapper** — New interactive remapping UI with an SVG gamepad diagram showing the Xbox controller layout (A/B/X/Y face buttons, D-pad, bumpers, sticks, triggers). Click any action then press a physical button to bind it. Shows human-readable labels (`A`, `B`, `X`, `Y`, `LB`, `RB`, etc.) instead of generic system labels (`BTN 0`, `BTN 1`). Supports live button press detection.
+
 ## 2.24.37 – 2026-05-18
 
 - **UX**: **Recently Played — collapsible, below Browse Systems** — Moved Recently Played below the Browse Systems grid and made it collapsible via a toggle header with chevron icon.
