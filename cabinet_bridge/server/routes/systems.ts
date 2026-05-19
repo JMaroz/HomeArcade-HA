@@ -98,18 +98,30 @@ export function registerSystemRoutes(app: Express) {
 
     // 2. Fall back to the configured URL (KyleBing PNGs or Wikimedia JPEGs)
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+
       const upstream = await fetch(config.url, {
         headers: SYSTEM_IMAGE_FETCH_HEADERS,
-        signal: AbortSignal.timeout(8000),
+        signal: controller.signal,
       });
-      if (!upstream.ok || !upstream.body) throw new Error("Upstream failed");
+
+      clearTimeout(timeoutId);
+
+      if (!upstream.ok || !upstream.body) {
+        console.error(`[HomeArcade] System image fetch failed for ${id}: ${upstream.status} ${upstream.statusText}`);
+        return res.status(404).json({ message: "Upstream image not found" });
+      }
+
       const buffer = Buffer.from(await upstream.arrayBuffer());
       await fs.writeFile(cachePath, buffer);
+      
       res.setHeader("Content-Type", contentType);
       res.setHeader("Cache-Control", "public, max-age=604800");
       return res.send(buffer);
-    } catch {
-      res.status(502).json({ message: "Failed to fetch system image" });
+    } catch (err: any) {
+      console.error(`[HomeArcade] Proxy error fetching ${id}:`, err?.message || err);
+      return res.status(404).json({ message: "Failed to fetch image" });
     }
   });
 
