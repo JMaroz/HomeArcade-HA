@@ -6,39 +6,38 @@ import { useTranslation } from "react-i18next";
 
 export function MobileTopBar() {
   const [location] = useLocation();
-  const onSettingsRoute = location.startsWith("/settings");
 
   return (
     <div
-      className="flex items-center justify-between px-4 h-14 landscape:h-12 border-b border-border bg-sidebar/80 backdrop-blur-md sticky top-0 z-30 transition-[height]"
+      className="flex items-center justify-between px-4 h-14 landscape:h-12 border-b border-white/10 bg-black/90 backdrop-blur-md sticky top-0 z-30"
       data-testid="bar-mobile-top"
     >
-      {/* Mobile home button — replaces SidebarTrigger */}
+      {/* Home button */}
       <Link
         href="/"
-        className="size-10 landscape:size-9 rounded-full flex items-center justify-center hover:bg-white/[0.08] transition-colors"
+        className="size-10 landscape:size-9 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
         aria-label="Home"
       >
-        <LayoutDashboard className="size-5 landscape:size-4" />
+        <LayoutDashboard className="size-5 landscape:size-4 text-primary" />
       </Link>
 
-      <Link href="/" className="flex items-center landscape:scale-90 transition-transform" data-testid="link-home-mobile">
+      {/* Wordmark */}
+      <Link href="/" className="flex items-center landscape:scale-90">
         <Wordmark />
       </Link>
 
-      {/* QR Scanner + Settings */}
+      {/* QR + Settings */}
       <div className="flex items-center gap-1">
         <button
           onClick={() => window.location.href = "/?scan=warp"}
-          className="size-10 landscape:size-9 rounded-full flex items-center justify-center hover:bg-white/[0.08] transition-colors text-primary"
+          className="size-10 landscape:size-9 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors text-primary"
           aria-label="Scan Warp Link"
-          title="Scan Warp Link"
         >
           <QrCode className="size-5 landscape:size-4" />
         </button>
         <Link
           href="/settings"
-          className="size-10 landscape:size-9 rounded-full flex items-center justify-center text-primary hover:bg-white/[0.08] transition-all"
+          className="size-10 landscape:size-9 rounded-full flex items-center justify-center text-primary hover:bg-white/10 transition-all"
           aria-label="Settings"
           data-testid="link-settings-topbar"
         >

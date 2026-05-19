@@ -663,10 +663,10 @@ export default function HomeArcadeTheme() {
           </div>
         </div>
 
-        {/* All Games Grid */}
+        {/* All Games Grid — 4-col on phone, scales up on larger screens */}
         <div
           ref={gridRef}
-          className="flex-1 overflow-y-auto p-8 scrollbar-none overscroll-y-contain pb-24 lg:pb-8"
+          className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 scrollbar-none overscroll-y-contain pb-24 lg:pb-8"
         >
           {filteredGames.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-white/30">
@@ -675,20 +675,20 @@ export default function HomeArcadeTheme() {
               {searchQuery && <div className="text-xs mt-1">Try a different search</div>}
             </div>
           ) : (
-             <div className="grid gap-4 sm:gap-5 md:gap-6"
+             <div className="grid gap-3 sm:gap-4 md:gap-5"
                style={{
-                 gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+                 gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
                }}>
                 {filteredGames.map((game, i) => {
                   const isActive = i === activeGameIdx;
                   return (
                     <motion.div
                       key={game.id}
-                      animate={{ scale: isActive ? 1.08 : 1 }}
-                      whileHover={{ scale: 1.05 }}
-                      className={`relative aspect-[2/3] rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 ${
+                      animate={{ scale: isActive ? 1.06 : 1 }}
+                      whileHover={{ scale: 1.03 }}
+                      className={`relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer group transition-all duration-300 ${
                         isActive
-                          ? "ring-4 ring-primary shadow-[0_0_40px_rgba(var(--primary),0.3)] z-10"
+                          ? "ring-2 ring-primary shadow-[0_0_30px_rgba(var(--primary),0.25)] z-10"
                           : "ring-1 ring-white/10 opacity-70 hover:opacity-100"
                       }`}
                       onClick={() => {
@@ -700,7 +700,7 @@ export default function HomeArcadeTheme() {
                         {game.artUrl ? (
                           <img src={game.artUrl} className="w-full h-full object-cover" alt="" />
                         ) : (
-                          <span className="text-xs font-black uppercase text-white/20 px-4 text-center">{game.title}</span>
+                          <span className="text-[10px] font-black uppercase text-white/20 px-2 text-center leading-tight">{game.title}</span>
                         )}
                       </div>
 
@@ -708,7 +708,7 @@ export default function HomeArcadeTheme() {
                         <motion.div
                           animate={{ opacity: [0.2, 0.5, 0.2] }}
                           transition={{ repeat: Infinity, duration: 2 }}
-                          className="absolute inset-0 ring-4 ring-primary rounded-2xl pointer-events-none"
+                          className="absolute inset-0 ring-2 ring-primary rounded-xl pointer-events-none"
                         />
                       )}
 
