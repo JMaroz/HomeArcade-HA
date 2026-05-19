@@ -597,6 +597,20 @@ function cabinetSetLaunchProgress(percent, status) {
   if (bar) bar.style.width = cabinetLaunchProgress + "%";
   if (statusText) statusText.textContent = status || "Loading...";
 }
+function cabinetFailLaunchProgress(msg) {
+  var bar = document.querySelector("#cabinet-progress-bar");
+  var statusText = document.querySelector("#cabinet-launch-status");
+  if (bar) {
+    bar.style.width = "100%";
+    bar.style.backgroundColor = "#ef4444";
+  }
+  if (statusText) {
+    statusText.textContent = msg || "Launch failed";
+    statusText.style.color = "#ef4444";
+    statusText.style.opacity = "1";
+    statusText.style.fontWeight = "900";
+  }
+}
 function cabinetSetEmulatorSaveSlot(slot) {
   if (window.EJS_emulator) {
     window.EJS_emulator.settings["save-state-slot"] = String(slot);
