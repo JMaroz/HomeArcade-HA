@@ -9,13 +9,13 @@ export function MobileTopBar() {
 
   return (
     <div
-      className="flex items-center justify-between px-3 h-14 landscape:h-12 border-b border-white/10 bg-[#0d0d0d] backdrop-blur-md sticky top-0 z-30"
+      className="flex items-center justify-between px-3 h-14 landscape:h-12 border-b border-primary/30 bg-[#0d0d0d]/95 backdrop-blur-md sticky top-0 z-30"
       data-testid="bar-mobile-top"
     >
-      {/* Home button */}
+      {/* Home button — purple glow */}
       <Link
         href="/"
-        className="size-10 landscape:size-9 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+        className="size-10 landscape:size-9 rounded-xl flex items-center justify-center bg-primary/20 hover:bg-primary/30 transition-colors border border-primary/30"
         aria-label="Home"
       >
         <LayoutDashboard className="size-5 landscape:size-4 text-primary" />
@@ -26,18 +26,18 @@ export function MobileTopBar() {
         <Wordmark />
       </Link>
 
-      {/* QR + Settings — always visible on mobile */}
+      {/* QR + Settings — always visible, bold purple buttons */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
           onClick={() => window.location.href = "/?scan=warp"}
-          className="size-9 rounded-xl flex items-center justify-center bg-primary/15 hover:bg-primary/25 transition-colors text-primary border border-primary/25"
+          className="size-9 rounded-xl flex items-center justify-center bg-primary/25 hover:bg-primary/40 transition-colors text-primary border-2 border-primary/50 font-bold shadow-[0_0_12px_rgba(176,93,252,0.3)]"
           aria-label="Scan Warp Link"
         >
           <QrCode className="size-5" />
         </button>
         <Link
           href="/settings"
-          className="size-9 rounded-xl flex items-center justify-center bg-primary/15 hover:bg-primary/25 transition-all text-primary border border-primary/25"
+          className="size-9 rounded-xl flex items-center justify-center bg-primary/25 hover:bg-primary/40 transition-all text-primary border-2 border-primary/50 font-bold shadow-[0_0_12px_rgba(176,93,252,0.3)]"
           aria-label="Settings"
           data-testid="link-settings-topbar"
         >
