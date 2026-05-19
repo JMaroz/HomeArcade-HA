@@ -64,14 +64,17 @@ export default function Settings() {
 
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 space-y-8 pb-24 lg:pb-12">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                {t("settings.header")}
-              </div>
-              <h1 className="font-display text-2xl font-bold leading-tight mt-1 text-neon">{t("settings.title")}</h1>
+          <div className="flex flex-col gap-1 mb-8">
+            <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-primary">
+              {t("settings.header")}
             </div>
-            <div className="flex items-center gap-3">
+            <h1 className="font-display text-4xl sm:text-5xl font-black leading-none tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
+              {t("settings.title")}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Configure your global arcade experience and interface preferences.
+            </p>
+            <div className="flex items-center gap-3 mt-2">
               {saveStatus === "saving" && (
                 <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
                   <Loader2 className="size-3 animate-spin" /> {t("common.saveStatus.saving")}
@@ -91,36 +94,51 @@ export default function Settings() {
           </div>
 
           <Tabs defaultValue="display" className="w-full">
-            <TabsList className="w-full justify-start bg-sidebar/40 border border-border/50 h-auto p-1 mb-8 overflow-x-auto scrollbar-none flex-nowrap shrink-0">
-              <TabsTrigger value="display" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+            <TabsList className="w-full justify-start bg-[#1a1a1a] border border-white/10 rounded-2xl p-1 mb-8 overflow-x-auto scrollbar-none flex-nowrap shrink-0">
+              <TabsTrigger value="display" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
                 <Palette className="size-4" /> {t("settings.tabs.display")}
               </TabsTrigger>
-              <TabsTrigger value="controls" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <TabsTrigger value="controls" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
                 <Gamepad2 className="size-4" /> {t("settings.tabs.controls")}
               </TabsTrigger>
-              <TabsTrigger value="library" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <TabsTrigger value="library" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
                 <Database className="size-4" /> {t("settings.tabs.library")}
               </TabsTrigger>
-              <TabsTrigger value="health" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <TabsTrigger value="health" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
                 <Activity className="size-4" /> {t("settings.tabs.health")}
               </TabsTrigger>
-              <TabsTrigger value="services" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <TabsTrigger value="services" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
                 <Wifi className="size-4" /> {t("settings.tabs.services")}
               </TabsTrigger>
-              <TabsTrigger value="help" className="gap-2 py-2 px-4 rounded-md data-[state=active]:bg-background/80">
+              <TabsTrigger value="help" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
                 <HelpCircle className="size-4" /> {t("settings.tabs.help")}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="display" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="mb-8">
+                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Global Preferences</div>
+                <h3 className="font-display text-xl font-bold">Interface &amp; Layout</h3>
+                <p className="text-xs text-muted-foreground mt-1">Configure your global arcade experience and interface preferences.</p>
+              </div>
               <DisplaySettings />
             </TabsContent>
 
             <TabsContent value="controls" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="mb-8">
+                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Advanced Controls</div>
+                <h3 className="font-display text-xl font-bold">Input &amp; Calibration</h3>
+                <p className="text-xs text-muted-foreground mt-1">Configure deadzones, haptics, and controller mapping.</p>
+              </div>
               <ControlsSettings />
             </TabsContent>
 
             <TabsContent value="library" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="mb-8">
+                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Game Library</div>
+                <h3 className="font-display text-xl font-bold">ROM Management</h3>
+                <p className="text-xs text-muted-foreground mt-1">Scanner, uploads, and metadata settings.</p>
+              </div>
               <ScannerStatusSection />
               <Separator className="bg-border/60" />
               <ManualUploadSection />
@@ -129,6 +147,11 @@ export default function Settings() {
             </TabsContent>
 
             <TabsContent value="health" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="mb-8">
+                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">System Health</div>
+                <h3 className="font-display text-xl font-bold">Diagnostics</h3>
+                <p className="text-xs text-muted-foreground mt-1">Monitor BIOS files and system health.</p>
+              </div>
                <Section
                  title={t("settings.sections.health.title")}
                  description={t("settings.sections.health.description")}
@@ -138,6 +161,11 @@ export default function Settings() {
             </TabsContent>
 
             <TabsContent value="services" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="mb-8">
+                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Connectivity</div>
+                <h3 className="font-display text-xl font-bold">Online Services</h3>
+                <p className="text-xs text-muted-foreground mt-1">Configure RetroAchievements, TheGamesDB, and Screenscraper.</p>
+              </div>
               <ServicesSettings />
             </TabsContent>
 

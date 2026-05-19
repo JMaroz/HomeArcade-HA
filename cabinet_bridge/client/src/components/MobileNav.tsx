@@ -1,25 +1,27 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { Wordmark } from "@/components/Logo";
-import { LayoutDashboard, Gamepad2, Trophy, Settings, History, QrCode } from "lucide-react";
+import { LayoutDashboard, Gamepad2, Trophy, Settings, History, QrCode, Menu } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigationContext } from "@/components/NavigationDrawer";
 
 export function MobileTopBar() {
   const [location] = useLocation();
+  const { openDrawer } = useNavigationContext();
 
   return (
     <div
       className="flex items-center justify-between px-3 h-14 landscape:h-12 border-b border-primary/30 bg-[#0d0d0d]/95 backdrop-blur-md sticky top-0 z-30"
       data-testid="bar-mobile-top"
     >
-      {/* Home button — purple glow */}
-      <Link
-        href="/"
+      {/* Hamburger — opens navigation drawer */}
+      <button
+        onClick={openDrawer}
         className="size-10 landscape:size-9 rounded-xl flex items-center justify-center bg-primary/20 hover:bg-primary/30 transition-colors border border-primary/30"
-        aria-label="Home"
+        aria-label="Open navigation"
       >
-        <LayoutDashboard className="size-5 landscape:size-4 text-primary" />
-      </Link>
+        <Menu className="size-5 landscape:size-4 text-primary" />
+      </button>
 
       {/* Wordmark */}
       <Link href="/" className="flex items-center landscape:scale-90">

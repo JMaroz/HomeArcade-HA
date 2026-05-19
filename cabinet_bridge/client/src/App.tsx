@@ -15,6 +15,7 @@ import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 import { THEMES, AppTheme } from "./lib/themes";
 import { NowPlayingBar } from "@/components/NowPlayingBar";
+import { NavigationDrawerProvider } from "@/components/NavigationDrawer";
 import { AnimatePresence, motion } from "framer-motion";
 
 /**
@@ -158,11 +159,13 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router hook={useHashLocation}>
-              <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
-                <PageTransition>
-                  <AppRouter />
-                </PageTransition>
-              </div>
+              <NavigationDrawerProvider>
+                <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
+                  <PageTransition>
+                    <AppRouter />
+                  </PageTransition>
+                </div>
+              </NavigationDrawerProvider>
             </Router>
             <NowPlayingBar />
           </TooltipProvider>
