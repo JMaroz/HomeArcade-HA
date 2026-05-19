@@ -709,7 +709,7 @@ export default function HomeArcadeTheme() {
             </div>
             {/* QR scanner shortcut */}
             <button
-              onClick={() => window.location.href = "/?scan=warp"}
+              onClick={() => window.location.href = "/#/?scan=warp"}
               className="size-9 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all shrink-0"
               aria-label="Scan Warp Link"
             >

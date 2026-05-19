@@ -29,7 +29,7 @@ export function MobileTopBar() {
       {/* QR + Settings — always visible, bold purple buttons */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
-          onClick={() => window.location.href = "/?scan=warp"}
+          onClick={() => window.location.href = "/#/?scan=warp"}
           className="size-9 rounded-xl flex items-center justify-center bg-primary/25 hover:bg-primary/40 transition-colors text-primary border-2 border-primary/50 font-bold shadow-[0_0_12px_rgba(176,93,252,0.3)]"
           aria-label="Scan Warp Link"
         >
