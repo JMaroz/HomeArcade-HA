@@ -497,4 +497,71 @@
       box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.4);
     }
   }
+
+  /* ── PXL Theme Utilities ────────────────────────────────── */
+  .pixel-border {
+    box-shadow: 
+      inset -2px -2px 0px 0px rgba(0,0,0,0.5),
+      inset 2px 2px 0px 0px rgba(255,255,255,0.2),
+      0px 0px 0px 2px #000;
+    border: none;
+  }
+  .pixel-border-sm {
+    box-shadow: 
+      inset -1px -1px 0px 0px rgba(0,0,0,0.5),
+      inset 1px 1px 0px 0px rgba(255,255,255,0.2),
+      0px 0px 0px 1px #000;
+  }
+  .pixel-panel {
+    background: #c0c0c0;
+    color: #000;
+    box-shadow: 
+      inset 2px 2px 0px 0px #fff,
+      inset -2px -2px 0px 0px #808080,
+      0px 0px 0px 2px #000;
+  }
+  .pixel-btn {
+    @apply relative active:translate-y-px;
+    background: #c0c0c0;
+    color: #000;
+    box-shadow: 
+      inset 2px 2px 0px 0px #fff,
+      inset -2px -2px 0px 0px #808080,
+      0px 0px 0px 2px #000;
+  }
+  .pixel-btn:active {
+    box-shadow: 
+      inset 2px 2px 0px 0px #808080,
+      inset -2px -2px 0px 0px #fff,
+      0px 0px 0px 2px #000;
+  }
+  .pixel-btn-primary {
+    @apply bg-primary text-white;
+    box-shadow: 
+      inset 2px 2px 0px 0px rgba(255,255,255,0.4),
+      inset -2px -2px 0px 0px rgba(0,0,0,0.4),
+      0px 0px 0px 2px #000;
+  }
+  .pixel-btn-primary:active {
+    box-shadow: 
+      inset 2px 2px 0px 0px rgba(0,0,0,0.4),
+      inset -2px -2px 0px 0px rgba(255,255,255,0.4),
+      0px 0px 0px 2px #000;
+  }
+  .pixel-text {
+    font-family: 'Press Start 2P', 'ui-monospace', monospace;
+    image-rendering: pixelated;
+  }
+  .pixel-rendering {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .pixel-bg {
+    background-image: 
+      linear-gradient(45deg, rgba(0,0,0,0.05) 25%, transparent 25%), 
+      linear-gradient(-45deg, rgba(0,0,0,0.05) 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, rgba(0,0,0,0.05) 75%), 
+      linear-gradient(-45deg, transparent 75%, rgba(0,0,0,0.05) 75%);
+    background-size: 4px 4px;
+  }
 }

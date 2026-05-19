@@ -228,6 +228,24 @@ function DisplaySettings() {
             </div>
           </Field>
 
+          <Field label="Dashboard Layout" hint="Choose between the modern glass theme or retro pixel theme.">
+            <div className="flex items-center gap-4">
+              <LayoutGrid className="w-4 h-4 text-muted-foreground shrink-0" />
+              <Select
+                value={config.dashboardTheme || "HomeArcade"}
+                onValueChange={(val: any) => setConfig({ dashboardTheme: val })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="HomeArcade">HomeArcade (Modern)</SelectItem>
+                  <SelectItem value="PXL">PXL (Retro)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </Field>
+
           <Field label={t("settings.fields.uiTheme.label")} hint={t("settings.fields.uiTheme.hint")}>
             <div className="flex items-center gap-4">
               <Palette className="w-4 h-4 text-muted-foreground shrink-0" />

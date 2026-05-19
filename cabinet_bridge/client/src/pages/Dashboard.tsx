@@ -1,5 +1,8 @@
-import React, { Suspense } from "react";
+import React, { Suspense, lazy } from "react";
 import HomeArcadeTheme from "@/components/dashboard-themes/HomeArcadeTheme";
+import { useIntegration } from "@/lib/integration";
+
+const PxlTheme = lazy(() => import("@/components/dashboard-themes/PxlTheme"));
 
 function ThemeFallback() {
   return (
@@ -10,9 +13,12 @@ function ThemeFallback() {
 }
 
 export default function Dashboard() {
+  const { config } = useIntegration();
+  const theme = config.dashboardTheme || "HomeArcade";
+
   return (
     <Suspense fallback={<ThemeFallback />}>
-      <HomeArcadeTheme />
+      {theme === "PXL" ? <PxlTheme /> : <HomeArcadeTheme />}
     </Suspense>
   );
 }
