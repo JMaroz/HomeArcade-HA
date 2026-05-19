@@ -69,6 +69,30 @@ export function initializeDatabase() {
       } catch {}
     }
 
+    // Fail-safe for missing rom_id columns in tables created by migrations
+    // Pattern matches the existing rom_hash fail-safe above
+    for (const [table, col] of [
+      ["play_sessions", "rom_id"],
+      ["game_cheat_codes", "rom_id"],
+      ["gamepad_bindings", "rom_id"],
+      ["profile_game_state", "rom_id"],
+    ] as [string, string][]) {
+      try {
+        const info = sqlite.prepare(`PRAGMA table_info(${table})`).all() as any[];
+        if (!info.some((c: any) => c.name === col)) {
+          log(`Fail-safe: Column "${col}" missing from "${table}" — will attempt to add it`, "db");
+          try {
+            sqlite.prepare(`ALTER TABLE "${table}" ADD COLUMN "${col}" integer`).run();
+            log(`Fail-safe: Added "${col}" to "${table}"`, "db");
+          } catch (addErr: any) {
+            log(`Fail-safe could not add "${col}" to "${table}": ${addErr.message}`, "db");
+          }
+        }
+      } catch (e: any) {
+        log(`Fail-safe check for "${col}" in "${table}" failed: ${e.message}`, "db");
+      }
+    }
+
     // Fail-safe for missing rom_hash column in rom_save_slots
     try {
       const info = sqlite.prepare("PRAGMA table_info(rom_save_slots)").all() as any[];
