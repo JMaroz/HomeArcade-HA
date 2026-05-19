@@ -619,53 +619,88 @@ export default function HomeArcadeTheme() {
           </div>
         )}
 
-        {/* Browse Systems — horizontal scrolling carousel on mobile */}
-        <div className="shrink-0 border-b border-white/5 px-4 sm:px-8 py-4">
-          <div className="font-display text-[12px] font-black uppercase tracking-[0.25em] text-white/40 mb-3">Browse Systems</div>
-          <div
-            className="flex gap-3 overflow-x-auto scrollbar-none pb-1 snap-x snap-mandatory flex-nowrap"
-            style={{ scrollPaddingLeft: "1rem" }}
-          >
-            {SYSTEMS.filter((s) => {
-              const count = allGames.filter((g) => g.system === s.id).length;
-              return count > 0;
-            }).map((system) => {
-              const count = allGames.filter((g) => g.system === system.id).length;
-              return (
-                <button
-                  key={system.id}
-                  type="button"
-                  onClick={() => setSearchQuery("filter:" + system.id)}
-                  className="snap-start shrink-0 w-36 sm:w-44 aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 group hover:border-white/40 hover:scale-105 transition-all duration-200 relative"
-                  style={{ background: `linear-gradient(135deg, hsl(${system.art[0]}) 0%, hsl(${system.art[1]}) 100%)` }}
-                >
-                  {/* Subtle system mono watermark */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                    <span className="font-black text-4xl text-white">{system.mono}</span>
-                  </div>
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  {/* Content */}
-                  <div className="absolute inset-0 flex flex-col justify-between p-3">
-                    {/* System mono badge top-left */}
-                    <div className="flex items-start">
+        {/* Browse Systems + Search + Sort — mobile header strip */}
+        <div className="shrink-0 border-b border-white/5">
+          {/* Systems carousel */}
+          <div className="px-4 pt-4 pb-2">
+            <div
+              className="flex gap-2.5 overflow-x-auto scrollbar-none pb-1 snap-x snap-mandatory flex-nowrap"
+              style={{ scrollPaddingLeft: "1rem" }}
+            >
+              {SYSTEMS.filter((s) => {
+                const count = allGames.filter((g) => g.system === s.id).length;
+                return count > 0;
+              }).map((system) => {
+                const count = allGames.filter((g) => g.system === system.id).length;
+                return (
+                  <button
+                    key={system.id}
+                    type="button"
+                    onClick={() => setSearchQuery("filter:" + system.id)}
+                    className="snap-start shrink-0 w-28 aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 group hover:border-white/40 hover:scale-105 transition-all duration-200 relative"
+                    style={{ background: `linear-gradient(135deg, hsl(${system.art[0]}) 0%, hsl(${system.art[1]}) 100%)` }}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                      <span className="font-black text-4xl text-white">{system.mono}</span>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 flex flex-col justify-between p-2">
                       <span className="font-black text-xs text-white/60">{system.mono}</span>
+                      <div>
+                        <div className="font-display text-xs font-black uppercase tracking-wide text-white truncate leading-tight drop-shadow">{system.shortName}</div>
+                        <div className="font-mono text-[9px] text-white/40">{count} titles</div>
+                      </div>
                     </div>
-                    {/* Name + count bottom */}
-                    <div>
-                      <div className="font-display text-sm font-black uppercase tracking-wide text-white truncate leading-tight drop-shadow">{system.shortName}</div>
-                      <div className="font-mono text-[10px] text-white/40 mt-0.5">{count} titles</div>
-                    </div>
-                  </div>
-                  {/* Glowing border on hover */}
-                  <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity border-2 border-white/30 pointer-events-none" />
+                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity border-2 border-white/30 pointer-events-none" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Search + Sort row */}
+          <div className="px-4 pb-3 flex gap-2 items-center">
+            <div className="relative flex-1">
+              <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+              <input
+                ref={searchRef as any}
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search games..."
+                className="w-full pl-8 pr-6 h-9 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 text-xs font-mono focus:outline-none focus:border-primary/50 transition-colors"
+                aria-label="Search games"
+                onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); searchRef.current?.blur(); } }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+                >
+                  <X className="size-3" />
                 </button>
-              );
-            })}
+              )}
+            </div>
+            {/* Sort chips */}
+            <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1 flex-shrink-0">
+              {(["recent", "title", "year"] as const).map((o) => (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => setSort(o)}
+                  className={`px-2 py-1 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-all ${
+                    sort === o ? "bg-primary text-white" : "text-white/30 hover:text-white"
+                  }`}
+                >
+                  {o === "recent" ? "Recent" : o === "az" ? "A-Z" : o.charAt(0).toUpperCase() + o.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* All Games Grid — 4-col on phone, scales up on larger screens */}
+        {/* All Games Grid — 5-col on mobile portrait, 6-col landscape, scales up on desktop */}
         <div
           ref={gridRef}
           className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 scrollbar-none overscroll-y-contain pb-24 lg:pb-8"
@@ -677,10 +712,7 @@ export default function HomeArcadeTheme() {
               {searchQuery && <div className="text-xs mt-1">Try a different search</div>}
             </div>
           ) : (
-             <div className="grid gap-3 sm:gap-4 md:gap-5"
-               style={{
-                 gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
-               }}>
+             <div className="grid gap-2.5 sm:gap-4 md:gap-5 grid-cols-[repeat(auto-fill,minmax(85px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(100px,1fr))]">
                 {filteredGames.map((game, i) => {
                   const isActive = i === activeGameIdx;
                   return (
