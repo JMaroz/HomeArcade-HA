@@ -80,6 +80,26 @@ export function renderPlayerError(message: string) {
 </html>`;
 }
 
+export function renderBootstrapError(message: string) {
+  return `"use strict";
+function cabinetFailLaunchProgress(msg) {
+  var bar = document.querySelector("#cabinet-progress-bar");
+  var statusText = document.querySelector("#cabinet-launch-status");
+  if (bar) {
+    bar.style.width = "100%";
+    bar.style.backgroundColor = "#ef4444";
+  }
+  if (statusText) {
+    statusText.textContent = msg || "Launch failed";
+    statusText.style.color = "#ef4444";
+    statusText.style.opacity = "1";
+    statusText.style.fontWeight = "900";
+  }
+}
+cabinetFailLaunchProgress(${JSON.stringify(message)});
+`;
+}
+
 export function renderEmulatorPage({ title, returnTo, romHash }: { title: string; returnTo: string; romHash: string | null }) {
   const safeTitle = escapeHtml(title);
   const safeReturnTo = JSON.stringify(returnTo);

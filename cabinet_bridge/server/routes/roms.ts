@@ -5,7 +5,7 @@ import {
   ROM_EXTENSIONS, MAX_UPLOAD_MB, MAX_UPLOAD_BYTES, 
   EMULATORJS_CORES, ROM_ROOT, getUserFromRequest 
 } from "./shared";
-import { renderEmulatorPage, renderEmulatorBootstrap, renderPlayerError } from "./player";
+import { renderEmulatorPage, renderEmulatorBootstrap, renderPlayerError, renderBootstrapError } from "./player";
 import { REQUIRED_BIOS } from "./bios";
 import { dataPath } from "../data-dir";
 import path from "node:path";
@@ -557,11 +557,7 @@ export function registerRomRoutes(app: Express) {
     // Return 200 so the script actually executes and shows the error message.
     if (coreBios.length > 0 && !biosUrl) {
       const missing = coreBios.map(m => m.filename).join(" or ");
-      return res.send(
-        `cabinetFailLaunchProgress(${JSON.stringify(
-          `BIOS required — upload ${missing} in the BIOS tab before playing this system.`
-        )});`
-      );
+      return res.send(renderBootstrapError(`BIOS required — upload ${missing} in the BIOS tab before playing this system.`));
     }
 
     res.send(renderEmulatorBootstrap({
@@ -595,7 +591,7 @@ export function registerRomRoutes(app: Express) {
       console.error(`[HomeArcade] bootstrap.js error for ROM ${req.params.id}:`, err);
       res.setHeader("Content-Type", "application/javascript; charset=utf-8");
       // Return 200 so the browser actually executes the script and shows the failure state
-      res.status(200).send(`cabinetFailLaunchProgress(${JSON.stringify("Server error: " + (err?.message || "Internal failure"))});`);
+      res.status(200).send(renderBootstrapError("Server error: " + (err?.message || "Internal failure")));
     }
   });
 
