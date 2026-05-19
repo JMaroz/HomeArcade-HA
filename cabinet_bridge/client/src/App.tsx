@@ -6,7 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationProvider, useIntegration } from "@/lib/integration";
-import { MobileBottomNav } from "@/components/MobileNav";
+import { MobileBottomNav, MobileTopBar } from "@/components/MobileNav";
 import i18n from "./lib/i18n";
 import { useTranslation } from "react-i18next";
 import Home from "@/pages/Home";
@@ -109,6 +109,7 @@ function AppRouter() {
     <>
       <Switch>
         <Route path="/">
+          <MobileTopBar />
           <Dashboard />
         </Route>
         <Route path="/library">
