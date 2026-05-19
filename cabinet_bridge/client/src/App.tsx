@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useRef } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { Switch, Route, Router, Redirect } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
@@ -15,6 +15,7 @@ import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 import { THEMES, AppTheme } from "./lib/themes";
 import { NowPlayingBar } from "@/components/NowPlayingBar";
+import { AnimatePresence, motion } from "framer-motion";
 
 /**
  * Ensures scroll position is reset or restore correctly on navigation.
@@ -81,26 +82,19 @@ function PageFallback() {
  */
 function PageTransition({ children }: { children: React.ReactNode }) {
   const [loc] = useHashLocation();
-  const ref = useRef<HTMLDivElement>(null);
-  const prevLoc = useRef(loc);
-
-  useEffect(() => {
-    if (loc !== prevLoc.current && ref.current) {
-      prevLoc.current = loc;
-      ref.current.animate(
-        [
-          { opacity: 0, transform: "translateY(6px)" },
-          { opacity: 1, transform: "translateY(0)" },
-        ],
-        { duration: 180, easing: "ease-out", fill: "both" },
-      );
-    }
-  }, [loc]);
-
   return (
-    <div ref={ref} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-      {children}
-    </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={loc}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+        className="flex-1 flex flex-col min-h-0 overflow-hidden"
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
   );
 }
 

@@ -5,6 +5,7 @@ import { uploadedRomToGame, GAMES, SYSTEMS, type Game, type System, type SystemI
 import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { MobileTopBar } from "@/components/MobileNav";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
+import { GameCardSkeleton } from "@/components/GameCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiUrl } from "@/lib/queryClient";
@@ -218,7 +219,7 @@ export default function HomeArcadeTheme() {
   const { config } = useIntegration();
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { data: roms = [] } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
+  const { data: roms = [], isLoading: isRomsLoading } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
   const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({
     queryKey: ["/api/collections"],
   });
@@ -705,6 +706,14 @@ export default function HomeArcadeTheme() {
                 </button>
               ))}
             </div>
+            {/* Mobile Settings shortcut */}
+            <Link
+              href="/settings"
+              className="size-9 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all shrink-0"
+              aria-label="Settings"
+            >
+              <SettingsIcon className="size-3.5 text-white/50" />
+            </Link>
           </div>
         </div>
 
@@ -713,11 +722,26 @@ export default function HomeArcadeTheme() {
           ref={gridRef}
           className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 scrollbar-none overscroll-y-contain pb-24 lg:pb-8"
         >
-          {filteredGames.length === 0 ? (
+          {isRomsLoading ? (
+            <GameCardSkeleton count={18} />
+          ) : filteredGames.length === 0 && !searchQuery ? (
+            <div className="flex flex-col items-center justify-center h-64 gap-4 text-white/30">
+              <div className="relative">
+                <Gamepad2 className="size-12" />
+                <div className="absolute -bottom-1 -right-1 size-5 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+                  <Plus className="size-3 text-primary" />
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="font-display text-sm font-black uppercase tracking-widest">No games yet</div>
+                <div className="text-xs mt-1.5 text-white/20 max-w-[200px]">Upload ROMs to get started, or scan a Warp Link to play from your PC</div>
+              </div>
+            </div>
+          ) : filteredGames.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-white/30">
               <Search className="size-8 mb-3" />
-              <div className="font-display text-sm font-black uppercase tracking-widest">No games found</div>
-              {searchQuery && <div className="text-xs mt-1">Try a different search</div>}
+              <div className="font-display text-sm font-black uppercase tracking-widest">No results</div>
+              <div className="text-xs mt-1">Try a different search term</div>
             </div>
           ) : (
              <div className="grid gap-2.5 sm:gap-4 md:gap-5 grid-cols-[repeat(auto-fill,minmax(85px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(100px,1fr))]">
@@ -731,7 +755,7 @@ export default function HomeArcadeTheme() {
                       className={`relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer group transition-all duration-300 ${
                         isActive
                           ? "ring-2 ring-primary shadow-[0_0_30px_rgba(var(--primary),0.25)] z-10"
-                          : "ring-1 ring-white/10 opacity-70 hover:opacity-100"
+                          : "ring-1 ring-white/10 hover:ring-white/25 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                       }`}
                       onClick={() => {
                         setActiveGameIdx(i);

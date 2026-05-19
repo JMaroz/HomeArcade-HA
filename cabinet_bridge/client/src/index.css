@@ -478,6 +478,15 @@
   .md-label-small { font-size: var(--md-type-label-small-size); line-height: var(--md-type-label-small-line); letter-spacing: var(--md-type-label-small-track); font-weight: var(--md-type-label-small-weight); }
   .hide-on-touch { @media (hover: none) { display: none !important; } }
 
+  /* ── Loading Skeleton Shimmer ───────────────────────────── */
+  @keyframes skeleton-shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
+  .skeleton-shimmer {
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  }
+
   .no-scrollbar::-webkit-scrollbar,
   .scrollbar-none::-webkit-scrollbar {
     display: none;
