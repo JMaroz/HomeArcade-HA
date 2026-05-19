@@ -9,7 +9,7 @@ export function MobileTopBar() {
 
   return (
     <div
-      className="flex items-center justify-between px-4 h-14 landscape:h-12 border-b border-white/10 bg-black/90 backdrop-blur-md sticky top-0 z-30"
+      className="flex items-center justify-between px-3 h-14 landscape:h-12 border-b border-white/10 bg-[#0d0d0d] backdrop-blur-md sticky top-0 z-30"
       data-testid="bar-mobile-top"
     >
       {/* Home button */}
@@ -26,22 +26,22 @@ export function MobileTopBar() {
         <Wordmark />
       </Link>
 
-      {/* QR + Settings */}
-      <div className="flex items-center gap-2">
+      {/* QR + Settings — always visible on mobile */}
+      <div className="flex items-center gap-2 flex-shrink-0">
         <button
           onClick={() => window.location.href = "/?scan=warp"}
-          className="size-10 landscape:size-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/15 transition-colors text-primary border border-white/10"
+          className="size-9 rounded-xl flex items-center justify-center bg-primary/15 hover:bg-primary/25 transition-colors text-primary border border-primary/25"
           aria-label="Scan Warp Link"
         >
-          <QrCode className="size-5 landscape:size-4" />
+          <QrCode className="size-5" />
         </button>
         <Link
           href="/settings"
-          className="size-10 landscape:size-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/15 transition-all text-primary border border-white/10"
+          className="size-9 rounded-xl flex items-center justify-center bg-primary/15 hover:bg-primary/25 transition-all text-primary border border-primary/25"
           aria-label="Settings"
           data-testid="link-settings-topbar"
         >
-          <Settings className="size-5 landscape:size-4" />
+          <Settings className="size-5" />
         </Link>
       </div>
     </div>

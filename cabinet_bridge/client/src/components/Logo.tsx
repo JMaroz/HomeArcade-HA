@@ -76,14 +76,18 @@ export function Logo({
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2 ${className}`} data-testid="brand-wordmark">
-      <Logo size={24} />
-      <div className="leading-none">
-        <div className="font-display text-[14px] font-semibold tracking-tight">
+      <Logo size={20} />
+      <div className="leading-none hidden sm:block">
+        <div className="font-display text-[13px] font-semibold tracking-tight">
           HOME<span className="text-primary">.</span>ARCADE
         </div>
-        <div className="font-mono text-[9px] uppercase tracking-[0.13em] text-muted-foreground mt-1 whitespace-nowrap">
+        <div className="font-mono text-[8px] uppercase tracking-[0.13em] text-muted-foreground mt-0.5 whitespace-nowrap">
           HOME ASSISTANT ⇌ RETRO GAMING
         </div>
+      </div>
+      {/* Mobile-only compact pill */}
+      <div className="sm:hidden flex items-center justify-center h-8 px-3 rounded-full bg-primary/10 border border-primary/20">
+        <span className="font-display text-[11px] font-black tracking-tight text-primary">HA</span>
       </div>
     </div>
   );
