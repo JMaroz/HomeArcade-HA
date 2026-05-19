@@ -511,8 +511,7 @@ export default function HomeArcadeTheme() {
         )}
       </AnimatePresence>
 
-      {/* Mobile top bar — always visible on phones */}
-      <MobileTopBar />
+      {/* Mobile top bar — rendered in App.tsx on mobile routes, not here */}
 
       {/* Top Navigation Bar */}
       <div className="h-16 px-8 hidden xl:flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur-2xl z-20">
