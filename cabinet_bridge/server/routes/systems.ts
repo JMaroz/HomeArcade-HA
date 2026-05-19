@@ -73,15 +73,21 @@ export function registerSystemRoutes(app: Express) {
     const id = req.params.id;
     if (!isSystemImageId(id)) return res.status(404).json({ message: "Invalid system ID" });
 
-    const cachePath = path.join(SYSTEM_IMAGE_CACHE_DIR, `${id}.jpg`);
+    const config = SYSTEM_IMAGES[id];
+    const isPng = config.url.toLowerCase().endsWith(".png");
+    const extension = isPng ? "png" : "jpg";
+    const contentType = isPng ? "image/png" : "image/jpeg";
+
+    const cachePath = path.join(SYSTEM_IMAGE_CACHE_DIR, `${id}.${extension}`);
     if (existsSync(cachePath)) {
+      res.setHeader("Content-Type", contentType);
       res.setHeader("Cache-Control", "public, max-age=604800");
       return res.sendFile(cachePath);
     }
 
     await fs.mkdir(SYSTEM_IMAGE_CACHE_DIR, { recursive: true });
 
-    // 1. Try SteamGridDB hero image first
+    // 1. Try SteamGridDB hero image first (always JPEGs from SGDB heroes)
     const sgdbBuffer = await fetchSteamGridDBHero(id);
     if (sgdbBuffer) {
       await fs.writeFile(cachePath, sgdbBuffer);
@@ -90,8 +96,7 @@ export function registerSystemRoutes(app: Express) {
       return res.send(sgdbBuffer);
     }
 
-    // 2. Fall back to Wikimedia Commons
-    const config = SYSTEM_IMAGES[id];
+    // 2. Fall back to the configured URL (KyleBing PNGs or Wikimedia JPEGs)
     try {
       const upstream = await fetch(config.url, {
         headers: SYSTEM_IMAGE_FETCH_HEADERS,
@@ -100,7 +105,7 @@ export function registerSystemRoutes(app: Express) {
       if (!upstream.ok || !upstream.body) throw new Error("Upstream failed");
       const buffer = Buffer.from(await upstream.arrayBuffer());
       await fs.writeFile(cachePath, buffer);
-      res.setHeader("Content-Type", "image/jpeg");
+      res.setHeader("Content-Type", contentType);
       res.setHeader("Cache-Control", "public, max-age=604800");
       return res.send(buffer);
     } catch {

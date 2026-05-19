@@ -1,3 +1,8 @@
+## 2.24.56 – 2026-05-19
+
+- **Feature**: **New Retro Console Icons** — Replaced Wikimedia Commons hardware photos with high-quality, transparent PNG illustrations from the `KyleBing/retro-game-console-icons` repository. Provides a much cleaner and more cohesive look for the system tiles.
+- **Improved**: **System Image Proxy** — Updated the backend to support both PNG and JPEG images for system tiles, ensuring transparency is preserved for the new icons.
+
 ## 2.24.43 – 2026-05-18
 
 - **Fix**: **TV-friendly responsive grid** — Replaced fixed `grid-cols-N` column counts with `repeat(auto-fill, minmax(180px, 1fr))` for the games grid and `repeat(auto-fill, minmax(140px, 1fr))` for the systems grid. Shows fewer, larger cards on large displays; readable font sizes on all screens.

@@ -30,58 +30,54 @@ export interface SystemImage {
 }
 
 /**
- * Wikimedia Commons photos of each console.
+ * Illustrated icons of each console by KyleBing.
+ * https://github.com/KyleBing/retro-game-console-icons
  *
- * The "Evan-Amos / Vanamo Online Game Museum" series is Public Domain
- * (NES, SNES, N64, GBA, Genesis, PS1, PS2). Dreamcast is CC-BY-SA-3.0
- * by the same author. Arcade is CC-BY-SA-2.0 (Marshall Astor / Flickr).
+ * These provide a cleaner, consistent aesthetic for system tiles.
+ * We fall back to Wikimedia Commons photos only for systems not in the set (e.g. PS2).
  */
 export const SYSTEM_IMAGES: Record<SystemImageId, SystemImage> = {
   nes: {
     id: "nes",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/NES-Console-Set.jpg/640px-NES-Console-Set.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl: "https://commons.wikimedia.org/wiki/File:NES-Console-Set.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/FC.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   snes: {
     id: "snes",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Nintendo-Super-Famicom-Set-FL.jpg/640px-Nintendo-Super-Famicom-Set-FL.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl:
-      "https://commons.wikimedia.org/wiki/File:Nintendo-Super-Famicom-Set-FL.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/SFC.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   n64: {
     id: "n64",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Nintendo-64-wController-L.jpg/640px-Nintendo-64-wController-L.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl:
-      "https://commons.wikimedia.org/wiki/File:Nintendo-64-wController-L.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/N64.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   gba: {
     id: "gba",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Nintendo-Game-Boy-Advance-Purple-FL.jpg/640px-Nintendo-Game-Boy-Advance-Purple-FL.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl:
-      "https://commons.wikimedia.org/wiki/File:Nintendo-Game-Boy-Advance-Purple-FL.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/GBA.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   genesis: {
     id: "genesis",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Sega-Genesis-Mk2-6button.jpg/640px-Sega-Genesis-Mk2-6button.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl:
-      "https://commons.wikimedia.org/wiki/File:Sega-Genesis-Mk2-6button.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/MD.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   ps1: {
     id: "ps1",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/PSX-Console-wController.jpg/640px-PSX-Console-wController.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl: "https://commons.wikimedia.org/wiki/File:PSX-Console-wController.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/PS.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   ps2: {
     id: "ps2",
@@ -93,46 +89,45 @@ export const SYSTEM_IMAGES: Record<SystemImageId, SystemImage> = {
   },
   arcade: {
     id: "arcade",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Arcade_Donkey_Kong.jpg/640px-Arcade_Donkey_Kong.jpg",
-    source: "Marshall Astor (Flickr)",
-    sourceUrl: "https://commons.wikimedia.org/wiki/File:Arcade_Donkey_Kong.jpg",
-    license: "CC-BY-SA-2.0",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/ARCADE.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   dreamcast: {
     id: "dreamcast",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Dreamcast-Console-Set.jpg/640px-Dreamcast-Console-Set.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl:
-      "https://commons.wikimedia.org/wiki/File:Dreamcast-Console-Set.jpg",
-    license: "CC-BY-SA-3.0",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/DC.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   gb: {
     id: "gb",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Nintendo-Game-Boy-FL.jpg/640px-Nintendo-Game-Boy-FL.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl: "https://commons.wikimedia.org/wiki/File:Nintendo-Game-Boy-FL.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/GB.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   gbc: {
     id: "gbc",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Nintendo-Game-Boy-Color-FL.jpg/640px-Nintendo-Game-Boy-Color-FL.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl: "https://commons.wikimedia.org/wiki/File:Nintendo-Game-Boy-Color-FL.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/GBC.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   nds: {
     id: "nds",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Nintendo-DS-Fat-Blue.jpg/640px-Nintendo-DS-Fat-Blue.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl: "https://commons.wikimedia.org/wiki/File:Nintendo-DS-Fat-Blue.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/NDS.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   psp: {
     id: "psp",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/PSP-1000.jpg/640px-PSP-1000.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl: "https://commons.wikimedia.org/wiki/File:PSP-1000.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/PSP.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
 };
 
