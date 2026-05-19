@@ -99,6 +99,7 @@ function NavigationDrawer({
 
           {/* Drawer */}
           <motion.div
+            data-testid="nav-drawer"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}

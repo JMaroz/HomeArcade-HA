@@ -771,6 +771,7 @@ export default function HomeArcadeTheme() {
                   return (
                     <motion.div
                       key={game.id}
+                      data-testid={`card-game-${game.id}`}
                       animate={{ scale: isActive ? 1.06 : 1 }}
                       whileHover={{ scale: 1.03 }}
                       className={`relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer group transition-all duration-300 ${
