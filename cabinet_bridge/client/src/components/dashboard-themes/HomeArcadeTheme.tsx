@@ -303,14 +303,19 @@ export default function HomeArcadeTheme() {
   // Handle ?scan=warp query param (mobile scanner shortcut)
   // URL format: /#/?scan=warp — parse hash for query params since app uses hash routing
   useEffect(() => {
-    const rawHash = window.location.hash; // e.g. "#/?scan=warp"
-    if (!rawHash) return;
-    const hashPath = rawHash.replace("#", "");
-    const params = new URLSearchParams(hashPath.split("?")[1] || "");
-    if (params.get("scan") === "warp") {
-      setShowScanner(true);
-      window.history.replaceState({}, "", window.location.pathname + window.location.hash.split("?")[0]);
+    function checkHash() {
+      const rawHash = window.location.hash; // e.g. "#/?scan=warp"
+      if (!rawHash) return;
+      const hashPath = rawHash.replace("#", "");
+      const params = new URLSearchParams(hashPath.split("?")[1] || "");
+      if (params.get("scan") === "warp") {
+        setShowScanner(true);
+        window.history.replaceState({}, "", window.location.pathname + window.location.hash.split("?")[0]);
+      }
     }
+    checkHash();
+    window.addEventListener("hashchange", checkHash);
+    return () => window.removeEventListener("hashchange", checkHash);
   }, []);
   const [showWarpDialog, setShowWarpDialog] = useState(false);
 
@@ -713,9 +718,8 @@ export default function HomeArcadeTheme() {
             {/* QR scanner shortcut */}
             <button
               onClick={() => {
-                window.history.replaceState({}, "", window.location.pathname + window.location.hash);
-                window.location.hash = "";
-                window.location.href = "/#/?scan=warp";
+                window.history.pushState({}, "", "/#/?scan=warp");
+                window.dispatchEvent(new HashChangeEvent("hashchange"));
               }}
               className="size-9 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all shrink-0"
               aria-label="Scan Warp Link"
