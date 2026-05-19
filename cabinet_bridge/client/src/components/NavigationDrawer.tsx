@@ -7,7 +7,6 @@ import {
   Gamepad2,
   Settings,
   HelpCircle,
-  X,
   QrCode,
   ChevronUp,
 } from "lucide-react";
@@ -26,6 +25,18 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/achievements", icon: HelpCircle, label: "Achievements" },
 ];
 
+interface ScannerContextValue {
+  openScanner: () => void;
+}
+
+const ScannerContext = createContext<ScannerContextValue>({
+  openScanner: () => {},
+});
+
+export function useScannerContext() {
+  return useContext(ScannerContext);
+}
+
 interface NavigationContextValue {
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -43,14 +54,23 @@ export function useNavigationContext() {
 export function NavigationDrawerProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
+  // Global scanner trigger — consumed by HomeArcadeTheme via context
+  const [, setScannerTrigger] = useState(0);
+
   const openDrawer = useCallback(() => setOpen(true), []);
   const closeDrawer = useCallback(() => setOpen(false), []);
+  const openScanner = useCallback(() => {
+    setOpen(false);
+    setScannerTrigger((n) => n + 1);
+  }, []);
 
   return (
-    <NavigationContext.Provider value={{ openDrawer, closeDrawer }}>
-      {children}
-      <NavigationDrawer open={open} onClose={closeDrawer} />
-    </NavigationContext.Provider>
+    <ScannerContext.Provider value={{ openScanner }}>
+      <NavigationContext.Provider value={{ openDrawer, closeDrawer }}>
+        {children}
+        <NavigationDrawer open={open} onClose={closeDrawer} />
+      </NavigationContext.Provider>
+    </ScannerContext.Provider>
   );
 }
 
@@ -61,6 +81,8 @@ function NavigationDrawer({
   open: boolean;
   onClose: () => void;
 }) {
+  const { openScanner } = useScannerContext();
+
   return (
     <AnimatePresence>
       {open && (
@@ -120,11 +142,10 @@ function NavigationDrawer({
                 </Link>
               ))}
 
-              {/* QR Scanner shortcut */}
-              <Link
-                href="/#/?scan=warp"
-                onClick={onClose}
-                className="flex items-center gap-4 px-4 py-4 rounded-2xl text-white/70 hover:text-white hover:bg-white/5 transition-all active:scale-[0.98]"
+              {/* QR Scanner shortcut — opens scanner directly via context */}
+              <button
+                onClick={openScanner}
+                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-white/70 hover:text-white hover:bg-white/5 transition-all active:scale-[0.98] text-left"
               >
                 <div className="size-10 rounded-xl bg-primary/15 flex items-center justify-center">
                   <QrCode className="size-5 text-primary" />
@@ -132,7 +153,7 @@ function NavigationDrawer({
                 <span className="font-display font-bold text-sm uppercase tracking-wider">
                   Scan Warp Link
                 </span>
-              </Link>
+              </button>
             </nav>
           </motion.div>
         </>

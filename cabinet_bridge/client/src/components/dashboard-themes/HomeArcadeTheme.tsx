@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { uploadedRomToGame, GAMES, SYSTEMS, type Game, type System, type SystemId } from "@/data/library";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { MobileTopBar } from "@/components/MobileNav";
+import { useScannerContext } from "@/components/NavigationDrawer";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { GameCardSkeleton } from "@/components/GameCardSkeleton";
 import { Button } from "@/components/ui/button";
@@ -299,6 +300,14 @@ export default function HomeArcadeTheme() {
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [recentlyPlayedCollapsed, setRecentlyPlayedCollapsed] = useState(false);
+  const { openScanner: triggerFromDrawer } = useScannerContext();
+
+  // Global scanner trigger from NavigationDrawer
+  useEffect(() => {
+    if (triggerFromDrawer) {
+      setShowScanner(true);
+    }
+  }, [triggerFromDrawer]);
 
   // Handle ?scan=warp query param (mobile scanner shortcut)
   // URL format: /#/?scan=warp — parse hash for query params since app uses hash routing
