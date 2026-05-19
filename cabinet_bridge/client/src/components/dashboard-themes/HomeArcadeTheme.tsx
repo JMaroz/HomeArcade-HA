@@ -512,7 +512,10 @@ export default function HomeArcadeTheme() {
         )}
       </AnimatePresence>
 
-      {/* Mobile top bar — rendered in App.tsx on mobile routes, not here */}
+      {/* Mobile top bar — QR scanner + Settings */}
+      <div className="shrink-0 xl:hidden">
+        <MobileTopBar />
+      </div>
 
       {/* Top Navigation Bar */}
       <div className="h-16 px-8 hidden xl:flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur-2xl z-20">
@@ -691,21 +694,27 @@ export default function HomeArcadeTheme() {
                 </button>
               )}
             </div>
-            {/* Sort chips */}
-            <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1 flex-shrink-0">
+            {/* Sort chips — larger touch targets on mobile */}
+            <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-1.5 flex-shrink-0">
               {(["recent", "title", "year"] as const).map((o) => (
                 <button
                   key={o}
                   type="button"
                   onClick={() => setSort(o)}
-                  className={`px-2 py-1 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-all ${
-                    sort === o ? "bg-primary text-white" : "text-white/30 hover:text-white"
-                  }`}
+                  className={`min-w-[44px] min-h-[36px] px-3 py-2 rounded-lg font-mono text-[11px] uppercase tracking-wider transition-all ${sort === o ? "bg-primary text-white" : "text-white/30 hover:text-white"}`}
                 >
                   {o === "recent" ? "Recent" : o === "az" ? "A-Z" : o.charAt(0).toUpperCase() + o.slice(1)}
                 </button>
               ))}
             </div>
+            {/* QR scanner shortcut */}
+            <button
+              onClick={() => window.location.href = "/?scan=warp"}
+              className="size-9 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all shrink-0"
+              aria-label="Scan Warp Link"
+            >
+              <QrCode className="size-3.5 text-white/50" />
+            </button>
             {/* Mobile Settings shortcut */}
             <Link
               href="/settings"
