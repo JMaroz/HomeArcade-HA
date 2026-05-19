@@ -27,17 +27,17 @@ export function MobileTopBar() {
       </Link>
 
       {/* QR + Settings */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <button
           onClick={() => window.location.href = "/?scan=warp"}
-          className="size-10 landscape:size-9 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors text-primary"
+          className="size-10 landscape:size-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/15 transition-colors text-primary border border-white/10"
           aria-label="Scan Warp Link"
         >
           <QrCode className="size-5 landscape:size-4" />
         </button>
         <Link
           href="/settings"
-          className="size-10 landscape:size-9 rounded-full flex items-center justify-center text-primary hover:bg-white/10 transition-all"
+          className="size-10 landscape:size-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/15 transition-all text-primary border border-white/10"
           aria-label="Settings"
           data-testid="link-settings-topbar"
         >
