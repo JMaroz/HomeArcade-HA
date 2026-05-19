@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Game, System } from "@/data/library";
 import { ConsoleSilhouette } from "@/components/ConsoleSilhouette";
 import { SystemLogo } from "@/components/SystemLogo";
+import { KyleBingIcon } from "@/components/KyleBingIcon";
 
 /**
  * Procedural cover art rendered from the game's gradient palette + a
@@ -97,70 +98,24 @@ export function SystemTile({
   className?: string;
 }) {
   const [a, b] = system.art;
-  const [imageFailed, setImageFailed] = useState(false);
-  const showImage = !!system.image && !imageFailed;
   return (
     <div
-      className={`relative w-full h-full overflow-hidden ${className}`}
+      className={`relative w-full h-full flex flex-col items-center justify-between overflow-hidden ${className}`}
       style={{
-        background: `linear-gradient(140deg, hsl(${a}) 0%, hsl(${b}) 100%)`,
+        background: `linear-gradient(160deg, hsl(${a}) 30%, hsl(${b}) 100%)`,
       }}
     >
-      {/* Scanline texture — subtle CRT feel */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px)",
-          zIndex: 1,
-        }}
-      />
-      {/* Radial sheen at top-center — gives the tile a lit, 3-D feel */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 90% 55% at 50% 8%, rgba(255,255,255,0.16) 0%, transparent 70%)",
-          zIndex: 2,
-        }}
-      />
-
-      {showImage && (
-        <img
-          src={system.image!.url}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover mix-blend-soft-light"
-          loading="lazy"
-          decoding="async"
-          onError={() => setImageFailed(true)}
-          data-testid={`img-system-${system.id}`}
-          style={{ zIndex: 0 }}
+      {/* Top section: icon + text */}
+      <div className="flex flex-col items-center justify-center flex-1 w-full px-4 pt-6 pb-2 gap-3">
+        <KyleBingIcon
+          systemId={system.id}
+          className="h-[55%] object-contain"
         />
-      )}
-
-      {/* Branding Logo - Always shown for clarity */}
-      <div className="absolute inset-0" style={{ zIndex: 3 }}>
-        <SystemLogo systemId={system.id} />
+        <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-white opacity-90 text-center leading-tight">
+          {system.shortName}
+        </span>
       </div>
 
-      {!showImage && (
-        <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          style={{ opacity: 0.18, zIndex: 0 }}
-        >
-          <ConsoleSilhouette systemId={system.id} />
-        </div>
-      )}
-
-      {/* Bottom vignette */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.5) 100%)",
-          zIndex: 4,
-        }}
-      />
     </div>
   );
 }

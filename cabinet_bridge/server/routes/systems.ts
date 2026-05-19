@@ -6,6 +6,7 @@ import {
   STEAMGRIDDB_API_KEY, STEAMGRIDDB_PLATFORM_IDS,
 } from "./shared";
 import { SYSTEM_IMAGES, isSystemImageId } from "@shared/system-images";
+import { kyleBingIconName, kyleBingIconRawUrl } from "@shared/kylebing-icons";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -136,7 +137,25 @@ export function registerSystemRoutes(app: Express) {
 
     await fs.mkdir(SYSTEM_LOGO_CACHE_DIR, { recursive: true });
 
-    // 1. Try SteamGridDB logo
+    // 1. Try KyleBing icons for mapped systems (runtime fetch, CC-BY-NC-4.0)
+    const kyleBingIcon = kyleBingIconName(id);
+    if (kyleBingIcon) {
+      try {
+        const kbUrl = kyleBingIconRawUrl(kyleBingIcon);
+        const kbRes = await fetch(kbUrl, { signal: AbortSignal.timeout(5000) });
+        if (kbRes.ok && kbRes.body) {
+          const buffer = Buffer.from(await kbRes.arrayBuffer());
+          await fs.writeFile(cachePath, buffer);
+          res.setHeader("Content-Type", "image/png");
+          res.setHeader("Cache-Control", "public, max-age=604800");
+          return res.send(buffer);
+        }
+      } catch {
+        // KyleBing fetch failed — fall through to next source
+      }
+    }
+
+    // 2. Try SteamGridDB logo
     const sgdbLogo = await fetchSteamGridDBLogo(id);
     if (sgdbLogo) {
       await fs.writeFile(cachePath, sgdbLogo);
@@ -145,7 +164,7 @@ export function registerSystemRoutes(app: Express) {
       return res.send(sgdbLogo);
     }
 
-    // 2. Fall back to libretro assets
+    // 3. Fall back to libretro assets
     const playlistName = LIBRETRO_PLAYLISTS[id];
     if (playlistName) {
       try {
