@@ -42,6 +42,8 @@ import { Progress } from "@/components/ui/progress";
 import { THEMES } from "@/lib/themes";
 import { BiosManager } from "@/components/BiosManager";
 import { RomUpload } from "@/components/RomUpload";
+import { ControllerRemapDialog } from "@/components/ControllerRemapDialog";
+import { useGamepadRemap } from "@/components/GamepadRemap";
 
 export default function Settings() {
   const { config, setConfig, resetConfig, saveStatus } = useIntegration();
@@ -700,6 +702,7 @@ function ControlsSettings() {
   const [gamepads, setGamepads] = useState<Gamepad[]>([]);
   const [pressedButtons, setPressedButtons] = useState<Record<number, number[]>>({});
   const [fetchingAutoconfig, setFetchingAutoconfig] = useState<string | null>(null);
+  const [showRemapDialog, setShowRemapDialog] = useState(false);
 
   const fetchAutoconfig = async (gp: Gamepad) => {
     setFetchingAutoconfig(gp.id);
@@ -753,6 +756,49 @@ function ControlsSettings() {
 
   return (
     <div className="space-y-10">
+      {showRemapDialog && (
+        <ControllerRemapDialog
+          activeButtons={gamepads.flatMap(gp =>
+            gp.buttons.reduce<{ index: number; label: string }[]>((acc, btn, i) => {
+              if (btn.pressed) acc.push({ index: i, label: String(i) });
+              return acc;
+            }, [])
+          )}
+          mapping={config.uiGamepadMapping || {}}
+          listeningAction={null}
+          listenedBtn={null}
+          lastPressedLabel=""
+          onRemapAction={(actionId) => {
+            // Poll for the next button press to assign
+            let resolved = false;
+            const rafTick = () => {
+              if (resolved) return;
+              const gps = navigator.getGamepads?.();
+              for (const gp of gps ?? []) {
+                if (!gp) continue;
+                for (let i = 0; i < gp.buttons.length; i++) {
+                  if (gp.buttons[i].pressed) {
+                    const mapping = { ...(config.uiGamepadMapping || {}) };
+                    mapping[actionId] = i;
+                    setConfig({ uiGamepadMapping: mapping });
+                    resolved = true;
+                    return;
+                  }
+                }
+              }
+              requestAnimationFrame(rafTick);
+            };
+            requestAnimationFrame(rafTick);
+          }}
+          onDone={() => setShowRemapDialog(false)}
+          actions={[
+            { id: "select",   label: "Select / Open" },
+            { id: "back",     label: "Back / Close" },
+            { id: "favorite", label: "Toggle Favorite" },
+            { id: "menu",     label: "System Menu" },
+          ]}
+        />
+      )}
       <Section
         title={t("settings.sections.input.title")}
         description={t("settings.sections.input.description")}
@@ -850,29 +896,46 @@ function ControlsSettings() {
         title={t("settings.sections.mapping.title")}
         description={t("settings.sections.mapping.description")}
       >
-        <div className="grid gap-3">
-          {[
-            { id: "select",   label: "Select / Open" },
-            { id: "back",     label: "Back / Close" },
-            { id: "favorite", label: "Toggle Favorite" },
-            { id: "menu",     label: "System Menu" },
-          ].map((action) => (
-            <div key={action.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-sidebar/40">
-              <div className="space-y-0.5">
-                <div className="font-display font-semibold text-sm">{action.label}</div>
-                <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Action: {action.id}</div>
-              </div>
-              <RemapButton
-                actionId={action.id}
-                currentValue={config.uiGamepadMapping?.[action.id]}
-                onMap={(btn) => {
-                  const mapping = { ...(config.uiGamepadMapping || {}) };
-                  mapping[action.id] = btn;
-                  setConfig({ uiGamepadMapping: mapping });
-                }}
-              />
-            </div>
-          ))}
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Remap controller buttons for navigating the HomeArcade interface. Click an action below to start the binding wizard.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {([
+              { id: "select",   label: "Select / Open" },
+              { id: "back",     label: "Back / Close" },
+              { id: "favorite", label: "Toggle Favorite" },
+              { id: "menu",     label: "System Menu" },
+            ] as const).map((action) => {
+              const btnIdx = config.uiGamepadMapping?.[action.id];
+              const XBOX_LABELS: Record<number, string> = {
+                0: "A", 1: "B", 2: "X", 3: "Y", 4: "LB", 5: "RB",
+                6: "Menu", 7: "View", 8: "L3", 9: "R3",
+                10: "↑", 11: "↓", 12: "←", 13: "→",
+              };
+              return (
+                <button
+                  key={action.id}
+                  onClick={() => setShowRemapDialog(true)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-sidebar/20 hover:bg-sidebar/40 transition-colors text-left min-w-[200px]"
+                >
+                  <div className="flex-1">
+                    <div className="text-xs font-semibold">{action.label}</div>
+                    <div className="text-[10px] text-muted-foreground font-mono uppercase">
+                      {btnIdx !== undefined ? `→ ${XBOX_LABELS[btnIdx] ?? `BTN ${btnIdx}`}` : "Not set"}
+                    </div>
+                  </div>
+                  <ChevronRight className="size-4 text-muted-foreground" />
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => setShowRemapDialog(true)}
+            className="w-full mt-2 py-3 rounded-xl border border-dashed border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-xs font-medium text-muted-foreground hover:text-primary"
+          >
+            Open Visual Remapper
+          </button>
         </div>
       </Section>
     </div>
