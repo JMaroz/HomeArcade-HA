@@ -720,6 +720,19 @@ export default function HomeArcadeTheme() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => {
+                      setActiveGameIdx(-1);
+                      setShowMobileDetails(false);
+                    }}
+                    className="absolute top-6 right-6 text-white/50 hover:text-white z-[70] transition-all hover:text-white/90 hover:scale-110"
+                    title="Close"
+                  >
+                    <X className="size-6" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowMobileDetails(false)}
                     className="absolute top-6 left-6 xl:hidden text-white/50 hover:text-white z-[70]"
                   >
