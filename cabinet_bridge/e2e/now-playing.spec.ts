@@ -225,7 +225,7 @@ test.describe('NowPlayingBar', () => {
     await expect(bar).toBeVisible({ timeout: 5000 });
 
     // Navigate to library
-    await page.goto(`${BASE_URL}/#/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1500);
     await expect(bar).toBeVisible({ timeout: 3000 });

@@ -24,8 +24,8 @@ test.describe('HomeArcade smoke tests', () => {
     await expect(page.locator('text=Something went wrong')).not.toBeVisible();
   });
 
-  test('library page renders game grid or empty state', async ({ page }) => {
-    await page.goto(`${BASE_URL}/#/library`);
+  test('home page renders game grid or empty state', async ({ page }) => {
+    await page.goto(`${APP_URL}/`);
     // Either a game card or the empty state message should be present
     const hasGames = await page.locator('[data-testid="game-card"]').count();
     const hasEmpty = await page.locator('text=No games').count();

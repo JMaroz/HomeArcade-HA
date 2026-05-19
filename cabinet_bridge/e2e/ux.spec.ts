@@ -112,7 +112,7 @@ test.describe('HomeArcade UX — Navigation & Structure', () => {
   });
 
   test('sidebar system filters navigate to correct library views', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
 
     // Click a system filter in the sidebar if visible
@@ -132,7 +132,7 @@ test.describe('HomeArcade UX — Navigation & Structure', () => {
 test.describe('HomeArcade UX — Game Library (Home Page)', () => {
 
   test('game grid renders cards or empty state', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000); // allow async data
 
@@ -143,7 +143,7 @@ test.describe('HomeArcade UX — Game Library (Home Page)', () => {
   });
 
   test('search bar filters games in real time', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -165,7 +165,7 @@ test.describe('HomeArcade UX — Game Library (Home Page)', () => {
   });
 
   test('search can be cleared with X button', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -188,7 +188,7 @@ test.describe('HomeArcade UX — Game Library (Home Page)', () => {
   });
 
   test('sort options change game order', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -214,7 +214,7 @@ test.describe('HomeArcade UX — Game Library (Home Page)', () => {
   });
 
   test('filter pills filter the game list', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -231,7 +231,7 @@ test.describe('HomeArcade UX — Game Library (Home Page)', () => {
   });
 
   test('grid/list view toggle works', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -245,7 +245,7 @@ test.describe('HomeArcade UX — Game Library (Home Page)', () => {
   });
 
   test('hover on a game card shows overlay', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -263,7 +263,7 @@ test.describe('HomeArcade UX — Game Library (Home Page)', () => {
   });
 
   test('click game card opens detail dialog', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -282,7 +282,7 @@ test.describe('HomeArcade UX — Game Library (Home Page)', () => {
   });
 
   test('favorite button toggles without navigating away', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -303,7 +303,7 @@ test.describe('HomeArcade UX — Game Library (Home Page)', () => {
 test.describe('HomeArcade UX — Game Detail Dialog', () => {
 
   async function openGameDialog(page: Page): Promise<void> {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
     const card = page.locator('[data-testid^="card-game-"]').first();
@@ -481,7 +481,7 @@ test.describe('HomeArcade UX — Settings Page', () => {
 test.describe('HomeArcade UX — Keyboard Navigation', () => {
 
   test('Tab key navigates through interactive elements', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -497,7 +497,7 @@ test.describe('HomeArcade UX — Keyboard Navigation', () => {
   });
 
   test('Escape closes any open dialog/modal', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -513,7 +513,7 @@ test.describe('HomeArcade UX — Keyboard Navigation', () => {
   });
 
   test('"/" shortcut focuses search input', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -526,7 +526,7 @@ test.describe('HomeArcade UX — Keyboard Navigation', () => {
   });
 
   test('Ctrl+K also focuses search input', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -539,7 +539,7 @@ test.describe('HomeArcade UX — Keyboard Navigation', () => {
   });
 
   test('Arrow keys navigate game grid when focused', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -607,7 +607,7 @@ test.describe('HomeArcade UX — History & Achievements', () => {
 test.describe('HomeArcade UX — Loading & Edge States', () => {
 
   test('loading skeletons appear while data fetches', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     // Don't wait for networkidle — capture the loading state
     await page.waitForTimeout(500);
 
@@ -617,7 +617,7 @@ test.describe('HomeArcade UX — Loading & Edge States', () => {
   });
 
   test('empty library shows helpful empty state', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
@@ -669,7 +669,7 @@ test.describe('HomeArcade UX — Loading & Edge States', () => {
 test.describe('HomeArcade UX — Collections', () => {
 
   test('collections appear in sidebar when present', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -680,7 +680,7 @@ test.describe('HomeArcade UX — Collections', () => {
   });
 
   test('clicking a collection in sidebar filters to that collection', async ({ page }) => {
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -705,7 +705,7 @@ test.describe('HomeArcade UX — Responsive & Mobile', () => {
 
   test('mobile viewport shows bottom nav', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
@@ -715,7 +715,7 @@ test.describe('HomeArcade UX — Responsive & Mobile', () => {
 
   test('game grid is usable on mobile viewport', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -748,7 +748,7 @@ test.describe('HomeArcade UX — Player Page', () => {
 
   test('player page loads without crash for valid game', async ({ page }) => {
     // Find first available rom ID
-    await page.goto(`${APP_URL}/library`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 

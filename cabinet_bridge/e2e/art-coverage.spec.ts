@@ -241,7 +241,7 @@ test.describe('HomeArcade Art Coverage', () => {
   });
 
   test('UI: recently played games have no visible cover art', async ({ page }) => {
-    await page.goto(`${BASE_URL}/#/library/recent`);
+    await page.goto(`${APP_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
