@@ -757,11 +757,11 @@ export default function HomeArcadeTheme() {
           <AnimatePresence>
              {(activeGame && (window.innerWidth >= 1280 || showMobileDetails)) && (
                <motion.div
-                 initial={{ x: "100%", opacity: 0 }}
-                 animate={{ x: 0, opacity: 1 }}
-                 exit={{ x: "100%", opacity: 0 }}
+                 initial={{ y: "100%", opacity: 0 }}
+                 animate={{ y: 0, opacity: 1 }}
+                 exit={{ y: "100%", opacity: 0 }}
                  transition={{ type: "spring", damping: 28, stiffness: 180 }}
-                 className={`fixed right-0 top-0 sm:top-16 bottom-0 w-full sm:w-[450px] 2xl:w-[500px] border-l border-white/10 bg-black/80 backdrop-blur-3xl z-[60] flex flex-col p-6 sm:p-12 ${!showMobileDetails && "hidden xl:flex"}`}
+                 className={`fixed inset-0 sm:inset-auto sm:right-0 sm:top-16 sm:bottom-0 sm:w-[450px] 2xl:w-[500px] sm:border-l border-white/10 bg-black/95 backdrop-blur-3xl z-[60] flex flex-col sm:p-6 lg:p-12 ${!showMobileDetails ? "hidden sm:flex" : "flex"}`}
                >
                   <Button
                     variant="ghost"
