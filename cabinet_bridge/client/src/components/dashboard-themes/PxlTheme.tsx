@@ -191,6 +191,9 @@ export default function PxlTheme() {
 
   return (
     <div className="fixed inset-0 z-[50] bg-[#1a1a1a] pixel-bg text-black flex flex-col select-none overflow-hidden font-mono">
+      <div className="shrink-0">
+        <MobileTopBar />
+      </div>
       
       {/* Top Menu Bar */}
       <div className="h-10 px-4 flex items-center justify-between border-b-2 border-black bg-[#c0c0c0] z-20">

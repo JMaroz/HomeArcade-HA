@@ -62,6 +62,9 @@ export default function NesTheme() {
 
   return (
     <div className="fixed inset-0 z-[50] bg-white text-black flex flex-col select-none overflow-hidden font-pixel p-4 sm:p-6 lg:p-8 overflow-y-auto">
+      <div className="shrink-0">
+        <MobileTopBar />
+      </div>
       
       {/* NES Title Bar */}
       <div className="nes-container with-title is-centered mb-8 bg-white border-4 border-black">
