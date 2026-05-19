@@ -640,6 +640,14 @@ export default function HomeArcadeTheme() {
                     className="snap-start shrink-0 w-28 aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 group hover:border-white/40 hover:scale-105 transition-all duration-200 relative"
                     style={{ background: `linear-gradient(135deg, hsl(${system.art[0]}) 0%, hsl(${system.art[1]}) 100%)` }}
                   >
+                    {system.image && (
+                      <img
+                        src={system.image.url}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover mix-blend-soft-light opacity-80"
+                        loading="lazy"
+                      />
+                    )}
                     <div className="absolute inset-0 flex items-center justify-center opacity-10">
                       <span className="font-black text-4xl text-white">{system.mono}</span>
                     </div>
