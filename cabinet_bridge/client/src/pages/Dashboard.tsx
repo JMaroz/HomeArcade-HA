@@ -3,6 +3,7 @@ import HomeArcadeTheme from "@/components/dashboard-themes/HomeArcadeTheme";
 import { useIntegration } from "@/lib/integration";
 
 const PxlTheme = lazy(() => import("@/components/dashboard-themes/PxlTheme"));
+const NesTheme = lazy(() => import("@/components/dashboard-themes/NesTheme"));
 
 function ThemeFallback() {
   return (
@@ -18,7 +19,7 @@ export default function Dashboard() {
 
   return (
     <Suspense fallback={<ThemeFallback />}>
-      {theme === "PXL" ? <PxlTheme /> : <HomeArcadeTheme />}
+      {theme === "PXL" ? <PxlTheme /> : theme === "NES" ? <NesTheme /> : <HomeArcadeTheme />}
     </Suspense>
   );
 }

@@ -241,6 +241,7 @@ function DisplaySettings() {
                 <SelectContent>
                   <SelectItem value="HomeArcade">HomeArcade (Modern)</SelectItem>
                   <SelectItem value="PXL">PXL (Retro)</SelectItem>
+                  <SelectItem value="NES">NES (8-bit)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
