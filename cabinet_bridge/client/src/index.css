@@ -3,31 +3,31 @@
 @tailwind utilities;
 
 /* ============================================================
-   HOMEARCADE GÇö Material Design 3 + Dark Gaming Aesthetic
+   HOMEARCADE â€” Material Design 3 + Dark Gaming Aesthetic
    v0.7.0: Full MD3 token system (color roles, type scale,
    shape scale, state layers, tonal elevation).
    ============================================================ */
 
 :root {
-  /* GöÇGöÇ MD3 Shape Scale GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
-  --md-shape-xs:   0.25rem;   /* 4px  GÇö extra-small */
-  --md-shape-sm:   0.5rem;    /* 8px  GÇö small       */
-  --md-shape-md:   0.75rem;   /* 12px GÇö medium      */
-  --md-shape-lg:   1rem;      /* 16px GÇö large       */
-  --md-shape-xl:   1.75rem;   /* 28px GÇö extra-large */
+  /* MD3 Shape Scale */
+  --md-shape-xs:   0.25rem;   /* 4px  â€” extra-small */
+  --md-shape-sm:   0.5rem;    /* 8px  â€” small       */
+  --md-shape-md:   0.75rem;   /* 12px â€” medium      */
+  --md-shape-lg:   1rem;      /* 16px â€” large       */
+  --md-shape-xl:   1.75rem;   /* 28px â€” extra-large */
   --md-shape-full: 9999px;    /* full / pill        */
 
-  /* GöÇGöÇ shadcn radius alias (MD3 medium = default card/dialog shape) GöÇGöÇ */
+  /* shadcn radius alias (MD3 medium = default card/dialog shape) */
   --radius: 0.75rem;
 
-  /* GöÇGöÇ State layer opacities (MD3) GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
+  /* State layer opacities (MD3) */
   --md-state-hover:   0.08;
   --md-state-press:   0.12;
   --md-state-focus:   0.12;
   --md-state-drag:    0.16;
   --md-state-selected: 0.08;
 
-  /* GöÇGöÇ Tonal elevation overlays (dark theme uses tinted surfaces) GöÇGöÇ */
+  /* Tonal elevation overlays (dark theme uses tinted surfaces) */
   --md-elev-1:  rgba(255,255,255,0.05);
   --md-elev-2:  rgba(255,255,255,0.08);
   --md-elev-3:  rgba(255,255,255,0.11);
@@ -41,7 +41,7 @@
   --button-outline: rgba(0, 0, 0, 0.1);
   --badge-outline: rgba(0, 0, 0, 0.05);
 
-  /* GöÇGöÇ Light mode base palette GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
+  /* Light mode base palette */
   --background:            36 18% 96%;
   --foreground:            240 14% 10%;
   --border:                36 8% 84%;
@@ -123,9 +123,9 @@
   --md-type-label-large-size: 0.875rem; --md-type-label-large-line: 1.25rem; --md-type-label-large-track: 0.007em; --md-type-label-large-weight: 500;
   --md-type-label-medium-size: 0.75rem; --md-type-label-medium-line: 1rem; --md-type-label-medium-track: 0.031em; --md-type-label-medium-weight: 500;
   --md-type-label-small-size: 0.6875rem; --md-type-label-small-line: 1rem; --md-type-label-small-track: 0.031em; --md-type-label-small-weight: 500;
-/* GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
-   DARK MODE GÇö primary palette
-   GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   DARK MODE â€” primary palette
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .dark {
   --opaque-button-border-intensity: 8;
   --button-outline: rgba(255, 255, 255, 0.08);
@@ -228,7 +228,7 @@
   .md-label-small { font-size: var(--md-type-label-small-size); line-height: var(--md-type-label-small-line); letter-spacing: var(--md-type-label-small-track); font-weight: var(--md-type-label-small-weight); }
   .hide-on-touch { @media (hover: none) { display: none !important; } }
 
-  /* GöÇGöÇ Loading Skeleton Shimmer GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
+  /* Loading Skeleton Shimmer */
   @keyframes skeleton-shimmer {
     0%   { transform: translateX(-100%); }
     100% { transform: translateX(200%); }
@@ -257,7 +257,7 @@
     }
   }
 
-  /* GöÇGöÇ PXL Theme Utilities GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
+  /* PXL Theme Utilities */
   .pixel-border {
     box-shadow: 
       inset -2px -2px 0px 0px rgba(0,0,0,0.5),

@@ -13,7 +13,6 @@ import Dashboard from "@/pages/Dashboard";
 import { useTranslation } from "react-i18next";
 import { ProfileProvider } from "@/lib/useProfile";
 import NotFound from "@/pages/not-found";
-import { THEMES, AppTheme } from "./lib/themes";
 import { NowPlayingBar } from "@/components/NowPlayingBar";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/ErrorBoundary";

@@ -183,7 +183,12 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
       : {},
     uiGamepadMapping: (source.uiGamepadMapping && typeof source.uiGamepadMapping === "object")
       ? source.uiGamepadMapping as Record<string, { kind: "button" | "axis"; buttonIndex?: number; axisIndex?: number; direction?: -1 | 1 }>
-      : { select: 0, back: 1, favorite: 3, menu: 9 },
+      : { 
+          select:   { kind: "button", buttonIndex: 0 }, 
+          back:     { kind: "button", buttonIndex: 1 }, 
+          favorite: { kind: "button", buttonIndex: 3 }, 
+          menu:     { kind: "button", buttonIndex: 9 } 
+        },
     language: typeof source.language === "string" ? source.language : undefined,
     showSystemLabels: typeof source.showSystemLabels === "boolean" ? source.showSystemLabels : true,
     globalAspectRatio: typeof source.globalAspectRatio === "string" ? source.globalAspectRatio : "auto",
@@ -414,5 +419,4 @@ export function formatRelative(ts: number | null | undefined): string {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.round(hrs / 24);
   return `${days}d ago`;
-}
 }

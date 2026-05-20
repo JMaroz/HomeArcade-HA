@@ -59,11 +59,11 @@ describe("cn() — Tailwind class merging", () => {
 
 describe("filter utilities — called on every route change & search", () => {
   bench("filterToPath (system ID)", () => {
-    filterToPath("snes");
+    filterToPath({ type: "system", value: "snes" });
   });
 
   bench("filterToPath (collection)", () => {
-    filterToPath("collection:42");
+    filterToPath({ type: "collection", value: "42" });
   });
 
   bench("parseFilter (valid system)", () => {

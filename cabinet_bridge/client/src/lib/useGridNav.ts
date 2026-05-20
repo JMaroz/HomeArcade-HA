@@ -21,7 +21,7 @@ export function useGridNav({
   onFocusChange,
   onExit,
   disabled = false,
-  mapping = { select: 0, favorite: 3 },
+  mapping = { select: { kind: "button", buttonIndex: 0 }, favorite: { kind: "button", buttonIndex: 3 } },
 }: {
   count: number;
   gridRef: React.RefObject<HTMLElement | null>;
@@ -30,7 +30,7 @@ export function useGridNav({
   onFocusChange?: (index: number) => void;
   onExit?: (dir: "left" | "right" | "up" | "down") => void;
   disabled?: boolean;
-  mapping?: { select?: number; favorite?: number };
+  mapping?: Record<string, any>;
 }) {
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
