@@ -19,7 +19,6 @@ import {
   Calendar,
   Star,
   Gamepad2,
-  Group,
   Settings,
   HelpCircle,
   ArrowLeft,
@@ -234,7 +233,6 @@ export default function GameDetail({ id }: GameDetailProps) {
         <SidebarBrand />
         <nav className="flex-1 space-y-1 px-2">
           <SidebarNavItem href="/" icon={Gamepad2} label="Library" />
-          <SidebarNavItem href="/friends" icon={Group} label="Friends" />
           <SidebarNavItem href="/history" icon={History} label="History" />
           <SidebarNavItem href="/settings" icon={Settings} label="Settings" />
           <SidebarNavItem href="/support" icon={HelpCircle} label="Support" />
@@ -483,10 +481,6 @@ export default function GameDetail({ id }: GameDetailProps) {
           <Gamepad2 className="size-5" />
           <span className="text-label-sm">Library</span>
         </Link>
-        <Link href="/friends" className="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-white/5 transition-colors">
-          <Group className="size-5" />
-          <span className="text-label-sm">Friends</span>
-        </Link>
         <Link href="/history" className="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-white/5 transition-colors">
           <History className="size-5" />
           <span className="text-label-sm">History</span>
@@ -516,7 +510,6 @@ function SidebarNav() {
   return (
     <nav className="flex-1 space-y-1 px-2">
       <SidebarNavItem href="/" icon={Gamepad2} label="Library" />
-      <SidebarNavItem href="/friends" icon={Group} label="Friends" />
       <SidebarNavItem href="/history" icon={History} label="History" />
       <SidebarNavItem href="/settings" icon={Settings} label="Settings" />
       <SidebarNavItem href="/support" icon={HelpCircle} label="Support" />

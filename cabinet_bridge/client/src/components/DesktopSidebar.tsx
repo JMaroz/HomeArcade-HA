@@ -6,7 +6,6 @@ import React from "react";
 import { Link, useLocation } from "wouter";
 import {
   Gamepad2,
-  Group,
   History,
   Settings,
   HelpCircle,
@@ -55,8 +54,7 @@ export function DesktopSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 px-2">
-        <SidebarNavItem href="/" icon={Gamepad2} label="Library" active={isActive("/") && !location.startsWith("/game") && !location.startsWith("/friends") && !location.startsWith("/history")} />
-        <SidebarNavItem href="/friends" icon={Group} label="Social Hub" active={isActive("/friends")} />
+        <SidebarNavItem href="/" icon={Gamepad2} label="Library" active={isActive("/") && !location.startsWith("/game") && !location.startsWith("/history")} />
         <SidebarNavItem href="/history" icon={History} label="History" active={isActive("/history")} />
         <SidebarNavItem href="/settings" icon={Settings} label="Settings" active={isActive("/settings")} />
         <SidebarNavItem href="/support" icon={HelpCircle} label="Support" />

@@ -34,7 +34,6 @@ const Settings = lazy(() => import("@/pages/Settings"));
 const Player = lazy(() => import("@/pages/Player"));
 const Achievements = lazy(() => import("@/pages/Achievements"));
 const History = lazy(() => import("@/pages/History"));
-const Friends = lazy(() => import("@/pages/Friends"));
 // const GameDetail = lazy(() => import("@/pages/GameDetail"));
 
 /**
@@ -136,9 +135,6 @@ function AppRouter() {
         </Route>
         <Route path="/library/:filter">
           <Redirect to="/" />
-        </Route>
-        <Route path="/friends">
-          <AppShell><Suspense fallback={<PageFallback />}><Friends /></Suspense></AppShell>
         </Route>
         <Route path="/game/:id">
           {(params) => <Redirect to={`/?game=${params.id}`} />}
