@@ -244,7 +244,7 @@ export default function Friends() {
           <SidebarNavItem href="/friends" icon={Group} label="Social Hub" active />
           <SidebarNavItem href="/history" icon={History} label="History" />
           <SidebarNavItem href="/settings" icon={Settings} label="Settings" />
-          <SidebarNavItem href="/support" icon={Help} label="Support" />
+          <SidebarNavItem href="/support" icon={HelpCircle} label="Support" />
         </nav>
 
         {/* User Profile */}
@@ -368,7 +368,7 @@ export default function Friends() {
               Social Hub
             </h2>
             <div className="relative group">
-              <PersonSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/60 size-5" />
+              <UserSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/60 size-5" />
               <input
                 type="text"
                 placeholder="FIND RETRO GAMERS..."
