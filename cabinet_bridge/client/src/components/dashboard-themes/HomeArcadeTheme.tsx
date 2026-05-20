@@ -122,45 +122,90 @@ function WarpScanner({
   onScan: (url: string) => void;
   onClose: () => void;
 }) {
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
+    // 1. Secure context check (required for getUserMedia)
+    if (!window.isSecureContext) {
+      setError("Camera access requires a secure context (HTTPS).");
+      return;
+    }
+
     const scanner = new Html5Qrcode("warp-scanner-viewport");
-    const config = {
-      fps: 20,
-      qrbox: { width: 280, height: 280 },
-      aspectRatio: 1.0
+    let mounted = true;
+
+    const startScanner = async () => {
+      try {
+        await scanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 20,
+            qrbox: { width: 280, height: 280 },
+            aspectRatio: 1.0
+          },
+          (text) => {
+            // Simple check to ensure it's a HomeArcade warp link
+            if (text.includes("/api/roms/") && text.includes("warp=true")) {
+              if (mounted) {
+                scanner.stop().then(() => {
+                  if (mounted) onScan(text);
+                }).catch(e => console.error("Stop failed", e));
+              }
+            }
+          },
+          () => {}
+        );
+      } catch (err: any) {
+        console.error("Scanner failed", err);
+        if (mounted) {
+          setError(err?.message || "Failed to access camera.");
+        }
+      }
     };
 
-    scanner.start(
-      { facingMode: "environment" },
-      config,
-      (text) => {
-        // Simple check to ensure it's a HomeArcade warp link
-        if (text.includes("/api/roms/") && text.includes("warp=true")) {
-          scanner.stop().then(() => onScan(text));
-        }
-      },
-      () => {}
-    ).catch(err => {
-      console.error("Scanner failed", err);
-    });
+    startScanner();
 
     return () => {
+      mounted = false;
       if (scanner.isScanning) {
         scanner.stop().catch(e => console.error("Scanner cleanup failed", e));
       }
     };
-  }, [onScan]);
+  }, []); // Run once on mount, ignore onScan changes to prevent flicker
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-sm aspect-square relative rounded-3xl overflow-hidden border-2 border-primary shadow-[0_0_50px_rgba(var(--primary),0.3)]">
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
+      <div className="w-full max-w-sm aspect-square relative rounded-3xl overflow-hidden border-2 border-primary shadow-[0_0_50px_rgba(var(--primary),0.3)] bg-neutral-900">
         <div id="warp-scanner-viewport" className="w-full h-full" />
-        {/* Subtle scan guide overlay */}
-        <div className="absolute inset-0 pointer-events-none border-[40px] border-black/40" />
+        
+        {error ? (
+          <div className="absolute inset-0 bg-neutral-900 flex flex-col items-center justify-center p-8 text-center">
+            <div className="size-14 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
+              <X className="size-7 text-destructive" />
+            </div>
+            <div className="text-sm font-bold text-white mb-2">Scanner Error</div>
+            <div className="text-[11px] text-white/50 leading-relaxed mb-6">
+              {error}
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.reload()}
+              className="rounded-xl border-white/10 hover:bg-white/5"
+            >
+              Retry
+            </Button>
+          </div>
+        ) : (
+          /* Subtle scan guide overlay */
+          <div className="absolute inset-0 pointer-events-none border-[40px] border-black/40" />
+        )}
       </div>
+      
       <p className="mt-8 text-white/60 text-xs font-bold uppercase tracking-widest text-center max-w-[240px]">
         Scan the Warp Link on your PC to continue playing
       </p>
+      
       <Button
         onClick={onClose}
         variant="outline"
@@ -500,10 +545,7 @@ export default function HomeArcadeTheme() {
             </div>
             {/* QR scanner shortcut */}
             <button
-              onClick={() => {
-                window.history.pushState({}, "", "/#/?scan=warp");
-                window.dispatchEvent(new HashChangeEvent("hashchange"));
-              }}
+              onClick={() => setShowScanner(true)}
               className="size-9 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all shrink-0"
               aria-label="Scan Warp Link"
             >
