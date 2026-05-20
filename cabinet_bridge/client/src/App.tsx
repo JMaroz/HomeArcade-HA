@@ -9,9 +9,8 @@ import { IntegrationProvider, useIntegration } from "@/lib/integration";
 import { MobileBottomNav } from "@/components/MobileNav";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import i18n from "./lib/i18n";
-import HomePage from "@/pages/HomePage";
+import Dashboard from "@/pages/Dashboard";
 import { useTranslation } from "react-i18next";
-import Home from "@/pages/Home";
 import { ProfileProvider } from "@/lib/useProfile";
 import NotFound from "@/pages/not-found";
 import { THEMES, AppTheme } from "./lib/themes";
@@ -127,9 +126,7 @@ function AppRouter() {
     <>
       <Switch>
         <Route path="/">
-          <AppShell>
-            <HomePage />
-          </AppShell>
+          <Dashboard />
         </Route>
         <Route path="/library">
           <Redirect to="/" />
