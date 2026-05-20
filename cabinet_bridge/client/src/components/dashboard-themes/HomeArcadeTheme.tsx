@@ -45,6 +45,7 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Gamepad,
 } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useTranslation } from "react-i18next";
@@ -721,7 +722,7 @@ export default function HomeArcadeTheme() {
           ) : filteredGames.length === 0 && !searchQuery ? (
             <div className="flex flex-col items-center justify-center h-64 gap-4 text-white/30">
               <div className="relative">
-                <Gamepad2 className="size-12" />
+                <Gamepad className="size-12" />
                 <div className="absolute -bottom-1 -right-1 size-5 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
                   <Plus className="size-3 text-primary" />
                 </div>
