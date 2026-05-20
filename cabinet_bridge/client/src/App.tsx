@@ -106,12 +106,12 @@ function PageTransition({ children }: { children: React.ReactNode }) {
  */
 function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
+    <>
       <Sidebar />
       <SidebarInset className="flex flex-col min-h-full overflow-hidden">
         {children}
       </SidebarInset>
-    </SidebarProvider>
+    </>
   );
 }
 
@@ -171,11 +171,13 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router hook={useHashLocation}>
-              <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
-                <PageTransition>
-                  <AppRouter />
-                </PageTransition>
-              </div>
+              <SidebarProvider>
+                <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
+                  <PageTransition>
+                    <AppRouter />
+                  </PageTransition>
+                </div>
+              </SidebarProvider>
             </Router>
             <NowPlayingBar />
           </TooltipProvider>
