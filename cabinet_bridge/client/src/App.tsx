@@ -6,7 +6,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationProvider, useIntegration } from "@/lib/integration";
-import { MobileBottomNav } from "@/components/MobileNav";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import i18n from "./lib/i18n";
 import Dashboard from "@/pages/Dashboard";
@@ -15,7 +14,6 @@ import { ProfileProvider } from "@/lib/useProfile";
 import NotFound from "@/pages/not-found";
 import { THEMES, AppTheme } from "./lib/themes";
 import { NowPlayingBar } from "@/components/NowPlayingBar";
-import { NavigationDrawerProvider } from "@/components/NavigationDrawer";
 import { AnimatePresence, motion } from "framer-motion";
 
 /**
@@ -113,8 +111,6 @@ function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main content — offset on desktop, full-width on mobile */}
       <div className="flex-1 md:ml-80 flex flex-col min-h-full">
         {children}
-        {/* Global mobile bottom nav */}
-        <MobileBottomNav />
       </div>
     </div>
   );
@@ -176,13 +172,11 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router hook={useHashLocation}>
-              <NavigationDrawerProvider>
-                <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
-                  <PageTransition>
-                    <AppRouter />
-                  </PageTransition>
-                </div>
-              </NavigationDrawerProvider>
+              <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
+                <PageTransition>
+                  <AppRouter />
+                </PageTransition>
+              </div>
             </Router>
             <NowPlayingBar />
           </TooltipProvider>

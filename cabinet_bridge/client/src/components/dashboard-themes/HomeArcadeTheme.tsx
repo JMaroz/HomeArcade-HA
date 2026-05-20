@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { uploadedRomToGame, GAMES, SYSTEMS, type Game, type System, type SystemId } from "@/data/library";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { MobileTopBar } from "@/components/MobileNav";
-import { useScannerContext } from "@/components/NavigationDrawer";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { GameCardSkeleton } from "@/components/GameCardSkeleton";
 import { Button } from "@/components/ui/button";
@@ -372,7 +371,7 @@ export default function HomeArcadeTheme() {
 
       {/* Mobile top bar — QR scanner + Settings */}
       <div className="shrink-0 xl:hidden">
-        <MobileTopBar />
+        <MobileTopBar onScannerOpen={() => setShowScanner(true)} />
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 relative z-10">
