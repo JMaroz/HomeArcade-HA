@@ -104,7 +104,7 @@ app.get("/api/debug", (_req: Request, res: Response) => {
     const content = readFileSync(indexPath, "utf-8");
     const scriptMatch = content.match(/src="([^"]+\.js)"/);
     entryScript = scriptMatch?.[1] ?? null;
-    const allMatches = [...content.matchAll(/src="([^"]+)"/g)];
+    const allMatches = Array.from(content.matchAll(/src="([^"]+)"/g));
     assetList = allMatches.map((m) => m[1]);
   }
   res.json({

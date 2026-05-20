@@ -16,6 +16,7 @@ import NotFound from "@/pages/not-found";
 import { THEMES, AppTheme } from "./lib/themes";
 import { NowPlayingBar } from "@/components/NowPlayingBar";
 import { AnimatePresence, motion } from "framer-motion";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 /**
  * Ensures scroll position is reset or restore correctly on navigation.
@@ -33,7 +34,6 @@ const Settings = lazy(() => import("@/pages/Settings"));
 const Player = lazy(() => import("@/pages/Player"));
 const Achievements = lazy(() => import("@/pages/Achievements"));
 const History = lazy(() => import("@/pages/History"));
-// const GameDetail = lazy(() => import("@/pages/GameDetail"));
 
 /**
  * Manages global visual effects and themes driven by Integration settings.
@@ -171,6 +171,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router hook={useHashLocation}>
+              <ErrorBoundary>
               <SidebarProvider>
                 <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
                   <PageTransition>
@@ -178,6 +179,7 @@ function App() {
                   </PageTransition>
                 </div>
               </SidebarProvider>
+              </ErrorBoundary>
             </Router>
             <NowPlayingBar />
           </TooltipProvider>

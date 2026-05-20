@@ -66,7 +66,8 @@ export function registerCheatRoutes(app: Express) {
       const targetTokens = significantTokens(targetNormalized);
       const targetNums = numberTokens(targetTokens);
 
-      const candidates = files.map(f => {
+      type CheatFile = { name: string; path: string };
+      const candidates = (files as CheatFile[]).map((f: CheatFile) => {
         const fileTitle = f.name.replace(/\.cht$/i, "");
         const baseTitle = fileTitle.replace(/\s*\(.+$/, "");
         const candNormalized = normalizeSearchTitle(baseTitle);
@@ -83,7 +84,7 @@ export function registerCheatRoutes(app: Express) {
           if (/\(World\)/i.test(f.name)) score += 5;
         }
         return { ...f, score };
-      }).filter(c => c.score >= 50).sort((a, b) => b.score - a.score);
+      }).filter((c: CheatFile & { score: number }) => c.score >= 50).sort((a: CheatFile & { score: number }, b: CheatFile & { score: number }) => b.score - a.score);
 
       const best = candidates[0];
       if (!best) return res.json({ cheats: [], message: `No cheat file found for "${rom.title}".` });
