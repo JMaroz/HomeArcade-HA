@@ -6,13 +6,13 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationProvider, useIntegration } from "@/lib/integration";
-import { MobileBottomNav, MobileTopBar } from "@/components/MobileNav";
+import { MobileBottomNav } from "@/components/MobileNav";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import i18n from "./lib/i18n";
+import HomePage from "@/pages/HomePage";
 import { useTranslation } from "react-i18next";
 import Home from "@/pages/Home";
 import { ProfileProvider } from "@/lib/useProfile";
-import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/not-found";
 import { THEMES, AppTheme } from "./lib/themes";
 import { NowPlayingBar } from "@/components/NowPlayingBar";
@@ -125,8 +125,9 @@ function AppRouter() {
     <>
       <Switch>
         <Route path="/">
-          <MobileTopBar />
-          <Dashboard />
+          <AppShell>
+            <HomePage />
+          </AppShell>
         </Route>
         <Route path="/library">
           <Redirect to="/" />

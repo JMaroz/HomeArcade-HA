@@ -1,5 +1,4 @@
 ﻿import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
-import Fuse from "fuse.js";
 import { useQuery } from "@tanstack/react-query";
 import { uploadedRomToGame, GAMES, SYSTEMS, type Game, type System, type SystemId } from "@/data/library";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
@@ -15,11 +14,9 @@ import { useGameDialogState } from "@/lib/useGameDialogState";
 import type { UploadedRom, GameCollectionWithItems, RomSaveSlot, GameCheatCode } from "@shared/schema";
 import {
   Play,
-  Search,
-  Settings as SettingsIcon,
+  Settings,
   Star,
   ChevronRight,
-  ChevronLeft,
   Clock,
   Zap,
   Save,
@@ -39,13 +36,13 @@ import {
   LayoutGrid,
   Camera,
   QrCode,
-  Smartphone,
   Wifi,
-  SlidersHorizontal,
   X,
   ChevronDown,
   ChevronUp,
   Gamepad,
+  List,
+  Search,
 } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useTranslation } from "react-i18next";
