@@ -12,37 +12,24 @@
 # Error details
 
 ```
-Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/
+Error: expect(locator).toBeVisible() failed
+
+Locator:  locator('body')
+Expected: visible
+Received: hidden
+Timeout:  5000ms
+
 Call log:
-  - navigating to "http://localhost:5000/", waiting until "load"
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('body')
+    14 × locator resolved to <body>…</body>
+       - unexpected value "hidden"
 
 ```
 
 # Test source
 
 ```ts
-  74  |     const title = g.title.length > 28 ? g.title.slice(0, 25) + '...' : g.title.padEnd(28);
-  75  |     const system = g.system.padEnd(10);
-  76  |     const art    = g.hasArtUrl      ? '✓' : '✗';
-  77  |     const video  = g.hasVideoUrl    ? '✓' : '–';
-  78  |     const rating = g.hasRating      ? '✓' : '–';
-  79  |     const desc   = g.hasDescription ? '✓' : '–';
-  80  |     console.log(`${g.id.padEnd(4)} | ${title} | ${system} | ${art.padEnd(3)} | ${video.padEnd(5)} | ${rating.padEnd(6)} | ${desc.padEnd(4)} |`);
-  81  |   }
-  82  |   console.log('-------------------------------\n');
-  83  | }
-  84  | 
-  85  | test.describe('HomeArcade Art Coverage', () => {
-  86  | 
-  87  |   test('API: fetch all ROMs and report art coverage', async ({ page }) => {
-  88  |     const { games, summary } = await fetchGameReport(page);
-  89  | 
-  90  |     printCoverageTable(games);
-  91  | 
-  92  |     console.log('\n=== Coverage Summary ===');
-  93  |     console.log(`Total ROMs:        ${summary.total}`);
-  94  |     console.log(`Has cover art:     ${summary.withArtUrl} / ${summary.total} (${summary.total > 0 ? Math.round(summary.withArtUrl / summary.total * 100) : 0}%)`);
-  95  |     console.log(`Has video preview: ${summary.withVideo} / ${summary.total} (${summary.total > 0 ? Math.round(summary.withVideo / summary.total * 100) : 0}%)`);
   96  |     console.log(`Has rating:        ${summary.withRating} / ${summary.total} (${summary.total > 0 ? Math.round(summary.withRating / summary.total * 100) : 0}%)`);
   97  |     console.log(`Has description:   ${summary.withDescription} / ${summary.total} (${summary.total > 0 ? Math.round(summary.withDescription / summary.total * 100) : 0}%)`);
   98  |     console.log(`Recently played:   ${summary.recentlyPlayed}`);
@@ -121,8 +108,7 @@ Call log:
   171 |   });
   172 | 
   173 |   test('UI: dashboard "Jump Back In" section shows visible game cards', async ({ page }) => {
-> 174 |     await page.goto(`${BASE_URL}/`);
-      |                ^ Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/
+  174 |     await page.goto(`${BASE_URL}/`);
   175 |     await page.waitForLoadState('networkidle');
   176 |     await page.waitForTimeout(3000);
   177 | 
@@ -144,7 +130,8 @@ Call log:
   193 |     console.log(`Game cards on page:     ${gameCardCount}`);
   194 | 
   195 |     // At minimum, the page should render something
-  196 |     await expect(page.locator('body')).toBeVisible();
+> 196 |     await expect(page.locator('body')).toBeVisible();
+      |                                        ^ Error: expect(locator).toBeVisible() failed
   197 |   });
   198 | 
   199 |   test('UI: check if game cards show real images vs. gradient fallbacks', async ({ page }) => {
@@ -192,7 +179,7 @@ Call log:
   241 |   });
   242 | 
   243 |   test('UI: recently played games have no visible cover art', async ({ page }) => {
-  244 |     await page.goto(`${BASE_URL}/#/library/recent`);
+  244 |     await page.goto(`${APP_URL}/`);
   245 |     await page.waitForLoadState('networkidle');
   246 |     await page.waitForTimeout(3000);
   247 | 
@@ -223,4 +210,14 @@ Call log:
   272 |       }
   273 |     }
   274 | 
+  275 |     console.log(`\n=== Recently Played Image Status (${Math.min(count, 10)} sampled) ===`);
+  276 |     console.log(`Cards with missing/broken images: ${cardsWithBrokenOrMissingImg} / ${Math.min(count, 10)}`);
+  277 | 
+  278 |     if (cardsWithBrokenOrMissingImg > 0) {
+  279 |       console.log(`\n⚠️  ${cardsWithBrokenOrMissingImg} recently-played game(s) show no cover art.`);
+  280 |     }
+  281 |   });
+  282 | 
+  283 | });
+  284 | 
 ```

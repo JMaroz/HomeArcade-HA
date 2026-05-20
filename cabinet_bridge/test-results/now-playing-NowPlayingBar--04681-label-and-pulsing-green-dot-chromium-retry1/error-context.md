@@ -12,9 +12,16 @@
 # Error details
 
 ```
-Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/
+Error: expect(locator).toBeVisible() failed
+
+Locator: locator('[data-testid="now-playing-bar"]')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
 Call log:
-  - navigating to "http://localhost:5000/", waiting until "load"
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('[data-testid="now-playing-bar"]')
 
 ```
 
@@ -91,13 +98,13 @@ Call log:
   68  |       startedAt: Date.now() - 120_000,
   69  |     });
   70  | 
-> 71  |     await page.goto(`${BASE_URL}/`);
-      |                ^ Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/
+  71  |     await page.goto(`${BASE_URL}/`);
   72  |     await page.waitForLoadState('networkidle');
   73  |     await page.waitForTimeout(2000);
   74  | 
   75  |     const bar = page.locator('[data-testid="now-playing-bar"]');
-  76  |     await expect(bar).toBeVisible();
+> 76  |     await expect(bar).toBeVisible();
+      |                       ^ Error: expect(locator).toBeVisible() failed
   77  | 
   78  |     // "Now Playing" label should be visible
   79  |     await expect(page.locator('text=Now Playing')).toBeVisible();
@@ -193,4 +200,9 @@ Call log:
   169 |       startedAt: Date.now(),
   170 |     });
   171 | 
+  172 |     await page.goto(`${BASE_URL}/`);
+  173 |     await page.waitForLoadState('networkidle');
+  174 |     await page.waitForTimeout(2000);
+  175 | 
+  176 |     const bar = page.locator('[data-testid="now-playing-bar"]');
 ```

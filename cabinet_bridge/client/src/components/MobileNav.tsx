@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { Wordmark } from "@/components/Logo";
-import { LayoutDashboard, Gamepad2, Trophy, Settings, History, QrCode, Menu } from "lucide-react";
+import { LayoutDashboard, Gamepad2, Trophy, Settings, History, QrCode, Menu, Group } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigationContext, useScannerContext } from "@/components/NavigationDrawer";
 
@@ -62,7 +62,8 @@ export function MobileBottomNav() {
   const { t } = useTranslation();
 
   const tabs = [
-    { href: "/",            icon: LayoutDashboard, label: t("nav.home") || "Home"     },
+    { href: "/",            icon: LayoutDashboard, label: t("nav.home") || "Library"   },
+    { href: "/friends",     icon: Group,           label: t("nav.friends") || "Friends"  },
     { href: "/history",     icon: History,         label: t("nav.history") || "History"  },
     { href: "/achievements",icon: Trophy,          label: t("nav.achievements") || "Awards"   },
     { href: "/settings",    icon: Settings,        label: t("nav.settings") || "Settings" },

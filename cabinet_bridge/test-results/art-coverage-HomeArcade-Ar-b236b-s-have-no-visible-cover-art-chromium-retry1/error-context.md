@@ -12,10 +12,7 @@
 # Error details
 
 ```
-Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/#/library/recent
-Call log:
-  - navigating to "http://localhost:5000/#/library/recent", waiting until "load"
-
+ReferenceError: APP_URL is not defined
 ```
 
 # Test source
@@ -121,8 +118,8 @@ Call log:
   241 |   });
   242 | 
   243 |   test('UI: recently played games have no visible cover art', async ({ page }) => {
-> 244 |     await page.goto(`${BASE_URL}/#/library/recent`);
-      |                ^ Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/#/library/recent
+> 244 |     await page.goto(`${APP_URL}/`);
+      |                        ^ ReferenceError: APP_URL is not defined
   245 |     await page.waitForLoadState('networkidle');
   246 |     await page.waitForTimeout(3000);
   247 | 

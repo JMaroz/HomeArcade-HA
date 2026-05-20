@@ -104,8 +104,8 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 
 /**
  * Shared layout shell used by all main pages.
- * - Desktop (md+): fixed left sidebar + content area
- * - Mobile: no sidebar, top bar + bottom nav
+ * - Desktop (md+): fixed left sidebar + content area + bottom nav hidden
+ * - Mobile: no sidebar, bottom nav bar visible + top bar from children
  */
 function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -115,6 +115,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main content — offset on desktop, full-width on mobile */}
       <div className="flex-1 md:ml-80 flex flex-col min-h-full">
         {children}
+        {/* Global mobile bottom nav */}
+        <MobileBottomNav />
       </div>
     </div>
   );
@@ -139,35 +141,27 @@ function AppRouter() {
           <Redirect to="/" />
         </Route>
         <Route path="/friends">
-          <Suspense fallback={<PageFallback />}><Friends /></Suspense>
+          <AppShell><Suspense fallback={<PageFallback />}><Friends /></Suspense></AppShell>
         </Route>
         <Route path="/game/:id">
           {(params) => (
-            <Suspense fallback={<PageFallback />}>
-              <GameDetail id={params.id} />
-            </Suspense>
+            <AppShell><Suspense fallback={<PageFallback />}><GameDetail id={params.id} /></Suspense></AppShell>
           )}
         </Route>
         <Route path="/settings">
-          <Suspense fallback={<PageFallback />}><Settings /></Suspense>
+          <AppShell><Suspense fallback={<PageFallback />}><Settings /></Suspense></AppShell>
         </Route>
         <Route path="/play/:id">
-          {(params) => <Suspense fallback={<PageFallback />}><Player id={params.id} /></Suspense>}
+          {(params) => <AppShell><Suspense fallback={<PageFallback />}><Player id={params.id} /></Suspense></AppShell>}
         </Route>
         <Route path="/history">
-          <Suspense fallback={<PageFallback />}><History /></Suspense>
+          <AppShell><Suspense fallback={<PageFallback />}><History /></Suspense></AppShell>
         </Route>
         <Route path="/achievements">
-          <Suspense fallback={<PageFallback />}><Achievements /></Suspense>
+          <AppShell><Suspense fallback={<PageFallback />}><Achievements /></Suspense></AppShell>
         </Route>
         <Route component={NotFound} />
       </Switch>
-      <Route path="/:rest*">
-        {(params) => {
-          if (params.rest?.startsWith("play/")) return null;
-          return <MobileBottomNav />;
-        }}
-      </Route>
     </>
   );
 }

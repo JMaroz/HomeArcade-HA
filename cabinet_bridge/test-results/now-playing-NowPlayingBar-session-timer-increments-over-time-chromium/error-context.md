@@ -12,9 +12,16 @@
 # Error details
 
 ```
-Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/
+Error: expect(locator).toBeVisible() failed
+
+Locator: locator('[data-testid="now-playing-bar"]')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
 Call log:
-  - navigating to "http://localhost:5000/", waiting until "load"
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('[data-testid="now-playing-bar"]')
 
 ```
 
@@ -115,13 +122,13 @@ Call log:
   92  |       startedAt: Date.now() - 90_000,
   93  |     });
   94  | 
-> 95  |     await page.goto(`${BASE_URL}/`);
-      |                ^ Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/
+  95  |     await page.goto(`${BASE_URL}/`);
   96  |     await page.waitForLoadState('networkidle');
   97  |     await page.waitForTimeout(2000);
   98  | 
   99  |     const bar = page.locator('[data-testid="now-playing-bar"]');
-  100 |     await expect(bar).toBeVisible({ timeout: 5000 });
+> 100 |     await expect(bar).toBeVisible({ timeout: 5000 });
+      |                       ^ Error: expect(locator).toBeVisible() failed
   101 | 
   102 |     // Read initial timer value
   103 |     const initialTimer = await bar.locator('[data-testid="now-playing-timer"]').textContent();
@@ -217,4 +224,9 @@ Call log:
   193 |       system: 'nes',
   194 |       startedAt: Date.now(),
   195 |     });
+  196 | 
+  197 |     await page.goto(`${BASE_URL}/`);
+  198 |     await page.waitForLoadState('networkidle');
+  199 |     await page.waitForTimeout(2000);
+  200 | 
 ```

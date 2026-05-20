@@ -12,9 +12,16 @@
 # Error details
 
 ```
-Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/
+Error: expect(locator).toBeVisible() failed
+
+Locator: locator('[data-testid="now-playing-bar"]')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
 Call log:
-  - navigating to "http://localhost:5000/", waiting until "load"
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('[data-testid="now-playing-bar"]')
 
 ```
 
@@ -70,13 +77,13 @@ Call log:
   47  |       startedAt: Date.now() - 60_000, // started 1 min ago
   48  |     });
   49  | 
-> 50  |     await page.goto(`${BASE_URL}/`);
-      |                ^ Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/
+  50  |     await page.goto(`${BASE_URL}/`);
   51  |     await page.waitForLoadState('networkidle');
   52  |     await page.waitForTimeout(2000);
   53  | 
   54  |     const bar = page.locator('[data-testid="now-playing-bar"]');
-  55  |     await expect(bar).toBeVisible({ timeout: 5000 });
+> 55  |     await expect(bar).toBeVisible({ timeout: 5000 });
+      |                       ^ Error: expect(locator).toBeVisible() failed
   56  | 
   57  |     // Title should appear
   58  |     await expect(page.locator('text=Duck Tales')).toBeVisible();
@@ -172,4 +179,9 @@ Call log:
   148 |     if (await exitBtn.count() > 0) {
   149 |       // Intercept the exit API call
   150 |       await page.route('/api/roms/exit', async (route) => {
+  151 |         await route.fulfill({ json: { ok: true }, status: 200 });
+  152 |       });
+  153 | 
+  154 |       await exitBtn.click();
+  155 |       await page.waitForTimeout(500);
 ```

@@ -12,20 +12,12 @@
 # Error details
 
 ```
-Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/
-Call log:
-  - navigating to "http://localhost:5000/", waiting until "load"
-
+TypeError: cards.count is not a function
 ```
 
 # Test source
 
 ```ts
-  100 |     // Assert at least some games were found
-  101 |     expect(summary.total).toBeGreaterThan(0);
-  102 |   });
-  103 | 
-  104 |   test('API: flag games missing cover art (artUrl)', async ({ page }) => {
   105 |     const { games, summary } = await fetchGameReport(page);
   106 |     const missingArt = games.filter(g => !g.hasArtUrl);
   107 | 
@@ -121,13 +113,13 @@ Call log:
   197 |   });
   198 | 
   199 |   test('UI: check if game cards show real images vs. gradient fallbacks', async ({ page }) => {
-> 200 |     await page.goto(`${BASE_URL}/`);
-      |                ^ Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5000/
+  200 |     await page.goto(`${BASE_URL}/`);
   201 |     await page.waitForLoadState('networkidle');
   202 |     await page.waitForTimeout(3000);
   203 | 
   204 |     const cards = page.locator('[data-testid^="card-game-"]').all();
-  205 |     const count = await cards.count();
+> 205 |     const count = await cards.count();
+      |                               ^ TypeError: cards.count is not a function
   206 | 
   207 |     if (count === 0) {
   208 |       console.log('No game cards found on dashboard — skipping image check');
@@ -166,7 +158,7 @@ Call log:
   241 |   });
   242 | 
   243 |   test('UI: recently played games have no visible cover art', async ({ page }) => {
-  244 |     await page.goto(`${BASE_URL}/#/library/recent`);
+  244 |     await page.goto(`${APP_URL}/`);
   245 |     await page.waitForLoadState('networkidle');
   246 |     await page.waitForTimeout(3000);
   247 | 
