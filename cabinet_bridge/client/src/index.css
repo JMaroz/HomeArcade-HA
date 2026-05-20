@@ -3,18 +3,18 @@
 @tailwind utilities;
 
 /* ============================================================
-   HOMEARCADE — Material Design 3 + Dark Gaming Aesthetic
+   HOMEARCADE � Material Design 3 + Dark Gaming Aesthetic
    v0.7.0: Full MD3 token system (color roles, type scale,
    shape scale, state layers, tonal elevation).
    ============================================================ */
 
 :root {
   /* MD3 Shape Scale */
-  --md-shape-xs:   0.25rem;   /* 4px  — extra-small */
-  --md-shape-sm:   0.5rem;    /* 8px  — small       */
-  --md-shape-md:   0.75rem;   /* 12px — medium      */
-  --md-shape-lg:   1rem;      /* 16px — large       */
-  --md-shape-xl:   1.75rem;   /* 28px — extra-large */
+  --md-shape-xs:   0.25rem;   /* 4px  � extra-small */
+  --md-shape-sm:   0.5rem;    /* 8px  � small       */
+  --md-shape-md:   0.75rem;   /* 12px � medium      */
+  --md-shape-lg:   1rem;      /* 16px � large       */
+  --md-shape-xl:   1.75rem;   /* 28px � extra-large */
   --md-shape-full: 9999px;    /* full / pill        */
 
   /* shadcn radius alias (MD3 medium = default card/dialog shape) */
@@ -123,9 +123,9 @@
   --md-type-label-large-size: 0.875rem; --md-type-label-large-line: 1.25rem; --md-type-label-large-track: 0.007em; --md-type-label-large-weight: 500;
   --md-type-label-medium-size: 0.75rem; --md-type-label-medium-line: 1rem; --md-type-label-medium-track: 0.031em; --md-type-label-medium-weight: 500;
   --md-type-label-small-size: 0.6875rem; --md-type-label-small-line: 1rem; --md-type-label-small-track: 0.031em; --md-type-label-small-weight: 500;
-/* ─────────────────────────────────────────────────────────────
-   DARK MODE — primary palette
-   ───────────────────────────────────────────────────────────── */
+/* -------------------------------------------------------------
+   DARK MODE � primary palette
+   ------------------------------------------------------------- */
 .dark {
   --opaque-button-border-intensity: 8;
   --button-outline: rgba(255, 255, 255, 0.08);
