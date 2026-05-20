@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.30.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.31.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -67,6 +67,10 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.31.0
+- **Removed Friends/Social Hub page** — Eliminated the placeholder Social Hub page and all associated navigation links, as it contained only mock data with no backend support.
+- **Fixed default dashboard routing** — Restored the HomeArcadeTheme as the correct default view, resolving a regression that was showing an incorrect layout with a bottom navigation bar.
 
 ### v2.30.0
 - **Unified Game Details:** Consolidated all dashboard themes (`HomeArcade`, `NES`, `PXL`) to use a single, feature-rich `GameDetailDialog`, eliminating redundant UI and improving consistency.

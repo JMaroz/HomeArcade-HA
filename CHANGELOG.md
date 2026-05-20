@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.31.0] — 2026-05-20
+
+### Cleanup: Remove Friends/Social Hub & Fix Dashboard Routing
+
+- **Removed Friends Page** — Deleted the placeholder Social Hub page (`Friends.tsx`) and all associated navigation links across the desktop sidebar, mobile bottom nav, and `GameDetail` page. The page contained only hardcoded mock data with no backend support.
+- **Fixed Dashboard Routing** — Restored the `HomeArcadeTheme` as the correct default view at `/`. A regression had caused the app to render a different layout (`HomePage`) that showed an incorrect bottom navigation bar on mobile.
+- **Code Cleanup** — Removed over 470 lines of dead code from the deleted Friends page and related navigation components.
+
+---
+
 ## [2.30.0] — 2026-05-20
 
 ### Major: Unified Game Details Experience
