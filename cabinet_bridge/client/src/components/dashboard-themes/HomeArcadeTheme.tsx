@@ -467,12 +467,6 @@ export default function HomeArcadeTheme() {
   // â”€â”€ Info Panel Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [activeTab, setActiveTab] = useState<"info" | "cheats" | "saves" | "meta">("info");
 
-  const [time, setTime] = useState(new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   return (
     <div className="fixed inset-0 z-[50] bg-[#0c0c0c] text-white flex flex-col select-none overflow-hidden font-sans">
 
@@ -504,67 +498,9 @@ export default function HomeArcadeTheme() {
         )}
       </AnimatePresence>
 
-      {/* Mobile top bar â€” QR scanner + Settings */}
+      {/* Mobile top bar — QR scanner + Settings */}
       <div className="shrink-0 xl:hidden">
         <MobileTopBar />
-      </div>
-
-      {/* Top Navigation Bar */}
-      <div className="h-16 px-8 hidden xl:flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur-2xl z-20">
-        <div className="flex items-center gap-6">
-          <div className="text-primary font-black tracking-tighter text-xl italic uppercase">HomeArcade</div>
-          <div className="h-4 w-px bg-white/10" />
-          <div className="flex gap-4">
-             <Link href="/history">
-               <Button variant="ghost" size="sm" className="text-xs uppercase tracking-[0.2em] text-white/50 hover:text-white transition-all">Activity</Button>
-             </Link>
-          </div>
-        </div>
-        <div className="flex items-center gap-6">
-          {/* Search */}
-          <div className="relative">
-            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
-            <Input
-              ref={searchRef}
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search games... (press /)"
-              className="pl-9 pr-8 w-64 bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm font-mono"
-              aria-label="Search games"
-              onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); searchRef.current?.blur(); } }}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
-              >
-                <X className="size-3.5" />
-              </button>
-            )}
-          </div>
-          {/* Sort */}
-          <div className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 p-1">
-            <SlidersHorizontal className="size-3.5 text-white/30 ml-1.5 mr-0.5" />
-            {(["recent", "title", "year", "rating", "plays"] as const).map((o) => (
-              <button
-                key={o}
-                type="button"
-                onClick={() => setSort(o)}
-                className={`px-2 py-1 rounded font-mono text-[11px] uppercase tracking-wider ${
-                  sort === o ? "bg-primary text-white" : "text-white/30 hover:text-white"
-                }`}
-              >
-                {o === "recent" ? "Recent" : o === "az" ? "A-Z" : o.charAt(0).toUpperCase() + o.slice(1)}
-              </button>
-            ))}
-          </div>
-          <Link href="/settings"><SettingsIcon className="size-4 cursor-pointer hover:text-white transition-colors text-white/30" /></Link>
-          <div className="font-mono text-sm font-black tracking-[0.2em] text-white/80 tabular-nums">
-            {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </div>
-        </div>
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 relative z-10">

@@ -961,15 +961,61 @@ function ControlsSettings() {
         title={t("settings.sections.shortcuts.title")}
         description={t("settings.sections.shortcuts.description")}
       >
-        <div className="grid sm:grid-cols-2 gap-3">
-           <Shortcut keyName="Arrow Keys" action="Navigate Grid" />
-           <Shortcut keyName="Enter" action="Open Game" />
-           <Shortcut keyName="F" action="Toggle Favorite" />
-           <Shortcut keyName="/" action="Focus Search" />
-           <Shortcut keyName="Esc" action="Close Dialog / Back" />
-           <Shortcut keyName="S" action="Quick Save (in-game)" />
-           <Shortcut keyName="L" action="Quick Load (in-game)" />
-           <Shortcut keyName="1-9" action="Change Save Slot" />
+        {/* Controller Mapping Card */}
+        <div className="rounded-2xl border border-white/10 bg-black/40 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5">
+            <div className="size-8 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Keyboard className="size-4 text-primary" />
+            </div>
+            <div>
+              <div className="font-display text-sm font-black uppercase tracking-wider">Keyboard & Gamepad</div>
+              <div className="font-mono text-[10px] text-white/30">Control reference guide</div>
+            </div>
+          </div>
+
+          {/* Two column layout */}
+          <div className="grid grid-cols-2 divide-x divide-white/5">
+            {/* Keyboard */}
+            <div className="px-5 py-4">
+              <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 mb-3">Keyboard</div>
+              <div className="space-y-2">
+                {[
+                  { key: "WASD / Arrows", action: "Navigate Grid" },
+                  { key: "Enter", action: "Activate / Play" },
+                  { key: "Q", action: "Quit Game" },
+                  { key: "Space", action: "Select" },
+                  { key: "Tab", action: "Switch Views" },
+                  { key: "Escape", action: "Back / Close" },
+                ].map(({ key, action }) => (
+                  <div key={key} className="flex items-center justify-between gap-4">
+                    <span className="text-xs text-white/50">{action}</span>
+                    <kbd className="shrink-0 px-2 py-1 rounded bg-white/5 border border-white/10 font-mono text-[11px] font-bold text-white/80">{key}</kbd>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Gamepad */}
+            <div className="px-5 py-4">
+              <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 mb-3">Gamepad</div>
+              <div className="space-y-2">
+                {[
+                  { key: "D-Pad", action: "Navigate Grid" },
+                  { key: "A", action: "Activate / Play" },
+                  { key: "B", action: "Back" },
+                  { key: "Y", action: "Toggle View" },
+                  { key: "Start", action: "Settings" },
+                  { key: "L3 / R3", action: "Not used" },
+                ].map(({ key, action }) => (
+                  <div key={key} className="flex items-center justify-between gap-4">
+                    <span className="text-xs text-white/50">{action}</span>
+                    <kbd className="shrink-0 px-2 py-1 rounded bg-white/5 border border-white/10 font-mono text-[11px] font-bold text-white/80">{key}</kbd>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </Section>
 
