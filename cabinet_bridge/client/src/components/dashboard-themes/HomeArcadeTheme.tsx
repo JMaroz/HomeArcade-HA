@@ -299,6 +299,7 @@ export default function HomeArcadeTheme() {
 
   const [activeGameIdx, setActiveGameIdx] = useState(0);
   const [showMobileDetails, setShowMobileDetails] = useState(false);
+  const [recentlyPlayedCollapsed, setRecentlyPlayedCollapsed] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [showWarpDialog, setShowWarpDialog] = useState(false);
 
