@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationProvider, useIntegration } from "@/lib/integration";
 import { MobileBottomNav, MobileTopBar } from "@/components/MobileNav";
+import { DesktopSidebar } from "@/components/DesktopSidebar";
 import i18n from "./lib/i18n";
 import { useTranslation } from "react-i18next";
 import Home from "@/pages/Home";
@@ -34,6 +35,8 @@ const Settings = lazy(() => import("@/pages/Settings"));
 const Player = lazy(() => import("@/pages/Player"));
 const Achievements = lazy(() => import("@/pages/Achievements"));
 const History = lazy(() => import("@/pages/History"));
+const Friends = lazy(() => import("@/pages/Friends"));
+const GameDetail = lazy(() => import("@/pages/GameDetail"));
 
 /**
  * Manages global visual effects and themes driven by Integration settings.
@@ -99,6 +102,24 @@ function PageTransition({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Shared layout shell used by all main pages.
+ * - Desktop (md+): fixed left sidebar + content area
+ * - Mobile: no sidebar, top bar + bottom nav
+ */
+function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-full">
+      {/* Desktop sidebar — hidden on mobile */}
+      <DesktopSidebar />
+      {/* Main content — offset on desktop, full-width on mobile */}
+      <div className="flex-1 md:ml-80 flex flex-col min-h-full">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function AppRouter() {
   return (
     <>
@@ -115,6 +136,16 @@ function AppRouter() {
         </Route>
         <Route path="/library/:filter">
           <Redirect to="/" />
+        </Route>
+        <Route path="/friends">
+          <Suspense fallback={<PageFallback />}><Friends /></Suspense>
+        </Route>
+        <Route path="/game/:id">
+          {(params) => (
+            <Suspense fallback={<PageFallback />}>
+              <GameDetail id={params.id} />
+            </Suspense>
+          )}
         </Route>
         <Route path="/settings">
           <Suspense fallback={<PageFallback />}><Settings /></Suspense>
