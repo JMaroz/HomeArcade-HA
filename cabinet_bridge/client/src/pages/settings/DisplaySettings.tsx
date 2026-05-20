@@ -7,8 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Monitor, Palette, LayoutGrid } from "lucide-react";
-import { THEMES } from "@/lib/themes";
+import { Monitor } from "lucide-react";
 import { Section, Field } from "./SettingsShared";
 
 const ALL_SYSTEMS = [
@@ -54,37 +53,7 @@ export function DisplaySettings() {
             </div>
           </Field>
 
-          <Field label="Dashboard Layout" hint="Choose between the modern glass theme or retro pixel theme.">
-            <div className="flex items-center gap-4">
-              <LayoutGrid className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Select value={config.dashboardTheme || "HomeArcade"} onValueChange={(val: any) => setConfig({ dashboardTheme: val })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="HomeArcade">HomeArcade (Modern)</SelectItem>
-                  <SelectItem value="PXL">PXL (Retro)</SelectItem>
-                  <SelectItem value="NES">NES (8-bit)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </Field>
 
-          <Field label={t("settings.fields.uiTheme.label")} hint={t("settings.fields.uiTheme.hint")}>
-            <div className="flex items-center gap-4">
-              <Palette className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Select value={config.theme || "default"} onValueChange={(val) => setConfig({ theme: val })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {THEMES.map((theme) => (
-                    <SelectItem key={theme} value={theme}>
-                      {theme.charAt(0).toUpperCase() + theme.slice(1).replace("-", " ")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </Field>
-
-          <div />
 
           <Field label={t("settings.fields.aspectRatio.label")} hint={t("settings.fields.aspectRatio.hint")}>
             <Select value={config.globalAspectRatio || "auto"} onValueChange={(v) => setConfig({ globalAspectRatio: v })}>
