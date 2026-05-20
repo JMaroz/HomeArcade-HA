@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.34.4] — 2026-05-20
+
+### Fix: Build Stability & Type Safety
+
+- **Resolved CSS Corruption** — Fixed a critical build failure caused by corrupted characters and encoding in `index.css` that was triggering PostCSS "Unclosed block" errors during Docker builds.
+- **Fixed Type Errors** — Resolved several TypeScript compilation errors in `App.tsx`, `integration.tsx`, `useGridNav.ts`, and benchmarks related to the recent theme removal and gamepad mapping changes.
+- **Cleaned Up Imports** — Removed stale imports and references to deleted theme libraries.
+
+---
+
 ## [2.34.3] — 2026-05-20
 
 ### Fix: QR Scanner Stability & UI Consolidation
