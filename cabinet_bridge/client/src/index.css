@@ -3,31 +3,31 @@
 @tailwind utilities;
 
 /* ============================================================
-   HOMEARCADE â€” Material Design 3 + Dark Gaming Aesthetic
+   HOMEARCADE GÇö Material Design 3 + Dark Gaming Aesthetic
    v0.7.0: Full MD3 token system (color roles, type scale,
    shape scale, state layers, tonal elevation).
    ============================================================ */
 
 :root {
-  /* â”€â”€ MD3 Shape Scale â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  --md-shape-xs:   0.25rem;   /* 4px  â€” extra-small */
-  --md-shape-sm:   0.5rem;    /* 8px  â€” small       */
-  --md-shape-md:   0.75rem;   /* 12px â€” medium      */
-  --md-shape-lg:   1rem;      /* 16px â€” large       */
-  --md-shape-xl:   1.75rem;   /* 28px â€” extra-large */
+  /* GöÇGöÇ MD3 Shape Scale GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
+  --md-shape-xs:   0.25rem;   /* 4px  GÇö extra-small */
+  --md-shape-sm:   0.5rem;    /* 8px  GÇö small       */
+  --md-shape-md:   0.75rem;   /* 12px GÇö medium      */
+  --md-shape-lg:   1rem;      /* 16px GÇö large       */
+  --md-shape-xl:   1.75rem;   /* 28px GÇö extra-large */
   --md-shape-full: 9999px;    /* full / pill        */
 
-  /* â”€â”€ shadcn radius alias (MD3 medium = default card/dialog shape) â”€â”€ */
+  /* GöÇGöÇ shadcn radius alias (MD3 medium = default card/dialog shape) GöÇGöÇ */
   --radius: 0.75rem;
 
-  /* â”€â”€ State layer opacities (MD3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* GöÇGöÇ State layer opacities (MD3) GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
   --md-state-hover:   0.08;
   --md-state-press:   0.12;
   --md-state-focus:   0.12;
   --md-state-drag:    0.16;
   --md-state-selected: 0.08;
 
-  /* â”€â”€ Tonal elevation overlays (dark theme uses tinted surfaces) â”€â”€ */
+  /* GöÇGöÇ Tonal elevation overlays (dark theme uses tinted surfaces) GöÇGöÇ */
   --md-elev-1:  rgba(255,255,255,0.05);
   --md-elev-2:  rgba(255,255,255,0.08);
   --md-elev-3:  rgba(255,255,255,0.11);
@@ -41,7 +41,7 @@
   --button-outline: rgba(0, 0, 0, 0.1);
   --badge-outline: rgba(0, 0, 0, 0.05);
 
-  /* â”€â”€ Light mode base palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* GöÇGöÇ Light mode base palette GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
   --background:            36 18% 96%;
   --foreground:            240 14% 10%;
   --border:                36 8% 84%;
@@ -123,259 +123,9 @@
   --md-type-label-large-size: 0.875rem; --md-type-label-large-line: 1.25rem; --md-type-label-large-track: 0.007em; --md-type-label-large-weight: 500;
   --md-type-label-medium-size: 0.75rem; --md-type-label-medium-line: 1rem; --md-type-label-medium-track: 0.031em; --md-type-label-medium-weight: 500;
   --md-type-label-small-size: 0.6875rem; --md-type-label-small-line: 1rem; --md-type-label-small-track: 0.031em; --md-type-label-small-weight: 500;
-}
-
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-   THEMES
-   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
-[data-theme="synthwave"], .dark[data-theme="synthwave"] {
-  --background: 260 40% 6%; --foreground: 300 100% 92%; --border: 300 100% 20%;
-  --card: 260 40% 10%; --card-border: 300 100% 25%;
-  --primary: 300 100% 60%; --secondary: 190 100% 50%; --accent: 30 100% 60%;
-  --sidebar: 260 40% 8%; --sidebar-primary: 300 100% 60%;
-  --glow-primary: 0 0 10px hsl(300 100% 60% / 0.5);
-  --glow-secondary: 0 0 10px hsl(190 100% 50% / 0.5);
-}
-[data-theme="gameboy"], .dark[data-theme="gameboy"] {
-  --background: 85 15% 15%; --foreground: 85 40% 70%; --border: 85 30% 25%;
-  --card: 85 15% 20%; --card-border: 85 30% 30%;
-  --primary: 85 45% 65%; --secondary: 85 40% 50%; --accent: 0 60% 50%;
-  --sidebar: 85 15% 18%; --sidebar-primary: 85 45% 65%;
-  --dot-matrix: radial-gradient(circle, #000 1px, transparent 1px);
-}
-[data-theme="oled"], .dark[data-theme="oled"] {
-  --background: 0 0% 0%; --foreground: 0 0% 90%; --border: 0 0% 15%;
-  --card: 0 0% 0%; --card-border: 0 0% 20%;
-  --primary: 0 0% 100%; --secondary: 0 0% 60%; --accent: 210 100% 50%;
-  --sidebar: 0 0% 0%;
-}
-[data-theme="nord"], .dark[data-theme="nord"] {
-  --background: 220 16% 22%; --foreground: 218 27% 92%; --border: 220 16% 28%;
-  --card: 222 16% 25%; --card-border: 220 16% 32%;
-  --primary: 193 43% 67%; --secondary: 161 31% 58%; --accent: 0 35% 60%;
-}
-[data-theme="amber"], .dark[data-theme="amber"] {
-  --background: 30 100% 2%; --foreground: 30 100% 60%; --border: 30 100% 10%;
-  --card: 30 100% 5%; --card-border: 30 100% 15%;
-  --primary: 30 100% 65%; --secondary: 40 100% 50%; --accent: 30 100% 40%;
-}
-[data-theme="cyberpunk"], .dark[data-theme="cyberpunk"] {
-  --background: 55 100% 50%; --foreground: 0 0% 0%; --border: 0 0% 0%;
-  --card: 55 100% 45%; --card-border: 0 0% 10%;
-  --primary: 0 0% 0%; --secondary: 320 100% 50%; --accent: 180 100% 50%;
-  --radius: 0px;
-}
-[data-theme="miami-vice"], .dark[data-theme="miami-vice"] {
-  --background: 190 100% 90%; --foreground: 320 60% 30%; --border: 320 60% 80%;
-  --card: 0 0% 100%; --card-border: 320 60% 85%;
-  --primary: 320 100% 65%; --secondary: 190 100% 45%; --accent: 280 100% 60%;
-}
-[data-theme="c64"] {
-  --background: 240 60% 30%; --foreground: 240 60% 85%; --border: 240 60% 40%;
-  --card: 240 60% 35%; --card-border: 240 60% 45%;
-  --primary: 240 60% 80%; --secondary: 240 60% 60%; --accent: 0 0% 100%;
-}
-[data-theme="arcade"], .dark[data-theme="arcade"] {
-  --background: 0 0% 5%; --foreground: 0 0% 95%; --border: 0 100% 50%;
-  --card: 0 0% 10%; --card-border: 60 100% 50%;
-  --primary: 210 100% 50%; --secondary: 120 100% 40%; --accent: 0 100% 50%;
-}
-[data-theme="vaporwave"], .dark[data-theme="vaporwave"] {
-  --background: 280 60% 15%; --foreground: 300 100% 90%; --border: 300 60% 25%;
-  --card: 280 60% 20%; --card-border: 300 60% 30%;
-  --primary: 180 100% 70%; --secondary: 300 100% 75%; --accent: 240 100% 80%;
-}
-[data-theme="win95"], .dark[data-theme="win95"] {
-  --background: 180 20% 80%; --foreground: 0 0% 0%; --border: 0 0% 100%;
-  --card: 0 0% 75%; --card-border: 0 0% 40%;
-  --primary: 220 100% 20%; --secondary: 0 0% 50%; --accent: 0 0% 0%;
-  --radius: 0px;
-  --win-bevel-out: inset 1px 1px #fff, inset -1px -1px #808080;
-  --win-bevel-in: inset 1px 1px #808080, inset -1px -1px #fff;
-}
-[data-theme="aqua"], .dark[data-theme="aqua"] {
-  --background: 200 100% 10%; --foreground: 190 100% 90%; --border: 190 100% 20%;
-  --card: 200 100% 15%; --card-border: 190 100% 30%;
-  --primary: 180 100% 50%; --secondary: 210 100% 60%; --accent: 160 100% 50%;
-}
-[data-theme="dracula"], .dark[data-theme="dracula"] {
-  --background: 231 15% 18%; --foreground: 60 30% 96%; --border: 231 15% 25%;
-  --card: 231 15% 22%; --card-border: 231 15% 30%;
-  --primary: 326 100% 74%; --secondary: 191 100% 77%; --accent: 250 100% 77%;
-}
-[data-theme="grunge"], .dark[data-theme="grunge"] {
-  --background: 30 10% 15%; --foreground: 40 20% 80%; --border: 30 10% 25%;
-  --card: 30 10% 20%; --card-border: 30 10% 30%;
-  --primary: 35 30% 50%; --secondary: 100 10% 40%; --accent: 20 40% 40%;
-}
-[data-theme="blockbuster"], .dark[data-theme="blockbuster"] {
-  --background: 210 100% 15%; --foreground: 50 100% 50%; --border: 50 100% 30%;
-  --card: 210 100% 20%; --card-border: 50 100% 40%;
-  --primary: 50 100% 50%; --secondary: 210 100% 60%; --accent: 0 100% 50%;
-}
-[data-theme="y2k"], .dark[data-theme="y2k"] {
-  --background: 180 100% 95%; --foreground: 240 100% 20%; --border: 180 100% 80%;
-  --card: 0 0% 100%; --card-border: 180 100% 85%;
-  --primary: 190 100% 50%; --secondary: 280 100% 70%; --accent: 150 100% 50%;
-}
-[data-theme="halo"], .dark[data-theme="halo"] {
-  --background: 120 20% 5%; --foreground: 120 40% 90%; --border: 120 40% 20%;
-  --card: 120 20% 10%; --card-border: 120 40% 25%;
-  --primary: 120 100% 50%; --secondary: 210 100% 50%; --accent: 60 100% 50%;
-}
-
-/* â”€â”€ NEW THEMES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
-/* SNES â€” warm purple/grey hardware aesthetic */
-[data-theme="snes"], .dark[data-theme="snes"] {
-  --background: 265 12% 14%; --foreground: 265 8% 88%; --border: 265 12% 24%;
-  --card: 265 12% 18%; --card-border: 265 12% 28%;
-  --primary: 280 65% 62%; --secondary: 210 60% 58%; --accent: 40 90% 58%;
-  --sidebar: 265 12% 11%; --sidebar-primary: 280 65% 62%;
-  --muted: 265 10% 22%; --muted-foreground: 265 8% 55%;
-  --ring: 280 65% 62%;
-}
-
-/* PS1 â€” gunmetal grey with PlayStation grey-blue */
-[data-theme="ps1"], .dark[data-theme="ps1"] {
-  --background: 215 10% 10%; --foreground: 215 10% 88%; --border: 215 10% 20%;
-  --card: 215 10% 14%; --card-border: 215 10% 24%;
-  --primary: 197 65% 55%; --secondary: 345 80% 60%; --accent: 55 90% 55%;
-  --sidebar: 215 10% 8%; --sidebar-primary: 197 65% 55%;
-  --muted: 215 8% 18%; --muted-foreground: 215 8% 52%;
-  --ring: 197 65% 55%;
-}
-[data-theme="ps1"] .bg-card::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
-}
-
-/* MATRIX â€” black on green phosphor */
-[data-theme="matrix"], .dark[data-theme="matrix"] {
-  --background: 120 100% 1%; --foreground: 120 100% 65%; --border: 120 100% 12%;
-  --card: 120 100% 3%; --card-border: 120 100% 18%;
-  --primary: 120 100% 50%; --secondary: 120 60% 35%; --accent: 120 100% 75%;
-  --sidebar: 120 100% 2%; --sidebar-primary: 120 100% 50%;
-  --muted: 120 50% 8%; --muted-foreground: 120 80% 40%;
-  --ring: 120 100% 50%;
-}
-[data-theme="matrix"] body {
-  font-family: 'Courier New', Courier, monospace !important;
-}
-[data-theme="matrix"] h1, [data-theme="matrix"] h2, [data-theme="matrix"] .text-primary {
-  text-shadow: 0 0 8px hsl(120 100% 50% / 0.7), 0 0 20px hsl(120 100% 50% / 0.3);
-}
-
-/* CHERRY BLOSSOM â€” soft pink sakura */
-[data-theme="cherry-blossom"], .dark[data-theme="cherry-blossom"] {
-  --background: 340 30% 8%; --foreground: 340 40% 92%; --border: 340 30% 18%;
-  --card: 340 25% 12%; --card-border: 340 30% 22%;
-  --primary: 340 80% 70%; --secondary: 290 50% 65%; --accent: 20 90% 65%;
-  --sidebar: 340 25% 7%; --sidebar-primary: 340 80% 70%;
-  --muted: 340 20% 16%; --muted-foreground: 340 20% 55%;
-  --ring: 340 80% 70%;
-}
-[data-theme="cherry-blossom"] h1, [data-theme="cherry-blossom"] h2, [data-theme="cherry-blossom"] .text-primary {
-  text-shadow: 0 0 12px hsl(340 80% 70% / 0.4);
-}
-
-/* TERMINAL â€” classic green-on-black CRT terminal */
-[data-theme="terminal"], .dark[data-theme="terminal"] {
-  --background: 0 0% 2%; --foreground: 140 100% 60%; --border: 140 100% 15%;
-  --card: 0 0% 4%; --card-border: 140 100% 20%;
-  --primary: 140 100% 55%; --secondary: 140 60% 35%; --accent: 0 0% 80%;
-  --sidebar: 0 0% 2%; --sidebar-primary: 140 100% 55%;
-  --muted: 0 0% 8%; --muted-foreground: 140 60% 38%;
-  --radius: 0px;
-  --ring: 140 100% 55%;
-}
-[data-theme="terminal"] body {
-  font-family: 'Courier New', Courier, monospace !important;
-}
-[data-theme="terminal"] * {
-  border-radius: 0 !important;
-}
-
-/* BLOOD MOON â€” deep red night sky */
-[data-theme="bloodmoon"], .dark[data-theme="bloodmoon"] {
-  --background: 0 30% 4%; --foreground: 0 20% 88%; --border: 0 40% 16%;
-  --card: 0 25% 7%; --card-border: 0 40% 20%;
-  --primary: 0 90% 52%; --secondary: 20 80% 48%; --accent: 50 100% 55%;
-  --sidebar: 0 30% 3%; --sidebar-primary: 0 90% 52%;
-  --muted: 0 20% 11%; --muted-foreground: 0 15% 50%;
-  --ring: 0 90% 52%;
-}
-[data-theme="bloodmoon"] h1, [data-theme="bloodmoon"] h2, [data-theme="bloodmoon"] .text-primary {
-  text-shadow: 0 0 10px hsl(0 90% 52% / 0.5);
-}
-
-/* DEEP SEA â€” dark ocean blues and bioluminescent cyan */
-[data-theme="deep-sea"], .dark[data-theme="deep-sea"] {
-  --background: 210 60% 5%; --foreground: 195 80% 88%; --border: 210 50% 14%;
-  --card: 210 55% 8%; --card-border: 210 50% 18%;
-  --primary: 190 100% 55%; --secondary: 210 80% 55%; --accent: 170 100% 60%;
-  --sidebar: 210 60% 4%; --sidebar-primary: 190 100% 55%;
-  --muted: 210 40% 12%; --muted-foreground: 195 40% 48%;
-  --ring: 190 100% 55%;
-}
-[data-theme="deep-sea"] h1, [data-theme="deep-sea"] h2, [data-theme="deep-sea"] .text-primary {
-  text-shadow: 0 0 12px hsl(190 100% 55% / 0.5);
-}
-[data-theme="deep-sea"] .bg-card::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(ellipse at 50% 0%, hsl(190 100% 55% / 0.04) 0%, transparent 70%);
-}
-
-/* GOLDEN AGE â€” warm sepia, like a vintage arcade marquee */
-[data-theme="golden-age"], .dark[data-theme="golden-age"] {
-  --background: 35 30% 7%; --foreground: 40 60% 88%; --border: 35 30% 18%;
-  --card: 35 25% 11%; --card-border: 35 30% 22%;
-  --primary: 42 100% 55%; --secondary: 20 80% 50%; --accent: 55 100% 60%;
-  --sidebar: 35 30% 5%; --sidebar-primary: 42 100% 55%;
-  --muted: 35 20% 15%; --muted-foreground: 40 20% 50%;
-  --ring: 42 100% 55%;
-}
-[data-theme="golden-age"] h1, [data-theme="golden-age"] h2, [data-theme="golden-age"] .text-primary {
-  text-shadow: 0 0 10px hsl(42 100% 55% / 0.4);
-}
-[data-theme="golden-age"] img {
-  filter: sepia(0.25) saturate(0.9);
-}
-
-/* â”€â”€ Theme Specific Utility Overrides â”€â”€ */
-[data-theme="win95"] .bg-card, [data-theme="win95"] .bg-sidebar, [data-theme="win95"] button {
-  box-shadow: var(--win-bevel-out) !important;
-  border: 1px solid #000 !important;
-}
-[data-theme="win95"] button:active {
-  box-shadow: var(--win-bevel-in) !important;
-}
-[data-theme="synthwave"] h1, [data-theme="synthwave"] h2, [data-theme="synthwave"] .text-primary {
-  text-shadow: var(--glow-primary);
-}
-[data-theme="gameboy"] .bg-card::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background-image: var(--dot-matrix); background-size: 4px 4px; opacity: 0.1;
-}
-[data-theme="gameboy"] img {
-  filter: sepia(0.5) hue-rotate(60deg) saturate(2) contrast(0.9);
-}
-[data-theme="arcade"] .bg-card::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
-}
-[data-theme="oled"] .border, [data-theme="oled"] .border-t, [data-theme="oled"] .border-b {
-  border-color: hsl(var(--border) / 0.5) !important;
-}
-[data-theme="cyberpunk"] {
-  clip-path: polygon(0% 0%, 100% 0%, 100% 95%, 95% 100%, 0% 100%);
-}
-
-
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-   DARK MODE â€” primary palette
-   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
+   DARK MODE GÇö primary palette
+   GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
 .dark {
   --opaque-button-border-intensity: 8;
   --button-outline: rgba(255, 255, 255, 0.08);
@@ -478,7 +228,7 @@
   .md-label-small { font-size: var(--md-type-label-small-size); line-height: var(--md-type-label-small-line); letter-spacing: var(--md-type-label-small-track); font-weight: var(--md-type-label-small-weight); }
   .hide-on-touch { @media (hover: none) { display: none !important; } }
 
-  /* â”€â”€ Loading Skeleton Shimmer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* GöÇGöÇ Loading Skeleton Shimmer GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
   @keyframes skeleton-shimmer {
     0%   { transform: translateX(-100%); }
     100% { transform: translateX(200%); }
@@ -507,7 +257,7 @@
     }
   }
 
-  /* â”€â”€ PXL Theme Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* GöÇGöÇ PXL Theme Utilities GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ */
   .pixel-border {
     box-shadow: 
       inset -2px -2px 0px 0px rgba(0,0,0,0.5),

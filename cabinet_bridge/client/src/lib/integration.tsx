@@ -184,10 +184,6 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     uiGamepadMapping: (source.uiGamepadMapping && typeof source.uiGamepadMapping === "object")
       ? source.uiGamepadMapping as Record<string, { kind: "button" | "axis"; buttonIndex?: number; axisIndex?: number; direction?: -1 | 1 }>
       : { select: 0, back: 1, favorite: 3, menu: 9 },
-    theme: typeof source.theme === "string" ? source.theme : "default",
-    dashboardTheme: (source.dashboardTheme === "HomeArcade" || source.dashboardTheme === "PXL" || source.dashboardTheme === "NES") 
-      ? source.dashboardTheme 
-      : "HomeArcade",
     language: typeof source.language === "string" ? source.language : undefined,
     showSystemLabels: typeof source.showSystemLabels === "boolean" ? source.showSystemLabels : true,
     globalAspectRatio: typeof source.globalAspectRatio === "string" ? source.globalAspectRatio : "auto",
@@ -418,4 +414,5 @@ export function formatRelative(ts: number | null | undefined): string {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.round(hrs / 24);
   return `${days}d ago`;
+}
 }

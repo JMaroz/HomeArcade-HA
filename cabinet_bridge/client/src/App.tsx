@@ -36,24 +36,6 @@ const Achievements = lazy(() => import("@/pages/Achievements"));
 const History = lazy(() => import("@/pages/History"));
 
 /**
- * Manages global visual effects and themes driven by Integration settings.
- */
-function VisualEffectManager() {
-  const { config } = useIntegration();
-
-  useEffect(() => {
-    const theme = config.theme || "default";
-    if (theme === "default") {
-      document.documentElement.removeAttribute("data-theme");
-    } else {
-      document.documentElement.setAttribute("data-theme", theme);
-    }
-  }, [config.theme]);
-
-  return null;
-}
-
-/**
  * Syncs the i18n language when the integration language setting changes.
  */
 function LanguageManager() {
@@ -155,17 +137,12 @@ function AppRouter() {
 function App() {
   useEffect(() => {
     document.documentElement.classList.add("dark");
-    const saved = localStorage.getItem("ha-theme") as AppTheme | null;
-    if (saved && saved !== "default") {
-      document.documentElement.setAttribute("data-theme", saved);
-    }
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ProfileProvider>
         <IntegrationProvider>
-          <VisualEffectManager />
           <LanguageManager />
           <ScrollRestoration />
           <TooltipProvider>
