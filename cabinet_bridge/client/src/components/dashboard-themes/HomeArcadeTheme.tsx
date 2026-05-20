@@ -469,30 +469,8 @@ export default function HomeArcadeTheme() {
             </div>
           </div>
 
-          {/* Search + Sort row */}
+          {/* Sort row */}
           <div className="px-4 pb-3 flex gap-2 items-center">
-            <div className="relative flex-1">
-              <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
-              <input
-                ref={searchRef as any}
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search games..."
-                className="w-full pl-8 pr-6 h-9 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 text-xs font-mono focus:outline-none focus:border-primary/50 transition-colors"
-                aria-label="Search games"
-                onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); searchRef.current?.blur(); } }}
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
-                >
-                  <X className="size-3" />
-                </button>
-              )}
-            </div>
             {/* Sort chips â€” larger touch targets on mobile */}
             <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-1.5 flex-shrink-0">
               {(["recent", "title", "year", "rating", "plays"] as const).map((o) => (
