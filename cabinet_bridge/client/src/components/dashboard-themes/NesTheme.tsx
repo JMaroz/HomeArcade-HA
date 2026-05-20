@@ -4,14 +4,17 @@ import { useQuery } from "@tanstack/react-query";
 import { uploadedRomToGame, GAMES, SYSTEMS, type Game, type System } from "@/data/library";
 import { MobileTopBar } from "@/components/MobileNav";
 import { apiUrl } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useIntegration } from "@/lib/integration";
 import { useGameDialogState } from "@/lib/useGameDialogState";
+import { GameDetailDialog } from "@/components/GameDetailDialog";
 import type { UploadedRom, GameCollectionWithItems } from "@shared/schema";
 import { Search, LayoutGrid, X, Star, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { useGridNav } from "@/lib/useGridNav";
+import { useToast } from "@/hooks/use-toast";
 
 export default function NesTheme() {
   const { config } = useIntegration();
@@ -38,6 +41,15 @@ export default function NesTheme() {
     });
   }, [allGames, searchQuery, sort]);
 
+  const { toast } = useToast();
+  const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({ queryKey: ["/api/collections"] });
+
+  const {
+    selectedGame: dialogGame, openGame, closeGame,
+    handleToggleFav, handleRate,
+    handleCreateCollection, handleToggleCollection, handleSetStatus,
+  } = useGameDialogState();
+
   const activeGame = filteredGames[activeGameIdx];
 
   const gridRef = useRef<HTMLDivElement>(null);
@@ -48,6 +60,10 @@ export default function NesTheme() {
     onActivate: (idx) => {
       const game = filteredGames[idx];
       if (game) openGame(game);
+    },
+    onFav: (idx) => {
+      const game = filteredGames[idx];
+      if (game) handleToggleFav(game);
     },
     onFocusChange: (idx) => idx >= 0 && setActiveGameIdx(idx)
   });

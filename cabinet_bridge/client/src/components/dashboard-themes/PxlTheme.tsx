@@ -51,6 +51,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useGridNav } from "@/lib/useGridNav";
 import { WarpLinkDialog } from "@/components/WarpLinkDialog";
+import { GameDetailDialog } from "@/components/GameDetailDialog";
 
 // ─── PXL Sub-components ───────────────────────────────────────────────────────
 
@@ -138,6 +139,10 @@ export default function PxlTheme() {
     openGame,
     closeGame,
     handleToggleFav,
+    handleRate,
+    handleCreateCollection,
+    handleToggleCollection,
+    handleSetStatus,
   } = useGameDialogState();
 
   const allGames = useMemo(() => [...roms.map(uploadedRomToGame), ...GAMES], [roms]);
@@ -171,14 +176,18 @@ export default function PxlTheme() {
       const game = filteredGames[idx];
       if (game) openGame(game);
     },
-    onFocusChange: (idx) => idx >= 0 && setActiveGameIdx(idx)
+    onFav: (idx) => {
+      const game = filteredGames[idx];
+      if (game) handleToggleFav(game);
+    },
+    onFocusChange: (idx) => { if (idx >= 0) setActiveGameIdx(idx); }
   });
 
   useEffect(() => { if (activeGameIdx !== focusedIndex) setFocusedIndex(activeGameIdx); }, [activeGameIdx, focusedIndex]);
 
   const { data: raProgress } = useQuery({
     queryKey: ["ra-progress", activeGame?.raGameId],
-    queryFn: async () => raGameId ? (await fetch(apiUrl(`/api/retroachievements/user-progress/${raGameId}`))).json() : null,
+    queryFn: async () => activeGame?.raGameId ? (await fetch(apiUrl(`/api/retroachievements/user-progress/${activeGame.raGameId}`))).json() : null,
     enabled: !!activeGame?.raGameId && !!config.raUsername,
   });
 
@@ -284,6 +293,11 @@ export default function PxlTheme() {
             game={dialogGame}
             onClose={closeGame}
             onToggleFav={handleToggleFav}
+            onRate={handleRate}
+            collections={collections}
+            onCreateCollection={handleCreateCollection}
+            onToggleCollection={handleToggleCollection}
+            onSetStatus={handleSetStatus}
           />
         </div>
       </div>

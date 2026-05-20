@@ -50,6 +50,8 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useGridNav } from "@/lib/useGridNav";
+import Fuse from "fuse.js";
+import { useLocation } from "wouter";
 import { WarpLinkDialog } from "@/components/WarpLinkDialog";
 
 // â”€â”€â”€ sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -500,7 +502,7 @@ export default function HomeArcadeTheme() {
                   onClick={() => setSort(o)}
                   className={`min-w-[44px] min-h-[36px] px-3 py-2 rounded-lg font-mono text-[11px] uppercase tracking-wider transition-all ${sort === o ? "bg-primary text-white" : "text-white/30 hover:text-white"}`}
                 >
-                  {o === "recent" ? "Recent" : o === "az" ? "A-Z" : o.charAt(0).toUpperCase() + o.slice(1)}
+                  {o === "recent" ? "Recent" : o.charAt(0).toUpperCase() + o.slice(1)}
                 </button>
               ))}
             </div>
