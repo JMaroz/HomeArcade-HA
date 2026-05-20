@@ -42,6 +42,7 @@ import {
   Gamepad,
   List,
   Search,
+  Upload,
 } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useTranslation } from "react-i18next";
@@ -376,6 +377,19 @@ export default function HomeArcadeTheme() {
         <MobileTopBar onScannerOpen={() => setShowScanner(true)} />
       </div>
 
+      {/* Scraper credentials nudge — shown when ROMs exist but no scraper key is set */}
+      {roms.length > 0 && !config.ssUserId && !config.tgdbApiKey && (
+        <div className="shrink-0 z-20 flex items-center justify-between gap-3 px-4 py-2.5 bg-primary/10 border-b border-primary/20">
+          <div className="flex items-center gap-2 min-w-0">
+            <ImagePlus className="size-3.5 text-primary shrink-0" />
+            <span className="text-[11px] font-mono text-white/70 truncate">Add ScreenScraper credentials to fetch box art</span>
+          </div>
+          <Link href="/settings" className="shrink-0 text-[10px] font-black uppercase tracking-wider text-primary hover:text-primary/80 transition-colors">
+            Set up →
+          </Link>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col min-h-0 relative z-10">
 
         {/* Recently Played â€” desktop only, hidden on mobile */}
@@ -514,15 +528,35 @@ export default function HomeArcadeTheme() {
                 </div>
               </div>
               <div className="text-center">
-                <div className="font-display text-sm font-black uppercase tracking-widest">No games yet</div>
-                <div className="text-xs mt-1.5 text-white/20 max-w-[200px]">Upload ROMs to get started, or scan a Warp Link to play from your PC</div>
+                {searchQuery.startsWith("filter:") ? (
+                  <>
+                    <div className="font-display text-sm font-black uppercase tracking-widest">
+                      No {searchQuery.slice(7).toUpperCase()} ROMs yet
+                    </div>
+                    <div className="text-xs mt-1.5 text-white/20 max-w-[220px]">
+                      Upload {searchQuery.slice(7).toUpperCase()} ROM files to see them here
+                    </div>
+                    <Link href="/settings" className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/20 border border-primary/30 text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/30 transition-colors">
+                      <Upload className="size-3" /> Upload ROMs
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <div className="font-display text-sm font-black uppercase tracking-widest">No games yet</div>
+                    <div className="text-xs mt-1.5 text-white/20 max-w-[200px]">Upload ROMs to get started, or scan a Warp Link to play from your PC</div>
+                    <Link href="/settings" className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/20 border border-primary/30 text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/30 transition-colors">
+                      <Upload className="size-3" /> Upload your first ROM
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           ) : filteredGames.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-white/30">
               <Search className="size-8 mb-3" />
               <div className="font-display text-sm font-black uppercase tracking-widest">No results</div>
-              <div className="text-xs mt-1">Try a different search term</div>
+              <div className="text-xs mt-1">Try a different search term or clear the filter</div>
+              <button type="button" onClick={() => setSearchQuery("")} className="mt-3 px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/40 text-xs font-mono uppercase tracking-wider hover:bg-white/10 transition-colors">Clear filter</button>
             </div>
           ) : (
              <div className="grid gap-2.5 sm:gap-4 md:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">

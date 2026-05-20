@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.33.1** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -164,6 +164,31 @@ Systems are listed in release-date order.
 
 ### v2.22.1
 - **Official Rebranding** — Fully transitioned from PlayHub to **HomeArcade**.
+
+---
+
+## Troubleshooting & FAQ
+
+**Box art isn't showing for my games.**
+You need free ScreenScraper credentials. Go to **Settings → Services** and enter your ScreenScraper username and password. Once saved, open any game's detail card and tap **Refresh Art**, or use **Scrape All ROMs** to batch-update your library.
+
+**The emulator shows a blank screen or "Blocked by response" error.**
+This is a browser security header conflict common in some Home Assistant setups. HomeArcade explicitly disables COOP/COEP headers to prevent this. If you still see it, try opening HomeArcade in a standalone browser tab instead of the HA sidebar panel.
+
+**My ROM won't launch — I see a red error message.**
+Check that the HomeArcade add-on is running in Home Assistant. If it restarted recently, wait 10–15 seconds and try again. For PS1/PS2/GBA/SegaCD games, ensure you have uploaded the correct BIOS file in **Settings → Health**.
+
+**Warp Link QR code fails or says "Warp Failed".**
+Make sure you are logged into Home Assistant in your phone's browser before scanning. The warp link contains your HA session — if you're not logged in, it will return a 401 error. Scan the code from within the HA Companion App for best results.
+
+**I uploaded a ROM but it doesn't appear in the library.**
+Try pulling down to refresh the page. If it still doesn't appear, check the add-on logs in Home Assistant for upload errors. Very large files (PS2 ISOs) may take a minute to process.
+
+**How do I enable Kiosk Mode?**
+Kiosk Mode hides the Settings, History, and Achievements navigation links — ideal for a shared TV or arcade cabinet. Enable it in **Settings → Library** by toggling the Kiosk Mode switch. To exit kiosk mode, navigate directly to `/#/settings` in the browser.
+
+**The sidebar doesn't appear on mobile.**
+On mobile, the sidebar is a slide-out panel. Tap the hamburger menu button (☰) at the top of any secondary page (Settings, History, Achievements) to open it.
 
 ---
 

@@ -1,30 +1,54 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, Gamepad2, Play, ArrowRight, BookOpen } from "lucide-react";
+import { Upload, Gamepad2, Play, ArrowRight, Image, Trophy, Wifi, ChevronLeft } from "lucide-react";
+import { Link } from "wouter";
 
-const STORAGE_KEY = "ha-onboarded";
+const STORAGE_KEY = "ha-onboarded-v2";
 
 const STEPS = [
   {
-    icon: Upload,
-    title: "Upload your ROMs",
-    body: "Drag-and-drop or click the upload area on the library page. ZIP files and most common ROM formats are supported.",
+    icon: Gamepad2,
+    title: "Welcome to HomeArcade",
+    subtitle: "Your retro game library, right inside Home Assistant.",
+    body: "HomeArcade turns your HA sidebar into a full retro gaming hub. Upload ROMs, browse with rich artwork, and launch games in your browser — no extra software needed.",
+    cta: "Let's get started",
   },
   {
-    icon: BookOpen,
-    title: "Scrape metadata",
-    body: "Open any game's detail card and hit Scrape to pull cover art, descriptions, and ratings from ScreenScraper automatically.",
+    icon: Upload,
+    title: "Step 1 — Upload your ROMs",
+    subtitle: "Get your games into the library.",
+    body: "Go to Settings → Library and use the upload area to add your ROM files. ZIP files and most common formats are supported. Large files (PS2 ISOs, etc.) are streamed directly to disk.",
+    cta: "Next",
+  },
+  {
+    icon: Image,
+    title: "Step 2 — Set up box art scraping",
+    subtitle: "Make your library look great.",
+    body: "HomeArcade can automatically fetch cover art, descriptions, and ratings. Go to Settings → Services and add your free ScreenScraper credentials. Without this, games will show placeholder art.",
+    cta: "Next",
+    action: { label: "Go to Settings →", href: "/settings" },
   },
   {
     icon: Play,
-    title: "Launch and play",
-    body: "Click a game card, then Launch. The emulator runs right here in your browser — no extra software needed.",
+    title: "Step 3 — Play your games",
+    subtitle: "You're ready to go.",
+    body: "Tap any game card to open its details, then hit Play Now. The emulator runs right here in your browser. Use Warp Link (QR button) to seamlessly hand off a game from your PC to your phone.",
+    cta: "Start playing",
+  },
+  {
+    icon: Trophy,
+    title: "Optional — RetroAchievements",
+    subtitle: "Track your progress across games.",
+    body: "Connect your free RetroAchievements account in Settings → Services to unlock achievement tracking, leaderboards, and progress stats across your entire library.",
+    cta: "Done",
+    skip: "Skip for now",
   },
 ];
 
 export function WelcomeDialog({ hasRoms }: { hasRoms: boolean }) {
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
     if (!hasRoms && !localStorage.getItem(STORAGE_KEY)) {
@@ -35,58 +59,93 @@ export function WelcomeDialog({ hasRoms }: { hasRoms: boolean }) {
   const dismiss = () => {
     localStorage.setItem(STORAGE_KEY, "1");
     setOpen(false);
+    setStep(0);
   };
+
+  const next = () => {
+    if (step < STEPS.length - 1) {
+      setStep(step + 1);
+    } else {
+      dismiss();
+    }
+  };
+
+  const current = STEPS[step];
+  const Icon = current.icon;
+  const isLast = step === STEPS.length - 1;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) dismiss(); }}>
-      <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-card border-card-border">
-        {/* Header */}
-        <div className="px-8 pt-8 pb-6 border-b border-border text-center">
-          <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 mb-4">
-            <Gamepad2 className="size-7 text-primary" />
-          </div>
-          <DialogTitle className="font-display text-xl font-bold">
-            Welcome to HomeArcade
-          </DialogTitle>
-          <DialogDescription className="mt-1 text-sm text-muted-foreground">
-            Your retro game library, right inside Home Assistant.
-          </DialogDescription>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-card border-card-border">
+        {/* Progress dots */}
+        <div className="flex items-center justify-center gap-1.5 pt-6 pb-2">
+          {STEPS.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setStep(i)}
+              className={`rounded-full transition-all duration-200 ${
+                i === step
+                  ? "w-5 h-1.5 bg-primary"
+                  : i < step
+                  ? "w-1.5 h-1.5 bg-primary/40"
+                  : "w-1.5 h-1.5 bg-border"
+              }`}
+              aria-label={`Go to step ${i + 1}`}
+            />
+          ))}
         </div>
 
-        {/* Steps */}
-        <div className="px-8 py-6 space-y-5">
-          {STEPS.map((step, i) => {
-            const Icon = step.icon;
-            return (
-              <div key={i} className="flex gap-4">
-                <div className="shrink-0 flex items-center justify-center size-9 rounded-xl bg-primary/10 text-primary">
-                  <Icon className="size-4" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-foreground">{step.title}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{step.body}</div>
-                </div>
-              </div>
-            );
-          })}
+        {/* Content */}
+        <div className="px-8 pt-4 pb-2 text-center">
+          <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 mb-4">
+            <Icon className="size-7 text-primary" />
+          </div>
+          <DialogTitle className="font-display text-xl font-bold leading-tight">
+            {current.title}
+          </DialogTitle>
+          <DialogDescription className="mt-1 text-sm text-muted-foreground font-medium">
+            {current.subtitle}
+          </DialogDescription>
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed text-left">
+            {current.body}
+          </p>
         </div>
 
         {/* Footer */}
-        <div className="px-8 pb-8 flex flex-col gap-2">
-          <Button className="w-full gap-2" onClick={dismiss}>
-            Get started <ArrowRight className="size-4" />
+        <div className="px-8 pb-8 pt-4 flex flex-col gap-2">
+          {current.action ? (
+            <Link href={current.action.href}>
+              <Button variant="outline" className="w-full gap-2" onClick={dismiss}>
+                {current.action.label}
+              </Button>
+            </Link>
+          ) : null}
+
+          <Button className="w-full gap-2" onClick={next}>
+            {current.cta}
+            {!isLast && <ArrowRight className="size-4" />}
           </Button>
-          <p className="text-center text-[11px] text-muted-foreground">
-            Need help?{" "}
-            <a
-              href="https://github.com/GlerschNersch/token/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground"
+
+          {current.skip && (
+            <button
+              type="button"
+              onClick={dismiss}
+              className="text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors"
             >
-              Open an issue on GitHub
-            </a>
-          </p>
+              {current.skip}
+            </button>
+          )}
+
+          {step > 0 && (
+            <button
+              type="button"
+              onClick={() => setStep(step - 1)}
+              className="flex items-center justify-center gap-1 text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="size-3" /> Back
+            </button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

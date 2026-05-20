@@ -3,6 +3,7 @@
  * Tab content is split into focused sub-components under ./settings/.
  */
 import React from "react";
+import { Link } from "wouter";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,6 +39,9 @@ export default function Settings() {
       <main className="flex-1 min-w-0 flex flex-col bg-background/30 overflow-y-auto overscroll-y-contain">
         <div className="flex items-center gap-2 px-4 h-14 border-b border-border shrink-0 md:hidden">
           <SidebarTrigger />
+          <Link href="/" className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors ml-1">
+            <Gamepad2 className="size-3.5" /> Dashboard
+          </Link>
         </div>
 
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 space-y-8 pb-24 lg:pb-12">

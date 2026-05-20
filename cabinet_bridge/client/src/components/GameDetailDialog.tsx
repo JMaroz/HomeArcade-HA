@@ -219,17 +219,22 @@ export function GameDetailDialog({
       try {
         const probe = await fetch(playerUrl, { method: "HEAD" });
         if (!probe.ok) {
-          const msg = probe.status === 404
-            ? "ROM file not found on the server. It may have been deleted."
-            : `Server returned ${probe.status}. Try restarting the HomeArcade add-on.`;
-          toast({ title: "Couldn't launch game", description: msg, variant: "destructive" });
+          const msg =
+            probe.status === 404
+              ? "This ROM file is missing from the server. It may have been deleted. Try re-uploading it."
+              : probe.status === 403
+              ? "Access denied. Make sure you are logged into Home Assistant."
+              : probe.status >= 500
+              ? "The HomeArcade server encountered an error. Try restarting the add-on from Home Assistant."
+              : `Launch failed (error ${probe.status}). Try restarting the HomeArcade add-on.`;
+          toast({ title: "Couldn't start the game", description: msg, variant: "destructive" });
           setLaunching(false);
           return;
         }
       } catch {
         toast({
-          title: "Couldn't reach server",
-          description: "HomeArcade server is not responding. Check that the add-on is running.",
+          title: "Can't reach HomeArcade",
+          description: "The add-on isn't responding. Check that HomeArcade is running in Home Assistant, then try again.",
           variant: "destructive",
         });
         setLaunching(false);
