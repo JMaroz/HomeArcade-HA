@@ -4,6 +4,7 @@ import { GAMES } from "@/data/library";
 import type { GameCollectionWithItems, UploadedRom } from "@shared/schema";
 import { Wordmark } from "@/components/Logo";
 import { useQuery } from "@tanstack/react-query";
+import { apiUrl } from "@/lib/queryClient";
 import { filterToPath, filterKey, type Filter } from "@/lib/filter";
 import {
   LayoutDashboard,
