@@ -506,6 +506,13 @@ export function registerRomRoutes(app: Express) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     // Short cache: the HTML shell rarely changes but we don't want stale BIOS errors
     res.setHeader("Cache-Control", "private, max-age=60");
+    // Explicitly override any proxy-injected isolation headers that would block the emulator.
+    // These must be set on the player page itself, not just globally, because HA ingress
+    // may inject its own COOP/COEP headers that override the global middleware.
+    res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
+    res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.removeHeader("X-Frame-Options");
     const returnTo = typeof req.query.return === "string" ? req.query.return : "";
     res.send(renderEmulatorPage({ title: rom.title, returnTo, romHash: rom.romHash ?? null }));
   });
@@ -540,6 +547,10 @@ export function registerRomRoutes(app: Express) {
     // Bootstrap content is stable for a given ROM+profile combination;
     // a short cache avoids regenerating it on every page reload.
     res.setHeader("Cache-Control", "private, max-age=300");
+    // Ensure isolation headers cannot be injected by HA ingress proxy
+    res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
+    res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
     const coreBios = REQUIRED_BIOS[core] || [];
     let biosUrl: string | null = null;
