@@ -1,3 +1,9 @@
+## 2.34.3 – 2026-05-20
+
+- **Fix**: **QR Scanner Stability** — Fixed a re-render loop in the WarpScanner component that caused the camera to flicker and fail on some devices. Added secure context (HTTPS) validation and better error feedback when camera access is denied.
+- **UI**: **Removed All Themes** — Removed all legacy UI themes (PXL, NES, etc.) and locked the application to the core "HomeArcade" dark aesthetic for a consistent and polished experience.
+- **Cleanup**: **Codebase Optimization** — Deleted unused theme components and simplified global CSS by removing hundreds of lines of theme-specific variables and overrides.
+
 ## 2.24.56 – 2026-05-19
 
 - **Feature**: **New Retro Console Icons** — Replaced Wikimedia Commons hardware photos with high-quality, transparent PNG illustrations from the `KyleBing/retro-game-console-icons` repository. Provides a much cleaner and more cohesive look for the system tiles.

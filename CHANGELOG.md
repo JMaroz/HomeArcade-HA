@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.34.3] — 2026-05-20
+
+### Fix: QR Scanner Stability & UI Consolidation
+
+- **QR Scanner Refactor** — Fixed a re-render loop that caused the camera to flicker and fail on some devices. Added secure context (HTTPS) validation and better error feedback when camera access is denied.
+- **Removed UI Themes** — Removed all legacy UI themes (PXL, NES, etc.) and locked the application to the core "HomeArcade" dark aesthetic for a more consistent and polished experience.
+- **Codebase Cleanup** — Deleted unused theme components and simplified global CSS by removing ~500 lines of theme-specific variables.
+
+---
+
 ## [2.32.0] — 2026-05-20
 
 ### Feature: Unified Sidebar Navigation
