@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.32.0] — 2026-05-20
+
+### Feature: Unified Sidebar Navigation
+
+- **Full Sidebar Wired In** — Replaced the old `DesktopSidebar` with the full-featured `Sidebar.tsx` component across all secondary pages (Settings, History, Achievements). The sidebar includes library filters, collections, profile switcher, and footer nav links.
+- **Responsive by Default** — On desktop (`md+`) the sidebar renders as a persistent collapsible panel with icon-only collapsed mode. On mobile it automatically switches to a slide-out `Sheet` triggered by a hamburger button.
+- **Removed Legacy Nav** — Deleted the old `DesktopSidebar.tsx` and removed all remaining `MobileBottomNav` and `NavigationDrawer` references, consolidating navigation into a single component.
+
+---
+
 ## [2.31.0] — 2026-05-20
 
 ### Cleanup: Remove Friends/Social Hub & Fix Dashboard Routing

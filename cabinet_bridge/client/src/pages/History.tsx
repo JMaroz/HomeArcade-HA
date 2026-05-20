@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { SYSTEMS } from "@/data/library";
 import { formatRelative, useIntegration } from "@/lib/integration";
-import { MobileTopBar } from "@/components/MobileNav";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { 
   BarChart, 
   Bar, 
@@ -125,7 +125,9 @@ export default function History() {
 
   return (
     <div className="flex-1 min-w-0 flex flex-col h-full bg-background/30 overflow-hidden">
-      <MobileTopBar />
+      <div className="flex items-center gap-2 px-4 h-14 border-b border-border shrink-0 md:hidden">
+        <SidebarTrigger />
+      </div>
 
       <main className="flex-1 overflow-y-auto overscroll-y-contain pb-24 lg:pb-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-10">

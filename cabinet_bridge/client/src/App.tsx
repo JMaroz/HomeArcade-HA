@@ -6,7 +6,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationProvider, useIntegration } from "@/lib/integration";
-import { DesktopSidebar } from "@/components/DesktopSidebar";
+import { Sidebar } from "@/components/Sidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import i18n from "./lib/i18n";
 import Dashboard from "@/pages/Dashboard";
 import { useTranslation } from "react-i18next";
@@ -100,19 +101,17 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 
 /**
  * Shared layout shell used by all main pages.
- * - Desktop (md+): fixed left sidebar + content area + bottom nav hidden
- * - Mobile: no sidebar, bottom nav bar visible + top bar from children
+ * Uses the full Sidebar component which handles both desktop (collapsible)
+ * and mobile (slide-out Sheet) automatically via SidebarProvider.
  */
 function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-full">
-      {/* Desktop sidebar — hidden on mobile */}
-      <DesktopSidebar />
-      {/* Main content — offset on desktop, full-width on mobile */}
-      <div className="flex-1 md:ml-80 flex flex-col min-h-full">
+    <SidebarProvider>
+      <Sidebar />
+      <SidebarInset className="flex flex-col min-h-full overflow-hidden">
         {children}
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { MobileTopBar } from "@/components/MobileNav";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,9 @@ export default function Settings() {
   return (
     <div className="flex h-full">
       <main className="flex-1 min-w-0 flex flex-col bg-background/30 overflow-y-auto overscroll-y-contain">
-        <MobileTopBar />
+        <div className="flex items-center gap-2 px-4 h-14 border-b border-border shrink-0 md:hidden">
+          <SidebarTrigger />
+        </div>
 
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 space-y-8 pb-24 lg:pb-12">
           {/* Header */}
