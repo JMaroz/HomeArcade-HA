@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
+﻿import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import Fuse from "fuse.js";
 import { useQuery } from "@tanstack/react-query";
 import { uploadedRomToGame, GAMES, SYSTEMS, type Game, type System, type SystemId } from "@/data/library";
@@ -55,7 +55,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useGridNav } from "@/lib/useGridNav";
 import { WarpLinkDialog } from "@/components/WarpLinkDialog";
 
-// ─── sub-components ──────────────────────────────────────────────────────────
+// â”€â”€â”€ sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function SaveSlotCard({
   slot,
@@ -209,7 +209,7 @@ function CheatRow({
   );
 }
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function fmtHoursShort(minutes: number) {
   const h = minutes / 60;
   if (h < 1) return `${minutes}m`;
@@ -236,13 +236,13 @@ export default function HomeArcadeTheme() {
     handleSetStatus,
   } = useGameDialogState();
 
-  // ── All Games (demo + uploaded) ───────────────────────────────────────────────
+  // â”€â”€ All Games (demo + uploaded) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const allGames = useMemo(() => {
     const uploaded = roms.map(uploadedRomToGame);
     return [...uploaded, ...GAMES];
   }, [roms]);
 
-  // ── Search + Sort ─────────────────────────────────────────────────────────
+  // â”€â”€ Search + Sort â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<"recent" | "title" | "year" | "rating" | "plays">("recent");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -299,38 +299,11 @@ export default function HomeArcadeTheme() {
   const [activeGameIdx, setActiveGameIdx] = useState(0);
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
-  const [recentlyPlayedCollapsed, setRecentlyPlayedCollapsed] = useState(false);
-  const { openScanner: triggerFromDrawer } = useScannerContext();
-
-  // Global scanner trigger from NavigationDrawer
-  useEffect(() => {
-    if (triggerFromDrawer) {
-      setShowScanner(true);
-    }
-  }, [triggerFromDrawer]);
-
-  // Handle ?scan=warp query param (mobile scanner shortcut)
-  // URL format: /#/?scan=warp — parse hash for query params since app uses hash routing
-  useEffect(() => {
-    function checkHash() {
-      const rawHash = window.location.hash; // e.g. "#/?scan=warp"
-      if (!rawHash) return;
-      const hashPath = rawHash.replace("#", "");
-      const params = new URLSearchParams(hashPath.split("?")[1] || "");
-      if (params.get("scan") === "warp") {
-        setShowScanner(true);
-        window.history.replaceState({}, "", window.location.pathname + window.location.hash.split("?")[0]);
-      }
-    }
-    checkHash();
-    window.addEventListener("hashchange", checkHash);
-    return () => window.removeEventListener("hashchange", checkHash);
-  }, []);
   const [showWarpDialog, setShowWarpDialog] = useState(false);
 
   const activeGame = filteredGames[activeGameIdx];
 
-  // ── Grid Navigation (Keyboard + Gamepad) ───────────────────────────────────
+  // â”€â”€ Grid Navigation (Keyboard + Gamepad) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const gridRef = useRef<HTMLDivElement>(null);
   const { focusedIndex, setFocusedIndex } = useGridNav({
     count: filteredGames.length,
@@ -360,7 +333,7 @@ export default function HomeArcadeTheme() {
     if (activeGameIdx !== focusedIndex) setFocusedIndex(activeGameIdx);
   }, [activeGameIdx, focusedIndex, setFocusedIndex]);
 
-  // ── Management Logic ─────────────────────────────────────────────────────────
+  // â”€â”€ Management Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [scrapingArt, setScrapingArt] = useState(false);
   const [cheatDesc, setCheatDesc] = useState("");
   const [cheatCode, setCheatCode] = useState("");
@@ -489,7 +462,7 @@ export default function HomeArcadeTheme() {
     await refetchSlots();
   };
 
-  // ── Info Panel Sections ──────────────────────────────────────────────────────
+  // â”€â”€ Info Panel Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [activeTab, setActiveTab] = useState<"info" | "cheats" | "saves" | "meta">("info");
 
   const [time, setTime] = useState(new Date());
@@ -529,7 +502,7 @@ export default function HomeArcadeTheme() {
         )}
       </AnimatePresence>
 
-      {/* Mobile top bar — QR scanner + Settings */}
+      {/* Mobile top bar â€” QR scanner + Settings */}
       <div className="shrink-0 xl:hidden">
         <MobileTopBar />
       </div>
@@ -594,7 +567,7 @@ export default function HomeArcadeTheme() {
 
       <div className="flex-1 flex flex-col min-h-0 relative z-10">
 
-        {/* Recently Played — desktop only, hidden on mobile */}
+        {/* Recently Played â€” desktop only, hidden on mobile */}
         {recentlyPlayed.length > 0 && !searchQuery && (
           <div className="shrink-0 border-t border-white/5 hidden sm:block">
             <button
@@ -640,7 +613,7 @@ export default function HomeArcadeTheme() {
           </div>
         )}
 
-        {/* Browse Systems + Search + Sort — mobile header strip */}
+        {/* Browse Systems + Search + Sort â€” mobile header strip */}
         <div className="shrink-0 border-b border-white/5">
           {/* Systems carousel */}
           <div className="px-4 pt-4 pb-2">
@@ -658,7 +631,7 @@ export default function HomeArcadeTheme() {
                     key={system.id}
                     type="button"
                     onClick={() => setSearchQuery("filter:" + system.id)}
-                    className="snap-start shrink-0 w-28 aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 group hover:border-white/40 hover:scale-105 transition-all duration-200 relative"
+                    className={`snap-start shrink-0 w-28 aspect-[4/3] rounded-2xl overflow-hidden border group hover:scale-105 transition-all duration-200 relative system-border-${system.id}`}
                     style={{ background: `linear-gradient(135deg, hsl(${system.art[0]}) 0%, hsl(${system.art[1]}) 100%)` }}
                   >
                     {system.image && (
@@ -711,7 +684,7 @@ export default function HomeArcadeTheme() {
                 </button>
               )}
             </div>
-            {/* Sort chips — larger touch targets on mobile */}
+            {/* Sort chips â€” larger touch targets on mobile */}
             <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-1.5 flex-shrink-0">
               {(["recent", "title", "year", "rating", "plays"] as const).map((o) => (
                 <button
@@ -738,7 +711,7 @@ export default function HomeArcadeTheme() {
           </div>
         </div>
 
-        {/* All Games Grid — 5-col on mobile portrait, 6-col landscape, scales up on desktop */}
+        {/* All Games Grid â€” 5-col on mobile portrait, 6-col landscape, scales up on desktop */}
         <div
           ref={gridRef}
           className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 scrollbar-none overscroll-y-contain pb-24 lg:pb-8"
@@ -765,7 +738,7 @@ export default function HomeArcadeTheme() {
               <div className="text-xs mt-1">Try a different search term</div>
             </div>
           ) : (
-             <div className="grid gap-2.5 sm:gap-4 md:gap-5 grid-cols-[repeat(auto-fill,minmax(85px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(100px,1fr))]">
+             <div className="grid gap-2.5 sm:gap-4 md:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                 {filteredGames.map((game, i) => {
                   const isActive = i === activeGameIdx;
                   return (
@@ -773,7 +746,7 @@ export default function HomeArcadeTheme() {
                       key={game.id}
                       data-testid={`card-game-${game.id}`}
                       animate={{ scale: isActive ? 1.06 : 1 }}
-                      whileHover={{ scale: 1.03 }}
+                      whileHover={{ scale: 1.06, y: -4 }}
                       className={`relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer group transition-all duration-300 ${
                         isActive
                           ? "ring-2 ring-primary shadow-[0_0_30px_rgba(var(--primary),0.25)] z-10"
