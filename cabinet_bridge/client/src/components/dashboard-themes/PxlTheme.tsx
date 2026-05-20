@@ -144,8 +144,6 @@ export default function PxlTheme() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<"recent" | "title" | "year">("recent");
   const [activeGameIdx, setActiveGameIdx] = useState(0);
-  const [showMobileDetails, setShowMobileDetails] = useState(false);
-  const [activeTab, setActiveTab] = useState<"info" | "cheats" | "saves">("info");
 
   const filteredGames = useMemo(() => {
     let list = allGames;
@@ -168,15 +166,10 @@ export default function PxlTheme() {
   const { focusedIndex, setFocusedIndex } = useGridNav({
     count: filteredGames.length,
     gridRef,
-    disabled: !!dialogGame || (window.innerWidth < 1280 && showMobileDetails),
+    disabled: !!dialogGame,
     onActivate: (idx) => {
-      if (activeGameIdx === idx) {
-        const game = filteredGames[idx];
-        window.location.href = apiUrl(`/api/roms/${game.romId}/player?return=${encodeURIComponent(window.location.href)}`);
-      } else {
-        setActiveGameIdx(idx);
-        if (window.innerWidth < 1280) setShowMobileDetails(true);
-      }
+      const game = filteredGames[idx];
+      if (game) openGame(game);
     },
     onFocusChange: (idx) => idx >= 0 && setActiveGameIdx(idx)
   });
@@ -262,8 +255,7 @@ export default function PxlTheme() {
                   <div
                     key={game.id}
                     onClick={() => {
-                      setActiveGameIdx(i);
-                      if (window.innerWidth < 1280) setShowMobileDetails(true);
+                      openGame(game);
                     }}
                     className={`relative aspect-[3/4] cursor-pointer transition-transform duration-75 active:scale-95 ${isActive ? "z-10" : ""}`}
                   >
@@ -288,111 +280,11 @@ export default function PxlTheme() {
             </div>
           </div>
 
-          {/* Side Panel (Retro Window) */}
-          <AnimatePresence>
-            {(activeGame && (window.innerWidth >= 1280 || showMobileDetails)) && (
-              <motion.div
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                transition={{ type: "spring", damping: 30, stiffness: 200 }}
-                className="fixed inset-0 sm:relative sm:inset-auto sm:w-[400px] 2xl:w-[450px] z-[55] flex flex-col"
-              >
-                <PxlWindow 
-                  title={`GAME_INFO: ${activeGame.title}`} 
-                  onClose={() => setShowMobileDetails(false)}
-                  className="h-full shadow-[8px_8px_0px_rgba(0,0,0,0.3)]"
-                >
-                  <div className="space-y-6">
-                    {/* Art Header */}
-                    <div className="pixel-border bg-black aspect-video flex items-center justify-center overflow-hidden">
-                      {activeGame.artUrl ? (
-                        <img src={activeGame.artUrl} className="w-full h-full object-cover pixel-rendering" alt="" />
-                      ) : (
-                        <div className="text-white/20 uppercase font-bold text-[10px]">No Video Signal</div>
-                      )}
-                    </div>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="pixel-border-sm bg-white/40 p-3">
-                        <div className="text-[8px] font-bold text-black/40 uppercase mb-1">Status</div>
-                        <div className="text-[10px] font-bold text-green-700">ONLINE</div>
-                      </div>
-                      <div className="pixel-border-sm bg-white/40 p-3">
-                        <div className="text-[8px] font-bold text-black/40 uppercase mb-1">Plays</div>
-                        <div className="text-[10px] font-bold text-black/80">{Math.floor((activeGame.minutesPlayed || 0) / 60)}H</div>
-                      </div>
-                    </div>
-
-                    {/* Tabs */}
-                    <div className="flex gap-1">
-                      {(["info", "cheats", "saves"] as const).map(t => (
-                        <button
-                          key={t}
-                          onClick={() => setActiveTab(t)}
-                          className={`pixel-btn flex-1 py-1 text-[9px] font-bold uppercase ${activeTab === t ? "bg-primary text-white shadow-none translate-y-px" : ""}`}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="min-h-[200px]">
-                      {activeTab === "info" && (
-                        <div className="space-y-4 animate-in fade-in duration-200">
-                          <p className="text-[11px] leading-relaxed font-bold text-black/70">
-                            {activeGame.description || "NO METADATA RETRIEVED FROM DATABASE."}
-                          </p>
-                          {raProgress && (
-                            <PxlStatBar 
-                              label="Achievements" 
-                              value={raProgress.NumAwarded} 
-                              max={raProgress.NumAchievements} 
-                              color="bg-yellow-400"
-                            />
-                          )}
-                        </div>
-                      )}
-
-                      {activeTab === "saves" && (
-                        <div className="grid grid-cols-2 gap-3 animate-in fade-in duration-200">
-                           {/* Add Save Slot Logic here if needed */}
-                           <div className="col-span-2 text-center py-8 border-2 border-dashed border-black/10 text-[9px] font-bold text-black/40 uppercase tracking-widest">
-                             System Storage Ready
-                           </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col gap-3 pt-4 border-t-2 border-black/10">
-                      <button
-                        onClick={() => {
-                          const returnTo = encodeURIComponent(window.location.href);
-                          window.location.href = apiUrl(`/api/roms/${activeGame.romId}/player?return=${returnTo}`);
-                        }}
-                        className="pixel-btn-primary w-full h-12 flex items-center justify-center gap-3 font-bold uppercase tracking-[0.2em] text-xs"
-                      >
-                        <Play className="size-4 fill-current" />
-                        Execute Game
-                      </button>
-                      <div className="flex gap-2">
-                        <button className="pixel-btn flex-1 h-10 text-[9px] font-bold uppercase flex items-center justify-center gap-2">
-                          <Star className={`size-3 ${activeGame.favorite ? "fill-yellow-500 text-yellow-500" : ""}`} />
-                          Fav
-                        </button>
-                        <button className="pixel-btn flex-1 h-10 text-[9px] font-bold uppercase flex items-center justify-center gap-2">
-                          <QrCode className="size-3" />
-                          Warp
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </PxlWindow>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <GameDetailDialog
+            game={dialogGame}
+            onClose={closeGame}
+            onToggleFav={handleToggleFav}
+          />
         </div>
       </div>
 

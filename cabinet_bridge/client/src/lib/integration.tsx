@@ -64,7 +64,7 @@ export interface IntegrationConfig {
   /** UI theme name */
   theme?: string;
   /** Dashboard layout theme */
-  dashboardTheme?: "HomeArcade" | "PXL";
+  dashboardTheme?: "HomeArcade" | "PXL" | "NES";
   /** UI language (ISO 639-1 code, e.g. "en", "es") */
   language?: string;
   /** Show console names on game cards */

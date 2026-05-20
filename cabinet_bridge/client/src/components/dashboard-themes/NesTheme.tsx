@@ -22,7 +22,6 @@ export default function NesTheme() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<"recent" | "title" | "year">("recent");
   const [activeGameIdx, setActiveGameIdx] = useState(0);
-  const [showMobileDetails, setShowMobileDetails] = useState(false);
 
   const filteredGames = useMemo(() => {
     let list = allGames;
@@ -45,15 +44,10 @@ export default function NesTheme() {
   const { focusedIndex, setFocusedIndex } = useGridNav({
     count: filteredGames.length,
     gridRef,
-    disabled: (window.innerWidth < 1280 && showMobileDetails),
+    disabled: !!dialogGame,
     onActivate: (idx) => {
-      if (activeGameIdx === idx) {
-        const game = filteredGames[idx];
-        window.location.href = apiUrl(`/api/roms/${game.romId}/player?return=${encodeURIComponent(window.location.href)}`);
-      } else {
-        setActiveGameIdx(idx);
-        if (window.innerWidth < 1280) setShowMobileDetails(true);
-      }
+      const game = filteredGames[idx];
+      if (game) openGame(game);
     },
     onFocusChange: (idx) => idx >= 0 && setActiveGameIdx(idx)
   });
@@ -139,8 +133,7 @@ export default function NesTheme() {
                   <div
                     key={game.id}
                     onClick={() => {
-                      setActiveGameIdx(i);
-                      if (window.innerWidth < 1280) setShowMobileDetails(true);
+                      openGame(game);
                     }}
                     className={`cursor-pointer transition-transform duration-75 active:scale-95`}
                   >
@@ -160,76 +153,16 @@ export default function NesTheme() {
             </div>
           </div>
 
-          {/* Details Window */}
-          <AnimatePresence>
-            {(activeGame && (window.innerWidth >= 1280 || showMobileDetails)) && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="fixed inset-4 sm:inset-auto sm:right-8 sm:top-24 sm:bottom-8 sm:w-[450px] z-[55] flex flex-col"
-              >
-                <div className="nes-container with-title is-rounded bg-white border-4 border-black h-full flex flex-col shadow-2xl">
-                  <p className="title text-[10px] uppercase bg-white px-2">Game Info</p>
-                  
-                  <div className="flex justify-end mb-4 lg:hidden">
-                    <button onClick={() => setShowMobileDetails(false)} className="nes-btn is-error is-small">X</button>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto pr-2 space-y-6">
-                    <div className="aspect-video bg-black border-4 border-black overflow-hidden flex items-center justify-center">
-                      {activeGame.artUrl ? (
-                         <img src={activeGame.artUrl} className="w-full h-full object-cover pixel-rendering" alt="" />
-                      ) : (
-                         <div className="text-[10px] text-white/20">NO SIGNAL</div>
-                      )}
-                    </div>
-
-                    <div className="space-y-4">
-                      <h2 className="text-[12px] uppercase font-bold leading-relaxed">{activeGame.title}</h2>
-                      <div className="nes-badge">
-                        <span className="is-dark text-[8px] uppercase">{activeGame.system}</span>
-                      </div>
-                      
-                      <div className="nes-container is-dark with-title border-4 border-white p-4">
-                        <p className="title text-[8px] uppercase bg-black px-2">Description</p>
-                        <p className="text-[10px] leading-relaxed text-white/70">
-                          {activeGame.description || "NO DATA FOUND ON CARTRIDGE."}
-                        </p>
-                      </div>
-
-                      <div className="space-y-4">
-                         <div className="flex flex-col gap-2">
-                           <span className="text-[8px] uppercase font-bold text-black/50">Current Progress</span>
-                           <progress className="nes-progress is-success w-full h-6" value={activeGame.minutesPlayed || 0} max="1000"></progress>
-                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-6 border-t-4 border-black flex flex-col gap-4">
-                    <button
-                      onClick={() => {
-                        const returnTo = encodeURIComponent(window.location.href);
-                        window.location.href = apiUrl(`/api/roms/${activeGame.romId}/player?return=${returnTo}`);
-                      }}
-                      className="nes-btn is-primary w-full py-4 text-[12px] uppercase font-bold"
-                    >
-                      Start Game
-                    </button>
-                    <div className="flex gap-2">
-                      <button className={`nes-btn flex-1 ${activeGame.favorite ? "is-warning" : ""}`}>
-                        <Star className="size-4 inline-block mr-2" />
-                      </button>
-                      <button className="nes-btn flex-1 is-success">
-                        <LayoutGrid className="size-4 inline-block" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <GameDetailDialog
+            game={dialogGame}
+            onClose={closeGame}
+            onToggleFav={handleToggleFav}
+            onRate={handleRate}
+            collections={collections}
+            onCreateCollection={handleCreateCollection}
+            onToggleCollection={handleToggleCollection}
+            onSetStatus={handleSetStatus}
+          />
         </div>
       </div>
 

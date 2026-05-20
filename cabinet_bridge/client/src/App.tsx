@@ -36,7 +36,7 @@ const Player = lazy(() => import("@/pages/Player"));
 const Achievements = lazy(() => import("@/pages/Achievements"));
 const History = lazy(() => import("@/pages/History"));
 const Friends = lazy(() => import("@/pages/Friends"));
-const GameDetail = lazy(() => import("@/pages/GameDetail"));
+// const GameDetail = lazy(() => import("@/pages/GameDetail"));
 
 /**
  * Manages global visual effects and themes driven by Integration settings.
@@ -144,9 +144,7 @@ function AppRouter() {
           <AppShell><Suspense fallback={<PageFallback />}><Friends /></Suspense></AppShell>
         </Route>
         <Route path="/game/:id">
-          {(params) => (
-            <AppShell><Suspense fallback={<PageFallback />}><GameDetail id={params.id} /></Suspense></AppShell>
-          )}
+          {(params) => <Redirect to={`/?game=${params.id}`} />}
         </Route>
         <Route path="/settings">
           <AppShell><Suspense fallback={<PageFallback />}><Settings /></Suspense></AppShell>

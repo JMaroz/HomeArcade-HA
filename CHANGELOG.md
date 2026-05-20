@@ -4,6 +4,18 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.30.0] — 2026-05-20
+
+### Major: Unified Game Details Experience
+
+- **Consolidated UI** — Unified all dashboard themes (`HomeArcade`, `NES`, `PXL`) to use a single, feature-rich `GameDetailDialog`. This eliminates redundant UI panels and ensures a consistent experience for star ratings, cover art, cheats, and save management across the entire app.
+- **Improved Performance** — Removed over 500 lines of redundant code and unused state logic from the theme components, resulting in a leaner and more maintainable frontend.
+- **Enhanced Navigation** — Details are now exclusively handled via modal dialogs, allowing for the removal of the standalone `/game/:id` route.
+- **Deep Linking** — Added support for the `?game=id` URL parameter to the main dashboard, enabling users to share or bookmark direct links to specific game details.
+- **Type Safety** — Formally added `NES` to the supported dashboard themes in the integration configuration.
+
+---
+
 ## [2.24.23] — 2026-05-17
 
 ### Fix: Explicit Security Isolation Disable

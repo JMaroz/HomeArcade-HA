@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.24.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.30.0** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -67,6 +67,11 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.30.0
+- **Unified Game Details:** Consolidated all dashboard themes (`HomeArcade`, `NES`, `PXL`) to use a single, feature-rich `GameDetailDialog`, eliminating redundant UI and improving consistency.
+- **Leaner Frontend:** Removed over 500 lines of legacy code and unused state logic.
+- **Deep Linking:** Added support for the `?game=id` URL parameter for direct access to game details.
 
 ### v2.24.0
 - **Major Feature: In-App Warp Scanner:** Integrated a native QR code scanner directly into the mobile dashboard. This allows you to scan Warp Links from your PC without leaving the Home Assistant app, completely eliminating "401 Unauthorized" login issues.
