@@ -4,7 +4,7 @@ import { Home, History, Trophy, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function MobileBottomNav() {
+export function AppBottomNav() {
   const [location] = useLocation();
 
   const navItems = [
@@ -15,7 +15,7 @@ export function MobileBottomNav() {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
+    <div className="fixed bottom-6 left-0 right-0 z-50 pointer-events-none px-6">
       <div className="max-w-md mx-auto pointer-events-auto">
         <div 
           className={cn(
