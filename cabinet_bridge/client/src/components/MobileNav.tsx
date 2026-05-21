@@ -19,15 +19,15 @@ export function AppBottomNav() {
       <div className="max-w-md mx-auto pointer-events-auto">
         <div 
           className={cn(
-            "relative flex items-center justify-around h-16 px-2",
-            "bg-black/40 backdrop-blur-2xl rounded-[28px]",
-            "border border-white/[0.08] border-t-white/[0.15]",
-            "shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_20px_rgba(176,93,252,0.1)]",
+            "relative flex items-center justify-around h-16 px-1",
+            "bg-[#0a0a0a] rounded-xl border border-white/10",
+            "shadow-[0_0_40px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.05)]",
             "overflow-hidden"
           )}
         >
-          {/* Subtle bottom glow */}
-          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-1/2 h-4 bg-primary/20 blur-2xl rounded-full" />
+          {/* Background Grid Pattern */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+               style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
 
           {navItems.map((item) => {
             const isActive = location === item.href;
@@ -38,33 +38,43 @@ export function AppBottomNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center min-w-[64px] h-12 transition-all duration-500 rounded-2xl relative",
-                  isActive ? "text-primary" : "text-white/30 hover:text-white/50"
+                  "flex flex-col items-center justify-center min-w-[70px] h-14 transition-all duration-300 relative group",
+                  isActive ? "text-primary" : "text-white/20 hover:text-white/40"
                 )}
               >
-                {/* Active Indicator Background */}
-                <AnimatePresence>
+                {/* Cyber-Active Frame */}
+                <AnimatePresence mode="wait">
                   {isActive && (
                     <motion.div
-                      layoutId="nav-active-pill"
-                      className="absolute inset-0 bg-primary/10 rounded-2xl border border-primary/20"
+                      layoutId="cyber-frame"
+                      className="absolute inset-1 border border-primary/30 rounded-lg bg-primary/[0.03]"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                     >
-                      {/* Inner Shine */}
-                      <div className="absolute inset-x-2 top-1 h-px bg-white/10" />
+                      {/* Corner Accents */}
+                      <div className="absolute top-0 left-0 size-1.5 border-t border-l border-primary shadow-[0_0_8px_rgba(176,93,252,0.5)]" />
+                      <div className="absolute top-0 right-0 size-1.5 border-t border-r border-primary shadow-[0_0_8px_rgba(176,93,252,0.5)]" />
+                      <div className="absolute bottom-0 left-0 size-1.5 border-b border-l border-primary shadow-[0_0_8px_rgba(176,93,252,0.5)]" />
+                      <div className="absolute bottom-0 right-0 size-1.5 border-b border-r border-primary shadow-[0_0_8px_rgba(176,93,252,0.5)]" />
+                      
+                      {/* Top Scanning Line */}
+                      <motion.div 
+                        initial={{ left: "-100%" }}
+                        animate={{ left: "100%" }}
+                        transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                        className="absolute top-0 h-[1px] w-1/2 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>
                 
                 <motion.div
                   animate={{ 
-                    scale: isActive ? 1.15 : 1,
-                    y: isActive ? -1 : 0 
+                    scale: isActive ? 1.1 : 1,
+                    filter: isActive ? "drop-shadow(0 0 8px rgba(176,93,252,0.4))" : "none"
                   }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   className="relative z-10"
                 >
                   <Icon className="size-5" strokeWidth={isActive ? 2.5 : 2} />
@@ -73,11 +83,10 @@ export function AppBottomNav() {
                 <AnimatePresence>
                   {isActive && (
                     <motion.span
-                      initial={{ opacity: 0, y: 5, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 2, scale: 0.9 }}
-                      transition={{ duration: 0.2 }}
-                      className="text-[9px] font-black uppercase tracking-[0.15em] mt-1 relative z-10"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="text-[8px] font-black uppercase tracking-[0.2em] mt-1.5 relative z-10"
                     >
                       {item.label}
                     </motion.span>
