@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Section, Field } from "./SettingsShared";
 import {
   Zap, CheckCircle2, XCircle, Loader2, Copy, Check,
-  Radio, Gamepad2, Monitor, User, Clock, Hash, Settings2
+  Radio, Gamepad2, Monitor, User, Clock, Hash, Settings2,
+  Cpu, MemoryStick, Activity
 } from "lucide-react";
 
 // ── Entity reference ──────────────────────────────────────────────────────────
@@ -246,6 +247,74 @@ export function AutomationsSettings() {
               </div>
             )}
           </div>
+        </div>
+      </Section>
+
+      {/* ── PC Sensors ────────────────────────────────────────────────────── */}
+      <Section
+        title="PC Sensor Configuration"
+        description="Link entities from HASS.Agent or IOT Link to show your PC's live status, CPU, and RAM on the dashboard."
+      >
+        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6">
+          <Field label="PC Hostname" hint="Display name for your gaming PC.">
+            <div className="relative">
+              <Monitor className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={config.pcHostname}
+                onChange={(e) => setConfig({ pcHostname: e.target.value })}
+                placeholder="ARCADE-PC"
+                className="pl-9 font-mono text-sm"
+              />
+            </div>
+          </Field>
+
+          <Field label="Online Entity ID" hint="A binary_sensor or sensor that is 'on' when PC is active.">
+            <div className="relative">
+              <Activity className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={config.pcOnlineEntityId}
+                onChange={(e) => setConfig({ pcOnlineEntityId: e.target.value })}
+                placeholder="binary_sensor.my_pc_active"
+                className="pl-9 font-mono text-sm"
+              />
+            </div>
+          </Field>
+
+          <Field label="CPU Usage Entity ID" hint="Sensor providing 0-100 percentage.">
+            <div className="relative">
+              <Cpu className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={config.pcCpuEntityId}
+                onChange={(e) => setConfig({ pcCpuEntityId: e.target.value })}
+                placeholder="sensor.my_pc_cpu_load"
+                className="pl-9 font-mono text-sm"
+              />
+            </div>
+          </Field>
+
+          <Field label="RAM Usage Entity ID" hint="Sensor providing 0-100 percentage.">
+            <div className="relative">
+              <MemoryStick className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={config.pcRamEntityId}
+                onChange={(e) => setConfig({ pcRamEntityId: e.target.value })}
+                placeholder="sensor.my_pc_memory_usage"
+                className="pl-9 font-mono text-sm"
+              />
+            </div>
+          </Field>
+
+          <Field label="Current App Entity ID" hint="Sensor showing the active window title.">
+            <div className="relative">
+              <Gamepad2 className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={config.pcAppEntityId}
+                onChange={(e) => setConfig({ pcAppEntityId: e.target.value })}
+                placeholder="sensor.my_pc_active_window"
+                className="pl-9 font-mono text-sm"
+              />
+            </div>
+          </Field>
         </div>
       </Section>
 
