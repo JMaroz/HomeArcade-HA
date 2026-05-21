@@ -141,10 +141,10 @@ function App() {
                     </SidebarInset>
                   </div>
                 </SidebarProvider>
+                <NowPlayingBar />
+                <MobileBottomNav />
               </ErrorBoundary>
             </Router>
-            <NowPlayingBar />
-            <MobileBottomNav />
           </TooltipProvider>
         </IntegrationProvider>
       </ProfileProvider>

@@ -5,6 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, X, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 interface NowPlayingData {
   playing: boolean;
@@ -168,14 +169,14 @@ export const NowPlayingBar = memo(function NowPlayingBar() {
           </div>
 
           {/* Return to game */}
-          <a
+          <Link
             href={`/play/${data.id}`}
             data-testid="now-playing-return"
             className="shrink-0 flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 text-white/70 hover:text-white transition-all text-xs font-mono uppercase tracking-widest font-bold"
           >
             <Play className="size-3 fill-current" />
             Return
-          </a>
+          </Link>
 
           {/* Exit game */}
           <button
