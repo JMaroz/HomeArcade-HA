@@ -224,44 +224,43 @@ export async function findLibretroBoxArt(system: string, title: string) {
   const playlist = LIBRETRO_PLAYLISTS[system];
   if (!playlist) return { url: null, message: "No Libretro thumbnail playlist configured." };
 
-  const directoryUrl = `https://thumbnails.libretro.com/${encodeURIComponent(playlist)}/Named_Boxarts/`;
-  try {
-    const response = await fetch(directoryUrl, { headers: { "User-Agent": "CabinetBridge/0.1" } });
-    if (!response.ok) return { url: null, message: `Libretro index returned ${response.status}.` };
-    const html = await response.text();
-    const hrefs = Array.from(html.matchAll(/href="([^"]+\.png)"/gi)).map((m) => decodeHtml(m[1]));
-    const normalizedTitle = normalizeSearchTitle(title);
-    const targetTokens = significantTokens(normalizedTitle);
-    
-    const candidates = hrefs.map((href) => {
-      const decoded = decodeURIComponent(href);
-      const fileTitle = decoded.replace(/\.png$/i, "");
-      const baseTitle = fileTitle.replace(/\s*\(.+$/, "");
-      const normalizedFile = normalizeTitle(fileTitle);
-      const normalizedBase = normalizeSearchTitle(baseTitle);
-      const candidateTokens = significantTokens(normalizedBase);
-      const targetNumbers = numberTokens(targetTokens);
-      const candidateNumbers = numberTokens(candidateTokens);
-      const numberMismatch = targetNumbers.length > 0 && candidateNumbers.length > 0 && !targetNumbers.some(t => candidateNumbers.includes(t));
-      const overlap = targetTokens.filter(t => candidateTokens.includes(t));
-      const textScore = numberMismatch ? 0 : normalizedBase === normalizedTitle ? 100 : normalizedFile.startsWith(normalizedTitle) ? 82 : overlap.length >= Math.min(2, targetTokens.length) ? (overlap.length/Math.max(1,targetTokens.length))*65 + (overlap.length/Math.max(1,candidateTokens.length))*25 : 0;
-      let score = textScore;
-      if (score > 0) {
-        if (/\(USA\)|\(US\)/i.test(decoded)) score += 20;
-        if (/\(World\)/i.test(decoded)) score += 12;
-        if (/\(Europe\)/i.test(decoded)) score += 8;
-        if (/\[h|\[b|\[tr|\[p|prototype|sample/i.test(decoded)) score -= 40;
-        if (normalizedBase !== normalizedTitle && normalizedBase.startsWith(normalizedTitle)) score -= 20;
-      }
-      return { href, decoded, score };
-    }).filter(c => c.score >= 55).sort((a,b) => b.score - a.score || a.decoded.length - b.decoded.length);
+  // Probe direct No-Intro filenames instead of parsing the directory listing.
+  // The directory index uses TOSEC-style names which breaks fuzzy matching,
+  // but the canonical No-Intro files exist at predictable URLs.
+  const baseUrl = `https://thumbnails.libretro.com/${encodeURIComponent(playlist)}/Named_Boxarts/`;
 
-    const best = candidates[0];
-    if (!best) return { url: null, message: `No Libretro box art match found for "${title}".` };
-    return { url: `${directoryUrl}${best.href}`, message: `Matched Libretro Named_Boxarts: ${best.decoded}` };
-  } catch (err) {
-    return { url: null, message: err instanceof Error ? err.message : "Artwork scrape failed." };
+  const cleanTitle = title
+    .replace(/\s*\((USA|US|Europe|EU|Japan|JP|World|En|Fr|De|Es|It|Pt|Nl|Sv|No|Da|Fi|Pl|Ru|Zh|Ko|Ja|As|AU|NZ|Scan|Unl|Rev\s*[A-Z0-9]+|v[0-9.]+|Beta|Proto|Demo|Sample|Disc\s*\d+|Disk\s*\d+)\)/gi, "")
+    .replace(/\s*\[[^\]]*\]/g, "")
+    .replace(/[._]+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  const candidates = [
+    `${cleanTitle} (USA).png`,
+    `${cleanTitle} (USA) (Rev 1).png`,
+    `${cleanTitle} (USA) (Rev A).png`,
+    `${cleanTitle} (World).png`,
+    `${cleanTitle} (Europe).png`,
+    `${cleanTitle} (Japan).png`,
+    `${cleanTitle}.png`,
+  ];
+
+  for (const filename of candidates) {
+    const url = baseUrl + encodeURIComponent(filename);
+    try {
+      const probe = await fetch(url, {
+        method: "HEAD",
+        headers: { "User-Agent": "CabinetBridge/0.1" },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (probe.ok) return { url, message: `Matched Libretro Named_Boxarts: ${filename}` };
+    } catch {
+      // network error — try next candidate
+    }
   }
+
+  return { url: null, message: `No Libretro box art match found for "${title}".` };
 }
 
 export function registerScrapeRoutes(app: Express) {
