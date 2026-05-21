@@ -55,7 +55,56 @@ import Fuse from "fuse.js";
 import { useLocation } from "wouter";
 import { WarpLinkDialog } from "@/components/WarpLinkDialog";
 
-// â”€â”€â”€ sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── sub-components ────────────────────────────────────────────────────────────
+
+function DashboardStatsSection() {
+  const { t } = useTranslation();
+  const { data: stats } = useQuery<any>({ queryKey: ["/api/stats/summary"], refetchInterval: 60_000 });
+  
+  if (!stats?.summary || stats.summary.totalGames === 0) return null;
+
+  return (
+    <div className="px-4 sm:px-8 py-6 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
+      {/* Summary Stats */}
+      <div className="col-span-1 space-y-4">
+        <div className="font-display text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Life Summary</div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.03] space-y-1">
+            <div className="text-2xl font-black text-primary">{fmtHoursShort(stats.summary.totalMinutes)}</div>
+            <div className="text-[9px] font-bold uppercase tracking-wider text-white/40">Play Time</div>
+          </div>
+          <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.03] space-y-1">
+            <div className="text-2xl font-black text-white">{stats.summary.totalGames}</div>
+            <div className="text-[9px] font-bold uppercase tracking-wider text-white/40">Games</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hall of Fame (Top 3) */}
+      <div className="col-span-1 md:col-span-2 space-y-4">
+        <div className="font-display text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Hall of Fame</div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {stats.hallOfFame?.map((game: any, i: number) => (
+            <div key={game.id} className="relative group rounded-2xl border border-white/5 bg-white/[0.03] p-3 flex items-center gap-3 overflow-hidden">
+               <div className="absolute -left-2 -top-2 text-4xl font-black italic text-white/[0.03] group-hover:text-primary/10 transition-colors pointer-events-none">#{i+1}</div>
+               <div className="relative size-12 rounded-lg overflow-hidden bg-neutral-900 shrink-0 ring-1 ring-white/10">
+                 {game.artUrl ? (
+                   <img src={apiUrl(game.romId ? `/api/roms/${game.romId}/art` : `/api/art?url=${encodeURIComponent(game.artUrl)}`)} className="size-full object-cover" alt="" />
+                 ) : (
+                   <div className="size-full flex items-center justify-center text-[8px] font-black text-white/20 uppercase">{game.system}</div>
+                 )}
+               </div>
+               <div className="min-w-0">
+                 <div className="text-[11px] font-black uppercase truncate text-white/90">{game.title}</div>
+                 <div className="text-[9px] font-mono text-white/40">{fmtHoursShort(game.minutesPlayed || 0)} played</div>
+               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function SaveSlotCard({
   slot,
@@ -410,7 +459,6 @@ export default function HomeArcadeTheme() {
   }, [activeGameIdx, focusedIndex, setFocusedIndex]);
 
   // Support ?game=id URL parameter to auto-open dialog
-  const [location] = useLocation();
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const gameId = params.get("game");
@@ -518,11 +566,13 @@ export default function HomeArcadeTheme() {
           </div>
         </div>
 
-        {/* All Games Grid â€” 5-col on mobile portrait, 6-col landscape, scales up on desktop */}
+        {/* All Games Grid — 5-col on mobile portrait, 6-col landscape, scales up on desktop */}
         <div
           ref={gridRef}
           className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 scrollbar-none overscroll-y-contain pb-24 lg:pb-8"
         >
+          {activeFilter.type === "all" && !searchQuery && <DashboardStatsSection />}
+
           {isRomsLoading ? (
             <GameCardSkeleton count={18} />
           ) : filteredGames.length === 0 && !searchQuery ? (

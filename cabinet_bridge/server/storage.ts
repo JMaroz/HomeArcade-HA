@@ -23,7 +23,7 @@ import { DEFAULT_INTEGRATION_SETTINGS, integrationSettingsSchema } from '@shared
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import Database from "better-sqlite3";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql, sum, count } from "drizzle-orm";
 import { dataPath, ensureDir, getDataDir } from "./data-dir";
 import { log } from "./log";
 import path from "node:path";
@@ -143,6 +143,8 @@ export interface IStorage {
   createPlaySession(romId: number, romTitle: string, romSystem: string, startedAt: number): Promise<number>;
   endPlaySession(sessionId: number, endedAt: number, durationSeconds: number): Promise<void>;
   listRecentSessions(limit?: number): Promise<any[]>;
+  getPlayStatsSummary(): Promise<any>;
+  getHallOfFame(limit?: number): Promise<UploadedRom[]>;
   updateUploadedRomMetadata(id: number, meta: any): Promise<UploadedRom | undefined>;
   listCollections(): Promise<GameCollectionWithItems[]>;
   createCollection(collection: InsertGameCollection): Promise<GameCollection>;
@@ -435,6 +437,26 @@ export class DatabaseStorage implements IStorage {
   }
   async listRecentSessions(limit = 50): Promise<any[]> {
     return db.select().from(playSessions).orderBy(desc(playSessions.startedAt)).limit(limit).all();
+  }
+  async getPlayStatsSummary(): Promise<any> {
+    const summary = db.select({
+      totalMinutes: sum(uploadedRoms.minutesPlayed),
+      totalGames: count(uploadedRoms.id),
+    }).from(uploadedRoms).get();
+    
+    const favCount = db.select({ count: count(uploadedRoms.id) })
+      .from(uploadedRoms)
+      .where(eq(uploadedRoms.favorite, true))
+      .get();
+
+    return { 
+      totalMinutes: Number(summary?.totalMinutes || 0),
+      totalGames: Number(summary?.totalGames || 0),
+      favoriteCount: Number(favCount?.count || 0) 
+    };
+  }
+  async getHallOfFame(limit = 3): Promise<UploadedRom[]> {
+    return db.select().from(uploadedRoms).orderBy(desc(uploadedRoms.minutesPlayed)).limit(limit).all();
   }
 }
 

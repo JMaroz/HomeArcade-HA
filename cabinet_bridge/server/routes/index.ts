@@ -15,6 +15,7 @@ import { registerRetroAchievementsRoutes } from "./retroachievements";
 import { registerKioskRoutes } from "./kiosk";
 import { registerBiosRoutes } from "./bios";
 import { registerGamepadRoutes } from "./gamepad";
+import { registerStatsRoutes } from "./stats";
 
 export async function registerRoutes(_httpServer: Server, app: Express) {
   registerRomRoutes(app);
@@ -32,5 +33,6 @@ export async function registerRoutes(_httpServer: Server, app: Express) {
   registerKioskRoutes(app);
   registerBiosRoutes(app);
   registerGamepadRoutes(app);
+  registerStatsRoutes(app);
 }
 
