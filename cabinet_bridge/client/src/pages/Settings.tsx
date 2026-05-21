@@ -42,10 +42,6 @@ export default function Settings() {
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 space-y-8 pb-24 lg:pb-12">
           {/* Header */}
           <div className="flex flex-col gap-1 mb-8">
-            <Link href="/" className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/30 hover:text-primary transition-all mb-4 w-fit">
-              <ChevronRight className="size-3 -scale-x-100 group-hover:-translate-x-1 transition-transform" />
-              Back to Dashboard
-            </Link>
             <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-primary">
               {t("settings.header")}
             </div>
