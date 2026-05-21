@@ -117,6 +117,7 @@ export function Sidebar({ onReturnToGrid }: { onReturnToGrid?: () => void }) {
   return (
     <ShadcnSidebar 
       collapsible="icon" 
+      variant="floating"
       className="border-r border-sidebar-border bg-sidebar/80 backdrop-blur-md"
       onKeyDown={handleKeyDown}
     >
