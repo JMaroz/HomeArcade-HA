@@ -146,7 +146,7 @@ async function initApp() {
   const envWatchDir = process.env.CABINET_ROM_WATCH_DIR || "";
   initScanner(
     envWatchDir,
-    storage.addScannedRom.bind(storage),
+    storage.addScannedRomsBulk.bind(storage),
     storage.listRomFilenames.bind(storage),
     async () => {
       const s = await storage.getIntegrationSettings();

@@ -421,6 +421,14 @@ export class DatabaseStorage implements IStorage {
     }
   }
   async addScannedRom(rom: any): Promise<UploadedRom> { return db.insert(uploadedRoms).values(rom).returning().get(); }
+  async addScannedRomsBulk(roms: any[]): Promise<void> {
+    if (roms.length === 0) return;
+    db.transaction((tx) => {
+      for (const rom of roms) {
+        tx.insert(uploadedRoms).values(rom).run();
+      }
+    });
+  }
   async listRomFilenames(): Promise<string[]> {
     const rows = db.select({ fileName: uploadedRoms.fileName }).from(uploadedRoms).all();
     return rows.map((r: any) => r.fileName);
