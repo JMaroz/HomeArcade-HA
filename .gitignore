@@ -3,6 +3,7 @@ dist/
 .vite/
 rom-storage/
 system-image-cache/
+art-cache/
 
 # SQLite database files — never commit; exposes demo data at rest
 data.db
