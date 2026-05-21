@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { ProfileProvider } from "@/lib/useProfile";
 import NotFound from "@/pages/not-found";
 import { NowPlayingBar } from "@/components/NowPlayingBar";
+import { MobileBottomNav } from "@/components/MobileNav";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -143,6 +144,7 @@ function App() {
               </ErrorBoundary>
             </Router>
             <NowPlayingBar />
+            <MobileBottomNav />
           </TooltipProvider>
         </IntegrationProvider>
       </ProfileProvider>

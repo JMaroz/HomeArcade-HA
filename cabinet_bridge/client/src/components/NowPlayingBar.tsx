@@ -104,7 +104,7 @@ export const NowPlayingBar = memo(function NowPlayingBar() {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 90, opacity: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="fixed bottom-[72px] left-0 right-0 z-50 mx-4 mb-2"
+        className="fixed bottom-[72px] md:bottom-4 left-0 right-0 z-50 mx-4 mb-2"
       >
         <div
           className={[
