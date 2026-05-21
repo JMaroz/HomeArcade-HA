@@ -48,7 +48,6 @@ import { Html5Qrcode } from "html5-qrcode";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
-import { MobileTopBar } from "@/components/MobileNav";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useGridNav } from "@/lib/useGridNav";
@@ -417,8 +416,6 @@ export default function HomeArcadeTheme() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <MobileTopBar onScannerOpen={() => setShowScanner(true)} />
 
       {/* Scraper credentials nudge — shown when ROMs exist but no scraper key is set */}
       {roms.length > 0 && !config.ssUserId && !config.tgdbApiKey && (
