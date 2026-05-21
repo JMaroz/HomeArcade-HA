@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.34** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.49** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -30,6 +30,25 @@ HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a fu
  Open HomeArcade from the sidebar, click a system (e.g. NES), drop a ROM file onto the upload zone, then click the game card → **Play**.
 
  That's it. No port forwarding, no reverse proxy, no extra software.
+
+---
+
+## Remote Access & Playing with Friends
+
+HomeArcade is a self-hosted retro game server. You can host your games and allow friends to play them with you from anywhere in the world.
+
+### How to host for friends:
+1. **Enable External Access:** Your Home Assistant instance must be accessible from the internet. The easiest way is using [Home Assistant Cloud (Nabu Casa)](https://www.nabucasa.com/), but you can also use a Cloudflare Tunnel or a Reverse Proxy.
+2. **Create User Accounts:** Create a separate user account in Home Assistant for each friend you want to invite.
+3. **Share the Link:** Send your friends your Home Assistant URL. Once they log in, they can open HomeArcade from the sidebar.
+
+### Multiplayer (Netplay):
+You can play multiplayer games together in real-time using the **Netplay Lobby**:
+* **Host a Room:** Open a game, tap the **Wifi** icon in the details dialog, and click **Host a room**. You'll get a 6-character code.
+* **Join a Room:** Your friend goes to the same game, taps the **Wifi** icon, and enters your code (or clicks your room in the **Lobby Browser**).
+* **Sync:** HomeArcade will automatically synchronize your game states. Both players will see the same screen and play together!
+
+*Note: For the best experience, ensure both players have identical ROM versions (e.g. both using the "USA" version).*
 
 ---
 
