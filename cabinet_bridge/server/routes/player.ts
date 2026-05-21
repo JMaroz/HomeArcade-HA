@@ -595,6 +595,12 @@ ${discs?.length > 1 ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) =>
 window.EJS_pathtodata = "../../emulatorjs/";
 window.EJS_startOnLoaded = true;
 
+// ── Performance & Quality ──
+window.EJS_webgl = true; // Use hardware acceleration
+window.EJS_fps = true;   // Show FPS counter (useful for users to see performance)
+window.EJS_threads = ${["psx", "n64", "pcsx2", "ppsspp", "melonds"].includes(core) ? "true" : "false"}; // Enable multi-threading for heavy cores
+window.EJS_cacheExtensions = true; // Use browser cache for assets
+
 // ── Hide built-in UI ──
 window.EJS_buttons = {
   play_pause: false,
