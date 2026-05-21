@@ -16,6 +16,7 @@
  */
 
 import { storage } from "./storage";
+import { log } from "./log";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -41,14 +42,17 @@ async function pushState(
   entityId: string,
   state: string,
   attributes: Record<string, unknown> = {},
-): Promise<void> {
+): Promise<boolean> {
   const token = await getToken();
-  if (!token) return;
+  if (!token) {
+    log(`No token for ${entityId}`, "ha");
+    return false;
+  }
 
   const baseUrl = await getBaseUrl();
   const url = `${baseUrl}/api/states/${entityId}`;
   try {
-    await fetch(url, {
+    const res = await fetch(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -57,38 +61,31 @@ async function pushState(
       body: JSON.stringify({ state, attributes }),
       signal: AbortSignal.timeout(5000),
     });
-  } catch {
-    // Non-fatal — HA may be temporarily unavailable
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      log(`Failed to push ${entityId}: ${res.status} ${text.slice(0, 100)}`, "ha");
+      return false;
+    } else {
+      log(`Pushed ${entityId} -> ${state}`, "ha");
+      return true;
+    }
+  } catch (err) {
+    log(`Network error pushing ${entityId}: ${err instanceof Error ? err.message : String(err)}`, "ha");
+    return false;
   }
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
-
-export interface GameStartedPayload {
-  romId: number;
-  title: string;
-  system: string;
-  profileName: string;
-  playCount?: number;
-  genre?: string | null;
-  developer?: string | null;
-  releaseYear?: number | null;
-  artUrl?: string | null;
-}
-
-export interface GameEndedPayload {
-  romId: number;
-  title: string;
-  system: string;
-  profileName: string;
-  durationSeconds: number;
-}
+// ... (GameStartedPayload/GameEndedPayload interfaces)
 
 /** Push all entities when a game starts */
 export async function publishGameStarted(payload: GameStartedPayload): Promise<void> {
   const settings = await storage.getIntegrationSettings();
-  if (!settings.haPublishEntities) return;
+  if (!settings.haPublishEntities) {
+    log("Publishing disabled in settings", "ha");
+    return;
+  }
 
+  log(`Publishing game start: ${payload.title}`, "ha");
   const startedAt = new Date().toISOString();
 
   await Promise.all([
@@ -134,6 +131,7 @@ export async function publishGameEnded(payload: GameEndedPayload): Promise<void>
   const settings = await storage.getIntegrationSettings();
   if (!settings.haPublishEntities) return;
 
+  log(`Publishing game end: ${payload.title}`, "ha");
   await Promise.all([
     pushState("binary_sensor.homearcade_active", "off", {
       friendly_name: "HomeArcade Active",
@@ -162,68 +160,66 @@ export async function publishGameEnded(payload: GameEndedPayload): Promise<void>
 
 /** Push a one-off test to verify connectivity */
 export async function publishTestPing(): Promise<{ ok: boolean; error?: string }> {
+  log("Test ping requested", "ha");
   const token = await getToken();
   if (!token) return { ok: false, error: "No token available. Set SUPERVISOR_TOKEN or configure haToken." };
 
-  const baseUrl = await getBaseUrl();
-  const url = `${baseUrl}/api/states/sensor.homearcade_test`;
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        state: "connected",
-        attributes: { friendly_name: "HomeArcade Test", icon: "mdi:check-circle", tested_at: new Date().toISOString() },
-      }),
-      signal: AbortSignal.timeout(6000),
-    });
-    if (res.ok) return { ok: true };
-    const text = await res.text().catch(() => "");
-    return { ok: false, error: `HA returned ${res.status}: ${text.slice(0, 200)}` };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Network error" };
+  const success = await pushState("sensor.homearcade_test", "connected", {
+    friendly_name: "HomeArcade Test",
+    icon: "mdi:check-circle",
+    tested_at: new Date().toISOString()
+  });
+
+  if (success) {
+    log("Test ping successful", "ha");
+    return { ok: true };
+  } else {
+    log("Test ping failed", "ha");
+    return { ok: false, error: "Failed to reach Home Assistant. Check URL and Token." };
   }
 }
 
 /** Push the 'idle' state for all sensors to ensure discovery in HA */
 export async function pushInitialEntities(): Promise<{ ok: boolean; error?: string }> {
+  log("Initial entities push requested", "ha");
   const token = await getToken();
   if (!token) return { ok: false, error: "No token available" };
 
-  try {
-    await Promise.all([
-      pushState("binary_sensor.homearcade_active", "off", {
-        friendly_name: "HomeArcade Active",
-        device_class: "running",
-      }),
-      pushState("sensor.homearcade_game", "idle", {
-        friendly_name: "HomeArcade Game",
-        icon: "mdi:gamepad-variant-outline",
-      }),
-      pushState("sensor.homearcade_system", "idle", {
-        friendly_name: "HomeArcade System",
-        icon: "mdi:controller-classic-outline",
-      }),
-      pushState("sensor.homearcade_player", "none", {
-        friendly_name: "HomeArcade Player",
-        icon: "mdi:account-circle-outline",
-      }),
-      pushState("sensor.homearcade_session_start", "unavailable", {
-        friendly_name: "HomeArcade Session Start",
-        icon: "mdi:clock-start",
-      }),
-      pushState("sensor.homearcade_play_count", "0", {
-        friendly_name: "HomeArcade Play Count",
-        icon: "mdi:counter",
-        unit_of_measurement: "plays",
-        state_class: "total_increasing",
-      }),
-    ]);
+  const results = await Promise.all([
+    pushState("binary_sensor.homearcade_active", "off", {
+      friendly_name: "HomeArcade Active",
+      device_class: "running",
+    }),
+    pushState("sensor.homearcade_game", "idle", {
+      friendly_name: "HomeArcade Game",
+      icon: "mdi:gamepad-variant-outline",
+    }),
+    pushState("sensor.homearcade_system", "idle", {
+      friendly_name: "HomeArcade System",
+      icon: "mdi:controller-classic-outline",
+    }),
+    pushState("sensor.homearcade_player", "none", {
+      friendly_name: "HomeArcade Player",
+      icon: "mdi:account-circle-outline",
+    }),
+    pushState("sensor.homearcade_session_start", "unavailable", {
+      friendly_name: "HomeArcade Session Start",
+      icon: "mdi:clock-start",
+    }),
+    pushState("sensor.homearcade_play_count", "0", {
+      friendly_name: "HomeArcade Play Count",
+      icon: "mdi:counter",
+      unit_of_measurement: "plays",
+      state_class: "total_increasing",
+    }),
+  ]);
+
+  const allOk = results.every(r => r === true);
+  if (allOk) {
+    log("Initial entities push complete", "ha");
     return { ok: true };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Network error" };
+  } else {
+    log("Initial entities push partially or fully failed", "ha");
+    return { ok: false, error: "Push failed. Check server logs for details." };
   }
 }
