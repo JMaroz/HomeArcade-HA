@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense, useEffect, useState, createContext, useContext } from "react";
 import { Switch, Route, Router, Redirect, useLocation } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
@@ -15,6 +15,7 @@ import { NowPlayingBar } from "@/components/NowPlayingBar";
 import { AppBottomNav } from "@/components/MobileNav";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { WarpScanner } from "@/components/dashboard-themes/HomeArcadeTheme";
 
 /**
  * Ensures scroll position is reset or restore correctly on navigation.
@@ -114,7 +115,20 @@ function AppRouter() {
   );
 }
 
+/* ── Global UI Context ── */
+interface UIContextType {
+  setScannerOpen: (open: boolean) => void;
+}
+const UIContext = createContext<UIContextType | undefined>(undefined);
+export const useUI = () => {
+  const ctx = useContext(UIContext);
+  if (!ctx) throw new Error("useUI must be used within UIProvider");
+  return ctx;
+};
+
 function App() {
+  const [showScanner, setShowScanner] = useState(false);
+
   useEffect(() => {
     document.documentElement.classList.add("dark");
   }, []);
@@ -123,24 +137,36 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ProfileProvider>
         <IntegrationProvider>
-          <LanguageManager />
-          <ScrollRestoration />
-          <TooltipProvider>
-            <Toaster />
-            <Router hook={useHashLocation}>
-              <ErrorBoundary>
-                <div className="h-dvh min-h-dvh flex w-full overflow-hidden bg-background">
-                  <main className="flex-1 flex flex-col min-h-full overflow-hidden relative">
-                    <PageTransition>
-                      <AppRouter />
-                    </PageTransition>
-                  </main>
-                </div>
-                <NowPlayingBar />
-                <AppBottomNav />
-              </ErrorBoundary>
-            </Router>
-          </TooltipProvider>
+          <UIContext.Provider value={{ setScannerOpen: setShowScanner }}>
+            <LanguageManager />
+            <ScrollRestoration />
+            <TooltipProvider>
+              <Toaster />
+              <Router hook={useHashLocation}>
+                <ErrorBoundary>
+                  <div className="h-dvh min-h-dvh flex w-full overflow-hidden bg-background">
+                    <main className="flex-1 flex flex-col min-h-full overflow-hidden relative">
+                      <PageTransition>
+                        <AppRouter />
+                      </PageTransition>
+                    </main>
+                  </div>
+                  <NowPlayingBar />
+                  <AppBottomNav />
+
+                  {showScanner && (
+                    <WarpScanner
+                      onClose={() => setShowScanner(false)}
+                      onScan={(url) => {
+                        setShowScanner(false);
+                        window.location.href = url;
+                      }}
+                    />
+                  )}
+                </ErrorBoundary>
+              </Router>
+            </TooltipProvider>
+          </UIContext.Provider>
         </IntegrationProvider>
       </ProfileProvider>
     </QueryClientProvider>

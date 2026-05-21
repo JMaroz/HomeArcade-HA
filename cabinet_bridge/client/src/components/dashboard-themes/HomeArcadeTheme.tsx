@@ -115,7 +115,7 @@ function SaveSlotCard({
   );
 }
 
-function WarpScanner({
+export function WarpScanner({
   onScan,
   onClose
 }: {
@@ -476,10 +476,10 @@ export default function HomeArcadeTheme() {
           </div>
         )}
 
-        {/* Browse Systems + Search + Sort â€” mobile header strip */}
+        {/* Browse Systems — mobile header strip */}
         <div className="shrink-0 border-b border-white/5">
           {/* Systems carousel */}
-          <div className="px-4 pt-4 pb-2">
+          <div className="px-4 pt-4 pb-4">
             <div
               className="flex gap-2.5 overflow-x-auto scrollbar-none pb-1 snap-x snap-mandatory flex-nowrap"
               style={{ scrollPaddingLeft: "1rem" }}
@@ -521,31 +521,6 @@ export default function HomeArcadeTheme() {
                 );
               })}
             </div>
-          </div>
-
-          {/* Sort row */}
-          <div className="px-4 pb-3 flex gap-2 items-center">
-            {/* Sort chips â€” larger touch targets on mobile */}
-            <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-1.5 flex-shrink-0">
-              {(["recent", "title", "year", "rating", "plays"] as const).map((o) => (
-                <button
-                  key={o}
-                  type="button"
-                  onClick={() => setSort(o)}
-                  className={`min-w-[44px] min-h-[36px] px-3 py-2 rounded-lg font-mono text-[11px] uppercase tracking-wider transition-all ${sort === o ? "bg-primary text-white" : "text-white/30 hover:text-white"}`}
-                >
-                  {o === "recent" ? "Recent" : o.charAt(0).toUpperCase() + o.slice(1)}
-                </button>
-              ))}
-            </div>
-            {/* QR scanner shortcut */}
-            <button
-              onClick={() => setShowScanner(true)}
-              className="size-9 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all shrink-0"
-              aria-label="Scan Warp Link"
-            >
-              <QrCode className="size-3.5 text-white/50" />
-            </button>
           </div>
         </div>
 
@@ -596,7 +571,7 @@ export default function HomeArcadeTheme() {
               <button type="button" onClick={() => setSearchQuery("")} className="mt-3 px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/40 text-xs font-mono uppercase tracking-wider hover:bg-white/10 transition-colors">Clear filter</button>
             </div>
           ) : (
-             <div className="grid gap-2.5 sm:gap-4 md:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+             <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8">
                 {filteredGames.map((game, i) => {
                   const isActive = i === activeGameIdx;
                   return (

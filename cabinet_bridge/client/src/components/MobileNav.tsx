@@ -1,15 +1,18 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { Home, History, Trophy, Settings } from "lucide-react";
+import { Home, History, Trophy, Settings, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useUI } from "@/App";
 
 export function AppBottomNav() {
   const [location] = useLocation();
+  const { setScannerOpen } = useUI();
 
   const navItems = [
     { label: "Home", icon: Home, href: "/" },
     { label: "History", icon: History, href: "/history" },
+    { label: "Scan", icon: QrCode, onClick: () => setScannerOpen(true) },
     { label: "Medals", icon: Trophy, href: "/achievements" },
     { label: "Settings", icon: Settings, href: "/settings" },
   ];
@@ -30,18 +33,11 @@ export function AppBottomNav() {
                style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
 
           {navItems.map((item) => {
-            const isActive = location === item.href;
+            const isActive = item.href ? location === item.href : false;
             const Icon = item.icon;
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex flex-col items-center justify-center min-w-[70px] h-14 transition-all duration-300 relative group",
-                  isActive ? "text-primary" : "text-white/20 hover:text-white/40"
-                )}
-              >
+            const content = (
+              <>
                 {/* Cyber-Active Frame */}
                 <AnimatePresence mode="wait">
                   {isActive && (
@@ -92,6 +88,33 @@ export function AppBottomNav() {
                     </motion.span>
                   )}
                 </AnimatePresence>
+              </>
+            );
+
+            if (item.onClick) {
+              return (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  className={cn(
+                    "flex flex-col items-center justify-center min-w-[70px] h-14 transition-all duration-300 relative group text-white/20 hover:text-white/40"
+                  )}
+                >
+                  {content}
+                </button>
+              );
+            }
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href!}
+                className={cn(
+                  "flex flex-col items-center justify-center min-w-[70px] h-14 transition-all duration-300 relative group",
+                  isActive ? "text-primary" : "text-white/20 hover:text-white/40"
+                )}
+              >
+                {content}
               </Link>
             );
           })}
