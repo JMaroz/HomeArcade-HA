@@ -21,10 +21,12 @@ interface OpenRoom {
 
 export function NetplayLobbyDialog({
   game,
+  open,
   profileId = 1,
   onClose,
 }: {
   game: Game;
+  open: boolean;
   profileId?: number;
   onClose: () => void;
 }) {
@@ -122,7 +124,7 @@ export function NetplayLobbyDialog({
   useEffect(() => () => { wsRef.current?.close(); }, []);
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
         className="sm:max-w-md bg-card border-card-border"
         data-testid="dialog-netplay-lobby"
