@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { integrationSettingsSchema } from "@shared/schema";
 import fs from "node:fs/promises";
-import { publishTestPing } from "../haPublisher";
+import { publishTestPing, pushInitialEntities } from "../haPublisher";
 
 // ---------------------------------------------------------------------------
 // Auto-configure HA panel_iframe so HomeArcade is accessible to all HA users.
@@ -92,6 +92,12 @@ export function registerIntegrationRoutes(app: Express) {
   // Test HA entity publishing connectivity
   app.post("/api/ha/test-ping", async (_req, res) => {
     const result = await publishTestPing();
+    res.json(result);
+  });
+
+  // Force-push all sensor entities for discovery
+  app.post("/api/ha/push-initial", async (_req, res) => {
+    const result = await pushInitialEntities();
     res.json(result);
   });
 }

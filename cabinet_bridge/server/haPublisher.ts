@@ -187,3 +187,43 @@ export async function publishTestPing(): Promise<{ ok: boolean; error?: string }
     return { ok: false, error: err instanceof Error ? err.message : "Network error" };
   }
 }
+
+/** Push the 'idle' state for all sensors to ensure discovery in HA */
+export async function pushInitialEntities(): Promise<{ ok: boolean; error?: string }> {
+  const token = await getToken();
+  if (!token) return { ok: false, error: "No token available" };
+
+  try {
+    await Promise.all([
+      pushState("binary_sensor.homearcade_active", "off", {
+        friendly_name: "HomeArcade Active",
+        device_class: "running",
+      }),
+      pushState("sensor.homearcade_game", "idle", {
+        friendly_name: "HomeArcade Game",
+        icon: "mdi:gamepad-variant-outline",
+      }),
+      pushState("sensor.homearcade_system", "idle", {
+        friendly_name: "HomeArcade System",
+        icon: "mdi:controller-classic-outline",
+      }),
+      pushState("sensor.homearcade_player", "none", {
+        friendly_name: "HomeArcade Player",
+        icon: "mdi:account-circle-outline",
+      }),
+      pushState("sensor.homearcade_session_start", "unavailable", {
+        friendly_name: "HomeArcade Session Start",
+        icon: "mdi:clock-start",
+      }),
+      pushState("sensor.homearcade_play_count", "0", {
+        friendly_name: "HomeArcade Play Count",
+        icon: "mdi:counter",
+        unit_of_measurement: "plays",
+        state_class: "total_increasing",
+      }),
+    ]);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Network error" };
+  }
+}

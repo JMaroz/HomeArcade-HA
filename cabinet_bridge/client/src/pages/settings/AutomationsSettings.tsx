@@ -138,6 +138,7 @@ export function AutomationsSettings() {
   const { config, setConfig } = useIntegration();
   const { toast } = useToast();
   const [testing, setTesting] = useState(false);
+  const [pushing, setPushing] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
@@ -159,6 +160,23 @@ export function AutomationsSettings() {
       toast({ variant: "destructive", title: "Connection failed", description: msg });
     } finally {
       setTesting(false);
+    }
+  };
+
+  const handlePushInitial = async () => {
+    setPushing(true);
+    try {
+      const res = await fetch(apiUrl("/api/ha/push-initial"), { method: "POST" });
+      const data = await res.json() as { ok: boolean; error?: string };
+      if (data.ok) {
+        toast({ title: "Entities pushed", description: "All HomeArcade entities were sent to HA." });
+      } else {
+        toast({ variant: "destructive", title: "Push failed", description: data.error });
+      }
+    } catch (err) {
+      toast({ variant: "destructive", title: "Push failed", description: err instanceof Error ? err.message : "Network error" });
+    } finally {
+      setPushing(false);
     }
   };
 
@@ -221,20 +239,34 @@ export function AutomationsSettings() {
             </div>
           </div>
 
-          {/* Test connection */}
-          <div className="flex items-center gap-3">
+          {/* Test connection & Force Push */}
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               variant="outline"
               size="sm"
               className="gap-2"
               onClick={handleTestPing}
-              disabled={testing}
+              disabled={testing || pushing}
             >
               {testing
                 ? <Loader2 className="size-3.5 animate-spin" />
                 : <Radio className="size-3.5" />}
               Test connection
             </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handlePushInitial}
+              disabled={testing || pushing}
+            >
+              {pushing
+                ? <Loader2 className="size-3.5 animate-spin" />
+                : <Zap className="size-3.5" />}
+              Push initial entities
+            </Button>
+
             {testResult !== null && (
               <div className={[
                 "flex items-center gap-1.5 text-xs font-mono",
