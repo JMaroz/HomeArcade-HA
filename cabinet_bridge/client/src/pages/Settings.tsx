@@ -13,12 +13,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import {
   Check, RotateCcw, ShieldAlert, Loader2,
-  Palette, Gamepad2, Database, Activity, Wifi, HelpCircle,
+  Palette, Gamepad2, Database, Activity, Wifi, HelpCircle, Zap,
 } from "lucide-react";
 import { DisplaySettings } from "./settings/DisplaySettings";
 import { ControlsSettings } from "./settings/ControlsSettings";
 import { LibrarySettings } from "./settings/LibrarySettings";
 import { ServicesSettings } from "./settings/ServicesSettings";
+import { AutomationsSettings } from "./settings/AutomationsSettings";
 import { BiosManager } from "@/components/BiosManager";
 import { Section, Step, Code } from "./settings/SettingsShared";
 
@@ -92,6 +93,9 @@ export default function Settings() {
               <TabsTrigger value="services" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
                 <Wifi className="size-4" /> {t("settings.tabs.services")}
               </TabsTrigger>
+              <TabsTrigger value="automations" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
+                <Zap className="size-4" /> Automations
+              </TabsTrigger>
               <TabsTrigger value="help" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
                 <HelpCircle className="size-4" /> {t("settings.tabs.help")}
               </TabsTrigger>
@@ -142,6 +146,15 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground mt-1">Configure RetroAchievements, TheGamesDB, and Screenscraper.</p>
               </div>
               <ServicesSettings />
+            </TabsContent>
+
+            <TabsContent value="automations" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="mb-8">
+                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Home Assistant</div>
+                <h3 className="font-display text-xl font-bold">Automations</h3>
+                <p className="text-xs text-muted-foreground mt-1">Expose game state as HA entities and trigger automations when you play.</p>
+              </div>
+              <AutomationsSettings />
             </TabsContent>
 
             <TabsContent value="help" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">

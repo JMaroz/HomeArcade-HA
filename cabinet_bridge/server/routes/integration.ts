@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { integrationSettingsSchema } from "@shared/schema";
 import fs from "node:fs/promises";
+import { publishTestPing } from "../haPublisher";
 
 // ---------------------------------------------------------------------------
 // Auto-configure HA panel_iframe so HomeArcade is accessible to all HA users.
@@ -87,4 +88,10 @@ export function registerIntegrationRoutes(app: Express) {
 
   app.put("/api/settings/integration", writeIntegrationSettings);
   app.patch("/api/settings/integration", writeIntegrationSettings);
+
+  // Test HA entity publishing connectivity
+  app.post("/api/ha/test-ping", async (_req, res) => {
+    const result = await publishTestPing();
+    res.json(result);
+  });
 }

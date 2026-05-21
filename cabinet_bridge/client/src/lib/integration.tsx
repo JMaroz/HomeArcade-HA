@@ -34,6 +34,8 @@ export interface IntegrationConfig {
   haToken: string;
   /** When false, calls are logged locally but no fetch() is made. */
   liveMode: boolean;
+  /** Publish live game state as HA sensor entities. */
+  haPublishEntities?: boolean;
   /** Override map for action endpoints by id. */
   endpoints: Record<string, string>;
   /** ScreenScraper.fr credentials */
@@ -163,6 +165,7 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     haBaseUrl: typeof source.haBaseUrl === "string" ? source.haBaseUrl : defaultConfig.haBaseUrl,
     haToken: typeof source.haToken === "string" ? source.haToken : defaultConfig.haToken,
     liveMode: typeof source.liveMode === "boolean" ? source.liveMode : defaultConfig.liveMode,
+    haPublishEntities: typeof source.haPublishEntities === "boolean" ? source.haPublishEntities : false,
     endpoints,
     ssUserId: typeof source.ssUserId === "string" ? source.ssUserId : "",
     ssPassword: typeof source.ssPassword === "string" ? source.ssPassword : "",

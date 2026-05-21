@@ -11,6 +11,7 @@ import { z } from "zod";
 import path from "node:path";
 import fs from "node:fs/promises";
 import express from "express";
+import { publishGameStarted, publishGameEnded } from "../haPublisher";
 
 export function registerProfileRoutes(app: Express) {
   app.get("/api/profiles", async (_req, res) => {
@@ -387,6 +388,27 @@ export function registerProfileRoutes(app: Express) {
           }).catch(() => {});
         } catch {}
       }
+
+      // Publish rich sensor entities to HA (uses Supervisor token automatically)
+      const { getUserFromRequest: _getUser } = await import("./shared");
+      const { userId } = getUserFromRequest(req);
+      const profiles = await storage.listProfiles();
+      const activeProfile = profiles.find(p => String(p.id) === String(userId)) ?? profiles[0];
+      const profileName = activeProfile?.name ?? "Player 1";
+      if (event === "started") {
+        publishGameStarted({
+          romId: rom.id, title: rom.title, system: rom.system,
+          profileName, playCount: rom.playCount ?? 0,
+          genre: rom.genre, developer: rom.developer,
+          releaseYear: rom.releaseYear, artUrl: rom.artUrl,
+        }).catch(() => {});
+      } else {
+        publishGameEnded({
+          romId: rom.id, title: rom.title, system: rom.system,
+          profileName, durationSeconds: resolvedDuration ?? 0,
+        }).catch(() => {});
+      }
+
       res.json({ ok: true });
     } catch (err: any) {
       console.error("POST /api/roms/:id/play-session error:", err);

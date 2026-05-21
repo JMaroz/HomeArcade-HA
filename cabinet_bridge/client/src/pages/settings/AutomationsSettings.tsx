@@ -1,0 +1,285 @@
+/**
+ * AutomationsSettings — Home Assistant Automations tab.
+ * Lets users enable HA entity publishing and shows the entity reference
+ * and example automation YAML they can copy into HA.
+ */
+import React, { useState } from "react";
+import { useIntegration } from "@/lib/integration";
+import { useToast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/queryClient";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Section } from "./SettingsShared";
+import {
+  Zap, CheckCircle2, XCircle, Loader2, Copy, Check,
+  Radio, Gamepad2, Monitor, User, Clock, Hash,
+} from "lucide-react";
+
+// ── Entity reference ──────────────────────────────────────────────────────────
+
+const ENTITIES = [
+  {
+    id: "binary_sensor.homearcade_active",
+    icon: Radio,
+    type: "Binary Sensor",
+    description: "on while a game is running, off when idle",
+    example: "on / off",
+  },
+  {
+    id: "sensor.homearcade_game",
+    icon: Gamepad2,
+    type: "Sensor",
+    description: "Title of the current game, or 'idle'",
+    example: "Super Mario Bros. 3",
+  },
+  {
+    id: "sensor.homearcade_system",
+    icon: Monitor,
+    type: "Sensor",
+    description: "Console system ID in uppercase",
+    example: "NES",
+  },
+  {
+    id: "sensor.homearcade_player",
+    icon: User,
+    type: "Sensor",
+    description: "Active profile name",
+    example: "Player 1",
+  },
+  {
+    id: "sensor.homearcade_session_start",
+    icon: Clock,
+    type: "Sensor (timestamp)",
+    description: "ISO timestamp when the current session started",
+    example: "2026-05-20T19:00:00Z",
+  },
+  {
+    id: "sensor.homearcade_play_count",
+    icon: Hash,
+    type: "Sensor",
+    description: "Total play count for the current game",
+    example: "42",
+  },
+];
+
+// ── Example automations ───────────────────────────────────────────────────────
+
+const EXAMPLES = [
+  {
+    title: "Dim lights when a game starts",
+    yaml: `automation:
+  alias: "HomeArcade — Gaming scene"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.homearcade_active
+      to: "on"
+  action:
+    - service: scene.turn_on
+      target:
+        entity_id: scene.gaming_mode`,
+  },
+  {
+    title: "Restore lights when game ends",
+    yaml: `automation:
+  alias: "HomeArcade — Restore scene"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.homearcade_active
+      to: "off"
+  action:
+    - service: scene.turn_on
+      target:
+        entity_id: scene.living_room_normal`,
+  },
+  {
+    title: "Notify after 2 hours of play",
+    yaml: `automation:
+  alias: "HomeArcade — Long session alert"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.homearcade_active
+      to: "on"
+      for:
+        hours: 2
+  action:
+    - service: notify.mobile_app
+      data:
+        message: >
+          You've been playing
+          {{ states('sensor.homearcade_game') }}
+          for 2 hours!`,
+  },
+  {
+    title: "Turn on TV input when NES game starts",
+    yaml: `automation:
+  alias: "HomeArcade — Switch TV to gaming input"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.homearcade_active
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: sensor.homearcade_system
+      state: "NES"
+  action:
+    - service: media_player.select_source
+      target:
+        entity_id: media_player.living_room_tv
+      data:
+        source: "HDMI 1"`,
+  },
+];
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export function AutomationsSettings() {
+  const { config, setConfig } = useIntegration();
+  const { toast } = useToast();
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+
+  const handleTestPing = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await fetch(apiUrl("/api/ha/test-ping"), { method: "POST" });
+      const data = await res.json() as { ok: boolean; error?: string };
+      setTestResult(data);
+      if (data.ok) {
+        toast({ title: "Connection successful", description: "sensor.homearcade_test was created in HA." });
+      } else {
+        toast({ variant: "destructive", title: "Connection failed", description: data.error });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Network error";
+      setTestResult({ ok: false, error: msg });
+      toast({ variant: "destructive", title: "Connection failed", description: msg });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const copyYaml = (yaml: string, idx: number) => {
+    navigator.clipboard.writeText(yaml).then(() => {
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 2000);
+    });
+  };
+
+  return (
+    <div className="space-y-10">
+
+      {/* ── Enable publishing ──────────────────────────────────────────────── */}
+      <Section
+        title="HA Entity Publishing"
+        description="Push live game state to Home Assistant as sensor entities. No manual token needed — uses the add-on Supervisor token automatically."
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-sidebar/40">
+            <div className="space-y-0.5">
+              <div className="font-display font-semibold text-sm flex items-center gap-2">
+                <Zap className="size-4 text-primary" />
+                Publish entities to Home Assistant
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Automatically updates sensor states when a game starts or ends.
+              </div>
+            </div>
+            <Switch
+              checked={!!config.haPublishEntities}
+              onCheckedChange={(v) => setConfig({ haPublishEntities: v })}
+            />
+          </div>
+
+          {/* Test connection */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleTestPing}
+              disabled={testing}
+            >
+              {testing
+                ? <Loader2 className="size-3.5 animate-spin" />
+                : <Radio className="size-3.5" />}
+              Test connection
+            </Button>
+            {testResult !== null && (
+              <div className={[
+                "flex items-center gap-1.5 text-xs font-mono",
+                testResult.ok ? "text-green-500" : "text-destructive",
+              ].join(" ")}>
+                {testResult.ok
+                  ? <CheckCircle2 className="size-3.5" />
+                  : <XCircle className="size-3.5" />}
+                {testResult.ok ? "Connected — sensor.homearcade_test created" : testResult.error}
+              </div>
+            )}
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Entity reference ───────────────────────────────────────────────── */}
+      <Section
+        title="Entity Reference"
+        description="These entities are created automatically in Home Assistant when publishing is enabled. Use them in automations, dashboards, and scripts."
+      >
+        <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
+          {ENTITIES.map((entity) => {
+            const Icon = entity.icon;
+            return (
+              <div key={entity.id} className="flex items-start gap-4 px-4 py-3 bg-sidebar/10 hover:bg-sidebar/20 transition-colors">
+                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Icon className="size-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-mono text-xs font-bold text-foreground">{entity.id}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">{entity.description}</div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">{entity.type}</div>
+                  <div className="font-mono text-[11px] text-primary/80 mt-0.5">{entity.example}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          Attributes like <code className="font-mono bg-muted/40 px-1 rounded">genre</code>, <code className="font-mono bg-muted/40 px-1 rounded">developer</code>, <code className="font-mono bg-muted/40 px-1 rounded">release_year</code>, and <code className="font-mono bg-muted/40 px-1 rounded">art_url</code> are available on <code className="font-mono bg-muted/40 px-1 rounded">sensor.homearcade_game</code>.
+        </p>
+      </Section>
+
+      {/* ── Example automations ────────────────────────────────────────────── */}
+      <Section
+        title="Example Automations"
+        description="Copy these into your automations.yaml or paste them in the HA automation editor."
+      >
+        <div className="space-y-4">
+          {EXAMPLES.map((ex, idx) => (
+            <div key={idx} className="rounded-xl border border-border bg-sidebar/10 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
+                <span className="text-sm font-semibold">{ex.title}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={() => copyYaml(ex.yaml, idx)}
+                >
+                  {copiedIdx === idx
+                    ? <><Check className="size-3 text-green-500" /> Copied</>
+                    : <><Copy className="size-3" /> Copy</>}
+                </Button>
+              </div>
+              <pre className="px-4 py-3 text-[11px] font-mono text-muted-foreground overflow-x-auto scrollbar-none leading-relaxed">
+                {ex.yaml}
+              </pre>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+    </div>
+  );
+}

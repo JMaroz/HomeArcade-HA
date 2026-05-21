@@ -128,6 +128,7 @@ export const integrationSettingsSchema = z.object({
   haBaseUrl: z.string().max(2048).default("https://homeassistant.local:8123"),
   haToken: z.string().max(4096).default(""),
   liveMode: z.boolean().default(false),
+  haPublishEntities: z.boolean().default(false),
   endpoints: z.record(z.string(), z.string().max(2048)).default({}),
   ssUserId: z.string().max(256).default(""),
   ssPassword: z.string().max(256).default(""),
