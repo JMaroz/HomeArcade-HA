@@ -130,7 +130,7 @@ function App() {
             <Toaster />
             <Router hook={useHashLocation}>
               <ErrorBoundary>
-                <SidebarProvider>
+                <SidebarProvider defaultOpen={false}>
                   <div className="h-dvh min-h-dvh flex w-full overflow-hidden bg-background">
                     <Sidebar />
                     <SidebarInset className="flex flex-col min-h-full overflow-hidden relative">
