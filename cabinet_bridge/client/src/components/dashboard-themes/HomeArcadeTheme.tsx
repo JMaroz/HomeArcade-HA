@@ -332,17 +332,7 @@ export default function HomeArcadeTheme() {
     });
   }, [allGames, searchQuery, sort]);
 
-  const recentlyPlayed = useMemo(
-    () =>
-      [...allGames]
-        .filter((g) => g.lastPlayed && g.lastPlayed > 0)
-        .sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))
-        .slice(0, 6),
-    [allGames],
-  );
-
   const [activeGameIdx, setActiveGameIdx] = useState(0);
-  const [recentlyPlayedCollapsed, setRecentlyPlayedCollapsed] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
 
   const activeGame = filteredGames[activeGameIdx];
@@ -431,50 +421,6 @@ export default function HomeArcadeTheme() {
       )}
 
       <div className="flex-1 flex flex-col min-h-0 relative z-10">
-
-        {/* Recently Played â€” desktop only, hidden on mobile */}
-        {recentlyPlayed.length > 0 && !searchQuery && (
-          <div className="shrink-0 border-t border-white/5 hidden sm:block">
-            <button
-              type="button"
-              onClick={() => setRecentlyPlayedCollapsed((v) => !v)}
-              className="w-full flex items-center justify-between px-4 sm:px-8 py-3 hover:bg-white/5 transition-colors"
-            >
-              <div className="font-display text-[12px] font-black uppercase tracking-[0.25em] text-white/40">Recently Played</div>
-              {recentlyPlayedCollapsed
-                ? <ChevronUp className="size-3.5 text-white/30" />
-                : <ChevronDown className="size-3.5 text-white/30" />
-              }
-            </button>
-            {!recentlyPlayedCollapsed && (
-              <div className="flex gap-4 overflow-x-auto scrollbar-none px-8 pb-4">
-                {recentlyPlayed.map((game) => (
-                  <button
-                    key={game.id}
-                    type="button"
-                    onClick={() => {
-                      openGame(game);
-                    }}
-                    className="shrink-0 w-28 aspect-[2/3] rounded-xl overflow-hidden bg-neutral-900/50 group flex flex-col items-center"
-                  >
-                    <div className="relative w-full h-full flex-1">
-                      {game.artUrl ? (
-                        <img src={game.artUrl} className="w-full h-full object-cover" alt="" />
-                      ) : (
-                        <div className="w-full h-full" style={{ background: `linear-gradient(135deg, hsl(${game.art[0]}), hsl(${game.art[1]}))` }} />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    </div>
-                    <div className="w-full bg-white/5 px-1.5 py-1 text-center">
-                      <div className="text-[11px] font-bold truncate text-white/80 leading-tight">{game.title}</div>
-                      <div className="text-[8px] text-white/30 uppercase">{game.system.toUpperCase()}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Browse Systems — mobile header strip */}
         <div className="shrink-0 border-b border-white/5">

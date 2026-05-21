@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { Home, History, Trophy, Settings, QrCode } from "lucide-react";
+import { Home, Trophy, Settings, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUI } from "@/App";
@@ -11,7 +11,6 @@ export function AppBottomNav() {
 
   const navItems = [
     { label: "Home", icon: Home, href: "/" },
-    { label: "History", icon: History, href: "/history" },
     { label: "Scan", icon: QrCode, onClick: () => setScannerOpen(true) },
     { label: "Medals", icon: Trophy, href: "/achievements" },
     { label: "Settings", icon: Settings, href: "/settings" },
@@ -22,7 +21,7 @@ export function AppBottomNav() {
       <div className="max-w-md mx-auto pointer-events-auto">
         <div 
           className={cn(
-            "relative flex items-center justify-around h-16 px-1",
+            "relative flex items-center justify-around h-16 px-2",
             "bg-[#0a0a0a] rounded-xl border border-white/10",
             "shadow-[0_0_40px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.05)]",
             "overflow-hidden"
@@ -97,7 +96,7 @@ export function AppBottomNav() {
                   key={item.label}
                   onClick={item.onClick}
                   className={cn(
-                    "flex flex-col items-center justify-center min-w-[70px] h-14 transition-all duration-300 relative group text-white/20 hover:text-white/40"
+                    "flex flex-col items-center justify-center min-w-[64px] h-14 transition-all duration-300 relative group text-white/20 hover:text-white/40"
                   )}
                 >
                   {content}
@@ -110,7 +109,7 @@ export function AppBottomNav() {
                 key={item.href}
                 href={item.href!}
                 className={cn(
-                  "flex flex-col items-center justify-center min-w-[70px] h-14 transition-all duration-300 relative group",
+                  "flex flex-col items-center justify-center min-w-[64px] h-14 transition-all duration-300 relative group",
                   isActive ? "text-primary" : "text-white/20 hover:text-white/40"
                 )}
               >
