@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "wouter";
 import { Home, History, Trophy, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function MobileBottomNav() {
   const [location] = useLocation();
@@ -14,31 +15,78 @@ export function MobileBottomNav() {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0d0d0d]/95 backdrop-blur-lg border-t border-white/10 px-6 pb-safe-area-inset-bottom">
-      <div className="flex items-center justify-between h-16">
-        {navItems.map((item) => {
-          const isActive = location === item.href;
-          const Icon = item.icon;
+    <div className="md:hidden fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
+      <div className="max-w-md mx-auto pointer-events-auto">
+        <div 
+          className={cn(
+            "relative flex items-center justify-around h-16 px-2",
+            "bg-black/40 backdrop-blur-2xl rounded-[28px]",
+            "border border-white/[0.08] border-t-white/[0.15]",
+            "shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_20px_rgba(176,93,252,0.1)]",
+            "overflow-hidden"
+          )}
+        >
+          {/* Subtle bottom glow */}
+          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-1/2 h-4 bg-primary/20 blur-2xl rounded-full" />
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center gap-1 transition-all duration-300 relative px-3 py-1 rounded-2xl",
-                isActive ? "text-primary" : "text-white/40 hover:text-white/60"
-              )}
-            >
-              {/* Active indicator pill (MD3 style) */}
-              {isActive && (
-                <div className="absolute inset-0 bg-primary/15 rounded-2xl scale-110 animate-in fade-in zoom-in-95 duration-200" />
-              )}
-              
-              <Icon className={cn("size-5 transition-transform duration-300", isActive && "scale-110")} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
-            </Link>
-          );
-        })}
+          {navItems.map((item) => {
+            const isActive = location === item.href;
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex flex-col items-center justify-center min-w-[64px] h-12 transition-all duration-500 rounded-2xl relative",
+                  isActive ? "text-primary" : "text-white/30 hover:text-white/50"
+                )}
+              >
+                {/* Active Indicator Background */}
+                <AnimatePresence>
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-active-pill"
+                      className="absolute inset-0 bg-primary/10 rounded-2xl border border-primary/20"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
+                    >
+                      {/* Inner Shine */}
+                      <div className="absolute inset-x-2 top-1 h-px bg-white/10" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                <motion.div
+                  animate={{ 
+                    scale: isActive ? 1.15 : 1,
+                    y: isActive ? -1 : 0 
+                  }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="relative z-10"
+                >
+                  <Icon className="size-5" strokeWidth={isActive ? 2.5 : 2} />
+                </motion.div>
+
+                <AnimatePresence>
+                  {isActive && (
+                    <motion.span
+                      initial={{ opacity: 0, y: 5, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 2, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-[9px] font-black uppercase tracking-[0.15em] mt-1 relative z-10"
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
