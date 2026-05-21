@@ -7,6 +7,7 @@ import { GameCardSkeleton } from "@/components/GameCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiUrl } from "@/lib/queryClient";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useIntegration } from "@/lib/integration";
 import { useGameDialogState } from "@/lib/useGameDialogState";
 import type { UploadedRom, GameCollectionWithItems, RomSaveSlot, GameCheatCode } from "@shared/schema";
@@ -415,6 +416,21 @@ export default function HomeArcadeTheme() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mobile top bar — sidebar trigger + wordmark + QR scanner */}
+      <div className="shrink-0 md:hidden flex items-center justify-between px-3 h-14 border-b border-white/10 bg-[#0d0d0d]/90 backdrop-blur-md z-20">
+        <SidebarTrigger
+          className="h-9 w-9 rounded-xl border border-white/15 bg-white/5 text-white/70 hover:bg-primary/20 hover:text-primary hover:border-primary/40 transition-all"
+        />
+        <span className="font-display font-black text-sm tracking-widest uppercase text-white/80">HomeArcade</span>
+        <button
+          onClick={() => setShowScanner(true)}
+          className="h-9 w-9 rounded-xl flex items-center justify-center border border-white/15 bg-white/5 text-white/70 hover:bg-primary/20 hover:text-primary hover:border-primary/40 transition-all"
+          aria-label="Scan Warp Link"
+        >
+          <QrCode className="size-4" />
+        </button>
+      </div>
 
       {/* Scraper credentials nudge — shown when ROMs exist but no scraper key is set */}
       {roms.length > 0 && !config.ssUserId && !config.tgdbApiKey && (
