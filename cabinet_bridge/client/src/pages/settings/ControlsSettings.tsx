@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { apiUrl } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ControllerRemapDialog } from "@/components/ControllerRemapDialog";
 import {
   detectControllerType,
   getButtonLayout,
@@ -21,7 +20,7 @@ import {
   type ControllerType,
 } from "@/components/GamepadRemap";
 import {
-  Gamepad2, Activity, Database, Keyboard, ChevronRight, Loader2, Zap,
+  Gamepad2, Activity, Database, Keyboard, Loader2, Zap,
 } from "lucide-react";
 import { Section } from "./SettingsShared";
 import { useProfile } from "@/lib/useProfile";
@@ -51,7 +50,6 @@ export function ControlsSettings() {
   const [gamepads, setGamepads] = useState<Gamepad[]>([]);
   const [pressedButtons, setPressedButtons] = useState<Record<number, number[]>>({});
   const [fetchingAutoconfig, setFetchingAutoconfig] = useState<string | null>(null);
-  const [showRemapDialog, setShowRemapDialog] = useState(false);
 
   // Detect the type of the first connected controller for label rendering
   const primaryType: ControllerType = gamepads.length > 0
@@ -71,8 +69,6 @@ export function ControlsSettings() {
       const cfg = data.mapping as Record<string, string>;
       const detectedType = detectControllerType(gp.id);
 
-      // Persist the RetroPad default physical mapping for this controller type
-      // to the server so in-game button routing is correct out of the box
       const retropadMap = RETROPAD_DEFAULTS[detectedType];
       try {
         await apiRequest(
@@ -84,7 +80,6 @@ export function ControlsSettings() {
         // Non-fatal — the in-game mapping will still use the default
       }
 
-      // Map the UI navigation actions from the autoconfig file
       const newMapping = { ...(config.uiGamepadMapping || {}) };
       if (cfg.input_a_btn !== undefined)     newMapping.select   = { kind: "button", buttonIndex: parseInt(cfg.input_a_btn) };
       if (cfg.input_b_btn !== undefined)     newMapping.back     = { kind: "button", buttonIndex: parseInt(cfg.input_b_btn) };
@@ -128,61 +123,6 @@ export function ControlsSettings() {
 
   return (
     <div className="space-y-10">
-      {showRemapDialog && (
-        <ControllerRemapDialog
-          activeButtons={gamepads.flatMap(gp =>
-            gp.buttons.reduce<{ index: number; label: string; pressed: boolean }[]>((acc, btn, i) => {
-              acc.push({ index: i, label: String(i), pressed: btn.pressed });
-              return acc;
-            }, [])
-          )}
-          mapping={config.uiGamepadMapping || {}}
-          listeningAction={null}
-          listenedBtn={null}
-          lastPressedLabel=""
-          gamepadId={gamepads[0]?.id ?? ""}
-          onRemapAction={(actionId) => {
-            let resolved = false;
-            const DEAD_ZONE = 0.5;
-            const rafTick = () => {
-              if (resolved) return;
-              const gps = navigator.getGamepads?.();
-              for (const gp of gps ?? []) {
-                if (!gp) continue;
-                for (let i = 0; i < gp.buttons.length; i++) {
-                  if (gp.buttons[i].pressed) {
-                    const mapping = { ...(config.uiGamepadMapping || {}) };
-                    mapping[actionId] = { kind: "button", buttonIndex: i };
-                    setConfig({ uiGamepadMapping: mapping });
-                    resolved = true;
-                    return;
-                  }
-                }
-                for (let i = 0; i < gp.axes.length; i++) {
-                  const val = gp.axes[i];
-                  if (Math.abs(val) > DEAD_ZONE) {
-                    const mapping = { ...(config.uiGamepadMapping || {}) };
-                    mapping[actionId] = { kind: "axis", axisIndex: i, direction: val > 0 ? 1 : -1 };
-                    setConfig({ uiGamepadMapping: mapping });
-                    resolved = true;
-                    return;
-                  }
-                }
-              }
-              requestAnimationFrame(rafTick);
-            };
-            requestAnimationFrame(rafTick);
-          }}
-          onDone={() => setShowRemapDialog(false)}
-          actions={[
-            { id: "select", label: "Select / Open" },
-            { id: "back", label: "Back / Close" },
-            { id: "favorite", label: "Toggle Favorite" },
-            { id: "menu", label: "System Menu" },
-          ]}
-        />
-      )}
-
       {/* ── Rumble ──────────────────────────────────────────────────────────── */}
       <Section title={t("settings.sections.input.title")} description={t("settings.sections.input.description")}>
         <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-sidebar/40">
@@ -368,45 +308,6 @@ export function ControlsSettings() {
               ))}
             </div>
           </div>
-        </div>
-      </Section>
-
-      {/* ── Button Mapping ───────────────────────────────────────────────────── */}
-      <Section title={t("settings.sections.mapping.title")} description={t("settings.sections.mapping.description")}>
-        <div className="space-y-4">
-          <p className="text-xs text-muted-foreground">
-            Remap controller buttons for navigating the HomeArcade interface. Click an action below to start the binding wizard.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {([
-              { id: "select",   label: "Select / Open" },
-              { id: "back",     label: "Back / Close" },
-              { id: "favorite", label: "Toggle Favorite" },
-              { id: "menu",     label: "System Menu" },
-            ] as const).map((action) => {
-              const entry = config.uiGamepadMapping?.[action.id];
-              const AXIS_LABELS: Record<number, string> = { 0: "L←→", 1: "L↑↓", 2: "R←→", 3: "R↑↓" };
-              const label = entry?.kind === "button" && entry.buttonIndex !== undefined
-                ? `→ ${getButtonLabel(entry.buttonIndex, primaryType)}`
-                : entry?.kind === "axis" && entry.axisIndex !== undefined
-                ? `→ ${AXIS_LABELS[entry.axisIndex] ?? `A${entry.axisIndex}`}${entry.direction === -1 ? "−" : "+"}`
-                : "Not set";
-              return (
-                <button key={action.id} onClick={() => setShowRemapDialog(true)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-sidebar/20 hover:bg-sidebar/40 transition-colors text-left min-w-[200px]">
-                  <div className="flex-1">
-                    <div className="text-xs font-semibold">{action.label}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono uppercase">{label}</div>
-                  </div>
-                  <ChevronRight className="size-4 text-muted-foreground" />
-                </button>
-              );
-            })}
-          </div>
-          <button onClick={() => setShowRemapDialog(true)}
-            className="w-full mt-2 py-3 rounded-xl border border-dashed border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-xs font-medium text-muted-foreground hover:text-primary">
-            Open Visual Remapper
-          </button>
         </div>
       </Section>
     </div>
