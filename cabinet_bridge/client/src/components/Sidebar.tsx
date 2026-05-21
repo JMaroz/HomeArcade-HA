@@ -121,14 +121,15 @@ export function Sidebar({ onReturnToGrid }: { onReturnToGrid?: () => void }) {
       onKeyDown={handleKeyDown}
     >
       <SidebarHeader className="h-16 flex items-center justify-between px-4">
-        {state === "expanded" && (
+        {/* Show wordmark when expanded on desktop, or always on mobile (Sheet) */}
+        {(state === "expanded" || isMobile) && (
           <Link href="/" className="flex-1 outline-none">
             <Wordmark />
           </Link>
         )}
         <SidebarTrigger
           className={[
-            state === "collapsed" ? "mx-auto" : "ml-auto",
+            state === "collapsed" && !isMobile ? "mx-auto" : "ml-auto",
             "h-8 w-8 rounded-lg border border-sidebar-border/70 bg-sidebar-accent/50",
             "text-sidebar-foreground/80 hover:bg-primary/20 hover:text-primary hover:border-primary/50",
             "transition-all duration-150 shadow-sm",
