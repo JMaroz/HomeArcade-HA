@@ -3,6 +3,7 @@ import type { Game, System } from "@/data/library";
 import { ConsoleSilhouette } from "@/components/ConsoleSilhouette";
 import { SystemLogo } from "@/components/SystemLogo";
 import { KyleBingIcon } from "@/components/KyleBingIcon";
+import { apiUrl } from "@/lib/queryClient";
 
 /**
  * Procedural cover art rendered from the game's gradient palette + a
@@ -41,7 +42,7 @@ export function GameArt({
        */}
       {game.romId ? (
         <img
-          src={`/api/roms/${game.romId}/art`}
+          src={apiUrl(`/api/roms/${game.romId}/art`)}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           loading={priority ? "eager" : "lazy"}
@@ -54,7 +55,7 @@ export function GameArt({
         />
       ) : game.artUrl ? (
         <img
-          src={`/api/art?url=${encodeURIComponent(game.artUrl)}`}
+          src={apiUrl(`/api/art?url=${encodeURIComponent(game.artUrl)}`)}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           loading={priority ? "eager" : "lazy"}
