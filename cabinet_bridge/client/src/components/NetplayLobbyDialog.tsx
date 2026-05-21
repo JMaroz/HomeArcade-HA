@@ -16,6 +16,7 @@ import type { Game } from "@/data/library";
 
 interface OpenRoom {
   code: string;
+  romHash: string | null;
   createdAt: number;
 }
 
@@ -35,6 +36,7 @@ export function NetplayLobbyDialog({
   const [joinCode, setJoinCode]     = useState("");
   const [peerJoined, setPeerJoined] = useState(false);
   const [wsStatus, setWsStatus]     = useState<"idle" | "connecting" | "connected" | "error">("idle");
+  const [errorMsg, setErrorMsg]     = useState<string | null>(null);
 
   // Use a ref so WS message handlers always see the latest code
   const codeRef = useRef("");
@@ -60,14 +62,18 @@ export function NetplayLobbyDialog({
   );
 
   const openWs = useCallback(
-    (firstMessage: object) => {
+    (firstMessage: any) => {
       if (wsRef.current) wsRef.current.close();
       setWsStatus("connecting");
+      setErrorMsg(null);
+      
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
         setWsStatus("connected");
+        // Always include ROM hash if we have it
+        if (game.romHash) firstMessage.romHash = game.romHash;
         ws.send(JSON.stringify(firstMessage));
       };
 
@@ -104,13 +110,14 @@ export function NetplayLobbyDialog({
 
           if (type === "error") {
             setWsStatus("error");
+            setErrorMsg(msg.message as string);
           }
         } catch { /* binary relay data — ignore in lobby */ }
       };
 
       ws.onclose = () => setWsStatus((s) => (s === "connecting" ? "error" : s));
     },
-    [wsUrl, launchNetplay],
+    [wsUrl, launchNetplay, game.romHash],
   );
 
   const handleHostRoom = () => openWs({ type: "create-room" });
@@ -129,7 +136,7 @@ export function NetplayLobbyDialog({
         className="sm:max-w-md bg-card border-card-border"
         data-testid="dialog-netplay-lobby"
       >
-        <DialogTitle className="flex items-center gap-2 font-display text-lg">
+        <DialogTitle className="flex items-center gap-2 font-display text-lg text-white">
           <Wifi className="size-4 text-primary" />
           Netplay — {game.title}
         </DialogTitle>
@@ -149,24 +156,37 @@ export function NetplayLobbyDialog({
                 </p>
               ) : (
                 <div className="space-y-1.5">
-                  {rooms.map((r) => (
-                    <button
-                      key={r.code}
-                      type="button"
-                      onClick={() => handleJoinCode(r.code)}
-                      className="w-full flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2 hover:border-primary/40 hover:bg-primary/5 transition-all"
-                      data-testid={`button-join-open-room-${r.code}`}
-                    >
-                      <span className="font-mono text-sm tracking-[0.25em] font-bold">
-                        {r.code}
-                      </span>
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Users className="size-3" />
-                        1/2{" · "}{formatAge(r.createdAt)}
-                        <ArrowRight className="size-3 text-primary" />
-                      </span>
-                    </button>
-                  ))}
+                  {rooms.map((r) => {
+                    const isCompatible = !r.romHash || !game.romHash || r.romHash === game.romHash;
+                    return (
+                      <button
+                        key={r.code}
+                        type="button"
+                        onClick={() => isCompatible && handleJoinCode(r.code)}
+                        disabled={!isCompatible}
+                        className={`w-full flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2 transition-all ${
+                          isCompatible 
+                            ? "hover:border-primary/40 hover:bg-primary/5 cursor-pointer" 
+                            : "opacity-40 cursor-not-allowed bg-black/20"
+                        }`}
+                        data-testid={`button-join-open-room-${r.code}`}
+                      >
+                        <div className="flex flex-col items-start">
+                          <span className="font-mono text-sm tracking-[0.25em] font-bold">
+                            {r.code}
+                          </span>
+                          {!isCompatible && (
+                            <span className="text-[8px] text-red-400 font-bold uppercase tracking-tight">ROM Mismatch</span>
+                          )}
+                        </div>
+                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Users className="size-3" />
+                          1/2{" · "}{formatAge(r.createdAt)}
+                          {isCompatible && <ArrowRight className="size-3 text-primary" />}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -212,9 +232,9 @@ export function NetplayLobbyDialog({
               </div>
             </div>
 
-            {wsStatus === "error" && (
-              <p className="text-xs text-destructive flex items-center gap-1.5">
-                <WifiOff className="size-3" /> Connection error — please try again.
+            {(wsStatus === "error" || errorMsg) && (
+              <p className="text-xs text-destructive font-bold flex flex-col gap-1.5 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <span className="flex items-center gap-1.5"><WifiOff className="size-3" /> {errorMsg || "Connection error — please try again."}</span>
               </p>
             )}
           </div>
@@ -259,7 +279,7 @@ export function NetplayLobbyDialog({
             <Button
               variant="outline"
               onClick={() => { wsRef.current?.close(); setView("lobby"); setDispCode(""); setPeerJoined(false); setWsStatus("idle"); }}
-              className="w-full"
+              className="w-full text-white"
             >
               Cancel
             </Button>

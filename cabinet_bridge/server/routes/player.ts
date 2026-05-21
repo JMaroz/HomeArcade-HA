@@ -356,7 +356,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         <div class="cabinet-menu-label">System</div>
         <div class="cabinet-menu-grid">
           <button type="button" id="cabinet-warp-open" class="full-width">✨ Warp Link (QR)</button>
-          <button type="button" id="cabinet-exit" class="danger full-width">Exit HomeArcade</button>
+          <button type="button" id="cabinet-exit" class="danger full-width">Exit Game</button>
         </div>
       </div>
     </nav>
