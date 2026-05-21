@@ -16,72 +16,6 @@ import { AppBottomNav } from "@/components/MobileNav";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WarpScanner } from "@/components/dashboard-themes/HomeArcadeTheme";
-import { Logo } from "@/components/Logo";
-
-/**
- * Cinematic boot sequence that plays once when the app is first opened.
- */
-function BootSequence({ onComplete }: { onComplete: () => void }) {
-  const [stage, setStage] = useState(0);
-
-  useEffect(() => {
-    const timer1 = setTimeout(() => setStage(1), 800);
-    const timer2 = setTimeout(() => setStage(2), 2200);
-    const timer3 = setTimeout(() => onComplete(), 3200);
-    return () => { clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3); };
-  }, [onComplete]);
-
-  return (
-    <motion.div 
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center overflow-hidden"
-    >
-      <div className="relative">
-        <AnimatePresence mode="wait">
-          {stage === 0 && (
-            <motion.div 
-              key="stage0"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, filter: "blur(20px)" }}
-              className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/20"
-            >
-              System Initializing...
-            </motion.div>
-          )}
-          {stage === 1 && (
-            <motion.div 
-              key="stage1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20, scale: 1.1 }}
-              className="flex flex-col items-center gap-6"
-            >
-              <div className="relative">
-                <Logo size={64} className="text-white drop-shadow-[0_0_30px_rgba(var(--primary),0.5)]" />
-                <motion.div 
-                  animate={{ opacity: [0, 1, 0] }}
-                  transition={{ repeat: Infinity, duration: 1 }}
-                  className="absolute inset-0 rounded-full border border-primary/30 scale-150"
-                />
-              </div>
-              <div className="text-center space-y-1">
-                <div className="font-display text-xl font-black tracking-tight text-white">HOME<span className="text-primary">ARCADE</span></div>
-                <div className="font-mono text-[8px] uppercase tracking-[0.4em] text-primary animate-pulse">Ready for player one</div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Cyber Background Accents */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none" 
-           style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-      <div className="absolute inset-0 bg-gradient-to-t from-primary/10 via-transparent to-transparent" />
-    </motion.div>
-  );
-}
 
 /**
  * Ensures scroll position is reset or restore correctly on navigation.
@@ -194,7 +128,6 @@ export const useUI = () => {
 
 function App() {
   const [showScanner, setShowScanner] = useState(false);
-  const [booting, setBooting] = useState(true);
 
   useEffect(() => {
     document.documentElement.classList.add("dark");
@@ -205,10 +138,6 @@ function App() {
       <ProfileProvider>
         <IntegrationProvider>
           <UIContext.Provider value={{ setScannerOpen: setShowScanner }}>
-            <AnimatePresence>
-              {booting && <BootSequence onComplete={() => setBooting(false)} />}
-            </AnimatePresence>
-            
             <LanguageManager />
             <ScrollRestoration />
             <TooltipProvider>
