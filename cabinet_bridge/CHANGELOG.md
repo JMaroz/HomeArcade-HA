@@ -1,3 +1,36 @@
+## 2.34.40 – 2026-05-21
+
+- **Fix**: **Netplay Synchronization** — Fixed a bug where netplay rooms would connect but game sessions wouldn't sync. The EmulatorJS bootstrap now correctly receives `EJS_netplayUrl`, `EJS_netplayRole`, and `EJS_netplayRoom` variables.
+- **Improved**: **Dynamic Netplay URL** — Added automatic WebSocket protocol detection (ws/wss) to ensure netplay works behind Home Assistant Ingress without manual configuration.
+
+## 2.34.39 – 2026-05-21
+
+- **Fix**: **HA Ingress Routing** — Moved ingress prefix stripping to the top of the middleware stack to fix routing issues for streaming Server-Sent Events (SSE).
+- **UX**: **Scrape All Feedback** — Added a "All ROMs already scraped" notification to provide better feedback when clicking Scrape All on a completed library.
+
+## 2.34.38 – 2026-05-21
+
+- **Fix**: **Bulk Scrape Progress Bar** — Disabled response buffering for the scrape-all route by adding `X-Accel-Buffering: no`. This allows the real-time progress bar to appear in the UI when running behind Home Assistant.
+- **Cleanup**: **Repository Hygiene** — Added `art-cache` to `.gitignore` to prevent local image cache from being committed.
+
+## 2.34.37 – 2026-05-21
+
+- **Fix**: **Broken Game Art in HA** — Fixed an issue where game thumbnails and background fanart failed to load in Home Assistant. All proxy image sources now correctly use the `apiUrl()` helper to prepend the ingress prefix.
+- **Dev**: **Windows Compatibility** — Integrated `cross-env` into package scripts to allow the dev server (`npm run dev`) to start correctly on Windows machines.
+
+## 2.34.36 – 2026-05-21
+
+- **Fix**: **Art Proxy in Theme** — Updated the HomeArcade theme to route all box art and fanart through the server-side proxy, fixing CORS issues for ScreenScraper and Libretro assets.
+
+## 2.34.35 – 2026-05-21
+
+- **UX**: **Simplified Dashboard** — Removed the "Jump Back In" and redundant "Recently Played" strips from the home page for a cleaner, faster-loading interface.
+- **UX**: **Mobile Nav Cleanup** — Removed the "History" link from the mobile bottom navigation bar and optimized spacing for the remaining items.
+
+## 2.34.34 – 2026-05-21
+
+- **Feature**: **Simplified Controls** — Removed the complex manual visual remapper in favor of a cleaner, more reliable controls settings interface.
+
 ## 2.34.3 – 2026-05-20
 
 - **Fix**: **QR Scanner Stability** — Fixed a re-render loop in the WarpScanner component that caused the camera to flicker and fail on some devices. Added secure context (HTTPS) validation and better error feedback when camera access is denied.

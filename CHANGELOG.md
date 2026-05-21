@@ -4,6 +4,68 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.34.40] — 2026-05-21
+
+### Fix: Netplay Synchronization & Core Bootstrapping
+
+- **Implemented Netplay Configuration** — Fixed an issue where netplay signaling succeeded but games failed to sync. The EmulatorJS bootstrap now correctly receives and initializes `EJS_netplayUrl`, `EJS_netplayRole`, and `EJS_netplayRoom`.
+- **Automatic Server Detection** — Added logic to dynamically detect the correct WebSocket protocol (ws/wss) and host, ensuring compatibility with Home Assistant Ingress.
+
+---
+
+## [2.34.39] — 2026-05-21
+
+### Fix: Home Assistant Ingress Stability & Bulk Scrape UI
+
+- **Optimized Middleware Order** — Moved Home Assistant ingress prefix stripping to the top of the middleware stack. This ensures consistent routing and fixes issues with streaming Server-Sent Events (SSE).
+- **Improved Scrape Feedback** — Added clear UI notifications when attempting to scrape an already-completed library, preventing user confusion when "nothing happens."
+
+---
+
+## [2.34.38] — 2026-05-21
+
+### Fix: Real-time Bulk Scrape Progress
+
+- **Disabled SSE Buffering** — Added `X-Accel-Buffering: no` headers to the bulk scrape route. This forces the Home Assistant proxy to deliver progress updates immediately rather than buffering the entire response.
+- **Repository Hygiene** — Updated `.gitignore` to exclude `art-cache` and removed accidentally committed local cache files.
+
+---
+
+## [2.34.37] — 2026-05-21
+
+### Fix: Broken Game Art in Home Assistant
+
+- **Restored Ingress Art Paths** — Fixed a regression where game thumbnails and background fanart failed to load in Home Assistant. All proxy image sources are now correctly wrapped in the `apiUrl()` helper to prepend the required ingress prefix.
+- **Enhanced Windows Compatibility** — Integrated `cross-env` into development scripts to ensure the preview server (`npm run dev`) works seamlessly on Windows environments.
+
+---
+
+## [2.34.36] — 2026-05-21
+
+### Fix: Game Art Proxying
+
+- **Centralized Art Proxy** — Updated the dashboard theme to route all external game art through the internal `/api/art` proxy. This resolves CORS issues and ensures reliable loading for ScreenScraper and Libretro assets.
+
+---
+
+## [2.34.35] — 2026-05-21
+
+### UI: Dashboard De-cluttering
+
+- **Removed "Recently Played" Sections** — Streamlined the main dashboard and library views by removing the "Jump Back In" grid and the redundant horizontal "Recently Played" strip.
+- **Navigation Cleanup** — Removed the "History" link from the mobile bottom navigation bar and optimized the remaining 4 items for a cleaner mobile layout.
+
+---
+
+## [2.34.34] — 2026-05-21
+
+### Feature: Simplified Controls & Settings
+
+- **Streamlined Remapper** — Removed the manual visual remapper in favor of a simplified controls settings interface.
+- **Code Optimization** — Cleaned up legacy remapping logic to improve maintainability.
+
+---
+
 ## [2.34.4] — 2026-05-20
 
 ### Fix: Build Stability & Type Safety
