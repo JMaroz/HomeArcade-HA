@@ -9,10 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import { apiUrl } from "@/lib/queryClient";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Section } from "./SettingsShared";
+import { Input } from "@/components/ui/input";
+import { Section, Field } from "./SettingsShared";
 import {
   Zap, CheckCircle2, XCircle, Loader2, Copy, Check,
-  Radio, Gamepad2, Monitor, User, Clock, Hash,
+  Radio, Gamepad2, Monitor, User, Clock, Hash, Settings2
 } from "lucide-react";
 
 // ── Entity reference ──────────────────────────────────────────────────────────
@@ -175,7 +176,7 @@ export function AutomationsSettings() {
         title="HA Entity Publishing"
         description="Push live game state to Home Assistant as sensor entities. No manual token needed — uses the add-on Supervisor token automatically."
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-sidebar/40">
             <div className="space-y-0.5">
               <div className="font-display font-semibold text-sm flex items-center gap-2">
@@ -190,6 +191,33 @@ export function AutomationsSettings() {
               checked={!!config.haPublishEntities}
               onCheckedChange={(v) => setConfig({ haPublishEntities: v })}
             />
+          </div>
+
+          {/* Manual Connection Overrides */}
+          <div className="rounded-xl border border-border bg-sidebar/10 overflow-hidden">
+            <div className="px-4 py-3 border-b border-border/60 bg-sidebar/20 flex items-center gap-2">
+              <Settings2 className="size-3.5 text-muted-foreground" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Manual Configuration (Optional)</span>
+            </div>
+            <div className="p-4 grid sm:grid-cols-2 gap-6">
+              <Field label="Home Assistant URL" hint="Only needed if running outside of HA Add-on environment.">
+                <Input
+                  value={config.haBaseUrl}
+                  onChange={(e) => setConfig({ haBaseUrl: e.target.value })}
+                  placeholder="https://homeassistant.local:8123"
+                  className="font-mono text-sm"
+                />
+              </Field>
+              <Field label="Long-Lived Access Token" hint="Generate this in your HA profile settings.">
+                <Input
+                  type="password"
+                  value={config.haToken}
+                  onChange={(e) => setConfig({ haToken: e.target.value })}
+                  placeholder="Paste token here..."
+                  className="font-mono text-sm"
+                />
+              </Field>
+            </div>
           </div>
 
           {/* Test connection */}

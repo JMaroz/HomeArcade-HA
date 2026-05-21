@@ -30,10 +30,11 @@ async function getToken(): Promise<string | null> {
   return settings.haToken || null;
 }
 
-function getBaseUrl(): string {
+async function getBaseUrl(): Promise<string> {
   // Inside the add-on, always use the Supervisor proxy
   if (getSupervisorToken()) return "http://supervisor/homeassistant";
-  return "https://homeassistant.local:8123";
+  const settings = await storage.getIntegrationSettings();
+  return settings.haBaseUrl || "https://homeassistant.local:8123";
 }
 
 async function pushState(
@@ -44,7 +45,8 @@ async function pushState(
   const token = await getToken();
   if (!token) return;
 
-  const url = `${getBaseUrl()}/api/states/${entityId}`;
+  const baseUrl = await getBaseUrl();
+  const url = `${baseUrl}/api/states/${entityId}`;
   try {
     await fetch(url, {
       method: "POST",
@@ -163,7 +165,8 @@ export async function publishTestPing(): Promise<{ ok: boolean; error?: string }
   const token = await getToken();
   if (!token) return { ok: false, error: "No token available. Set SUPERVISOR_TOKEN or configure haToken." };
 
-  const url = `${getBaseUrl()}/api/states/sensor.homearcade_test`;
+  const baseUrl = await getBaseUrl();
+  const url = `${baseUrl}/api/states/sensor.homearcade_test`;
   try {
     const res = await fetch(url, {
       method: "POST",
