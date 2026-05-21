@@ -92,6 +92,8 @@ export async function publishGameStarted(payload: GameStartedPayload): Promise<v
     pushState("binary_sensor.homearcade_active", "on", {
       friendly_name: "HomeArcade Active",
       device_class: "running",
+      netplay_nickname: settings.netplayNickname,
+      netplay_port: settings.netplayPort,
     }),
     pushState("sensor.homearcade_game", payload.title, {
       friendly_name: "HomeArcade Game",
@@ -102,6 +104,8 @@ export async function publishGameStarted(payload: GameStartedPayload): Promise<v
       developer: payload.developer ?? "Unknown",
       release_year: payload.releaseYear ?? null,
       art_url: payload.artUrl ?? "",
+      netplay_nickname: settings.netplayNickname,
+      netplay_port: settings.netplayPort,
     }),
     pushState("sensor.homearcade_system", payload.system.toUpperCase(), {
       friendly_name: "HomeArcade System",
