@@ -109,7 +109,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>${safeTitle} · HomeArcade</title>
     <style>
       html, body {
@@ -118,7 +118,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         margin: 0;
         padding: 0;
         overflow: hidden;
-        background: #050507;
+        background: #000;
         color: #f8fafc;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       }
@@ -130,59 +130,53 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         appearance: none;
         border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 999px;
-        background: rgba(5, 5, 7, 0.58);
+        background: rgba(5, 5, 7, 0.65);
         color: #f8fafc;
         cursor: pointer;
-        font: 800 11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font: 800 11px ui-monospace, monospace;
         letter-spacing: 0.14em;
         min-height: 46px;
         padding: 0 18px;
         text-transform: uppercase;
         box-shadow: 0 12px 36px rgba(0, 0, 0, 0.42);
         backdrop-filter: blur(12px);
-        transition: opacity 180ms ease, transform 180ms ease, background 180ms ease, border-color 180ms ease;
+        transition: all 180ms ease;
       }
       .cabinet-menu-button:hover,
-      .cabinet-menu-button:focus-visible,
       .cabinet-menu-button[aria-expanded="true"] {
         background: rgba(236, 72, 153, 0.36);
         border-color: rgba(236, 72, 153, 0.78);
         outline: none;
       }
-      .cabinet-menu-button:active {
-        transform: translateY(1px) scale(0.98);
-      }
       .cabinet-menu-backdrop {
         position: fixed;
         z-index: 999998;
         inset: 0;
-        background: rgba(5, 5, 7, 0.54);
+        background: rgba(0, 0, 0, 0.7);
         opacity: 0;
         pointer-events: none;
         transition: opacity 180ms ease, visibility 180ms ease;
         visibility: hidden;
+        backdrop-filter: blur(4px);
       }
       .cabinet-menu-panel {
         position: fixed;
         z-index: 999999;
         top: max(70px, calc(env(safe-area-inset-top) + 64px));
         left: max(12px, env(safe-area-inset-left));
-        width: min(92vw, 360px);
-        max-height: min(82vh, calc(100dvh - 90px));
+        width: min(92vw, 400px);
+        max-height: min(85vh, calc(100dvh - 90px));
         overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 22px;
-        background: rgba(11, 11, 16, 0.84);
-        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58);
-        color: #f8fafc;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 24px;
+        background: rgba(10, 10, 15, 0.95);
+        box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8);
         opacity: 0;
         pointer-events: none;
-        transform: translateY(-8px) scale(0.98);
-        transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+        transform: translateY(-10px) scale(0.98);
+        transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
         visibility: hidden;
-        backdrop-filter: blur(18px);
-        overscroll-behavior: contain;
+        backdrop-filter: blur(20px);
       }
       .cabinet-menu-panel.is-open,
       .cabinet-menu-backdrop.is-open {
@@ -191,327 +185,117 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         transform: translateY(0) scale(1);
         visibility: visible;
       }
-      .cabinet-menu-panel__header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 18px 18px 12px;
+      .cabinet-menu-section {
+        padding: 16px 20px;
       }
-      .cabinet-menu-title {
-        margin: 0;
-        color: #f8fafc;
-        font: 900 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing: 0.18em;
+      .cabinet-menu-section + .cabinet-menu-section {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .cabinet-menu-label {
+        color: rgba(255, 255, 255, 0.35);
+        font: 900 9px ui-monospace, monospace;
+        letter-spacing: 0.2em;
         text-transform: uppercase;
-      }
-      .cabinet-menu-subtitle {
-        margin: 5px 0 0;
-        color: rgba(248, 250, 252, 0.58);
-        font: 700 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing: 0.08em;
-        line-height: 1.5;
-        text-transform: uppercase;
-      }
-      .cabinet-menu-hash {
-        margin: 4px 0 0;
-        color: rgba(248, 250, 252, 0.28);
-        font: 600 9px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing: 0.06em;
-        cursor: pointer;
-        user-select: all;
-      }
-      .cabinet-menu-hash:hover { color: rgba(248, 250, 252, 0.55); }
-      .cabinet-menu-divider {
-        grid-column: 1 / -1;
-        height: 1px;
-        background: rgba(255, 255, 255, 0.08);
-        margin: 2px 0;
-      }
-      .cabinet-user-badge {
-        font-size: 11px;
-        font-weight: 600;
-        color: rgba(255,255,255,.75);
-        background: rgba(255,255,255,.1);
-        border: 1px solid rgba(255,255,255,.18);
-        border-radius: 20px;
-        padding: 3px 10px;
-        white-space: nowrap;
-        align-self: flex-start;
-        margin-top: 4px;
-        letter-spacing: .3px;
-        flex-shrink: 0;
+        margin-bottom: 12px;
       }
       .cabinet-menu-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-        padding: 8px 18px 24px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
       }
       .cabinet-menu-panel button {
         appearance: none;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.08);
-        color: #f8fafc;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.9);
         cursor: pointer;
-        font: 700 11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing: 0.12em;
-        min-height: 54px;
-        padding: 10px 12px;
+        font: 800 10px ui-monospace, monospace;
+        letter-spacing: 0.1em;
+        min-height: 48px;
+        padding: 10px;
         text-transform: uppercase;
-      }
-      .cabinet-menu-panel button:hover,
-      .cabinet-menu-panel button:focus-visible,
-      .cabinet-menu-panel button[aria-pressed="true"] {
-        background: rgba(236, 72, 153, 0.34);
-        border-color: rgba(236, 72, 153, 0.75);
-        outline: none;
-      }
-      .cabinet-menu-panel .primary-action {
-        grid-column: 1 / -1;
-        background: rgba(236, 72, 153, 0.42);
-        border-color: rgba(236, 72, 153, 0.78);
-      }
-      .cabinet-menu-panel .danger {
-        grid-column: 1 / -1;
-      }
-      .cabinet-menu-panel .danger:hover,
-      .cabinet-menu-panel .danger:focus-visible {
-        background: rgba(239, 68, 68, 0.32);
-        border-color: rgba(239, 68, 68, 0.72);
-      }
-      .cabinet-save-panel {
-        position: fixed;
-        z-index: 1000000;
-        left: 50%;
-        top: 50%;
-        width: min(94vw, 760px);
-        max-height: min(86vh, 720px);
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 24px;
-        background: rgba(11, 11, 16, 0.9);
-        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.66);
-        color: #f8fafc;
-        opacity: 0;
-        pointer-events: none;
-        transform: translate(-50%, -48%) scale(0.98);
-        transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
-        visibility: hidden;
-        backdrop-filter: blur(20px);
-      }
-      .cabinet-save-panel.is-open {
-        opacity: 1;
-        pointer-events: auto;
-        transform: translate(-50%, -50%) scale(1);
-        visibility: visible;
-      }
-      .cabinet-save-panel__header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 18px 18px 12px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      .cabinet-save-title {
-        margin: 0;
-        color: #f8fafc;
-        font: 900 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-      }
-      .cabinet-save-subtitle {
-        margin: 6px 0 0;
-        color: rgba(248, 250, 252, 0.6);
-        font: 700 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing: 0.08em;
-        line-height: 1.5;
-        text-transform: uppercase;
-      }
-      .cabinet-save-close {
-        appearance: none;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        color: #f8fafc;
-        cursor: pointer;
-        font: 900 16px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        min-height: 40px;
-        min-width: 40px;
-      }
-      .cabinet-save-close:hover,
-      .cabinet-save-close:focus-visible {
-        background: rgba(236, 72, 153, 0.34);
-        border-color: rgba(236, 72, 153, 0.75);
-        outline: none;
-      }
-      .cabinet-save-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
-        max-height: calc(min(86vh, 720px) - 94px);
-        overflow-y: auto;
-        padding: 14px 18px 18px;
-      }
-      .cabinet-save-slot {
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.06);
-        padding: 12px;
-      }
-      .cabinet-save-slot[data-filled="true"] {
-        border-color: rgba(236, 72, 153, 0.46);
-        background:
-          radial-gradient(circle at 12% 0%, rgba(236, 72, 153, 0.2), transparent 44%),
-          rgba(255, 255, 255, 0.07);
-      }
-      .cabinet-save-slot__thumb {
-        width: 100%;
-        aspect-ratio: 4/3;
-        border-radius: 10px;
-        overflow: hidden;
-        background: rgba(0,0,0,0.35);
-        margin-bottom: 8px;
+        transition: all 150ms ease;
         display: flex;
         align-items: center;
         justify-content: center;
+        text-align: center;
+        gap: 8px;
       }
-      .cabinet-save-slot__thumb img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        image-rendering: pixelated;
+      .cabinet-menu-panel button:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
       }
-      .cabinet-save-slot__thumb--empty::after {
-        content: "NO SAVE";
-        color: rgba(248,250,252,0.2);
-        font: 800 8px ui-monospace, monospace;
-        letter-spacing: 0.2em;
+      .cabinet-menu-panel button[aria-pressed="true"] {
+        background: rgba(236, 72, 153, 0.3);
+        border-color: rgba(236, 72, 153, 0.7);
+        color: #fff;
+        box-shadow: 0 0 15px rgba(236, 72, 153, 0.2);
       }
-      .cabinet-save-slot__eyebrow {
-        color: rgba(248, 250, 252, 0.56);
-        font: 800 9px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
+      .cabinet-menu-panel button.primary {
+        background: rgba(236, 72, 153, 0.4);
+        border-color: rgba(236, 72, 153, 0.6);
+        color: #fff;
       }
-      .cabinet-save-slot__label {
-        margin-top: 5px;
-        color: #f8fafc;
-        font: 900 14px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      .cabinet-menu-panel button.danger:hover {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.5);
       }
-      .cabinet-save-slot__meta {
-        min-height: 32px;
-        margin-top: 5px;
-        color: rgba(248, 250, 252, 0.58);
-        font: 700 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        line-height: 1.5;
+      .cabinet-menu-panel .full-width {
+        grid-column: 1 / -1;
       }
-      .cabinet-save-slot__actions {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+
+      /* Disc Selector Submenu */
+      .cabinet-disc-list {
+        display: flex;
+        flex-direction: column;
         gap: 6px;
         margin-top: 10px;
       }
-      .cabinet-save-slot button {
-        appearance: none;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.08);
-        color: #f8fafc;
-        cursor: pointer;
-        font: 800 9px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing: 0.12em;
-        min-height: 36px;
-        padding: 8px 6px;
-        text-transform: uppercase;
+      .cabinet-disc-item {
+        justify-content: flex-start !important;
+        padding-left: 16px !important;
       }
-      .cabinet-save-slot button:hover,
-      .cabinet-save-slot button:focus-visible {
-        background: rgba(236, 72, 153, 0.34);
-        border-color: rgba(236, 72, 153, 0.75);
-        outline: none;
-      }
-      .cabinet-save-slot button:disabled {
-        cursor: not-allowed;
-        opacity: 0.38;
-      }
-      .cabinet-save-slot .danger:hover,
-      .cabinet-save-slot .danger:focus-visible {
-        background: rgba(239, 68, 68, 0.28);
-        border-color: rgba(239, 68, 68, 0.68);
-      }
-      .cabinet-opt {
-        appearance: none;
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 12px;
-        background: rgba(255,255,255,0.07);
-        color: rgba(248,250,252,0.8);
-        cursor: pointer;
-        font: 800 9px ui-monospace,monospace;
-        letter-spacing: 0.12em;
-        min-height: 36px;
-        padding: 8px 6px;
-        text-transform: uppercase;
-        transition: background 0.15s, border-color 0.15s, color 0.15s;
-      }
-      .cabinet-opt:hover,
-      .cabinet-opt:focus-visible {
-        background: rgba(236,72,153,0.2);
-        border-color: rgba(236,72,153,0.55);
-        color: #fff;
-        outline: none;
-      }
-      .cabinet-aspect-btn {
-        appearance: none;
-        border: 1px solid rgba(255,255,255,0.16);
-        border-radius: 12px;
-        background: rgba(255,255,255,0.08);
-        color: #f8fafc;
-        cursor: pointer;
-        font: 800 9px ui-monospace,monospace;
-        letter-spacing: 0.12em;
-        min-height: 36px;
-        padding: 8px 6px;
-        text-transform: uppercase;
-      }
-      .cabinet-aspect-btn:hover,
-      .cabinet-aspect-btn:focus-visible,
-      .cabinet-aspect-btn[aria-checked="true"] {
-        background: rgba(236, 72, 153, 0.34);
-        border-color: rgba(236, 72, 153, 0.75);
-        outline: none;
-      }
-      #game canvas {
-        transition: filter 0.2s;
-      }
-      /* Filters */
-      #game.cabinet-filter-crt canvas { filter: contrast(1.15) brightness(0.92) saturate(1.2) !important; }
-      #game.cabinet-filter-smooth canvas { image-rendering: auto !important; filter: blur(0.5px) brightness(1.02) !important; }
-      #game.cabinet-filter-scanlines canvas { image-rendering: pixelated !important; filter: contrast(1.1) brightness(0.85) !important; }
-      #game.cabinet-filter-lcd canvas { image-rendering: pixelated !important; filter: contrast(1.3) brightness(1.1) saturate(0.7) !important; }
-      #game.cabinet-filter-phosphor canvas { filter: contrast(1.1) brightness(0.95) saturate(0) sepia(1) hue-rotate(90deg) !important; }
+
+      /* In-game Toast */
       .cabinet-toast {
         position: fixed;
         z-index: 1000000;
-        top: max(70px, calc(env(safe-area-inset-top) + 64px));
+        top: 24px;
         left: 50%;
         transform: translateX(-50%);
-        max-width: min(90vw, 520px);
-        padding: 10px 14px;
-        border-radius: 12px;
-        background: rgba(236, 72, 153, 0.92);
+        padding: 12px 24px;
+        border-radius: 99px;
+        background: rgba(236, 72, 153, 0.95);
         color: white;
-        font: 700 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing: 0.08em;
+        font: 900 11px ui-monospace, monospace;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 180ms ease;
+        transition: all 200ms ease;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
       }
-      .cabinet-toast.show { opacity: 1; }
-      #game { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+      .cabinet-toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
+
+      #game { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; }
+      
+      /* Filter Overlays (on #game container) */
+      #game.filter-crt canvas { filter: contrast(1.1) brightness(0.9) saturate(1.1); }
+      #game.filter-crt::after {
+        content: ""; pointer-events: none; position: absolute; inset: 0; z-index: 10;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+        background-size: 100% 3px, 3px 100%;
+      }
+      #game.filter-scanlines canvas { filter: brightness(0.85); }
+      #game.filter-scanlines::after {
+        content: ""; pointer-events: none; position: absolute; inset: 0; z-index: 10;
+        background: linear-gradient(transparent 50%, rgba(0,0,0,0.2) 50%);
+        background-size: 100% 2px;
+      }
+      #game.filter-smooth canvas { image-rendering: auto !important; filter: blur(0.4px) brightness(1.05); }
+
+      /* Launch Overlay */
       .cabinet-launch-overlay {
         position: fixed;
         z-index: 999998;
@@ -519,60 +303,85 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 24px;
-        background: radial-gradient(circle at 50% 32%, rgba(236, 72, 153, 0.22), transparent 34%), linear-gradient(180deg, rgba(5, 5, 7, 0.92), rgba(5, 5, 7, 0.72));
+        background: #000;
         color: #f8fafc;
-        transition: opacity 240ms ease, visibility 240ms ease;
+        transition: opacity 300ms ease;
       }
       .cabinet-launch-overlay.is-hidden { opacity: 0; visibility: hidden; }
       .cabinet-launch-card {
-        width: min(88vw, 520px);
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 22px;
-        background: rgba(11, 11, 16, 0.78);
-        padding: 22px;
-        backdrop-filter: blur(18px);
+        width: 300px;
+        text-align: center;
       }
-      .cabinet-progress-track { width: 100%; height: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 999px; background: rgba(255, 255, 255, 0.08); }
-      .cabinet-progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #ec4899, #f9a8d4); transition: width 260ms ease; }
+      .cabinet-progress-track { width: 100%; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); overflow: hidden; margin: 20px 0; }
+      .cabinet-progress-bar { width: 0%; height: 100%; background: #ec4899; transition: width 200ms ease; }
     </style>
   </head>
   <body>
-    <button type="button" class="cabinet-menu-button" id="cabinet-menu-toggle" aria-expanded="false">Menu</button>
+    <button type="button" class="cabinet-menu-button" id="cabinet-menu-toggle">Menu</button>
     <div class="cabinet-menu-backdrop" id="cabinet-menu-backdrop"></div>
+    
     <nav class="cabinet-menu-panel" id="cabinet-menu-panel">
-      <div class="cabinet-menu-grid">
-        <button type="button" id="cabinet-resume">Resume Game</button>
-        <button type="button" id="cabinet-save">Quick Save</button>
-        <button type="button" id="cabinet-load">Quick Load</button>
-        <button type="button" id="cabinet-warp-open">Warp Link</button>
-        <button type="button" id="cabinet-exit" class="danger">Exit Game</button>
+      <!-- Game Section -->
+      <div class="cabinet-menu-section">
+        <div class="cabinet-menu-label">Game Controls</div>
+        <div class="cabinet-menu-grid">
+          <button type="button" id="cabinet-resume" class="primary full-width">Resume</button>
+          <button type="button" id="cabinet-save">Save State</button>
+          <button type="button" id="cabinet-load">Load State</button>
+        </div>
+      </div>
+
+      <!-- Disc Swap Section (Hidden by default, shown by JS if discs exist) -->
+      <div class="cabinet-menu-section" id="cabinet-disc-section" style="display:none;">
+        <div class="cabinet-menu-label">CD Console Controls</div>
+        <button type="button" class="full-width" id="cabinet-disc-toggle">💿 Swap Disc...</button>
+        <div id="cabinet-disc-list" class="cabinet-disc-list" style="display:none;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Visuals Section -->
+      <div class="cabinet-menu-section">
+        <div class="cabinet-menu-label">Visual Filters</div>
+        <div class="cabinet-menu-grid">
+          <button type="button" class="cabinet-filter-btn" data-filter="none" aria-pressed="true">Raw</button>
+          <button type="button" class="cabinet-filter-btn" data-filter="smooth">Smooth</button>
+          <button type="button" class="cabinet-filter-btn" data-filter="crt">CRT</button>
+          <button type="button" class="cabinet-filter-btn" data-filter="scanlines">Scanlines</button>
+        </div>
+      </div>
+
+      <!-- System Section -->
+      <div class="cabinet-menu-section">
+        <div class="cabinet-menu-label">System</div>
+        <div class="cabinet-menu-grid">
+          <button type="button" id="cabinet-warp-open" class="full-width">✨ Warp Link (QR)</button>
+          <button type="button" id="cabinet-exit" class="danger full-width">Exit HomeArcade</button>
+        </div>
       </div>
     </nav>
-    <section class="cabinet-save-panel" id="cabinet-warp-panel">
-      <div style="padding:24px;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;">
-        <p style="font-weight:900;text-transform:uppercase;letter-spacing:0.1em;">Warp Link</p>
-        <div id="cabinet-warp-qr">Warping...</div>
-        <div style="max-width:280px;color:rgba(248,250,252,0.6);font:600 11px ui-monospace,monospace;letter-spacing:0.05em;line-height:1.5;">
-          Scan to continue on your phone. <br>
-          <span style="color:rgba(236, 72, 153, 0.9);">Make sure you are logged into Home Assistant in your phone's browser!</span>
-        </div>
-        <div id="cabinet-warp-manual" style="display:none;width:100%;">
-          <p style="font-size:10px;opacity:0.6;">Manual link:</p>
-          <input id="cabinet-warp-url" type="text" readonly style="width:100%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:8px;border-radius:8px;" />
-        </div>
-        <button type="button" id="cabinet-warp-close" style="appearance:none;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:10px 20px;border-radius:12px;cursor:pointer;">Close</button>
-      </div>
+
+    <section class="cabinet-save-panel" id="cabinet-warp-panel" style="display:none; position:fixed; inset:0; z-index:1000000; background:rgba(0,0,0,0.9); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center;">
+       <div style="width:min(90vw, 400px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center;">
+          <div class="cabinet-menu-label" style="margin-bottom:20px;">Warp Hand-off</div>
+          <div id="cabinet-warp-qr" style="margin:0 auto 20px; background:#fff; padding:10px; border-radius:12px; width:220px; height:220px;"></div>
+          <p style="font-size:11px; color:rgba(255,255,255,0.5); line-height:1.6; margin-bottom:24px;">Scan with your phone to pick up exactly where you left off. Make sure you're logged into Home Assistant on your phone!</p>
+          <button type="button" id="cabinet-warp-close" style="appearance:none; width:100%; padding:14px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; font:900 10px ui-monospace,monospace; text-transform:uppercase; cursor:pointer;">Back to Menu</button>
+       </div>
     </section>
+
     <div class="cabinet-launch-overlay" id="cabinet-launch-overlay">
       <div class="cabinet-launch-card">
-        <p style="font-weight:900;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 12px;">Loading ${safeTitle}</p>
+        <div class="cabinet-menu-label">Booting Core</div>
+        <p style="font-weight:900; letter-spacing:0.1em; text-transform:uppercase; margin-top:8px;">${safeTitle}</p>
         <div class="cabinet-progress-track"><div class="cabinet-progress-bar" id="cabinet-progress-bar"></div></div>
-        <p id="cabinet-launch-status" style="margin-top:12px;font-size:11px;opacity:0.6;">Initializing...</p>
+        <p id="cabinet-launch-status" style="font-size:9px; opacity:0.4; text-transform:uppercase; letter-spacing:0.1em;">Initializing...</p>
       </div>
     </div>
+
     <div class="cabinet-toast" id="cabinet-toast"></div>
     <div id="game"></div>
+
     <script>
       window.CABINET_RETURN_TO = ${safeReturnTo};
     </script>
@@ -602,6 +411,7 @@ export function renderEmulatorBootstrap({
   profileId,
   cheats,
   biosUrl,
+  netplayUrl,
   netplayRole,
   netplayRoom,
 }: any) {
@@ -611,8 +421,9 @@ function cabinetToast(msg) {
   if (!t) return;
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(function() { t.classList.remove("show"); }, 2000);
+  setTimeout(function() { t.classList.remove("show"); }, 2500);
 }
+
 var cabinetLaunchProgress = 0;
 function cabinetSetLaunchProgress(percent, status) {
   cabinetLaunchProgress = Math.max(cabinetLaunchProgress, percent);
@@ -621,6 +432,7 @@ function cabinetSetLaunchProgress(percent, status) {
   if (bar) bar.style.width = cabinetLaunchProgress + "%";
   if (statusText) statusText.textContent = status || "Loading...";
 }
+
 function cabinetFailLaunchProgress(msg) {
   var bar = document.querySelector("#cabinet-progress-bar");
   var statusText = document.querySelector("#cabinet-launch-status");
@@ -635,201 +447,126 @@ function cabinetFailLaunchProgress(msg) {
     statusText.style.fontWeight = "900";
   }
 }
-function cabinetSetEmulatorSaveSlot(slot) {
-  if (window.EJS_emulator) {
-    window.EJS_emulator.settings["save-state-slot"] = String(slot);
-    if (typeof window.EJS_emulator.changeSettingOption === "function") {
-      window.EJS_emulator.changeSettingOption("save-state-slot", String(slot));
-    }
-  }
-}
-async function cabinetRecordSaveSlot(slot) {
-  try {
-    var res = await fetch("./save-states/" + slot, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({label: "Slot "+slot}) });
-    if (!res.ok) {
-       var err = await res.json().catch(function(){return {message:"Metadata update failed"};});
-       throw new Error(err.message);
-    }
-  } catch(e) {
-    console.error("[Record] Failed:", e);
-    throw e;
-  }
-}
-async function cabinetBackupSlot(slot) {
-  var emu = window.EJS_emulator;
-  if (!emu || !emu.gameManager || !emu.gameManager.FS) throw new Error("Emulator filesystem not ready");
-  var FS = emu.gameManager.FS;
-  if (typeof FS.syncfs === "function") {
-    await new Promise(function(resolve) { FS.syncfs(false, resolve); });
-  }
-  
-  var data = null;
-  var gId = ${JSON.stringify(userId + "_" + gameId)};
-  var paths = [
-    "/" + gId + "-" + slot + ".state", 
-    "/" + slot + "-quick.state",
-    "/" + gId + "/auto.state",
-    "/auto.state"
-  ];
 
-  try {
-    var files = FS.readdir("/");
-    console.log("[Warp] Files on virtual disk:", files);
-  } catch(e) {}
+// ── Unified Menu Logic ──────────────────────────────────────────────────────
 
-  for (var i=0; i<paths.length; i++) {
-    try { 
-      data = FS.readFile(paths[i]); 
-      if (data && data.length > 0) {
-        console.log("[Warp] Found save data at " + paths[i]);
-        break; 
-      }
-    } catch(e) {}
-  }
-
-  if (!data || data.length === 0) throw new Error("Save file not found on virtual disk");
-  
-  var res = await fetch("./save-backup/" + slot, { 
-    method: "PUT", 
-    headers: { "Content-Type": "application/octet-stream" },
-    body: data 
-  });
-  if (!res.ok) {
-    var errBody = await res.json().catch(function(){ return {message:"Server rejected backup ("+res.status+")"}; });
-    throw new Error(errBody.message);
-  }
-}
-async function cabinetRestoreBackup(slot) {
-  var emu = window.EJS_emulator;
-  if (!emu || !emu.gameManager || !emu.gameManager.FS) return;
-  var FS = emu.gameManager.FS;
-  
-  console.log("[Warp] Restoring backup for slot " + slot + "...");
-  var res = await fetch("./save-backup/" + slot);
-  if (!res.ok) {
-    console.log("[Warp] No remote backup found for slot " + slot);
-    return;
-  }
-  
-  var data = new Uint8Array(await res.arrayBuffer());
-  var gId = ${JSON.stringify(userId + "_" + gameId)};
-  var paths = [
-    "/" + gId + "-" + slot + ".state", 
-    "/" + slot + "-quick.state",
-    "/" + gId + "/auto.state",
-    "/auto.state"
-  ];
-  
-  try { FS.mkdir("/" + gId); } catch(e) {}
-  
-  for (var i=0; i<paths.length; i++) {
-    try {
-       FS.writeFile(paths[i], data);
-       console.log("[Warp] Restored backup to " + paths[i]);
-    } catch(e) {}
-  }
-
-  if (typeof FS.syncfs === "function") {
-    await new Promise(function(resolve) { FS.syncfs(false, resolve); });
-  }
-}
-function cabinetSetPanelOpen(id, open) {
-  var el = document.getElementById(id);
-  var backdrop = document.getElementById("cabinet-menu-backdrop");
-  if (!el || !backdrop) return;
-  el.classList.toggle("is-open", open);
-  backdrop.classList.toggle("is-open", open);
-}
-function cabinetSetupWarp() {
-  var btn = document.querySelector("#cabinet-warp-open");
-  if (!btn) return;
-  btn.onclick = async function() {
-    var menu = document.getElementById("cabinet-menu-panel");
-    if (menu) menu.classList.remove("is-open");
-    cabinetSetPanelOpen("cabinet-warp-panel", true);
-    var qr = document.querySelector("#cabinet-warp-qr");
-    qr.innerHTML = '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#000;font:800 10px ui-monospace,monospace;letter-spacing:0.1em;text-transform:uppercase;text-align:center;padding:20px;">Warping...</div>';
-    var slot = 9; // Slot 9 is the primary handoff point (Slot 0 is fallback)
-    
-    cabinetSetEmulatorSaveSlot(slot);
-    var emu = window.EJS_emulator;
-    var saved = false;
-    
-    console.log("[Warp] Triggering save to slot " + slot + "...");
-    if (emu && emu.gameManager && typeof emu.gameManager.quickSave === "function") {
-      try { saved = !!emu.gameManager.quickSave(String(slot)); } catch(e) { saved = false; }
-    }
-    if (!saved && emu && typeof emu.saveState === "function") {
-      try { emu.saveState(); saved = true; } catch(e) { saved = false; }
-    }
-    if (!saved) { cabinetSendInput(24, "1"); }
-    
-    var attempt = 0;
-    var check = async function() {
-      try {
-        attempt++;
-        await cabinetBackupSlot(slot);
-        await cabinetRecordSaveSlot(slot);
-        var url = new URL(window.location.href);
-        url.searchParams.set("loadSlot", String(slot));
-        url.searchParams.set("warp", "true");
-        
-        // Populate manual link
-        var manualBox = document.getElementById("cabinet-warp-manual");
-        var manualInput = document.getElementById("cabinet-warp-url");
-        if (manualBox && manualInput) {
-          manualInput.value = url.toString();
-          manualBox.style.display = "block";
-        }
-        
-        // Correct path: from /api/roms/:id/player to /api/roms/warp-qr is ../warp-qr
-        var response = await fetch("../warp-qr?url=" + encodeURIComponent(url.toString()));
-        var data = await response.json();
-        if (data.dataUrl) {
-          qr.innerHTML = '<img src="'+data.dataUrl+'" style="display:block;margin:0 auto;max-width:100%;height:auto;border-radius:8px;box-shadow:0 0 20px rgba(0,0,0,0.2);" />';
-          cabinetToast("Warp Point Ready ✨");
-        } else {
-          throw new Error("QR Generation Failed");
-        }
-      } catch(e) {
-        console.warn("[Warp] Sync attempt " + attempt + " failed: " + e.message);
-        if (attempt < 8) setTimeout(check, 1500);
-        else {
-          qr.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:20px;text-transform:uppercase;font-weight:900;">Warp Failed</div><div style="font-size:9px;opacity:0.6;padding:0 10px;">' + e.message + '</div>';
-          cabinetToast("Warp failed");
-        }
-      }
-    };
-    setTimeout(check, 1200);
-  };
-  var closeBtn = document.getElementById("cabinet-warp-close");
-  if (closeBtn) closeBtn.onclick = function() { cabinetSetPanelOpen("cabinet-warp-panel", false); };
-}
-function cabinetSetupSystemMenu() {
+function cabinetSetupMenu() {
   var btn = document.getElementById("cabinet-menu-toggle");
   var backdrop = document.getElementById("cabinet-menu-backdrop");
   var panel = document.getElementById("cabinet-menu-panel");
+  var resumeBtn = document.getElementById("cabinet-resume");
+  var saveBtn = document.getElementById("cabinet-save");
+  var loadBtn = document.getElementById("cabinet-load");
+  var warpBtn = document.getElementById("cabinet-warp-open");
   var exitBtn = document.getElementById("cabinet-exit");
-  if (!btn || !backdrop || !panel) return;
-  btn.onclick = function() {
-    panel.classList.toggle("is-open");
-    backdrop.classList.toggle("is-open");
-  };
-  backdrop.onclick = function() {
-    panel.classList.remove("is-open");
-    backdrop.classList.remove("is-open");
-    cabinetSetPanelOpen("cabinet-warp-panel", false);
-  };
-  if (exitBtn) {
-    exitBtn.onclick = function() {
-      if (window.CABINET_RETURN_TO) {
-        window.location.href = window.CABINET_RETURN_TO;
-      } else {
-        window.location.href = "/";
-      }
-    };
+
+  if (!btn || !panel) return;
+
+  function toggleMenu(open) {
+    panel.classList.toggle("is-open", open);
+    backdrop.classList.toggle("is-open", open);
+    btn.setAttribute("aria-expanded", open);
+    if (window.EJS_emulator) {
+       // Pause/Unpause emulator when menu is open
+       if (open) window.EJS_emulator.pause();
+       else window.EJS_emulator.resume();
+    }
   }
+
+  btn.onclick = function() { toggleMenu(!panel.classList.contains("is-open")); };
+  backdrop.onclick = function() { toggleMenu(false); };
+  resumeBtn.onclick = function() { toggleMenu(false); };
+
+  saveBtn.onclick = function() {
+    if (!window.EJS_emulator) return;
+    window.EJS_emulator.saveState();
+    cabinetToast("Game Saved ✨");
+    toggleMenu(false);
+  };
+
+  loadBtn.onclick = function() {
+    if (!window.EJS_emulator) return;
+    window.EJS_emulator.loadState();
+    cabinetToast("State Loaded 🎮");
+    toggleMenu(false);
+  };
+
+  exitBtn.onclick = function() {
+    if (window.CABINET_RETURN_TO) window.location.href = window.CABINET_RETURN_TO;
+    else window.location.href = "/";
+  };
+
+  // Visual Filters
+  document.querySelectorAll(".cabinet-filter-btn").forEach(function(fBtn) {
+    fBtn.onclick = function() {
+      var filter = fBtn.getAttribute("data-filter");
+      var gameEl = document.getElementById("game");
+      gameEl.className = ""; // Clear all
+      if (filter !== "none") gameEl.classList.add("filter-" + filter);
+      
+      document.querySelectorAll(".cabinet-filter-btn").forEach(function(b) { b.setAttribute("aria-pressed", "false"); });
+      fBtn.setAttribute("aria-pressed", "true");
+      cabinetToast(filter.toUpperCase() + " Enabled");
+    };
+  });
+
+  // Disc Swapping (Multi-disc)
+  var discData = ${JSON.stringify(discs || [])};
+  if (discData && discData.length > 1) {
+    var discSection = document.getElementById("cabinet-disc-section");
+    var discToggle = document.getElementById("cabinet-disc-toggle");
+    var discList = document.getElementById("cabinet-disc-list");
+    discSection.style.display = "block";
+    
+    discToggle.onclick = function() {
+      var hidden = discList.style.display === "none";
+      discList.style.display = hidden ? "flex" : "none";
+    };
+
+    discData.forEach(function(disc, idx) {
+      var dBtn = document.createElement("button");
+      dBtn.className = "cabinet-disc-item";
+      dBtn.textContent = "Disc " + (idx + 1) + (disc.label ? ": " + disc.label : "");
+      dBtn.onclick = function() {
+        if (window.EJS_emulator && window.EJS_emulator.gameManager) {
+          window.EJS_emulator.gameManager.changeDisc(idx);
+          cabinetToast("Swapped to Disc " + (idx + 1));
+          toggleMenu(false);
+        }
+      };
+      discList.appendChild(dBtn);
+    });
+  }
+
+  // Warp Logic
+  warpBtn.onclick = async function() {
+    toggleMenu(false);
+    document.getElementById("cabinet-warp-panel").style.display = "flex";
+    var qr = document.getElementById("cabinet-warp-qr");
+    qr.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#000; font:800 10px monospace;">GENERATING...</div>';
+    
+    var slot = 9;
+    if (window.EJS_emulator) {
+       window.EJS_emulator.saveState(slot);
+       // Wait for save to complete before QR
+       setTimeout(async function() {
+          var url = new URL(window.location.href);
+          url.searchParams.set("loadSlot", String(slot));
+          url.searchParams.set("warp", "true");
+          var response = await fetch("../warp-qr?url=" + encodeURIComponent(url.toString()));
+          var data = await response.json();
+          if (data.dataUrl) {
+            qr.innerHTML = '<img src="'+data.dataUrl+'" style="width:100%; height:auto;" />';
+          }
+       }, 1500);
+    }
+  };
+  document.getElementById("cabinet-warp-close").onclick = function() {
+    document.getElementById("cabinet-warp-panel").style.display = "none";
+    toggleMenu(true);
+  };
 }
+
 window.EJS_onGameStart = function() {
   cabinetSetLaunchProgress(100, "Ready");
   setTimeout(function() { 
@@ -840,54 +577,48 @@ window.EJS_onGameStart = function() {
   var params = new URLSearchParams(window.location.search);
   var loadSlot = params.get("loadSlot");
   if (loadSlot) {
-    (async function() {
-      try {
-        var slot = Number(loadSlot);
-        await cabinetRestoreBackup(slot);
-        
-        // Give the core 3 seconds to fully initialize before forcing a load
-        setTimeout(function() { 
-          var emu = window.EJS_emulator;
-          var loaded = false;
-          console.log("[Warp] Attempting to load state from slot " + slot + "...");
-          
-          if (emu && emu.gameManager && typeof emu.gameManager.quickLoad === "function") {
-            try { loaded = !!emu.gameManager.quickLoad(String(slot)); } catch(e) { loaded = false; }
-          }
-          if (!loaded && emu && typeof emu.loadState === "function") {
-            try { emu.loadState(slot); loaded = true; } catch(e) { loaded = false; }
-          }
-          
-          if (loaded) {
-            cabinetToast("Warp Complete ✨");
-          } else {
-            console.warn("[Warp] Auto-load failed, please load slot " + slot + " manually.");
-          }
-        }, 3000);
-      } catch(e) {
-        console.error("[Warp] Restore failed:", e);
-      }
-    })();
+    setTimeout(function() {
+      if (window.EJS_emulator) window.EJS_emulator.loadState(Number(loadSlot));
+      cabinetToast("Warp Complete ✨");
+    }, 2500);
   }
 };
-cabinetSetupSystemMenu();
-cabinetSetupWarp();
+
+cabinetSetupMenu();
 cabinetSetLaunchProgress(20, "Booting...");
+
 window.EJS_player = "#game";
 window.EJS_core = ${JSON.stringify(core)};
 window.EJS_gameName = ${JSON.stringify(title)};
 window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
-${discs?.length > 1 ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) => ({ fileName: `../\${d.id}/file`, label: d.label })))};` : `window.EJS_gameUrl = \"./file\";`}
-window.EJS_pathtodata = \"../../emulatorjs/\";
+${discs?.length > 1 ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) => ({ fileName: `../${d.id}/file`, label: d.label })))};` : `window.EJS_gameUrl = \"./file\";`}
+window.EJS_pathtodata = "../../emulatorjs/";
 window.EJS_startOnLoaded = true;
+
+// ── Hide built-in UI ──
+window.EJS_buttons = {
+  play_pause: false,
+  restart: false,
+  mute: false,
+  settings: false,
+  fullscreen: true, // Keep fullscreen as it's useful
+  save_state: false,
+  load_state: false,
+  screen_record: false,
+  screenshot: false,
+  quick_save: false,
+  quick_load: false,
+  cheat: false,
+  chancge_disc: false
+};
 
 // ── Netplay Configuration ──
 window.EJS_netplayUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + (window.location.pathname.match(/^\\/api\\/(?:hassio_)?ingress\\/[^/]+/)?.[0] || "") + "/api/netplay";
 ${netplayRole ? `window.EJS_netplayRole = ${JSON.stringify(netplayRole)};` : ""}
 ${netplayRoom ? `window.EJS_netplayRoom = ${JSON.stringify(netplayRoom)};` : ""}
 
-var loader = document.createElement(\"script\");
-loader.src = \"../../emulatorjs/loader.js\";
+var loader = document.createElement("script");
+loader.src = "../../emulatorjs/loader.js";
 document.body.appendChild(loader);
 `;
 }
