@@ -100,9 +100,11 @@ cabinetFailLaunchProgress(${JSON.stringify(message)});
 `;
 }
 
-export function renderEmulatorPage({ title, returnTo, romHash }: { title: string; returnTo: string; romHash: string | null }) {
+export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { title: string; returnTo: string; romHash: string | null; queryString?: string }) {
   const safeTitle = escapeHtml(title);
   const safeReturnTo = JSON.stringify(returnTo);
+  const safeQueryString = queryString || "";
+
   return `<!doctype html>
 <html>
   <head>
@@ -574,7 +576,7 @@ export function renderEmulatorPage({ title, returnTo, romHash }: { title: string
     <script>
       window.CABINET_RETURN_TO = ${safeReturnTo};
     </script>
-    <script src="./bootstrap.js"></script>
+    <script src="./bootstrap.js${safeQueryString}"></script>
   </body>
 </html>`;
 }
@@ -600,6 +602,8 @@ export function renderEmulatorBootstrap({
   profileId,
   cheats,
   biosUrl,
+  netplayRole,
+  netplayRoom,
 }: any) {
   return `"use strict";
 function cabinetToast(msg) {
@@ -876,6 +880,12 @@ window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
 ${discs?.length > 1 ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) => ({ fileName: `../\${d.id}/file`, label: d.label })))};` : `window.EJS_gameUrl = \"./file\";`}
 window.EJS_pathtodata = \"../../emulatorjs/\";
 window.EJS_startOnLoaded = true;
+
+// ── Netplay Configuration ──
+window.EJS_netplayUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + (window.location.pathname.match(/^\\/api\\/(?:hassio_)?ingress\\/[^/]+/)?.[0] || "") + "/api/netplay";
+${netplayRole ? `window.EJS_netplayRole = ${JSON.stringify(netplayRole)};` : ""}
+${netplayRoom ? `window.EJS_netplayRoom = ${JSON.stringify(netplayRoom)};` : ""}
+
 var loader = document.createElement(\"script\");
 loader.src = \"../../emulatorjs/loader.js\";
 document.body.appendChild(loader);

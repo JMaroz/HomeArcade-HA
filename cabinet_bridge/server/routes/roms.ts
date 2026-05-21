@@ -514,7 +514,8 @@ export function registerRomRoutes(app: Express) {
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     res.removeHeader("X-Frame-Options");
     const returnTo = typeof req.query.return === "string" ? req.query.return : "";
-    res.send(renderEmulatorPage({ title: rom.title, returnTo, romHash: rom.romHash ?? null }));
+    const qString = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+    res.send(renderEmulatorPage({ title: rom.title, returnTo, romHash: rom.romHash ?? null, queryString: qString }));
   });
 
   app.get("/api/roms/:id/bootstrap.js", async (req, res) => {
@@ -542,6 +543,9 @@ export function registerRomRoutes(app: Express) {
     const profileParam = req.query.profile ? String(req.query.profile) : null;
     const pId = profileParam && !isNaN(Number(profileParam)) ? Number(profileParam) : 1;
     const userId = profileParam ? `profile_${profileParam}` : haUserId;
+
+    const netplayRole = req.query.netplay_role ? String(req.query.netplay_role) : null;
+    const netplayRoom = req.query.netplay_room ? String(req.query.netplay_room) : null;
 
     res.setHeader("Content-Type", "application/javascript; charset=utf-8");
     // Bootstrap content is stable for a given ROM+profile combination;
@@ -597,6 +601,8 @@ export function registerRomRoutes(app: Express) {
       userId, userName, profileId: String(pId),
       cheats: await storage.listCheats(rom.id, pId).then((cs) => cs.filter((c) => c.enabled)),
       biosUrl,
+      netplayRole,
+      netplayRoom,
     }));
     } catch (err: any) {
       console.error(`[HomeArcade] bootstrap.js error for ROM ${req.params.id}:`, err);
