@@ -126,7 +126,14 @@ export function Sidebar({ onReturnToGrid }: { onReturnToGrid?: () => void }) {
             <Wordmark />
           </Link>
         )}
-        <SidebarTrigger className={state === "collapsed" ? "mx-auto" : "ml-auto"} />
+        <SidebarTrigger
+          className={[
+            state === "collapsed" ? "mx-auto" : "ml-auto",
+            "h-8 w-8 rounded-lg border border-sidebar-border/70 bg-sidebar-accent/50",
+            "text-sidebar-foreground/80 hover:bg-primary/20 hover:text-primary hover:border-primary/50",
+            "transition-all duration-150 shadow-sm",
+          ].join(" ")}
+        />
       </SidebarHeader>
 
       <SidebarSeparator />

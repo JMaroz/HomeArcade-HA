@@ -101,7 +101,7 @@ function AppRouter() {
     <>
       <Switch>
         <Route path="/">
-          <Dashboard />
+          <AppShell><Dashboard /></AppShell>
         </Route>
         <Route path="/library">
           <Redirect to="/" />

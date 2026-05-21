@@ -2,7 +2,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { uploadedRomToGame, GAMES, SYSTEMS, type Game, type System, type SystemId } from "@/data/library";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
-import { MobileTopBar } from "@/components/MobileNav";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { GameCardSkeleton } from "@/components/GameCardSkeleton";
 import { Button } from "@/components/ui/button";
@@ -387,7 +386,7 @@ export default function HomeArcadeTheme() {
 
 
   return (
-    <div className="fixed inset-0 z-[50] bg-[#0c0c0c] text-white flex flex-col select-none overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col min-h-0 bg-[#0c0c0c] text-white select-none overflow-hidden font-sans relative">
 
       {/* Dynamic Background Fanart (High Blur) */}
       <AnimatePresence mode="wait">
@@ -416,11 +415,6 @@ export default function HomeArcadeTheme() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Mobile top bar — QR scanner + Settings */}
-      <div className="shrink-0 xl:hidden">
-        <MobileTopBar onScannerOpen={() => setShowScanner(true)} />
-      </div>
 
       {/* Scraper credentials nudge — shown when ROMs exist but no scraper key is set */}
       {roms.length > 0 && !config.ssUserId && !config.tgdbApiKey && (
