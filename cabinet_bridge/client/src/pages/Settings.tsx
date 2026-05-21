@@ -20,6 +20,7 @@ import { ControlsSettings } from "./settings/ControlsSettings";
 import { LibrarySettings } from "./settings/LibrarySettings";
 import { ServicesSettings } from "./settings/ServicesSettings";
 import { AutomationsSettings } from "./settings/AutomationsSettings";
+import { NetplaySettings } from "./settings/NetplaySettings";
 import { BiosManager } from "@/components/BiosManager";
 import { Section, Step, Code } from "./settings/SettingsShared";
 
@@ -93,6 +94,9 @@ export default function Settings() {
               <TabsTrigger value="services" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
                 <Wifi className="size-4" /> {t("settings.tabs.services")}
               </TabsTrigger>
+              <TabsTrigger value="netplay" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
+                <Wifi className="size-4" /> Netplay
+              </TabsTrigger>
               <TabsTrigger value="automations" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
                 <Zap className="size-4" /> Automations
               </TabsTrigger>
@@ -146,6 +150,15 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground mt-1">Configure RetroAchievements, TheGamesDB, and Screenscraper.</p>
               </div>
               <ServicesSettings />
+            </TabsContent>
+
+            <TabsContent value="netplay" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="mb-8">
+                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Multiplayer</div>
+                <h3 className="font-display text-xl font-bold">Netplay Configuration</h3>
+                <p className="text-xs text-muted-foreground mt-1">Set your nickname and hosting preferences for online sessions.</p>
+              </div>
+              <NetplaySettings />
             </TabsContent>
 
             <TabsContent value="automations" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">

@@ -282,39 +282,6 @@ export function AutomationsSettings() {
         </div>
       </Section>
 
-      {/* ── Netplay ────────────────────────────────────────────────────────── */}
-      <Section
-        title="Netplay Configuration"
-        description="Configure your online presence for multiplayer gaming. These settings apply to the built-in netplay and compatible native launchers."
-      >
-        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6">
-          <Field label="Netplay Nickname" hint="Your display name in netplay sessions.">
-            <div className="relative">
-              <User className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={config.netplayNickname}
-                onChange={(e) => setConfig({ netplayNickname: e.target.value })}
-                placeholder="HomeArcadePlayer"
-                className="pl-9 font-mono text-sm"
-              />
-            </div>
-          </Field>
-
-          <Field label="Netplay Port" hint="Default port for hosting sessions (typically 55435).">
-            <div className="relative">
-              <Hash className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="number"
-                value={config.netplayPort}
-                onChange={(e) => setConfig({ netplayPort: parseInt(e.target.value) || 55435 })}
-                placeholder="55435"
-                className="pl-9 font-mono text-sm"
-              />
-            </div>
-          </Field>
-        </div>
-      </Section>
-
       {/* ── PC Sensors ────────────────────────────────────────────────────── */}
       <Section
         title="PC Sensor Configuration"

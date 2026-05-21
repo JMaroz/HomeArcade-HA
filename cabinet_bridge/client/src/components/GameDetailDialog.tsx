@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Button } from "@/components/ui/button";
 import { GameArt } from "@/components/GameArt";
 import { WarpLinkDialog } from "@/components/WarpLinkDialog";
+import { NetplayLobbyDialog } from "@/components/NetplayLobbyDialog";
 import { SYSTEMS, type Game, gameLaunchEndpoint } from "@/data/library";
 import { useIntegration, formatRelative } from "@/lib/integration";
 import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
@@ -61,7 +62,12 @@ export function GameDetailDialog({
   const [scrapingArt, setScrapingArt] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [showWarp, setShowWarp] = useState(false);
-  useEffect(() => { setVideoPlaying(false); setShowWarp(false); }, [game?.id]);
+  const [netplayOpen, setNetplayOpen] = useState(false);
+  useEffect(() => { 
+    setVideoPlaying(false); 
+    setShowWarp(false); 
+    setNetplayOpen(false);
+  }, [game?.id]);
   const [selectedRomId, setSelectedRomId] = useState<number | null>(null);
 
   const { data: raProgress, isLoading: loadingRa } = useQuery({
@@ -770,6 +776,17 @@ export function GameDetailDialog({
               >
                 <QrCode className="size-4" /> Warp
               </Button>
+              {game.romId && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setNetplayOpen(true)}
+                  className="font-mono uppercase tracking-wider gap-2"
+                  data-testid="button-detail-netplay"
+                >
+                  <Wifi className="size-4" /> Netplay
+                </Button>
+              )}
               <Button
                 size="lg"
                 variant="outline"
@@ -796,6 +813,14 @@ export function GameDetailDialog({
         slot={latestSave?.slot}
         onClose={() => setShowWarp(false)}
       />
+      {game.romId && (
+        <NetplayLobbyDialog
+          game={game}
+          open={netplayOpen}
+          profileId={profileId}
+          onClose={() => setNetplayOpen(false)}
+        />
+      )}
     </Dialog>
   );
 }
