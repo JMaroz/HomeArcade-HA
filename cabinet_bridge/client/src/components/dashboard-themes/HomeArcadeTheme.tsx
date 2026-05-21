@@ -289,8 +289,19 @@ export default function HomeArcadeTheme() {
 
   // â”€â”€ Search + Sort â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [searchQuery, setSearchQuery] = useState("");
+  const [location] = useLocation();
   const [sort, setSort] = useState<"recent" | "title" | "year" | "rating" | "plays">("recent");
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Derive active filter from location
+  const activeFilter = useMemo(() => {
+    const loc = location || "/";
+    if (loc === "/") return { type: "all" };
+    if (loc.startsWith("/library/collection/")) return { type: "collection", value: loc.split("/").pop() };
+    if (loc.startsWith("/library/status/")) return { type: "status", value: loc.split("/").pop() };
+    if (loc.startsWith("/library/")) return { type: "simple", value: loc.split("/").pop() };
+    return { type: "all" };
+  }, [location]);
 
   // Keyboard shortcut: / or Ctrl+K to focus search
   useEffect(() => {
@@ -309,17 +320,54 @@ export default function HomeArcadeTheme() {
 
   const filteredGames = useMemo(() => {
     let list = allGames;
+
+    // 1. apply routing filter (collections, systems, status)
+    if (activeFilter.type === "collection") {
+      const col = collections.find(c => String(c.id) === activeFilter.value);
+      if (col) {
+        if (col.smartFilter) {
+          const rules = col.smartFilter;
+          list = list.filter(g => {
+            if (rules.systems?.length && !rules.systems.includes(g.system)) return false;
+            if (rules.playStatus?.length && !rules.playStatus.includes(g.playStatus)) return false;
+            if (rules.minRating && (g.rating || 0) < rules.minRating) return false;
+            if (rules.minMinutesPlayed && (g.minutesPlayed || 0) < rules.minMinutesPlayed) return false;
+            if (rules.favorites && !g.favorite) return false;
+            if (rules.genre && !g.genre?.toLowerCase().includes(rules.genre.toLowerCase())) return false;
+            return true;
+          });
+        } else {
+          list = list.filter(g => col.romIds.includes(g.romId as number));
+        }
+      }
+    } else if (activeFilter.type === "status") {
+      list = list.filter(g => g.playStatus === activeFilter.value);
+    } else if (activeFilter.type === "simple") {
+      if (activeFilter.value === "favorites") list = list.filter(g => g.favorite);
+      else if (activeFilter.value === "recent") list = list.filter(g => g.lastPlayed && g.lastPlayed > 0);
+      else if (activeFilter.value === "backlog") list = list.filter(g => g.playStatus === "backlog");
+      else if (activeFilter.value === "playing") list = list.filter(g => g.playStatus === "playing");
+      else if (activeFilter.value === "completed") list = list.filter(g => g.playStatus === "completed");
+      else if (activeFilter.value === "dropped") list = list.filter(g => g.playStatus === "dropped");
+      else {
+        // Assume system ID if simple value doesn't match
+        list = list.filter(g => g.system === activeFilter.value);
+      }
+    }
+
+    // 2. apply search filter
     const systemFilter = searchQuery.startsWith("filter:") ? searchQuery.slice(7).trim() : "";
     if (systemFilter) {
       list = list.filter((g) => g.system === systemFilter);
     } else if (searchQuery.trim()) {
-      const fuse = new Fuse(allGames, {
+      const fuse = new Fuse(list, {
         keys: ["title", "system", "genre", "developer", "publisher"],
         threshold: 0.35,
         distance: 100,
       });
       list = fuse.search(searchQuery.trim()).map((r) => r.item);
     }
+
     return [...list].sort((a, b) => {
       switch (sort) {
         case "title": return a.title.localeCompare(b.title);
@@ -330,7 +378,7 @@ export default function HomeArcadeTheme() {
         default: return (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0);
       }
     });
-  }, [allGames, searchQuery, sort]);
+  }, [allGames, searchQuery, sort, activeFilter, collections]);
 
   const [activeGameIdx, setActiveGameIdx] = useState(0);
   const [showScanner, setShowScanner] = useState(false);

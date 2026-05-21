@@ -6,9 +6,10 @@ import { createServer } from "node:http";
 import fs from "node:fs";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { initializeDatabase } from "./storage";
+import { initializeDatabase, storage } from "./storage";
 import { registerRoutes } from "./routes/index";
 import { attachNetplayServer } from "./netplay";
+import { initScanner } from "./scanner";
 import { serveStatic } from "./static";
 import { setupVite } from "./vite";
 
@@ -140,6 +141,19 @@ async function initApp() {
   log("Routes registered", "boot");
 
   attachNetplayServer(httpServer);
+
+  // Initialize ROM scanner
+  const envWatchDir = process.env.CABINET_ROM_WATCH_DIR || "";
+  initScanner(
+    envWatchDir,
+    storage.addScannedRom.bind(storage),
+    storage.listRomFilenames.bind(storage),
+    async () => {
+      const s = await storage.getIntegrationSettings();
+      return s.libraryWatchPaths.split(",").map(p => p.trim()).filter(Boolean);
+    }
+  );
+  log("ROM scanner initialized", "boot");
 
   // Error handler must be registered after all routes
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

@@ -45,6 +45,7 @@ const ALL_STATUSES = [
 
 function ScannerStatusSection() {
   const { t } = useTranslation();
+  const { config, setConfig } = useIntegration();
   const { toast } = useToast();
   const [scanning, setScanning] = useState(false);
   const { data: status } = useQuery<ScannerStatusData>({ queryKey: ["/api/scanner/status"], refetchInterval: 30_000 });
@@ -63,38 +64,58 @@ function ScannerStatusSection() {
     }
   };
 
-  if (!status?.enabled) {
-    return (
-      <Section title={t("settings.sections.scanner.title")} description={t("settings.sections.scanner.disabledDescription")}>
-        <p className="text-sm text-muted-foreground">
-          Not active — set <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">CABINET_ROM_WATCH_DIR</code> in the add-on config to enable automatic ROM imports.
-        </p>
-      </Section>
-    );
-  }
-
   return (
     <Section title={t("settings.sections.scanner.title")} description={t("settings.sections.scanner.enabledDescription")}>
-      <div className="space-y-3">
-        <div className="flex items-center gap-x-3 gap-y-1 text-sm font-mono">
-          <span className="text-muted-foreground">Watch dir:</span>
-          <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{status.watchDir}</code>
-          {status.watching && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-green-400">
-              <span className="size-1.5 rounded-full bg-green-400 animate-pulse" /> {t("common.ui.active")}
-            </span>
-          )}
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Watch Directories</Label>
+          <div className="flex gap-2">
+            <Input
+              value={config.libraryWatchPaths}
+              onChange={(e) => setConfig({ libraryWatchPaths: e.target.value })}
+              placeholder="e.g. C:\RetroBat\roms, /mnt/roms"
+              className="font-mono text-sm"
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            Separate multiple paths with commas. These folders will be scanned automatically every 60 seconds.
+            You can also set <code className="bg-muted px-1 rounded text-[9px]">CABINET_ROM_WATCH_DIR</code> in your environment.
+          </p>
         </div>
-        <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground font-mono">
-          <span>Total imported: <span className="text-foreground">{status.totalScanned}</span></span>
-          {status.lastScanAt ? <span>Last scan: <span className="text-foreground">{new Date(status.lastScanAt).toLocaleTimeString()}</span></span> : null}
-          {(status.lastScanFound ?? 0) > 0 && <span className="text-primary">+{status.lastScanFound} last run</span>}
+
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 p-4 rounded-xl border border-white/5 bg-white/[0.02]">
+          <div className="flex-1 min-w-[200px] space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Status</span>
+              {status?.watching ? (
+                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/20">
+                   {t("common.ui.active")}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter text-muted-foreground bg-muted/20 px-2 py-0.5 rounded-full border border-white/5">
+                   Idle
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-muted-foreground font-mono">
+              <span>Total: <span className="text-foreground">{status?.totalScanned ?? 0}</span></span>
+              {status?.lastScanAt ? <span>Last run: <span className="text-foreground">{new Date(status.lastScanAt).toLocaleTimeString()}</span></span> : null}
+            </div>
+          </div>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleScanNow} 
+            disabled={scanning} 
+            className="gap-1.5 h-9 px-4 font-black uppercase tracking-wider text-[10px] bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary"
+          >
+            {scanning ? <Loader2 className="size-3.5 animate-spin" /> : <ScanLine className="size-3.5" />}
+            {t("settings.buttons.scanNow")}
+          </Button>
         </div>
-        {status.error && <p className="text-xs text-destructive font-mono">{status.error}</p>}
-        <Button variant="outline" size="sm" onClick={handleScanNow} disabled={scanning} className="gap-1.5" data-testid="button-scan-now">
-          {scanning ? <Loader2 className="size-3.5 animate-spin" /> : <ScanLine className="size-3.5" />}
-          {t("settings.buttons.scanNow")}
-        </Button>
+
+        {status?.error && <p className="text-xs text-destructive font-mono bg-destructive/10 p-3 rounded-lg border border-destructive/20">{status.error}</p>}
       </div>
     </Section>
   );
