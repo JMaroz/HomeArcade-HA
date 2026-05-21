@@ -1,9 +1,8 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:latest
-FROM ${BUILD_FROM}
+ARG BUILD_ARCH=amd64
+FROM ghcr.io/home-assistant/${BUILD_ARCH}-base:latest
 
 # Build arguments provided by the HA builder / GitHub Actions workflow
 ARG BUILD_VERSION="dev"
-ARG BUILD_ARCH="amd64"
 
 # Required labels for Home Assistant Supervisor to recognise the image
 LABEL \
