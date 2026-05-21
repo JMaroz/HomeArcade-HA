@@ -80,56 +80,38 @@ function PageTransition({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * Shared layout shell used by all main pages.
- * Uses the full Sidebar component which handles both desktop (collapsible)
- * and mobile (slide-out Sheet) automatically via SidebarProvider.
- */
-function AppShell({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <Sidebar />
-      <SidebarInset className="flex flex-col min-h-full overflow-hidden">
-        {children}
-      </SidebarInset>
-    </>
-  );
-}
-
 function AppRouter() {
   return (
-    <>
-      <Switch>
-        <Route path="/">
-          <AppShell><Dashboard /></AppShell>
-        </Route>
-        <Route path="/library">
-          <Redirect to="/" />
-        </Route>
-        <Route path="/library/collection/:id">
-          <Redirect to="/" />
-        </Route>
-        <Route path="/library/:filter">
-          <Redirect to="/" />
-        </Route>
-        <Route path="/game/:id">
-          {(params) => <Redirect to={`/?game=${params.id}`} />}
-        </Route>
-        <Route path="/settings">
-          <AppShell><Suspense fallback={<PageFallback />}><Settings /></Suspense></AppShell>
-        </Route>
-        <Route path="/play/:id">
-          {(params) => <AppShell><Suspense fallback={<PageFallback />}><Player id={params.id} /></Suspense></AppShell>}
-        </Route>
-        <Route path="/history">
-          <AppShell><Suspense fallback={<PageFallback />}><History /></Suspense></AppShell>
-        </Route>
-        <Route path="/achievements">
-          <AppShell><Suspense fallback={<PageFallback />}><Achievements /></Suspense></AppShell>
-        </Route>
-        <Route component={NotFound} />
-      </Switch>
-    </>
+    <Switch>
+      <Route path="/">
+        <Dashboard />
+      </Route>
+      <Route path="/library">
+        <Redirect to="/" />
+      </Route>
+      <Route path="/library/collection/:id">
+        <Redirect to="/" />
+      </Route>
+      <Route path="/library/:filter">
+        <Redirect to="/" />
+      </Route>
+      <Route path="/game/:id">
+        {(params) => <Redirect to={`/?game=${params.id}`} />}
+      </Route>
+      <Route path="/settings">
+        <Suspense fallback={<PageFallback />}><Settings /></Suspense>
+      </Route>
+      <Route path="/play/:id">
+        {(params) => <Suspense fallback={<PageFallback />}><Player id={params.id} /></Suspense>}
+      </Route>
+      <Route path="/history">
+        <Suspense fallback={<PageFallback />}><History /></Suspense>
+      </Route>
+      <Route path="/achievements">
+        <Suspense fallback={<PageFallback />}><Achievements /></Suspense>
+      </Route>
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 
@@ -148,13 +130,16 @@ function App() {
             <Toaster />
             <Router hook={useHashLocation}>
               <ErrorBoundary>
-              <SidebarProvider>
-                <div className="h-dvh min-h-dvh flex w-full overflow-hidden">
-                  <PageTransition>
-                    <AppRouter />
-                  </PageTransition>
-                </div>
-              </SidebarProvider>
+                <SidebarProvider>
+                  <div className="h-dvh min-h-dvh flex w-full overflow-hidden bg-background">
+                    <Sidebar />
+                    <SidebarInset className="flex flex-col min-h-full overflow-hidden relative">
+                      <PageTransition>
+                        <AppRouter />
+                      </PageTransition>
+                    </SidebarInset>
+                  </div>
+                </SidebarProvider>
               </ErrorBoundary>
             </Router>
             <NowPlayingBar />
