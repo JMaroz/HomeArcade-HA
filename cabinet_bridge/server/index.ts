@@ -25,6 +25,18 @@ export function log(message: string, source = "express") {
 const app = express();
 const httpServer = createServer(app);
 
+// Strip HA ingress prefix so routes work under the ingress proxy
+// This MUST happen before any other middleware to ensure paths are clean
+const INGRESS_PREFIX_RE = /^\/api\/(?:hassio_)?ingress\/[^/]+/;
+app.use((req, _res, next) => {
+  const match = req.url.match(INGRESS_PREFIX_RE);
+  if (match) {
+    const stripped = req.url.slice(match[0].length) || "/";
+    req.url = stripped.startsWith("/") ? stripped : `/${stripped}`;
+  }
+  next();
+});
+
 app.use(compression({
   filter: (req, res) => {
     if (req.path.endsWith("/scrape-all")) return false;
@@ -54,17 +66,6 @@ app.use((req, res, next) => {
   // Explicitly disable isolation policies that break in HA iframes
   res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
   res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
-  next();
-});
-
-// Strip HA ingress prefix so routes work under the ingress proxy
-const INGRESS_PREFIX_RE = /^\/api\/(?:hassio_)?ingress\/[^/]+/;
-app.use((req, _res, next) => {
-  const match = req.url.match(INGRESS_PREFIX_RE);
-  if (match) {
-    const stripped = req.url.slice(match[0].length) || "/";
-    req.url = stripped.startsWith("/") ? stripped : `/${stripped}`;
-  }
   next();
 });
 

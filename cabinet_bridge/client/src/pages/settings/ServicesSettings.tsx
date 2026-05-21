@@ -59,6 +59,17 @@ export function ServicesSettings() {
     try {
       const res = await fetch(apiUrl("/api/roms/scrape-all"), { method: "POST" });
       if (!res.ok) throw new Error(res.statusText);
+
+      const contentType = res.headers.get("Content-Type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await res.json();
+        toast({
+          title: "Bulk Scrape",
+          description: data.message || "No ROMs need scraping.",
+        });
+        return;
+      }
+
       const reader = res.body?.getReader();
       if (!reader) throw new Error("Body reader not available");
 
