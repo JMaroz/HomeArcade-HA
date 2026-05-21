@@ -14,15 +14,25 @@ import { WebSocketServer, WebSocket } from "ws";
 import type { Server as HttpServer } from "http";
 
 interface NetplayRoom {
-  host: WebSocket;
+  host: WebSocket | null;
   client: WebSocket | null;
   romHash: string | null;
   createdAt: number;
+  lastActive: number;
+  deleteTimer?: NodeJS.Timeout;
 }
 
 const rooms = new Map<string, NetplayRoom>();
 
-// ... (setInterval remains same)
+// Prune stale rooms every minute (rooms inactive for more than 10 minutes)
+setInterval(() => {
+  const cutoff = Date.now() - 10 * 60 * 1000;
+  for (const [code, room] of Array.from(rooms.entries())) {
+    if (room.lastActive < cutoff && !room.host && !room.client) {
+      rooms.delete(code);
+    }
+  }
+}, 60 * 1000);
 
 function generateRoomCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -49,7 +59,28 @@ export function attachNetplayServer(httpServer: HttpServer) {
       if (msg) {
         const type = msg.type as string | undefined;
 
+        // HOSTING or RE-JOINING as host
         if (type === "create-room" || type === "host") {
+          const code = (msg.room as string | undefined)?.toUpperCase();
+          
+          if (code && rooms.has(code)) {
+            // Re-connecting to existing room as host
+            const room = rooms.get(code)!;
+            if (room.host && room.host !== ws) {
+               send(ws, { type: "error", message: "Host slot already occupied." });
+               return;
+            }
+            roomCode = code;
+            role = "host";
+            room.host = ws;
+            room.lastActive = Date.now();
+            if (room.deleteTimer) { clearTimeout(room.deleteTimer); delete room.deleteTimer; }
+            send(ws, { type: "room-created", room: roomCode }); 
+            console.log(`[netplay] Host connected to room ${roomCode}`);
+            return;
+          }
+
+          // New room creation
           if (roomCode) { send(ws, { type: "error", message: "Already in a room." }); return; }
           roomCode = generateRoomCode();
           role = "host";
@@ -57,19 +88,26 @@ export function attachNetplayServer(httpServer: HttpServer) {
             host: ws, 
             client: null, 
             romHash: (msg.romHash as string) || null,
-            createdAt: Date.now() 
+            createdAt: Date.now(),
+            lastActive: Date.now()
           });
           send(ws, { type: "room-created", room: roomCode });
           console.log(`[netplay] Room ${roomCode} created (hash: ${msg.romHash || "none"})`);
           return;
         }
 
+        // JOINING or RE-JOINING as client
         if (type === "join-room" || type === "client") {
           const code = ((msg.room ?? msg.roomId) as string | undefined)?.toUpperCase();
           if (!code) { send(ws, { type: "error", message: "Missing room code." }); return; }
+          
           const room = rooms.get(code);
           if (!room) { send(ws, { type: "error", message: "Room not found." }); return; }
-          if (room.client) { send(ws, { type: "error", message: "Room is full." }); return; }
+          
+          if (room.client && room.client !== ws) { 
+            send(ws, { type: "error", message: "Room is full." }); 
+            return; 
+          }
 
           // Validate ROM hash if both exist
           if (room.romHash && msg.romHash && room.romHash !== msg.romHash) {
@@ -83,8 +121,11 @@ export function attachNetplayServer(httpServer: HttpServer) {
           roomCode = code;
           role = "client";
           room.client = ws;
+          room.lastActive = Date.now();
+          if (room.deleteTimer) { clearTimeout(room.deleteTimer); delete room.deleteTimer; }
+          
           send(ws, { type: "room-joined", room: roomCode });
-          send(room.host, { type: "peer-joined" });
+          if (room.host) send(room.host, { type: "peer-joined" });
           console.log(`[netplay] Peer joined room ${roomCode}`);
           return;
         }
@@ -102,10 +143,30 @@ export function attachNetplayServer(httpServer: HttpServer) {
       if (!roomCode) return;
       const room = rooms.get(roomCode);
       if (!room) return;
+
+      if (role === "host") room.host = null;
+      else if (role === "client") room.client = null;
+
+      room.lastActive = Date.now();
+
       const peer = role === "host" ? room.client : room.host;
-      if (peer && peer.readyState === WebSocket.OPEN) send(peer, { type: "peer-disconnected" });
-      rooms.delete(roomCode);
-      console.log(`[netplay] Room ${roomCode} closed (${role} disconnected)`);
+      if (peer && peer.readyState === WebSocket.OPEN) {
+        send(peer, { type: "peer-disconnected", role });
+      }
+
+      // If room is empty, wait 30 seconds before final deletion
+      // This allows for page transitions and refreshes
+      if (!room.host && !room.client) {
+        if (room.deleteTimer) clearTimeout(room.deleteTimer);
+        room.deleteTimer = setTimeout(() => {
+          if (!room.host && !room.client) {
+            rooms.delete(roomCode!);
+            console.log(`[netplay] Room ${roomCode} permanently closed after timeout`);
+          }
+        }, 30000); 
+      }
+      
+      console.log(`[netplay] Room ${roomCode} - ${role} disconnected (grace period started)`);
     });
 
     ws.on("error", () => { /* close fires next */ });
