@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect } from "react";
-import { Switch, Route, Router, Redirect } from "wouter";
+import { Switch, Route, Router, Redirect, useLocation } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -116,6 +116,24 @@ function AppRouter() {
   );
 }
 
+function AppLayout({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  const isSettings = location === "/settings";
+
+  return (
+    <SidebarProvider defaultOpen={false}>
+      <div className="h-dvh min-h-dvh flex w-full overflow-hidden bg-background">
+        {!isSettings && <Sidebar />}
+        <SidebarInset className="flex flex-col min-h-full overflow-hidden relative">
+          <PageTransition>
+            {children}
+          </PageTransition>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
+}
+
 function App() {
   useEffect(() => {
     document.documentElement.classList.add("dark");
@@ -131,16 +149,9 @@ function App() {
             <Toaster />
             <Router hook={useHashLocation}>
               <ErrorBoundary>
-                <SidebarProvider defaultOpen={false}>
-                  <div className="h-dvh min-h-dvh flex w-full overflow-hidden bg-background">
-                    <Sidebar />
-                    <SidebarInset className="flex flex-col min-h-full overflow-hidden relative">
-                      <PageTransition>
-                        <AppRouter />
-                      </PageTransition>
-                    </SidebarInset>
-                  </div>
-                </SidebarProvider>
+                <AppLayout>
+                  <AppRouter />
+                </AppLayout>
                 <NowPlayingBar />
                 <MobileBottomNav />
               </ErrorBoundary>
