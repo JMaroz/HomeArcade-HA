@@ -392,7 +392,7 @@ export default function HomeArcadeTheme() {
           >
             {activeGame.artUrl ? (
               <img
-                src={activeGame.artUrl}
+                src={activeGame.romId ? `/api/roms/${activeGame.romId}/art` : `/api/art?url=${encodeURIComponent(activeGame.artUrl)}`}
                 className="w-full h-full object-cover opacity-30 blur-[15px] scale-110"
                 alt=""
               />
@@ -537,7 +537,14 @@ export default function HomeArcadeTheme() {
                     >
                       <div className="absolute inset-0 bg-neutral-900/50 flex items-center justify-center">
                         {game.artUrl ? (
-                          <img src={game.artUrl} className="w-full h-full object-cover" alt="" />
+                          <img 
+                            src={game.romId ? `/api/roms/${game.romId}/art` : `/api/art?url=${encodeURIComponent(game.artUrl)}`}
+                            className="w-full h-full object-cover" 
+                            alt="" 
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
                         ) : (
                           <span className="text-[10px] font-black uppercase text-white/20 px-2 text-center leading-tight">{game.title}</span>
                         )}
