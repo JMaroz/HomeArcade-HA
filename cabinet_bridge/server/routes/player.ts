@@ -297,7 +297,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
       }
       #game.filter-smooth canvas { image-rendering: auto !important; filter: blur(0.4px) brightness(1.05); }
 
-      /* Launch Overlay */
+      /* AI Overlay */
       .cabinet-ai-overlay {
         position: fixed;
         inset: 0;
@@ -309,6 +309,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         padding: 24px;
         backdrop-filter: blur(15px);
       }
+      
       .cabinet-launch-overlay {
         position: fixed;
         z-index: 999998;
@@ -388,7 +389,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
           <div class="cabinet-menu-label" style="margin-bottom:20px; color:rgba(236, 72, 153, 0.8);">🤖 AI Strategy Guide</div>
           <div id="cabinet-ai-screenshot" style="width:100%; aspect-ratio:16/9; border-radius:12px; background:#000; margin-bottom:20px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); position:relative;">
              <img id="cabinet-ai-img" src="" style="width:100%; height:100%; object-fit:contain;" />
-             <div id="cabinet-ai-loading" style="position:absolute; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center;">
+             <div id="cabinet-ai-loading" style="position:absolute; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center;">
                 <div class="cabinet-menu-label animate-pulse" style="color:#fff;">Analyzing...</div>
              </div>
           </div>
@@ -400,7 +401,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
        </div>
     </section>
 
-    <section class="cabinet-save-panel" id="cabinet-warp-panel">
+    <section class="cabinet-save-panel" id="cabinet-warp-panel" style="display:none; position:fixed; inset:0; z-index:1000000; background:rgba(0,0,0,0.9); backdrop-filter:blur(10px); align-items:center; justify-content:center;">
        <div style="width:min(90vw, 400px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center;">
           <div class="cabinet-menu-label" style="margin-bottom:20px;">Warp Hand-off</div>
           <div id="cabinet-warp-qr" style="margin:0 auto 20px; background:#fff; padding:10px; border-radius:12px; width:220px; height:220px;"></div>
@@ -611,107 +612,86 @@ function cabinetSetupMenu() {
   var aiImg = document.getElementById("cabinet-ai-img");
   var aiLoading = document.getElementById("cabinet-ai-loading");
   var aiResponse = document.getElementById("cabinet-ai-response");
+  var aiStatus = document.getElementById("cabinet-ai-status");
   var aiClose = document.getElementById("cabinet-ai-close");
   var aiCancel = document.getElementById("cabinet-ai-cancel");
 
-  aiBtn.onclick = async function() {
-    try {
-      if (!aiOverlay) throw new Error("AI UI missing from page.");
-      
-      // 0. Immediate Visibility - bypass CSS classes
-      aiOverlay.style.display = "flex";
-      aiOverlay.style.opacity = "1";
-      aiOverlay.style.visibility = "visible";
-      
-      if (aiLoading) aiLoading.style.display = "block";
-      if (aiResponse) {
-        aiResponse.style.display = "none";
-        aiResponse.innerHTML = '<div class="cabinet-menu-label" style="opacity:0.4;">Preparing AI Guide...</div>';
-      }
+  if (aiBtn) {
+    aiBtn.onclick = async function() {
+      try {
+        if (!aiOverlay) throw new Error("AI UI missing.");
+        
+        // 0. Force Visibility
+        aiOverlay.style.display = "flex";
+        if (aiLoading) aiLoading.style.display = "flex";
+        if (aiResponse) aiResponse.style.display = "none";
+        if (aiStatus) aiStatus.textContent = "Initializing Assistant...";
 
-      function setAiStatus(msg) {
-        if (aiResponse) {
-          aiResponse.style.display = "block";
-          aiResponse.innerHTML = '<div class="cabinet-menu-label" style="opacity:0.6;">' + msg + '</div>';
+        function updateStatus(msg) {
+          if (aiStatus) aiStatus.textContent = msg;
+          console.log("[AI] " + msg);
         }
-      }
 
-      // 1. Capture and resize screen (smaller is faster + avoids HA proxy limits)
-      setAiStatus("Capturing screen...");
-      var canvas = document.querySelector("#game canvas");
-      if (!canvas) throw new Error("Emulator screen not found.");
+        // 1. Capture screen
+        updateStatus("Capturing game screen...");
+        var canvas = document.querySelector("#game canvas");
+        if (!canvas) throw new Error("Could not find game canvas.");
 
-      // Pause game
-      if (window.EJS_emulator) window.EJS_emulator.pause();
-      
-      // Close the menu so it's not in the background
-      if (panel) panel.classList.remove("is-open");
-      if (backdrop) backdrop.classList.remove("is-open");
+        // Pause
+        if (window.EJS_emulator) window.EJS_emulator.pause();
+        if (panel) panel.classList.remove("is-open");
+        if (backdrop) backdrop.classList.remove("is-open");
 
-      // Use a hidden canvas to resize
-      var targetWidth = 640;
-      var scale = targetWidth / canvas.width;
-      var targetHeight = canvas.height * scale;
-      
-      var offscreen = document.createElement("canvas");
-      offscreen.width = targetWidth;
-      offscreen.height = targetHeight;
-      var ctx = offscreen.getContext("2d");
-      ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
+        // Resize
+        var targetWidth = 640;
+        var scale = targetWidth / canvas.width;
+        var offscreen = document.createElement("canvas");
+        offscreen.width = targetWidth;
+        offscreen.height = canvas.height * scale;
+        var ctx = offscreen.getContext("2d");
+        ctx.drawImage(canvas, 0, 0, offscreen.width, offscreen.height);
 
-      var dataUrl;
-      try {
-        dataUrl = offscreen.toDataURL("image/jpeg", 0.6);
-      } catch (e) {
-        throw new Error("Capture blocked. Try a different browser or check HTTPS.");
-      }
-      if (aiImg) aiImg.src = dataUrl;
+        var dataUrl = offscreen.toDataURL("image/jpeg", 0.6);
+        if (aiImg) aiImg.src = dataUrl;
 
-      // 2. Talk to server
-      setAiStatus("Ollama is thinking...");
-      console.log("[AI] Requesting analysis...");
-      
-      var controller = new AbortController();
-      var timeoutId = setTimeout(() => controller.abort(), 60000);
+        // 2. Request
+        updateStatus("Talking to Ollama...");
+        var ingressBase = window.location.pathname.match(/^\/api\/(?:hassio_)?ingress\/[^\/]+/)?.[0] || "";
+        var aiUrl = ingressBase + "/api/ai/analyze";
+        
+        var controller = new AbortController();
+        var timeoutId = setTimeout(() => controller.abort(), 60000);
 
-      try {
-        var res = await fetch("../../../ai/analyze", {
+        var res = await fetch(aiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
           body: JSON.stringify({ 
             image: dataUrl,
-            prompt: "I am playing " + ${JSON.stringify(title)} + ". Look at this screenshot and give me a helpful hint on what I should do next. Be concise and cryptic."
+            prompt: "I am playing " + ${JSON.stringify(title)} + ". Look at this screenshot and give me a helpful hint on what I should do next. Be concise."
           })
         });
 
         clearTimeout(timeoutId);
-
-        if (!res.ok) {
-          var errBody = await res.json().catch(function(){return {};});
-          throw new Error(errBody.message || "AI Error (" + res.status + ")");
-        }
+        if (!res.ok) throw new Error("AI Error (" + res.status + ")");
         
         var data = await res.json();
+        updateStatus("Analysis complete.");
         if (aiLoading) aiLoading.style.display = "none";
         if (aiResponse) {
           aiResponse.style.display = "block";
           aiResponse.textContent = data.response;
         }
       } catch (err) {
-        clearTimeout(timeoutId);
-        if (err.name === "AbortError") throw new Error("AI timeout (60s). Is Ollama awake?");
-        throw err;
+        updateStatus("Failed: " + err.message);
+        if (aiLoading) aiLoading.style.display = "none";
+        if (aiResponse) {
+          aiResponse.style.display = "block";
+          aiResponse.innerHTML = '<div style="color:#ef4444; font-weight:900;">ERROR</div>' + err.message;
+        }
       }
-    } catch (err) {
-      console.error("[AI] Error:", err);
-      if (aiLoading) aiLoading.style.display = "none";
-      if (aiResponse) {
-        aiResponse.style.display = "block";
-        aiResponse.innerHTML = '<div style="color:#ef4444; font-weight:900;">AI UNAVAILABLE</div><div style="font-size:11px; opacity:0.7; margin-top:8px;">' + err.message + '</div>';
-      }
-    }
-  };
+    };
+  }
 
   var closeAi = function() {
     if (aiOverlay) aiOverlay.style.display = "none";
