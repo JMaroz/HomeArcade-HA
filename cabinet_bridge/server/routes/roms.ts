@@ -18,6 +18,7 @@ import { z } from "zod";
 import { insertUploadedRomSchema } from "@shared/schema";
 import { extractFirstRomFromZip, titleFromFileName, slugify } from "./utils";
 import { fetchTheGamesDBMeta, fetchScreenScraperMeta, findLibretroBoxArt } from "./scrape";
+import { getHltbData } from "../hltb";
 import QRCode from "qrcode";
 
 // ── EmulatorJS asset disk cache ─────────────────────────────────────────────
@@ -237,6 +238,21 @@ export function registerRomRoutes(app: Express) {
       res.status(201).json(saved);
     },
   );
+
+  app.get("/api/roms/:id/hltb", async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const rom = await storage.getUploadedRom(id);
+      if (!rom) return res.status(404).json({ message: "ROM not found." });
+
+      const data = await getHltbData(rom.id, rom.title);
+      if (!data) return res.json({ found: false });
+      res.json({ ...data, found: true });
+    } catch (err) {
+      console.error("[HLTB] Proxy error:", err);
+      res.status(500).json({ found: false });
+    }
+  });
 
   app.get("/api/roms", async (_req, res) => {
     const roms = await storage.listUploadedRoms();

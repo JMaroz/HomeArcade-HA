@@ -15,17 +15,27 @@ function detectApiBase(): string {
 
   if (typeof window === "undefined") return "";
 
+  // 1. Try window.location.pathname (most reliable in standard Ingress)
   const pathname = window.location.pathname || "/";
-  console.log("[HA] Current pathname:", pathname);
-  
-  // Explicitly look for the Home Assistant ingress prefix
   const ingressMatch = pathname.match(/^\/api\/(?:hassio_)?ingress\/[^\/]+/);
   if (ingressMatch) {
     let base = ingressMatch[0];
     if (base.endsWith("/")) base = base.slice(0, -1);
-    console.log("[HA] Ingress base detected:", base);
+    console.log("[HA] Ingress base detected from pathname:", base);
     return base;
   }
+
+  // 2. Try document.baseURI (fallback for certain proxy configurations)
+  try {
+    const baseUri = new URL(document.baseURI).pathname;
+    const baseMatch = baseUri.match(/^\/api\/(?:hassio_)?ingress\/[^\/]+/);
+    if (baseMatch) {
+      let base = baseMatch[0];
+      if (base.endsWith("/")) base = base.slice(0, -1);
+      console.log("[HA] Ingress base detected from baseURI:", base);
+      return base;
+    }
+  } catch {}
 
   // Fallback: strip a trailing index.html and any trailing slash
   let fallback = pathname.replace(/\/index\.html?$/i, "/");
