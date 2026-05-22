@@ -30,7 +30,7 @@ const EJS_VALUE2: Record<number, string> = {
   15: "11", // Retropad R3  → Right stick    (button 11)
 };
 
-function buildPlayerControls(
+export function buildPlayerControls(
   core: string,
   customKeys: Record<number, string>,
   gamepadBindings: Record<number, number> = {},
@@ -49,6 +49,7 @@ function buildPlayerControls(
     }
     controls[i] = entry;
   }
+  // Hotkeys (shared, still respect custom overrides)
   for (const idx of [24, 25, 26]) {
     controls[idx] = { value: customKeys[idx] ?? EJS_DEFAULT_KEYS[idx] ?? String(idx - 23) };
   }
@@ -62,11 +63,13 @@ export function buildEjsControls(
   controlDefaultsP2: Record<number, string> = {},
   gamepadBindingsP2: Record<number, number> = {},
 ): Record<number, Record<number, { value: string; value2?: string }>> {
+  // Merge numeric keys from saved config (keys may be strings after JSON round-trip)
   const custom: Record<number, string> = {};
   for (const [k, v] of Object.entries(controlDefaults[core] ?? {})) {
     custom[Number(k)] = v;
   }
   const p1 = buildPlayerControls(core, custom, gamepadBindings);
+  // Only populate P2 if bindings have been saved for it
   const hasP2 = Object.keys(controlDefaultsP2).length > 0 || Object.keys(gamepadBindingsP2).length > 0;
   const p2 = hasP2 ? buildPlayerControls(core, controlDefaultsP2, gamepadBindingsP2) : {};
   return { 0: p1, 1: p2, 2: {}, 3: {} };
@@ -351,70 +354,68 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         display: flex;
         align-items: center;
         justify-content: center;
-        min-width: 62px;
-        min-height: 62px;
-        border: 1px solid rgba(255, 255, 255, 0.28);
+        min-width: 66px;
+        min-height: 66px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
         border-radius: 999px;
         background:
-          radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15), transparent 60%),
-          rgba(15, 15, 22, 0.65);
-        color: #f8fafc;
+          radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.25) 0%, transparent 50%),
+          radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 80%),
+          rgba(15, 15, 22, 0.75);
+        color: #fff;
         box-shadow:
-          0 8px 24px rgba(0, 0, 0, 0.45),
-          inset 0 1px 1px rgba(255, 255, 255, 0.1);
-        font: 900 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), background 120ms ease, border-color 120ms ease;
+          0 10px 25px rgba(0, 0, 0, 0.5),
+          inset 0 1px 1px rgba(255, 255, 255, 0.2),
+          inset 0 -2px 5px rgba(0, 0, 0, 0.3);
+        font: 900 15px ui-monospace, SFMono-Regular, monospace;
+        letter-spacing: 0.02em;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        transition: transform 80ms cubic-bezier(0.2, 0, 0, 1), background 120ms ease, box-shadow 80ms ease;
       }
       .virtual-pad button.is-pressed,
       .virtual-pad button:active {
         background:
-          radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.4), rgba(236, 72, 153, 0.15)),
-          rgba(10, 10, 15, 0.8);
-        border-color: rgba(236, 72, 153, 0.9);
-        transform: scale(0.92) translateY(1px);
-        transition: transform 60ms cubic-bezier(0, 0, 0.2, 1);
+          radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15), transparent 70%),
+          rgba(10, 10, 15, 0.85);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 2px 10px rgba(0, 0, 0, 0.4);
+        transform: scale(0.94) translateY(2px);
+        transition: transform 40ms ease;
       }
       
-      .vpad-dpad { position: absolute; left: max(20px, env(safe-area-inset-left)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 64px); gap: 4px; }
-      .vpad-dpad .up { grid-column: 2; grid-row: 1; border-radius: 18px 18px 6px 6px; }
-      .vpad-dpad .left { grid-column: 1; grid-row: 2; border-radius: 18px 6px 6px 18px; }
-      .vpad-dpad .right { grid-column: 3; grid-row: 2; border-radius: 6px 18px 18px 6px; }
-      .vpad-dpad .down { grid-column: 2; grid-row: 3; border-radius: 6px 6px 18px 18px; }
+      .vpad-dpad { position: absolute; left: max(32px, env(safe-area-inset-left)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 68px); grid-template-rows: repeat(3, 68px); gap: 2px; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6)); }
+      .vpad-dpad button { border-radius: 8px; min-width: 68px; min-height: 68px; background: rgba(20, 20, 25, 0.85); border-color: rgba(255,255,255,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
+      .vpad-dpad .up { grid-column: 2; grid-row: 1; border-radius: 16px 16px 4px 4px; border-bottom: none; }
+      .vpad-dpad .left { grid-column: 1; grid-row: 2; border-radius: 16px 4px 4px 16px; border-right: none; }
+      .vpad-dpad .right { grid-column: 3; grid-row: 2; border-radius: 4px 16px 16px 4px; border-left: none; }
+      .vpad-dpad .down { grid-column: 2; grid-row: 3; border-radius: 4px 4px 16px 16px; border-top: none; }
+      .vpad-dpad-core { grid-column: 2; grid-row: 2; background: rgba(15, 15, 20, 0.9); border: 1px solid rgba(255,255,255,0.05); }
 
-      .vpad-face { position: absolute; right: max(20px, env(safe-area-inset-right)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 64px); gap: 8px; }
+      .vpad-face { position: absolute; right: max(32px, env(safe-area-inset-right)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 72px); grid-template-rows: repeat(3, 72px); gap: 6px; }
+      .vpad-face button { border-radius: 999px; width: 72px; height: 72px; }
       .vpad-face .y { grid-column: 1; grid-row: 2; }
       .vpad-face .x { grid-column: 2; grid-row: 1; }
       .vpad-face .b { grid-column: 2; grid-row: 3; }
       .vpad-face .a { grid-column: 3; grid-row: 2; }
 
       .vpad-shoulders { position: absolute; top: 12px; left: max(20px, env(safe-area-inset-left)); right: max(20px, env(safe-area-inset-right)); display: flex; justify-content: space-between; }
-      .vpad-shoulders button { min-width: min(28vw, 140px); min-height: 48px; border-radius: 20px; font-size: 11px; }
+      .vpad-shoulders button { width: min(30vw, 160px); height: 52px; border-radius: 20px; font-size: 12px; background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); }
 
-      .vpad-system { position: absolute; left: 50%; bottom: max(32px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 16px; }
-      .vpad-system button { min-width: 92px; min-height: 42px; border-radius: 14px; font-size: 10px; }
+      .vpad-system { position: absolute; left: 50%; bottom: max(32px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 24px; }
+      .vpad-system button { width: 90px; height: 32px; border-radius: 999px; font-size: 9px; font-weight: 900; background: rgba(255, 255, 255, 0.05); border-color: rgba(255,255,255,0.1); transform: rotate(-15deg); }
 
-      /* ── SNES THEME ── */
-      body[data-system="snes"] .vpad-face .a { background: rgba(239, 68, 68, 0.6) !important; border-color: #ef4444 !important; } /* Red */
-      body[data-system="snes"] .vpad-face .b { background: rgba(234, 179, 8, 0.6) !important; border-color: #eab308 !important; } /* Yellow */
-      body[data-system="snes"] .vpad-face .x { background: rgba(59, 130, 246, 0.6) !important; border-color: #3b82f6 !important; } /* Blue */
-      body[data-system="snes"] .vpad-face .y { background: rgba(34, 197, 94, 0.6) !important; border-color: #22c55e !important; } /* Green */
-      
-      body[data-system="snes"] .vpad-face .x, 
-      body[data-system="snes"] .vpad-face .y {
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.5); /* US SNES Concave feel */
+      /* ── SNES THEME (High Gloss) ── */
+      body[data-system="snes"] .vpad-face button {
+        background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.4) 0%, transparent 60%);
       }
-
-      body[data-system="snes"] .vpad-dpad button {
-        background: rgba(31, 41, 55, 0.8) !important;
-        border-color: #374151 !important;
-      }
+      body[data-system="snes"] .vpad-face .a { background-color: rgba(220, 38, 38, 0.8) !important; border-color: #ef4444 !important; }
+      body[data-system="snes"] .vpad-face .b { background-color: rgba(202, 138, 4, 0.8) !important; border-color: #facc15 !important; }
+      body[data-system="snes"] .vpad-face .x { background-color: rgba(37, 99, 235, 0.8) !important; border-color: #60a5fa !important; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.5); }
+      body[data-system="snes"] .vpad-face .y { background-color: rgba(22, 163, 74, 0.8) !important; border-color: #4ade80 !important; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.5); }
       
       @media (max-width: 768px) {
-        .vpad-dpad { grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(3, 54px); }
-        .vpad-face { grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 58px); }
-        .vpad-dpad button, .vpad-face button { min-width: 54px; min-height: 54px; }
+        .vpad-dpad { grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 58px); left: 20px; bottom: 20px; }
+        .vpad-face { grid-template-columns: repeat(3, 62px); grid-template-rows: repeat(3, 62px); right: 20px; bottom: 20px; }
+        .vpad-dpad button, .vpad-face button { min-width: 58px; min-height: 58px; width: 62px; height: 62px; }
       }
     </style>
   </head>
@@ -585,7 +586,7 @@ function cabinetFinishLaunchProgress(status) {
   cabinetSetLaunchProgress(100, status || "Ready");
   clearInterval(cabinetLaunchTimer);
   setTimeout(function () {
-    var overlay = document.querySelector("#cabinet-launch-overlay");
+    var overlay = document.getElementById("cabinet-launch-overlay");
     if (overlay) overlay.classList.add("is-hidden");
   }, 500);
 }
@@ -816,6 +817,7 @@ ${biosUrl ? `window.EJS_biosUrl = ${JSON.stringify(biosUrl)};` : ""}
 window.EJS_startOnLoaded = true;
 
 // ── Hide built-in UI ──
+window.EJS_virtualGamepad = false;
 window.EJS_buttons = {
   play_pause: false, restart: false, mute: false, settings: false, fullscreen: true,
   save_state: false, load_state: false, quick_save: false, quick_load: false

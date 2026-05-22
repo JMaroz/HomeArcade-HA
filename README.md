@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.89** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.90** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -87,11 +87,10 @@ Systems are listed in release-date order.
 
 ## Changelog
 
-### v2.34.89
-- **SNES-Themed Controller** — Added a custom on-screen skin specifically for SNES games. Features the iconic Red/Yellow/Blue/Green face button layout and a simulated concave/convex tactile feel for a more authentic retro experience.
-- **High-Performance Core Engine** — Upgraded core systems to the most modern and stable versions used in the Lemuroid ecosystem. This includes `mgba` for GBA, `snes9x` for SNES, `fceumm` for NES, `genesis_plus_gx` for Sega, and `mupen64plus_next` for N64.
-- **Unified Player Logic** — Consolidated emulator bootstrap and rendering logic into a single, optimized module for faster load times and easier maintenance.
-- **Pick Up and Play Polish** — Refined the auto-resume system to be more robust across different cores, ensuring you always return exactly where you left off.
+### v2.34.90
+- **Fix: Button Overlap** — Resolved a bug where default EmulatorJS buttons were rendering underneath the custom SNES skin ("buttons on top of buttons").
+- **High-Gloss Aesthetic** — Refined the virtual gamepad with 3D bulb highlights, deeper shadows, and authentic SNES concave/convex button geometry to match professional handheld standards.
+- **Improved Ergonomics** — Rotated and centered the system buttons (Start/Select) and increased the touch precision of the D-Pad.
 
 ### v2.32.0
 - **Unified Sidebar Navigation** — Wired in the full-featured `Sidebar.tsx` component for all secondary pages (Settings, History, Achievements). On desktop it renders as a collapsible icon sidebar; on mobile it automatically becomes a slide-out sheet panel.
