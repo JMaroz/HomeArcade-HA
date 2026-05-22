@@ -23,7 +23,7 @@ interface TGDBMeta {
   scrapeMessage: string;
 }
 
-export async function fetchTheGamesDBMeta(system: string, title: string, apiKey: string): Promise<TGDBMeta | null> {
+export async function fetchTheGamesDBMeta(system: string, title: string, apiKey: string, lang: string = "en"): Promise<TGDBMeta | null> {
   if (!apiKey) return null;
   const platformId = TGDB_PLATFORM_IDS[system];
   if (!platformId) return null;
@@ -49,9 +49,6 @@ export async function fetchTheGamesDBMeta(system: string, title: string, apiKey:
     const titleLower = title.toLowerCase();
     const normalizedTarget = normalizeSearchTitle(title);
     
-    // 1. Try exact match
-    // 2. Try match after normalization (removing noise like region tags)
-    // 3. Fallback to first result
     const game = games.find((g) => String(g.game_title ?? "").toLowerCase() === titleLower) 
               ?? games.find((g) => normalizeSearchTitle(String(g.game_title ?? "")) === normalizedTarget)
               ?? games[0];
@@ -84,7 +81,7 @@ export async function fetchTheGamesDBMeta(system: string, title: string, apiKey:
     const pubsMap = (include?.publishers as any)?.data as Record<string, { name?: string }> | undefined;
     const pubIds = game.publishers as number[] | undefined;
     let publisher: string | null = null;
-    if (pubsMap && Array.isArray(pubIds) && pubIds.length > 0) {
+    if (pubsMap && Array.isArray(devIds) && devIds.length > 0) {
       publisher = pubsMap[pubIds[0]]?.name ?? null;
     }
 
@@ -101,7 +98,7 @@ export async function fetchTheGamesDBMeta(system: string, title: string, apiKey:
     return {
       artUrl, description, releaseYear, developer, publisher, genre, players,
       scrapeStatus: "matched",
-      scrapeMessage: "Metadata from TheGamesDB",
+      scrapeMessage: `Metadata from TheGamesDB (${lang})`,
     };
   } catch { return null; }
 }
@@ -130,7 +127,7 @@ export interface ScreenScraperMeta {
 }
 
 export async function fetchScreenScraperMeta(
-  system: string, romFileName: string, title: string, ssUserId: string, ssPassword: string,
+  system: string, romFileName: string, title: string, ssUserId: string, ssPassword: string, lang: string = "en",
 ): Promise<ScreenScraperMeta | null> {
   const systemId = SCREENSCRAPER_SYSTEM_IDS[system];
   if (!systemId) return null;
@@ -156,8 +153,10 @@ export async function fetchScreenScraperMeta(
     let description: string | null = null;
     const synopses = jeu.synopsis as Array<{ langue: string; text: string }> | undefined;
     if (Array.isArray(synopses)) {
-      const en = synopses.find((s) => s.langue === "en");
-      description = (en ?? synopses[0])?.text ?? null;
+      // Priority: 1. User Preferred, 2. English, 3. First available
+      const pref = synopses.find((s) => s.langue.toLowerCase() === lang.toLowerCase());
+      const en = synopses.find((s) => s.langue.toLowerCase() === "en");
+      description = (pref ?? en ?? synopses[0])?.text ?? null;
     }
 
     let releaseYear: number | null = null;
@@ -175,8 +174,9 @@ export async function fetchScreenScraperMeta(
     const genres = jeu.genres as Array<{ noms: Array<{ langue: string; text: string }> }> | undefined;
     if (Array.isArray(genres) && genres.length > 0) {
       const names = genres.map((g) => {
-        const en = (g.noms ?? []).find((n) => n.langue === "en");
-        return (en ?? g.noms?.[0])?.text;
+        const pref = (g.noms ?? []).find((n) => n.langue.toLowerCase() === lang.toLowerCase());
+        const en = (g.noms ?? []).find((n) => n.langue.toLowerCase() === "en");
+        return (pref ?? en ?? g.noms?.[0])?.text;
       }).filter(Boolean) as string[];
       genre = names.slice(0, 2).join(", ") || null;
     }
@@ -215,7 +215,7 @@ export async function fetchScreenScraperMeta(
 
     return {
       artUrl, wheelArtUrl, videoUrl, communityScore, description, releaseYear, developer, publisher, genre, players,
-      scrapeStatus: "matched", scrapeMessage: "Metadata from ScreenScraper.fr",
+      scrapeStatus: "matched", scrapeMessage: `Metadata from ScreenScraper.fr (${lang})`,
     };
   } catch { return null; }
 }
@@ -224,9 +224,6 @@ export async function findLibretroBoxArt(system: string, title: string) {
   const playlist = LIBRETRO_PLAYLISTS[system];
   if (!playlist) return { url: null, message: "No Libretro thumbnail playlist configured." };
 
-  // Probe direct No-Intro filenames instead of parsing the directory listing.
-  // The directory index uses TOSEC-style names which breaks fuzzy matching,
-  // but the canonical No-Intro files exist at predictable URLs.
   const baseUrl = `https://thumbnails.libretro.com/${encodeURIComponent(playlist)}/Named_Boxarts/`;
 
   const cleanTitle = title
@@ -270,20 +267,19 @@ export function registerScrapeRoutes(app: Express) {
     if (!rom) return res.status(404).json({ message: "ROM not found." });
 
     const settings = await storage.getIntegrationSettings();
+    const lang = settings.language || "en";
     let meta: any = null;
 
-    // Try ScreenScraper first (most detailed)
+    // Try ScreenScraper first (most detailed + multilingual)
     if (settings.ssUserId && settings.ssPassword) {
-      console.log(`[Scrape] Trying ScreenScraper for ${rom.title} (${rom.fileName})...`);
-      meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.ssUserId, settings.ssPassword);
-      if (meta) console.log(`[Scrape] ScreenScraper matched ${rom.title}`);
+      console.log(`[Scrape] Trying ScreenScraper for ${rom.title} in ${lang}...`);
+      meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.ssUserId, settings.ssPassword, lang);
     }
 
     // Try TheGamesDB second
     if (!meta && settings.tgdbApiKey) {
-      console.log(`[Scrape] Trying TheGamesDB for ${rom.title}...`);
-      meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.tgdbApiKey);
-      if (meta) console.log(`[Scrape] TheGamesDB matched ${rom.title}`);
+      console.log(`[Scrape] Trying TheGamesDB for ${rom.title} in ${lang}...`);
+      meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.tgdbApiKey, lang);
     }
 
     // Fallback to Libretro (art only)
@@ -295,7 +291,6 @@ export function registerScrapeRoutes(app: Express) {
           artUrl: libretro.url, 
           scrapeStatus: "matched", 
           scrapeMessage: libretro.message,
-          // Explicitly set null to clear/ensure empty for missing detail fields
           description: null,
           releaseYear: null,
           developer: null,
@@ -303,7 +298,6 @@ export function registerScrapeRoutes(app: Express) {
           genre: null,
           players: null
         };
-        console.log(`[Scrape] Libretro matched ${rom.title}`);
       } else {
         console.log(`[Scrape] No match found for ${rom.title}: ${libretro.message}`);
         await storage.updateUploadedRomArt(id, { artUrl: null, scrapeStatus: "failed", scrapeMessage: libretro.message });
@@ -333,6 +327,7 @@ export function registerScrapeRoutes(app: Express) {
     send({ type: "start", total: unscraped.length });
 
     const settings = await storage.getIntegrationSettings();
+    const lang = settings.language || "en";
     let count = 0;
 
     for (const rom of unscraped) {
@@ -341,10 +336,10 @@ export function registerScrapeRoutes(app: Express) {
 
       let meta: any = null;
       if (settings.ssUserId && settings.ssPassword) {
-        meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.ssUserId, settings.ssPassword);
+        meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.ssUserId, settings.ssPassword, lang);
       }
       if (!meta && settings.tgdbApiKey) {
-        meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.tgdbApiKey);
+        meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.tgdbApiKey, lang);
       }
       if (!meta) {
         const libretro = await findLibretroBoxArt(rom.system, rom.title);
@@ -358,7 +353,6 @@ export function registerScrapeRoutes(app: Express) {
         await storage.updateUploadedRomArt(rom.id, { artUrl: null, scrapeStatus: "failed", scrapeMessage: "No match found during bulk scrape." });
         send({ type: "result", id: rom.id, title: rom.title, status: "failed" });
       }
-      // Small delay to avoid rate limiting
       await new Promise((r) => setTimeout(r, 500));
     }
 
