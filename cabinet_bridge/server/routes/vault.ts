@@ -4,6 +4,7 @@ import { log } from "../log";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { ensureDriveFolder } from "../google-drive";
 
 export function registerVaultRoutes(app: Express) {
   /**
@@ -84,6 +85,52 @@ export function registerVaultRoutes(app: Express) {
 
       log(`Vault prune: removed ${count} dead links`, "vault");
       res.json({ success: true, removedCount: count });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  /**
+   * Test Google Drive Connection
+   */
+  app.get("/api/vault/test-drive", async (_req, res) => {
+    try {
+      const folderId = await ensureDriveFolder();
+      res.json({ ok: true, message: `Successfully connected to Google Drive. Saves folder ID: ${folderId}`, folderId });
+    } catch (err: any) {
+      log(`Drive test failed: ${err.message}`, "cloud");
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
+  /**
+   * Bulk Sync Local Saves to Cloud
+   */
+  app.post("/api/vault/cloud-sync", async (_req, res) => {
+    try {
+      const roms = await storage.listUploadedRoms();
+      let uploadCount = 0;
+      let downloadCount = 0;
+
+      for (const rom of roms) {
+        const slots = await storage.listAllRomSaveSlots(rom.id);
+        for (const slot of slots) {
+          const localPath = path.join(SAVE_BACKUP_DIR, slot.userId, String(rom.id), `slot-${slot.slot}.state`);
+          const driveFileName = `${slot.userId}_${rom.id}_slot-${slot.slot}.state`;
+
+          // 1. Try to download newer version
+          const downloaded = await downloadFromDrive(driveFileName, localPath).catch(() => false);
+          if (downloaded) downloadCount++;
+
+          // 2. Upload local if it exists
+          if (existsSync(localPath)) {
+            await uploadToDrive(localPath, driveFileName).catch(() => {});
+            uploadCount++;
+          }
+        }
+      }
+
+      res.json({ success: true, uploaded: uploadCount, downloaded: downloadCount });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

@@ -12,6 +12,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import express from "express";
 import { publishGameStarted, publishGameEnded } from "../haPublisher";
+import { uploadToDrive, downloadFromDrive } from "../google-drive";
 
 export function registerProfileRoutes(app: Express) {
   app.get("/api/profiles", async (_req, res) => {
@@ -240,8 +241,16 @@ export function registerProfileRoutes(app: Express) {
       if (!rom) return res.status(404).json({ message: "ROM not found." });
 
       const { userId } = getUserFromRequest(req);
-      const resolved = path.resolve(path.join(SAVE_BACKUP_DIR, userId, String(romId), `slot-${slot}.state`));
-      
+      const localPath = path.join(SAVE_BACKUP_DIR, userId, String(romId), `slot-${slot}.state`);
+      const driveFileName = `${userId}_${romId}_slot-${slot}.state`;
+
+      // Try downloading newer version from cloud if enabled
+      const settings = await storage.getIntegrationSettings();
+      if (settings.cloudSaveEnabled) {
+        try { await downloadFromDrive(driveFileName, localPath); } catch (e) { console.warn("[Cloud] Sync failed:", e); }
+      }
+
+      const resolved = path.resolve(localPath);
       if (!resolved.startsWith(path.resolve(SAVE_BACKUP_DIR))) {
         console.warn(`[Profiles] Access denied to path: ${resolved}`);
         return res.status(403).json({ message: "Access denied." });
@@ -274,6 +283,14 @@ export function registerProfileRoutes(app: Express) {
       
       await fs.writeFile(filePath, buf);
       console.log(`[Profiles] Saved backup for ROM ${id} slot ${slot} (${buf.length} bytes)`);
+
+      // Upload to cloud if enabled
+      const settings = await storage.getIntegrationSettings();
+      if (settings.cloudSaveEnabled) {
+        const driveFileName = `${userId}_${id}_slot-${slot}.state`;
+        uploadToDrive(filePath, driveFileName).catch(e => console.error("[Cloud] Upload failed:", e));
+      }
+
       res.json({ ok: true, slot, size: buf.length });
     } catch (err: any) {
       console.error("PUT /api/roms/:id/save-backup/:slot error:", err);
@@ -299,6 +316,14 @@ export function registerProfileRoutes(app: Express) {
       const base64 = dataUrl.split(",")[1];
       await fs.writeFile(filePath, Buffer.from(base64, "base64"));
       console.log(`[Profiles] Saved thumbnail for ROM ${id} slot ${slot}`);
+
+      // Upload thumbnail to cloud if enabled
+      const settings = await storage.getIntegrationSettings();
+      if (settings.cloudSaveEnabled) {
+        const driveFileName = `${userId}_${id}_slot-${slot}.jpg`;
+        uploadToDrive(filePath, driveFileName).catch(e => console.error("[Cloud] Thumb upload failed:", e));
+      }
+
       res.json({ ok: true });
     } catch (err: any) {
       console.error("PUT /api/roms/:id/save-thumb/:slot error:", err);

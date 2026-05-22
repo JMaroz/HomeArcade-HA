@@ -249,6 +249,9 @@ export class DatabaseStorage implements IStorage {
   async listRomSaveSlots(romId: number, userId: string): Promise<RomSaveSlot[]> {
     return db.select().from(romSaveSlots).where(and(eq(romSaveSlots.romId, romId), eq(romSaveSlots.userId, userId))).orderBy(romSaveSlots.slot).all();
   }
+  async listAllRomSaveSlots(romId: number): Promise<RomSaveSlot[]> {
+    return db.select().from(romSaveSlots).where(eq(romSaveSlots.romId, romId)).all();
+  }
   async upsertRomSaveSlot(saveSlot: InsertRomSaveSlot): Promise<RomSaveSlot> {
     const existing = db.select().from(romSaveSlots).where(and(eq(romSaveSlots.romId, saveSlot.romId), eq(romSaveSlots.userId, saveSlot.userId ?? "default"), eq(romSaveSlots.slot, saveSlot.slot))).get();
     const now = Date.now();

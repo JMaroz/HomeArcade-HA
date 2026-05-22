@@ -13,9 +13,13 @@ import { Separator } from "@/components/ui/separator";
 import { 
   ShieldAlert, Trash2, RefreshCw, CheckCircle2, 
   XCircle, Sparkles, Image, FileText, Timer, 
-  Search, Link, Copy, Loader2, AlertCircle
+  Search, Link, Copy, Loader2, AlertCircle, Cloud, Globe, Key
 } from "lucide-react";
 import { Section } from "./SettingsShared";
+import { useIntegration } from "@/lib/integration";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface VaultHealth {
   total: number;
@@ -75,12 +79,15 @@ function HealthCard({ icon, label, count, total, colorClass }: { icon: React.Rea
 
 export function VaultSettings() {
   const { t } = useTranslation();
+  const { config, setConfig } = useIntegration();
   const { toast } = useToast();
   const [scraping, setScraping] = useState(false);
   const [progress, setProgress] = useState<ScrapeProgress | null>(null);
   const [results, setResults] = useState<ScrapeResult[]>([]);
   const [summary, setSummary] = useState<ScrapeComplete | null>(null);
   const [auditing, setAuditing] = useState(false);
+  const [testingDrive, setTestingDrive] = useState(false);
+  const [syncingCloud, setSyncingCloud] = useState(false);
 
   const { data: health, refetch: refetchHealth } = useQuery<VaultHealth>({ queryKey: ["/api/vault/health"] });
   const { data: audit, refetch: refetchAudit } = useQuery<VaultAudit>({ 
@@ -145,6 +152,36 @@ export function VaultSettings() {
     setAuditing(false);
   };
 
+  const testDrive = async () => {
+    setTestingDrive(true);
+    try {
+      const res = await fetch(apiUrl("/api/vault/test-drive"));
+      const data = await res.json();
+      if (data.ok) {
+        toast({ title: "Drive Connected", description: data.message });
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (err: any) {
+      toast({ title: "Connection Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setTestingDrive(false);
+    }
+  };
+
+  const syncCloud = async () => {
+    setSyncingCloud(true);
+    try {
+      const res = await apiRequest("POST", "/api/vault/cloud-sync");
+      const data = await res.json();
+      toast({ title: "Cloud Sync Complete", description: `Uploaded ${data.uploaded} saves and downloaded ${data.downloaded} newer versions.` });
+    } catch (err: any) {
+      toast({ title: "Sync Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSyncingCloud(false);
+    }
+  };
+
   const pruneDeadLinks = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/vault/prune");
@@ -161,6 +198,106 @@ export function VaultSettings() {
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
+      {/* ── Cloud Synchronization ────────────────────────────────────────────── */}
+      <Section title="Cloud Synchronization" description="Sync your game saves and screenshots to Google Drive. This allows you to pick up where you left off on any device.">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between p-4 rounded-xl border border-primary/20 bg-primary/5">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Cloud className="size-5 text-primary" />
+              </div>
+              <div>
+                <div className="font-display font-bold text-sm">Google Drive Sync</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">
+                  {config.cloudSaveEnabled ? "Active & Synchronizing" : "Disabled"}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+               {config.cloudSaveEnabled && (
+                  <Button onClick={syncCloud} disabled={syncingCloud} variant="ghost" size="sm" className="gap-2 h-9 px-4 font-black uppercase tracking-wider text-[10px] text-primary hover:text-primary hover:bg-primary/5">
+                    {syncingCloud ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
+                    Sync Now
+                  </Button>
+               )}
+              <Switch 
+                checked={config.cloudSaveEnabled} 
+                onCheckedChange={(v) => setConfig({ cloudSaveEnabled: v })} 
+              />
+            </div>
+          </div>
+
+          {config.cloudSaveEnabled && (
+            <div className="grid gap-6 p-5 rounded-xl border border-border bg-sidebar/10 animate-in slide-in-from-top-2 duration-300">
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">API Credentials</div>
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase tracking-wider opacity-60">Client ID</Label>
+                      <div className="relative">
+                        <Globe className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input 
+                          value={config.googleDriveClientId} 
+                          onChange={(e) => setConfig({ googleDriveClientId: e.target.value })}
+                          placeholder="000000000000-xxx.apps.googleusercontent.com"
+                          className="pl-9 font-mono text-xs h-9"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase tracking-wider opacity-60">Client Secret</Label>
+                      <div className="relative">
+                        <Key className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input 
+                          type="password"
+                          value={config.googleDriveClientSecret} 
+                          onChange={(e) => setConfig({ googleDriveClientSecret: e.target.value })}
+                          placeholder="GOCSPX-xxxxxxxxxxxx"
+                          className="pl-9 font-mono text-xs h-9"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Persistence</div>
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase tracking-wider opacity-60">Refresh Token</Label>
+                      <div className="relative">
+                        <RefreshCw className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input 
+                          type="password"
+                          value={config.googleDriveRefreshToken} 
+                          onChange={(e) => setConfig({ googleDriveRefreshToken: e.target.value })}
+                          placeholder="1//0xxxxxxxxxxxx"
+                          className="pl-9 font-mono text-xs h-9"
+                        />
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-200/70 leading-relaxed">
+                      <AlertCircle className="size-3 inline mr-1 mb-0.5" />
+                      <strong>Setup Guide:</strong> Create a project in Google Cloud Console, enable Drive API, create OAuth Credentials (Web), and use an OAuth playground to get your long-lived Refresh Token.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button onClick={testDrive} disabled={testingDrive} variant="outline" size="sm" className="gap-2 h-9 px-4 font-black uppercase tracking-wider text-[10px]">
+                  {testingDrive ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
+                  Test Connection
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </Section>
+
+      <Separator className="bg-border/60" />
+
       {/* ── Health Dashboard ─────────────────────────────────────────────────── */}
       <Section title="Library Health" description="Real-time audit of your metadata coverage and storage status.">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
