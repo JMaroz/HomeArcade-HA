@@ -15,15 +15,21 @@ function detectApiBase(): string {
 
   if (typeof window === "undefined") return "";
 
-  let pathname = window.location.pathname || "/";
-  // Strip a trailing index.html (some ingress proxies serve it explicitly).
-  pathname = pathname.replace(/\/index\.html?$/i, "/");
-  // Drop the trailing slash so we can safely concatenate with "/api/...".
-  if (pathname.length > 1 && pathname.endsWith("/")) {
-    pathname = pathname.slice(0, -1);
+  const pathname = window.location.pathname || "/";
+  
+  // Explicitly look for the Home Assistant ingress prefix
+  const ingressMatch = pathname.match(/^\/api\/(?:hassio_)?ingress\/[^\/]+/);
+  if (ingressMatch) {
+    return ingressMatch[0];
   }
-  if (pathname === "/" || pathname === "") return "";
-  return pathname;
+
+  // Fallback: strip a trailing index.html and any trailing slash
+  let base = pathname.replace(/\/index\.html?$/i, "/");
+  if (base.length > 1 && base.endsWith("/")) {
+    base = base.slice(0, -1);
+  }
+  
+  return base === "/" ? "" : base;
 }
 
 let cachedApiBase: string | null = null;

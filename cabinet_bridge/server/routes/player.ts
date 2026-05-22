@@ -660,7 +660,8 @@ function cabinetSetupMenu() {
         if (aiImg) aiImg.src = dataUrl;
 
         updateStatus("Talking to Ollama...");
-        var ingressBase = window.location.pathname.match(/^\\\\/api\\\\/(?:hassio_)?ingress\\\\/[^\\\\/]+/)?.[0] || "";
+        var pathParts = window.location.pathname.split("/");
+        var ingressBase = pathParts.slice(0, 4).join("/");
         var aiUrl = ingressBase + "/api/ai/analyze";
         
         var controller = new AbortController();
@@ -758,7 +759,9 @@ window.EJS_buttons = {
 };
 
 // ── Netplay Configuration ──
-window.EJS_netplayUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + (window.location.pathname.match(/^\\\\/api\\\\/(?:hassio_)?ingress\\\\/[^\\\\/]+/)?.[0] || "") + "/api/netplay";
+var pathParts = window.location.pathname.split("/");
+var ingressBase = pathParts.slice(0, 4).join("/");
+window.EJS_netplayUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + ingressBase + "/api/netplay";
 ${netplayRole ? `window.EJS_netplayRole = ${JSON.stringify(netplayRole)};` : ""}
 ${netplayRoom ? `window.EJS_netplayRoom = ${JSON.stringify(netplayRoom)};` : ""}
 
