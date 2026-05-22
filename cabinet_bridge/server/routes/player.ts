@@ -130,6 +130,10 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>${safeTitle} · HomeArcade</title>
     <style>
+      :root {
+        --vpad-scale: 1;
+        --vpad-opacity: 1;
+      }
       html, body {
         width: 100%;
         height: 100%;
@@ -180,115 +184,6 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .cabinet-menu-panel {
         position: fixed;
         z-index: 999999;
-        top: max(70px, calc(env(safe-area-inset-top) + 64px));
-        left: max(12px, env(safe-area-inset-left));
-        width: min(92vw, 400px);
-        max-height: min(85vh, calc(100dvh - 90px));
-        overflow-y: auto;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 24px;
-        background: rgba(10, 10, 15, 0.95);
-        box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8);
-        opacity: 0;
-        pointer-events: none;
-        transform: translateY(-10px) scale(0.98);
-        transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
-        visibility: hidden;
-        backdrop-filter: blur(20px);
-      }
-      .cabinet-menu-panel.is-open,
-      .cabinet-menu-backdrop.is-open {
-        opacity: 1;
-        pointer-events: auto;
-        visibility: visible;
-      }
-      .cabinet-menu-panel.is-open {
-        transform: translateY(0) scale(1);
-      }
-      .cabinet-menu-section {
-        padding: 16px 20px;
-      }
-      .cabinet-menu-section + .cabinet-menu-section {
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-      }
-      .cabinet-menu-label {
-        color: rgba(255, 255, 255, 0.35);
-        font: 900 9px ui-monospace, monospace;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        margin-bottom: 12px;
-      }
-      .cabinet-menu-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-      }
-      .cabinet-menu-panel button {
-        appearance: none;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.05);
-        color: rgba(255, 255, 255, 0.9);
-        cursor: pointer;
-        font: 800 10px ui-monospace, monospace;
-        letter-spacing: 0.1em;
-        min-height: 48px;
-        padding: 10px;
-        text-transform: uppercase;
-        transition: all 150ms ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        gap: 8px;
-      }
-      .cabinet-menu-panel button:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-      }
-      .cabinet-menu-panel button[aria-pressed="true"] {
-        background: rgba(236, 72, 153, 0.3);
-        border-color: rgba(236, 72, 153, 0.7);
-        color: #fff;
-        box-shadow: 0 0 15px rgba(236, 72, 153, 0.2);
-      }
-      .cabinet-menu-panel button.primary {
-        background: rgba(236, 72, 153, 0.4);
-        border-color: rgba(236, 72, 153, 0.6);
-        color: #fff;
-      }
-      .cabinet-menu-panel button.danger:hover {
-        background: rgba(239, 68, 68, 0.2);
-        border-color: rgba(239, 68, 68, 0.5);
-      }
-      .cabinet-menu-panel .full-width {
-        grid-column: 1 / -1;
-      }
-
-      /* Disc Selector Submenu */
-      .cabinet-disc-list {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-top: 10px;
-      }
-      .cabinet-disc-item {
-        justify-content: flex-start !important;
-        padding-left: 16px !important;
-      }
-
-      /* Forced Menu Hide for Default EmulatorJS */
-      #emulator-parent > div[style*="z-index: 1001"],
-      .ejs-menu, .ejs-overlay, div[class*="overlay-menu"] {
-        display: none !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        visibility: hidden !important;
-      }
-
-      .cabinet-menu-panel {
-        position: fixed;
-        z-index: 999999;
         inset: 0;
         display: flex;
         align-items: center;
@@ -304,6 +199,8 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
 
       .cabinet-menu-card {
         width: min(90vw, 420px);
+        max-height: 90vh;
+        overflow-y: auto;
         background: rgba(15, 15, 20, 0.85);
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 32px;
@@ -317,6 +214,8 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .cabinet-menu-header { margin-bottom: 24px; text-align: center; }
       .cabinet-menu-title { font: 900 11px ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.3em; color: #ec4899; }
       .cabinet-menu-game { font-size: 16px; font-weight: 900; color: #fff; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+      .cabinet-menu-section-label { font: 900 9px ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255, 255, 255, 0.3); margin: 24px 0 12px; }
 
       .cabinet-menu-grid {
         display: grid;
@@ -347,6 +246,27 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .cabinet-menu-tile i { font-size: 20px; }
       .cabinet-menu-tile span { font: 900 10px ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; }
 
+      /* Settings Controls */
+      .cabinet-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+      .cabinet-setting-label { font: 800 10px ui-monospace, monospace; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); }
+      .cabinet-setting-control { flex: 1; display: flex; align-items: center; gap: 12px; }
+      
+      input[type="range"] {
+        flex: 1; appearance: none; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.1);
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #ec4899; cursor: pointer; border: 2px solid #fff;
+      }
+      
+      .cabinet-toggle {
+        appearance: none; width: 36px; height: 20px; border-radius: 18px; background: rgba(255, 255, 255, 0.1); position: relative; cursor: pointer; transition: background 200ms;
+      }
+      .cabinet-toggle::after {
+        content: ""; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 200ms;
+      }
+      .cabinet-toggle:checked { background: #ec4899; }
+      .cabinet-toggle:checked::after { transform: translateX(16px); }
+
       .cabinet-menu-footer { margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; gap: 8px; }
       .cabinet-menu-btn-wide {
         appearance: none; width: 100%; height: 48px; border-radius: 14px;
@@ -356,6 +276,27 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         transition: all 150ms ease;
       }
       .cabinet-menu-btn-wide:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+
+      /* Disc Selector Submenu */
+      .cabinet-disc-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .cabinet-disc-item {
+        justify-content: flex-start !important;
+        padding-left: 16px !important;
+      }
+
+      /* Forced Menu Hide for Default EmulatorJS */
+      #emulator-parent > div[style*="z-index: 1001"],
+      .ejs-menu, .ejs-overlay, div[class*="overlay-menu"] {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+      }
 
       /* In-game Toast */
       .cabinet-toast {
@@ -455,8 +396,9 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         pointer-events: none;
         opacity: 0;
         transition: opacity 250ms ease;
+        opacity: var(--vpad-opacity);
       }
-      .virtual-pad.is-visible { opacity: 1; }
+      .virtual-pad.is-visible { opacity: var(--vpad-opacity); }
       .virtual-pad button {
         appearance: none;
         pointer-events: auto;
@@ -467,8 +409,8 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         display: flex;
         align-items: center;
         justify-content: center;
-        min-width: 66px;
-        min-height: 66px;
+        min-width: calc(66px * var(--vpad-scale));
+        min-height: calc(66px * var(--vpad-scale));
         border: 1px solid rgba(255, 255, 255, 0.35);
         border-radius: 999px;
         background:
@@ -480,7 +422,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
           0 10px 25px rgba(0, 0, 0, 0.5),
           inset 0 1px 1px rgba(255, 255, 255, 0.2),
           inset 0 -2px 5px rgba(0, 0, 0, 0.3);
-        font: 900 15px ui-monospace, SFMono-Regular, monospace;
+        font: 900 calc(15px * var(--vpad-scale)) ui-monospace, SFMono-Regular, monospace;
         letter-spacing: 0.02em;
         text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         transition: transform 80ms cubic-bezier(0.2, 0, 0, 1), background 120ms ease, box-shadow 80ms ease;
@@ -495,26 +437,26 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         transition: transform 40ms ease;
       }
       
-      .vpad-dpad { position: absolute; left: max(32px, env(safe-area-inset-left)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 68px); grid-template-rows: repeat(3, 68px); gap: 2px; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6)); }
-      .vpad-dpad button { border-radius: 8px; min-width: 68px; min-height: 68px; background: rgba(20, 20, 25, 0.85); border-color: rgba(255,255,255,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
+      .vpad-dpad { position: absolute; left: max(32px, env(safe-area-inset-left)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, calc(68px * var(--vpad-scale))); grid-template-rows: repeat(3, calc(68px * var(--vpad-scale))); gap: 2px; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6)); }
+      .vpad-dpad button { border-radius: 8px; min-width: calc(68px * var(--vpad-scale)); min-height: calc(68px * var(--vpad-scale)); background: rgba(20, 20, 25, 0.85); border-color: rgba(255,255,255,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
       .vpad-dpad .up { grid-column: 2; grid-row: 1; border-radius: 16px 16px 4px 4px; border-bottom: none; }
       .vpad-dpad .left { grid-column: 1; grid-row: 2; border-radius: 16px 4px 4px 16px; border-right: none; }
       .vpad-dpad .right { grid-column: 3; grid-row: 2; border-radius: 4px 16px 16px 4px; border-left: none; }
-      .vpad-dpad .down { grid-column: 2; grid-row: 3; border-radius: 4px 4px 16px 16px; border-top: none; }
+      .vpad-dpad .down { grid-column: 2; grid-row: 3; border-radius: 4px 16px 16px 4px; border-top: none; }
       .vpad-dpad-core { grid-column: 2; grid-row: 2; background: rgba(15, 15, 20, 0.9); border: 1px solid rgba(255,255,255,0.05); }
 
-      .vpad-face { position: absolute; right: max(32px, env(safe-area-inset-right)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 72px); grid-template-rows: repeat(3, 72px); gap: 6px; }
-      .vpad-face button { border-radius: 999px; width: 72px; height: 72px; }
+      .vpad-face { position: absolute; right: max(32px, env(safe-area-inset-right)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, calc(72px * var(--vpad-scale))); grid-template-rows: repeat(3, calc(72px * var(--vpad-scale))); gap: 6px; }
+      .vpad-face button { border-radius: 999px; width: calc(72px * var(--vpad-scale)); height: calc(72px * var(--vpad-scale)); }
       .vpad-face .y { grid-column: 1; grid-row: 2; }
       .vpad-face .x { grid-column: 2; grid-row: 1; }
       .vpad-face .b { grid-column: 2; grid-row: 3; }
       .vpad-face .a { grid-column: 3; grid-row: 2; }
 
       .vpad-shoulders { position: absolute; top: 12px; left: max(20px, env(safe-area-inset-left)); right: max(20px, env(safe-area-inset-right)); display: flex; justify-content: space-between; }
-      .vpad-shoulders button { width: min(30vw, 160px); height: 52px; border-radius: 20px; font-size: 12px; background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); }
+      .vpad-shoulders button { width: min(30vw, calc(160px * var(--vpad-scale))); height: calc(52px * var(--vpad-scale)); border-radius: 20px; font-size: calc(12px * var(--vpad-scale)); background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); }
 
       .vpad-system { position: absolute; left: 50%; bottom: max(32px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 24px; }
-      .vpad-system button { width: 90px; height: 32px; border-radius: 999px; font-size: 9px; font-weight: 900; background: rgba(255, 255, 255, 0.05); border-color: rgba(255,255,255,0.1); transform: rotate(-15deg); }
+      .vpad-system button { width: calc(90px * var(--vpad-scale)); height: calc(32px * var(--vpad-scale)); border-radius: 999px; font-size: calc(9px * var(--vpad-scale)); font-weight: 900; background: rgba(255, 255, 255, 0.05); border-color: rgba(255,255,255,0.1); transform: rotate(-15deg); }
 
       /* ── SNES THEME (High Gloss) ── */
       body[data-system="snes"] .vpad-face button {
@@ -526,9 +468,9 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       body[data-system="snes"] .vpad-face .y { background-color: rgba(22, 163, 74, 0.8) !important; border-color: #4ade80 !important; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.5); }
       
       @media (max-width: 768px) {
-        .vpad-dpad { grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 58px); left: 20px; bottom: 20px; }
-        .vpad-face { grid-template-columns: repeat(3, 62px); grid-template-rows: repeat(3, 62px); right: 20px; bottom: 20px; }
-        .vpad-dpad button, .vpad-face button { min-width: 58px; min-height: 58px; width: 62px; height: 62px; }
+        .vpad-dpad { grid-template-columns: repeat(3, calc(58px * var(--vpad-scale))); grid-template-rows: repeat(3, calc(58px * var(--vpad-scale))); left: 20px; bottom: 20px; }
+        .vpad-face { grid-template-columns: repeat(3, calc(62px * var(--vpad-scale))); grid-template-rows: repeat(3, calc(62px * var(--vpad-scale))); right: 20px; bottom: 20px; }
+        .vpad-dpad button, .vpad-face button { min-width: calc(58px * var(--vpad-scale)); min-height: calc(58px * var(--vpad-scale)); width: calc(62px * var(--vpad-scale)); height: calc(62px * var(--vpad-scale)); }
       }
     </style>
   </head>
@@ -567,6 +509,26 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
            <button type="button" class="cabinet-menu-tile" id="cabinet-pad-toggle">
               <i>📱</i><span>Pad</span>
            </button>
+        </div>
+
+        <div class="cabinet-menu-section-label">Handheld Settings</div>
+        <div class="space-y-4">
+           <div class="cabinet-setting-row">
+              <span class="cabinet-setting-label">Button Size</span>
+              <div class="cabinet-setting-control">
+                 <input type="range" id="cabinet-set-vpad-scale" min="0.5" max="1.5" step="0.05" value="1" />
+              </div>
+           </div>
+           <div class="cabinet-setting-row">
+              <span class="cabinet-setting-label">Opacity</span>
+              <div class="cabinet-setting-control">
+                 <input type="range" id="cabinet-set-vpad-opacity" min="0.1" max="1" step="0.05" value="1" />
+              </div>
+           </div>
+           <div class="cabinet-setting-row">
+              <span class="cabinet-setting-label">HD Mode (Upscale)</span>
+              <input type="checkbox" class="cabinet-toggle" id="cabinet-set-hd" />
+           </div>
         </div>
 
         <div class="cabinet-menu-footer">
@@ -733,6 +695,9 @@ function cabinetPressControl(control, pressed) {
 function cabinetSetupVirtualPad() {
   var pad = document.querySelector("#cabinet-vpad");
   var toggle = document.querySelector("#cabinet-pad-toggle");
+  var sizeSlider = document.getElementById("cabinet-set-vpad-scale");
+  var opacitySlider = document.getElementById("cabinet-set-vpad-opacity");
+  
   if (!pad || !toggle) return;
 
   var touchCapable = "ontouchstart" in window || navigator.maxTouchPoints > 0;
@@ -742,10 +707,32 @@ function cabinetSetupVirtualPad() {
     visible = v;
     pad.classList.toggle("is-visible", v);
     toggle.setAttribute("aria-pressed", v ? "true" : "false");
-    toggle.textContent = v ? "Hide Pad" : "Show Pad";
+    var label = toggle.querySelector("span");
+    if (label) label.textContent = v ? "Hide Pad" : "Show Pad";
   }
 
+  // Load customizations
+  var savedScale = localStorage.getItem("cabinet_vpad_scale") || "1";
+  var savedOpacity = localStorage.getItem("cabinet_vpad_opacity") || "1";
+  document.documentElement.style.setProperty("--vpad-scale", savedScale);
+  document.documentElement.style.setProperty("--vpad-opacity", savedOpacity);
+  if (sizeSlider) sizeSlider.value = savedScale;
+  if (opacitySlider) opacitySlider.value = savedOpacity;
+
   toggle.onclick = function() { setPadVisible(!visible); };
+
+  if (sizeSlider) {
+    sizeSlider.oninput = function() {
+      document.documentElement.style.setProperty("--vpad-scale", sizeSlider.value);
+      localStorage.setItem("cabinet_vpad_scale", sizeSlider.value);
+    };
+  }
+  if (opacitySlider) {
+    opacitySlider.oninput = function() {
+      document.documentElement.style.setProperty("--vpad-opacity", opacitySlider.value);
+      localStorage.setItem("cabinet_vpad_opacity", opacitySlider.value);
+    };
+  }
 
   pad.querySelectorAll("button").forEach(function(btn) {
     btn.onpointerdown = function(e) {
@@ -775,6 +762,7 @@ function cabinetSetupMenu() {
   var loadBtn = document.getElementById("cabinet-load");
   var warpBtn = document.getElementById("cabinet-warp-open");
   var exitBtn = document.getElementById("cabinet-exit");
+  var hdToggle = document.getElementById("cabinet-set-hd");
 
   if (!btn || !panel) return;
 
@@ -839,6 +827,16 @@ function cabinetSetupMenu() {
       gameEl.className = ""; 
       if (filter !== "none") gameEl.classList.add("filter-" + filter);
       cabinetToast("Filter: " + filter.toUpperCase());
+    };
+  }
+
+  // HD Mode / Upscale
+  if (hdToggle) {
+    var savedHD = localStorage.getItem("cabinet_hd_mode") === "true";
+    hdToggle.checked = savedHD;
+    hdToggle.onchange = function() {
+      localStorage.setItem("cabinet_hd_mode", hdToggle.checked);
+      cabinetToast("HD Mode " + (hdToggle.checked ? "ON" : "OFF") + " (Restart game to apply)");
     };
   }
 
@@ -950,6 +948,9 @@ window.EJS_iceServers = [
   { urls: "stun:stun3.l.google.com:19302" },
   { urls: "stun:stun4.l.google.com:19302" }
 ];
+
+// ── HD Mode Upscale ──
+window.EJS_upscale = localStorage.getItem("cabinet_hd_mode") === "true";
 
 // ── Hide built-in UI ──
 window.EJS_onMobile = false;
