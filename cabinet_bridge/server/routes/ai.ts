@@ -19,9 +19,13 @@ export function registerAiRoutes(app: Express) {
 
       log(`Sending image to Ollama at ${settings.ollamaUrl} (model: ${settings.ollamaModel})`, "ai");
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+
       const response = await fetch(`${settings.ollamaUrl}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           model: settings.ollamaModel,
           prompt: prompt || "What is happening in this game screenshot? Give me a helpful hint on what to do next.",
@@ -30,6 +34,8 @@ export function registerAiRoutes(app: Express) {
           stream: false
         }),
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -41,6 +47,28 @@ export function registerAiRoutes(app: Express) {
     } catch (err: any) {
       log(`AI analysis failed: ${err.message}`, "ai");
       res.status(500).json({ message: `AI Assistant unavailable: ${err.message}` });
+    }
+  });
+
+  app.get("/api/ai/test", async (_req, res) => {
+    try {
+      const settings = await storage.getIntegrationSettings();
+      if (!settings.ollamaUrl) throw new Error("Ollama URL not configured.");
+
+      const response = await fetch(`${settings.ollamaUrl}/api/tags`);
+      if (!response.ok) throw new Error(`Ollama returned ${response.status}`);
+      
+      const data = await response.json();
+      const models = data.models || [];
+      const hasVision = models.some((m: any) => m.name.includes("llava") || m.name.includes("vision"));
+
+      res.json({ 
+        ok: true, 
+        models: models.map((m: any) => m.name),
+        hasVisionModel: hasVision
+      });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
     }
   });
 }

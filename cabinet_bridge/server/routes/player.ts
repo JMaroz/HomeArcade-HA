@@ -182,8 +182,10 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
       .cabinet-menu-backdrop.is-open {
         opacity: 1;
         pointer-events: auto;
-        transform: translateY(0) scale(1);
         visibility: visible;
+      }
+      .cabinet-menu-panel.is-open {
+        transform: translateY(0) scale(1);
       }
       .cabinet-menu-section {
         padding: 16px 20px;
@@ -296,6 +298,17 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
       #game.filter-smooth canvas { image-rendering: auto !important; filter: blur(0.4px) brightness(1.05); }
 
       /* Launch Overlay */
+      .cabinet-ai-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000000;
+        background: rgba(0, 0, 0, 0.96);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        backdrop-filter: blur(15px);
+      }
       .cabinet-launch-overlay {
         position: fixed;
         z-index: 999998;
@@ -369,23 +382,25 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
       </div>
     </nav>
 
-    <section class="cabinet-save-panel" id="cabinet-ai-panel" style="display:none; position:fixed; inset:0; z-index:1000000; background:rgba(0,0,0,0.9); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center;">
-       <div style="width:min(90vw, 500px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center;">
-          <div class="cabinet-menu-label" style="margin-bottom:20px;">AI Strategy Guide</div>
-          <div id="cabinet-ai-screenshot" style="width:100%; aspect-ratio:4/3; border-radius:12px; background:#000; margin-bottom:20px; overflow:hidden; border:1px solid rgba(255,255,255,0.1);">
+    <section class="cabinet-ai-overlay" id="cabinet-ai-overlay">
+       <button type="button" id="cabinet-ai-cancel" style="position:fixed; top:20px; right:20px; width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:24px; cursor:pointer; z-index:2000001; display:flex; align-items:center; justify-content:center;">&times;</button>
+       <div style="width:min(90vw, 500px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+          <div class="cabinet-menu-label" style="margin-bottom:20px; color:rgba(236, 72, 153, 0.8);">🤖 AI Strategy Guide</div>
+          <div id="cabinet-ai-screenshot" style="width:100%; aspect-ratio:16/9; border-radius:12px; background:#000; margin-bottom:20px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); position:relative;">
              <img id="cabinet-ai-img" src="" style="width:100%; height:100%; object-fit:contain;" />
+             <div id="cabinet-ai-loading" style="position:absolute; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center;">
+                <div class="cabinet-menu-label animate-pulse" style="color:#fff;">Analyzing...</div>
+             </div>
           </div>
-          <div id="cabinet-ai-loading" style="display:none; padding:20px;">
-             <div class="cabinet-menu-label animate-pulse">AI is analyzing screen...</div>
-          </div>
-          <div id="cabinet-ai-response" style="text-align:left; font-size:13px; color:rgba(255,255,255,0.8); line-height:1.6; margin-bottom:24px; max-height:200px; overflow-y:auto; padding:10px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+          <div id="cabinet-ai-status" style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.3); margin-bottom:12px;">Initializing...</div>
+          <div id="cabinet-ai-response" style="text-align:left; font-size:14px; color:rgba(255,255,255,0.9); line-height:1.6; margin-bottom:24px; max-height:220px; overflow-y:auto; padding:16px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.05); white-space: pre-wrap;">
              <!-- AI text goes here -->
           </div>
-          <button type="button" id="cabinet-ai-close" style="appearance:none; width:100%; padding:14px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; font:900 10px ui-monospace,monospace; text-transform:uppercase; cursor:pointer;">Back to Game</button>
+          <button type="button" id="cabinet-ai-close" style="appearance:none; width:100%; padding:14px; border-radius:12px; background:rgba(236, 72, 153, 0.2); border:1px solid rgba(236, 72, 153, 0.4); color:#fff; font:900 10px ui-monospace,monospace; text-transform:uppercase; cursor:pointer;">Back to Game</button>
        </div>
     </section>
 
-    <section class="cabinet-save-panel" id="cabinet-warp-panel" style="display:none; position:fixed; inset:0; z-index:1000000; background:rgba(0,0,0,0.9); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center;">
+    <section class="cabinet-save-panel" id="cabinet-warp-panel">
        <div style="width:min(90vw, 400px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center;">
           <div class="cabinet-menu-label" style="margin-bottom:20px;">Warp Hand-off</div>
           <div id="cabinet-warp-qr" style="margin:0 auto 20px; background:#fff; padding:10px; border-radius:12px; width:220px; height:220px;"></div>
@@ -592,65 +607,119 @@ function cabinetSetupMenu() {
 
   // AI Assistant (Ollama)
   var aiBtn = document.getElementById("cabinet-ai-ask");
-  var aiPanel = document.getElementById("cabinet-ai-panel");
+  var aiOverlay = document.getElementById("cabinet-ai-overlay");
   var aiImg = document.getElementById("cabinet-ai-img");
   var aiLoading = document.getElementById("cabinet-ai-loading");
   var aiResponse = document.getElementById("cabinet-ai-response");
   var aiClose = document.getElementById("cabinet-ai-close");
+  var aiCancel = document.getElementById("cabinet-ai-cancel");
 
   aiBtn.onclick = async function() {
-    toggleMenu(false);
-    aiPanel.style.display = "flex";
-    aiLoading.style.display = "block";
-    aiResponse.style.display = "none";
-    aiResponse.textContent = "";
-
-    // 1. Capture screen from EmulatorJS canvas
-    var canvas = document.querySelector("#game canvas");
-    if (!canvas) {
-      aiLoading.style.display = "none";
-      aiResponse.style.display = "block";
-      aiResponse.textContent = "Error: Emulator screen not found.";
-      return;
-    }
-
-    var dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-    aiImg.src = dataUrl;
-
-    // 2. Call local AI API
-    console.log("[AI] Requesting analysis from Ollama...");
     try {
-      var res = await fetch("../../ai/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          image: dataUrl,
-          prompt: "I am playing " + ${JSON.stringify(title)} + ". Look at this screenshot and give me a helpful hint on what I should do next or where I am. Be concise and cryptic."
-        })
-      });
-
-      if (!res.ok) {
-        var errBody = await res.json().catch(function(){return {};});
-        throw new Error(errBody.message || "AI Assistant unavailable (" + res.status + ")");
-      }
+      if (!aiOverlay) throw new Error("AI UI missing from page.");
       
-      var data = await res.json();
-      console.log("[AI] Analysis received:", data.response);
-      aiLoading.style.display = "none";
-      aiResponse.style.display = "block";
-      aiResponse.textContent = data.response;
+      // 0. Immediate Visibility - bypass CSS classes
+      aiOverlay.style.display = "flex";
+      aiOverlay.style.opacity = "1";
+      aiOverlay.style.visibility = "visible";
+      
+      if (aiLoading) aiLoading.style.display = "block";
+      if (aiResponse) {
+        aiResponse.style.display = "none";
+        aiResponse.innerHTML = '<div class="cabinet-menu-label" style="opacity:0.4;">Preparing AI Guide...</div>';
+      }
+
+      function setAiStatus(msg) {
+        if (aiResponse) {
+          aiResponse.style.display = "block";
+          aiResponse.innerHTML = '<div class="cabinet-menu-label" style="opacity:0.6;">' + msg + '</div>';
+        }
+      }
+
+      // 1. Capture and resize screen (smaller is faster + avoids HA proxy limits)
+      setAiStatus("Capturing screen...");
+      var canvas = document.querySelector("#game canvas");
+      if (!canvas) throw new Error("Emulator screen not found.");
+
+      // Pause game
+      if (window.EJS_emulator) window.EJS_emulator.pause();
+      
+      // Close the menu so it's not in the background
+      if (panel) panel.classList.remove("is-open");
+      if (backdrop) backdrop.classList.remove("is-open");
+
+      // Use a hidden canvas to resize
+      var targetWidth = 640;
+      var scale = targetWidth / canvas.width;
+      var targetHeight = canvas.height * scale;
+      
+      var offscreen = document.createElement("canvas");
+      offscreen.width = targetWidth;
+      offscreen.height = targetHeight;
+      var ctx = offscreen.getContext("2d");
+      ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
+
+      var dataUrl;
+      try {
+        dataUrl = offscreen.toDataURL("image/jpeg", 0.6);
+      } catch (e) {
+        throw new Error("Capture blocked. Try a different browser or check HTTPS.");
+      }
+      if (aiImg) aiImg.src = dataUrl;
+
+      // 2. Talk to server
+      setAiStatus("Ollama is thinking...");
+      console.log("[AI] Requesting analysis...");
+      
+      var controller = new AbortController();
+      var timeoutId = setTimeout(() => controller.abort(), 60000);
+
+      try {
+        var res = await fetch("../../../ai/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({ 
+            image: dataUrl,
+            prompt: "I am playing " + ${JSON.stringify(title)} + ". Look at this screenshot and give me a helpful hint on what I should do next. Be concise and cryptic."
+          })
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          var errBody = await res.json().catch(function(){return {};});
+          throw new Error(errBody.message || "AI Error (" + res.status + ")");
+        }
+        
+        var data = await res.json();
+        if (aiLoading) aiLoading.style.display = "none";
+        if (aiResponse) {
+          aiResponse.style.display = "block";
+          aiResponse.textContent = data.response;
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === "AbortError") throw new Error("AI timeout (60s). Is Ollama awake?");
+        throw err;
+      }
     } catch (err) {
       console.error("[AI] Error:", err);
-      aiLoading.style.display = "none";
-      aiResponse.style.display = "block";
-      aiResponse.textContent = "Error: " + err.message;
+      if (aiLoading) aiLoading.style.display = "none";
+      if (aiResponse) {
+        aiResponse.style.display = "block";
+        aiResponse.innerHTML = '<div style="color:#ef4444; font-weight:900;">AI UNAVAILABLE</div><div style="font-size:11px; opacity:0.7; margin-top:8px;">' + err.message + '</div>';
+      }
     }
   };
 
-  aiClose.onclick = function() {
-    aiPanel.style.display = "none";
+  var closeAi = function() {
+    if (aiOverlay) aiOverlay.style.display = "none";
     if (window.EJS_emulator) window.EJS_emulator.resume();
   };
+
+  if (aiClose) aiClose.onclick = closeAi;
+  if (aiCancel) aiCancel.onclick = closeAi;
 }
 
 window.EJS_onGameStart = function() {

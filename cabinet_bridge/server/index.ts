@@ -53,13 +53,14 @@ declare module "http" {
 
 app.use(
   express.json({
+    limit: "50mb",
     verify: (req, _res, buf) => {
       (req as any).rawBody = buf;
     },
   }),
 );
 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ limit: "50mb", extended: false }));
 
 // Global security headers to ensure assets load correctly under HA Ingress
 app.use((req, res, next) => {
