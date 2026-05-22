@@ -77,7 +77,7 @@ export const GameCard = memo(function GameCard({
   }, [priority]);
 
   const saveThumbUrl = game.romId
-    ? `/api/roms/${game.romId}/save-thumb/auto?t=${game.lastPlayed}`
+    ? apiUrl(`/api/roms/${game.romId}/save-thumb/auto?t=${game.lastPlayed}`)
     : null;
 
   const prefetchData = useCallback(() => {
@@ -177,7 +177,7 @@ export const GameCard = memo(function GameCard({
             {showVideo && (
               <video
                 ref={videoRef}
-                src={`/api/roms/${game.romId}/video`}
+                src={apiUrl(`/api/roms/${game.romId}/video`)}
                 muted loop playsInline preload="none"
                 onError={() => setVideoFailed(true)}
                 className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"

@@ -125,7 +125,7 @@ export const NowPlayingBar = memo(function NowPlayingBar() {
             >
               {/* Game art is loaded dynamically — show gradient fallback */}
               <img
-                src={`/api/roms/${data.id}/art`}
+                src={apiUrl(`/api/roms/${data.id}/art`)}
                 alt={data.title}
                 className="w-full h-full object-cover"
                 onError={(e) => {

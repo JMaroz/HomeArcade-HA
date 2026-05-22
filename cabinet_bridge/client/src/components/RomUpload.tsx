@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { SYSTEMS, type SystemId, formatRomSize } from "@/data/library";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import type { UploadedRom } from "@shared/schema";
 import { FileArchive, Upload, X, Zap, CheckCircle2 } from "lucide-react";
 
@@ -122,8 +122,7 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
           overallPct: basePct,
         });
 
-        const baseUrl = window.location.pathname.replace(/\/[^/]*$/, "");
-        const url = `${baseUrl}/api/roms/upload?system=${encodeURIComponent(system)}&favorite=${favorite ? "1" : "0"}`;
+        const url = apiUrl(`/api/roms/upload?system=${encodeURIComponent(system)}&favorite=${favorite ? "1" : "0"}`);
 
         const rom = await xhrUpload(file, url, (filePct) => {
           setProgress({
@@ -162,7 +161,7 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
     let matched = 0;
     for (const id of uploadedIds) {
       try {
-        const res = await fetch(`/api/roms/${id}/scrape-art`, { method: "POST" });
+        const res = await fetch(apiUrl(`/api/roms/${id}/scrape-art`), { method: "POST" });
         const data = await res.json() as { artUrl?: string };
         if (data.artUrl) matched++;
       } catch { /* ignore per-rom errors */ }

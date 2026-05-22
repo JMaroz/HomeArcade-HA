@@ -5,6 +5,7 @@
 import React, { useState } from "react";
 import { Save, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import type { RomSaveSlot, GameCheatCode } from "@shared/schema";
+import { apiUrl } from "@/lib/queryClient";
 
 // ── Stat card ──────────────────────────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ export function HltbStat({ label, value }: { label: string; value: string }) {
 export function SaveSlotCard({ slot, romId, onDelete }: { slot: RomSaveSlot; romId: number; onDelete: () => void }) {
   const [thumbError, setThumbError] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const thumbUrl = `/api/roms/${romId}/save-thumb/${slot.slot}`;
+  const thumbUrl = apiUrl(`/api/roms/${romId}/save-thumb/${slot.slot}`);
 
   const timeAgo = (() => {
     const diffMs = Date.now() - slot.updatedAt;

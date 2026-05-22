@@ -31,7 +31,7 @@ export function RomDeleteDialog({ romId, romTitle, onDeleted, iconOnly = false }
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/roms/${romId}`, { method: "DELETE" });
+      const res = await fetch(apiUrl(`/api/roms/${romId}`), { method: "DELETE" });
       if (!res.ok) {
         const body = await res.json().catch(() => ({ message: "Unknown error" }));
         throw new Error(body.message ?? "Delete failed");

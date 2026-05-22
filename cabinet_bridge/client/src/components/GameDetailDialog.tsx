@@ -74,7 +74,7 @@ export function GameDetailDialog({
     queryKey: ["ra-progress", game?.raGameId],
     queryFn: async () => {
       if (!game?.raGameId) return null;
-      const res = await fetch(`/api/retroachievements/user-progress/${game.raGameId}`);
+      const res = await fetch(apiUrl(`/api/retroachievements/user-progress/${game.raGameId}`));
       if (!res.ok) return null;
       return res.json();
     },
@@ -85,7 +85,7 @@ export function GameDetailDialog({
   const { data: hltbData } = useQuery<HltbData>({
     queryKey: ["hltb", game?.romId],
     queryFn: async () => {
-      const res = await fetch(`/api/roms/${game!.romId}/hltb`);
+      const res = await fetch(apiUrl(`/api/roms/${game!.romId}/hltb`));
       if (!res.ok) return { found: false };
       return res.json();
     },
@@ -98,7 +98,7 @@ export function GameDetailDialog({
   const { data: saveSlots = [], refetch: refetchSlots } = useQuery<RomSaveSlot[]>({
     queryKey: ["save-states", game?.romId],
     queryFn: async () => {
-      const res = await fetch(`/api/roms/${game!.romId}/save-states`);
+      const res = await fetch(apiUrl(`/api/roms/${game!.romId}/save-states`));
       if (!res.ok) return [];
       return res.json();
     },
@@ -125,7 +125,7 @@ export function GameDetailDialog({
   const { data: cheats = [], refetch: refetchCheats } = useQuery<GameCheatCode[]>({
     queryKey: ["cheats", game?.romId, profileId],
     queryFn: async () => {
-      const res = await fetch(`/api/roms/${game!.romId}/cheats?profileId=${profileId}`);
+      const res = await fetch(apiUrl(`/api/roms/${game!.romId}/cheats?profileId=${profileId}`));
       if (!res.ok) return [];
       return res.json();
     },
@@ -293,7 +293,7 @@ export function GameDetailDialog({
             {videoPlaying && game.romId ? (
               <div className="absolute inset-0 bg-black flex items-center justify-center">
                 <video
-                  src={`/api/roms/${game.romId}/video`}
+                  src={apiUrl(`/api/roms/${game.romId}/video`)}
                   autoPlay
                   controls
                   muted
@@ -370,12 +370,15 @@ export function GameDetailDialog({
               >
                 {game.title}
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                {game.description || `Details for ${game.title}`}
+              </DialogDescription>
               {(game.developer || game.publisher) && (
-                <DialogDescription className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex flex-wrap gap-x-3">
+                <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex flex-wrap gap-x-3">
                   {game.developer && <span>{game.developer}</span>}
                   {game.developer && game.publisher && <span>·</span>}
                   {game.publisher && <span>{game.publisher}</span>}
-                </DialogDescription>
+                </div>
               )}
               {genrePills.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-0.5">
@@ -824,4 +827,3 @@ export function GameDetailDialog({
     </Dialog>
   );
 }
-
