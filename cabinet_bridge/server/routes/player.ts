@@ -324,6 +324,15 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
 
       #game { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; }
       
+      /* Force-hide any default EmulatorJS UI elements that might leak through */
+      .ejs-virtual-gamepad, 
+      #emulator-parent > div[style*="z-index: 1000"],
+      div[class*="virtual-gamepad"] { 
+        display: none !important; 
+        opacity: 0 !important; 
+        pointer-events: none !important; 
+      }
+      
       /* Filter Overlays (on #game container) */
       #game.filter-crt canvas { filter: contrast(1.1) brightness(0.9) saturate(1.1); }
       #game.filter-crt::after {
@@ -855,6 +864,7 @@ window.EJS_iceServers = [
 ];
 
 // ── Hide built-in UI ──
+window.EJS_onMobile = false;
 window.EJS_virtualGamepad = false;
 window.EJS_buttons = {
   play_pause: false, restart: false, mute: false, settings: false, fullscreen: true,
