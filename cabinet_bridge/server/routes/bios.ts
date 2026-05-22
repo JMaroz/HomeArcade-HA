@@ -101,6 +101,7 @@ export function registerBiosRoutes(app: Express) {
 
     try {
       await fs.access(filePath);
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       res.sendFile(filePath);
     } catch {
       res.status(404).json({ message: "BIOS file not found." });
