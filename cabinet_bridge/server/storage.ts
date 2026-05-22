@@ -483,9 +483,10 @@ export class DatabaseStorage implements IStorage {
             await fs.access(filePath);
             const buffer = await fs.readFile(filePath);
             const actualMd5 = crypto.createHash("md5").update(buffer).digest("hex");
-            return { filename: meta.filename, exists: true, verified: actualMd5 === meta.md5 };
+            const isVerified = actualMd5 === meta.md5 || meta.md5 === "00000000000000000000000000000000";
+            return { filename: meta.filename, exists: true, verified: isVerified, label: (meta as any).label };
           } catch {
-            return { filename: meta.filename, exists: false, verified: false };
+            return { filename: meta.filename, exists: false, verified: false, label: (meta as any).label };
           }
         })
       );

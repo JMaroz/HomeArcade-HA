@@ -530,10 +530,6 @@ export function registerRomRoutes(app: Express) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     // Short cache: the HTML shell rarely changes but we don't want stale BIOS errors
     res.setHeader("Cache-Control", "private, max-age=60");
-    // Enable Cross-Origin Isolation for SharedArrayBuffer / Multi-threading
-    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     res.removeHeader("X-Frame-Options");
     const returnTo = typeof req.query.return === "string" ? req.query.return : "";
     const qString = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
@@ -577,9 +573,6 @@ export function registerRomRoutes(app: Express) {
     // Bootstrap content is stable for a given ROM+profile combination;
     // a short cache avoids regenerating it on every page reload.
     res.setHeader("Cache-Control", "private, max-age=300");
-    // Ensure isolation headers cannot be injected by HA ingress proxy
-    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
     const coreBios = REQUIRED_BIOS[core] || [];
