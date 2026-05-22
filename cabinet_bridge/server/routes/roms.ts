@@ -63,6 +63,7 @@ export function registerRomRoutes(app: Express) {
       if (exists) {
         res.setHeader("Content-Type", "image/jpeg");
         res.setHeader("Cache-Control", "public, max-age=86400, immutable");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
         return res.sendFile(cachePath);
       }
     } catch {}
@@ -78,6 +79,7 @@ export function registerRomRoutes(app: Express) {
       const ct = upstream.headers.get("Content-Type") ?? "image/jpeg";
       res.setHeader("Content-Type", ct);
       res.setHeader("Cache-Control", "public, max-age=86400");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
 
       await fs.mkdir(cacheDir, { recursive: true }).catch(() => {});
@@ -286,6 +288,7 @@ export function registerRomRoutes(app: Express) {
       const cl = upstream.headers.get("Content-Length");
       if (cl) res.setHeader("Content-Length", cl);
       res.setHeader("Cache-Control", "public, max-age=86400");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       const { Readable } = await import("stream");
       Readable.fromWeb(upstream.body as any).pipe(res);
     } catch {
@@ -312,6 +315,7 @@ export function registerRomRoutes(app: Express) {
       if (exists) {
         res.setHeader("Content-Type", "image/jpeg");
         res.setHeader("Cache-Control", "public, max-age=86400, immutable");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
         return res.sendFile(cachePath);
       }
     } catch {}
@@ -327,6 +331,7 @@ export function registerRomRoutes(app: Express) {
       const ct = upstream.headers.get("Content-Type") ?? "image/jpeg";
       res.setHeader("Content-Type", ct);
       res.setHeader("Cache-Control", "public, max-age=86400");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
       // Stream to browser AND save to disk cache
       await fs.mkdir(cacheDir, { recursive: true }).catch(() => {});
@@ -389,6 +394,7 @@ export function registerRomRoutes(app: Express) {
         res.setHeader("Content-Length", String(stat.size));
         res.setHeader("Cache-Control", "public, max-age=604800, immutable");
         res.setHeader("X-Cache", "HIT");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
         // Support Range requests so browsers can stream large WASM files
         const rangeHeader = req.headers.range;
         if (rangeHeader) {
@@ -425,6 +431,7 @@ export function registerRomRoutes(app: Express) {
       res.setHeader("Cache-Control", "public, max-age=604800, immutable");
       res.setHeader("Accept-Ranges", "bytes");
       res.setHeader("X-Cache", "MISS");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       const cl = upstream.headers.get("Content-Length");
       if (cl) res.setHeader("Content-Length", cl);
 
@@ -482,6 +489,7 @@ export function registerRomRoutes(app: Express) {
     res.setHeader("Accept-Ranges", "bytes");
     // 1-hour browser cache for ROMs (immutable content, large files)
     res.setHeader("Cache-Control", "private, max-age=3600");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
     const rangeHeader = req.headers.range;
     if (rangeHeader) {
@@ -522,11 +530,9 @@ export function registerRomRoutes(app: Express) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     // Short cache: the HTML shell rarely changes but we don't want stale BIOS errors
     res.setHeader("Cache-Control", "private, max-age=60");
-    // Explicitly override any proxy-injected isolation headers that would block the emulator.
-    // These must be set on the player page itself, not just globally, because HA ingress
-    // may inject its own COOP/COEP headers that override the global middleware.
-    res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
-    res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+    // Enable Cross-Origin Isolation for SharedArrayBuffer / Multi-threading
+    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     res.removeHeader("X-Frame-Options");
     const returnTo = typeof req.query.return === "string" ? req.query.return : "";
@@ -568,8 +574,8 @@ export function registerRomRoutes(app: Express) {
     // a short cache avoids regenerating it on every page reload.
     res.setHeader("Cache-Control", "private, max-age=300");
     // Ensure isolation headers cannot be injected by HA ingress proxy
-    res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
-    res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
     const coreBios = REQUIRED_BIOS[core] || [];
