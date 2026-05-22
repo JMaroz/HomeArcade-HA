@@ -88,9 +88,10 @@ Systems are listed in release-date order.
 ## Changelog
 
 ### v2.34.89
-- **SNES-Themed Controller** — Added a specific on-screen skin for SNES games featuring the classic Red/Yellow/Blue/Green face button colors and a concave/convex physical feel.
-- **Unified Player Logic** — Consolidated emulator bootstrap and rendering logic into a single, optimized module.
-- **Improved Auto-Resume** — Refined the pick-up-and-play logic to be more robust across different cores and screen states.
+- **SNES-Themed Controller** — Added a custom on-screen skin specifically for SNES games. Features the iconic Red/Yellow/Blue/Green face button layout and a simulated concave/convex tactile feel for a more authentic retro experience.
+- **High-Performance Core Engine** — Upgraded core systems to the most modern and stable versions used in the Lemuroid ecosystem. This includes `mgba` for GBA, `snes9x` for SNES, `fceumm` for NES, `genesis_plus_gx` for Sega, and `mupen64plus_next` for N64.
+- **Unified Player Logic** — Consolidated emulator bootstrap and rendering logic into a single, optimized module for faster load times and easier maintenance.
+- **Pick Up and Play Polish** — Refined the auto-resume system to be more robust across different cores, ensuring you always return exactly where you left off.
 
 ### v2.32.0
 - **Unified Sidebar Navigation** — Wired in the full-featured `Sidebar.tsx` component for all secondary pages (Settings, History, Achievements). On desktop it renders as a collapsible icon sidebar; on mobile it automatically becomes a slide-out sheet panel.
