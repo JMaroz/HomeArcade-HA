@@ -385,7 +385,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
 
     <section class="cabinet-ai-overlay" id="cabinet-ai-overlay">
        <button type="button" id="cabinet-ai-cancel" style="position:fixed; top:20px; right:20px; width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:24px; cursor:pointer; z-index:2000001; display:flex; align-items:center; justify-content:center;">&times;</button>
-       <div style="width:min(90vw, 500px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+       <div style="width:min(90vw, 500px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
           <div class="cabinet-menu-label" style="margin-bottom:20px; color:rgba(236, 72, 153, 0.8);">🤖 AI Strategy Guide</div>
           <div id="cabinet-ai-screenshot" style="width:100%; aspect-ratio:16/9; border-radius:12px; background:#000; margin-bottom:20px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); position:relative;">
              <img id="cabinet-ai-img" src="" style="width:100%; height:100%; object-fit:contain;" />
@@ -660,7 +660,7 @@ function cabinetSetupMenu() {
         if (aiImg) aiImg.src = dataUrl;
 
         updateStatus("Talking to Ollama...");
-        var ingressBase = window.location.pathname.match(/^\/api\/(?:hassio_)?ingress\/[^\/]+/)?.[0] || "";
+        var ingressBase = window.location.pathname.match(/^\\\\/api\\\\/(?:hassio_)?ingress\\\\/[^\\\\/]+/)?.[0] || "";
         var aiUrl = ingressBase + "/api/ai/analyze";
         
         var controller = new AbortController();
@@ -758,7 +758,7 @@ window.EJS_buttons = {
 };
 
 // ── Netplay Configuration ──
-window.EJS_netplayUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + (window.location.pathname.match(/^\\/api\\/(?:hassio_)?ingress\\/[^/]+/)?.[0] || "") + "/api/netplay";
+window.EJS_netplayUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + (window.location.pathname.match(/^\\\\/api\\\\/(?:hassio_)?ingress\\\\/[^\\\\/]+/)?.[0] || "") + "/api/netplay";
 ${netplayRole ? `window.EJS_netplayRole = ${JSON.stringify(netplayRole)};` : ""}
 ${netplayRoom ? `window.EJS_netplayRoom = ${JSON.stringify(netplayRoom)};` : ""}
 
