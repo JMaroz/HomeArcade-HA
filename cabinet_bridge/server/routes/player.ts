@@ -277,6 +277,86 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         padding-left: 16px !important;
       }
 
+      /* Forced Menu Hide for Default EmulatorJS */
+      #emulator-parent > div[style*="z-index: 1001"],
+      .ejs-menu, .ejs-overlay, div[class*="overlay-menu"] {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+      }
+
+      .cabinet-menu-panel {
+        position: fixed;
+        z-index: 999999;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(12px);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+        visibility: hidden;
+      }
+      .cabinet-menu-panel.is-open { opacity: 1; pointer-events: auto; visibility: visible; }
+
+      .cabinet-menu-card {
+        width: min(90vw, 420px);
+        background: rgba(15, 15, 20, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 32px;
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        padding: 32px;
+        transform: scale(0.9) translateY(20px);
+        transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .cabinet-menu-panel.is-open .cabinet-menu-card { transform: scale(1) translateY(0); }
+
+      .cabinet-menu-header { margin-bottom: 24px; text-align: center; }
+      .cabinet-menu-title { font: 900 11px ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.3em; color: #ec4899; }
+      .cabinet-menu-game { font-size: 16px; font-weight: 900; color: #fff; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+      .cabinet-menu-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      .cabinet-menu-tile {
+        appearance: none;
+        aspect-ratio: 1 / 0.8;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: all 150ms ease;
+      }
+      .cabinet-menu-tile:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+      .cabinet-menu-tile:active { transform: scale(0.95); background: rgba(236, 72, 153, 0.2); border-color: #ec4899; }
+      .cabinet-menu-tile.primary { background: rgba(236, 72, 153, 0.15); border-color: rgba(236, 72, 153, 0.4); }
+      .cabinet-menu-tile.primary:hover { background: rgba(236, 72, 153, 0.25); border-color: #ec4899; }
+      .cabinet-menu-tile.danger:hover { background: rgba(239, 68, 68, 0.15); border-color: #ef4444; }
+
+      .cabinet-menu-tile i { font-size: 20px; }
+      .cabinet-menu-tile span { font: 900 10px ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; }
+
+      .cabinet-menu-footer { margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; gap: 8px; }
+      .cabinet-menu-btn-wide {
+        appearance: none; width: 100%; height: 48px; border-radius: 14px;
+        background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.8); cursor: pointer;
+        font: 900 10px ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.1em;
+        transition: all 150ms ease;
+      }
+      .cabinet-menu-btn-wide:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+
       /* In-game Toast */
       .cabinet-toast {
         position: fixed;
@@ -408,7 +488,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .virtual-pad button.is-pressed,
       .virtual-pad button:active {
         background:
-          radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15), transparent 70%),
+          radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.4), rgba(236, 72, 153, 0.15)),
           rgba(10, 10, 15, 0.85);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 2px 10px rgba(0, 0, 0, 0.4);
         transform: scale(0.94) translateY(2px);
@@ -461,45 +541,40 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       <span id="cabinet-ping-text">-- ms</span>
     </div>
     
-    <nav class="cabinet-menu-panel" id="cabinet-menu-panel">
-      <!-- Game Section -->
-      <div class="cabinet-menu-section">
-        <div class="cabinet-menu-label">Game Controls</div>
+    <div class="cabinet-menu-panel" id="cabinet-menu-panel">
+      <div class="cabinet-menu-card">
+        <div class="cabinet-menu-header">
+           <div class="cabinet-menu-title">Paused</div>
+           <div class="cabinet-menu-game">${safeTitle}</div>
+        </div>
+
         <div class="cabinet-menu-grid">
-          <button type="button" id="cabinet-resume" class="primary full-width">Resume Game</button>
-          <button type="button" id="cabinet-save">Save State</button>
-          <button type="button" id="cabinet-load">Load State</button>
-          <button type="button" id="cabinet-pad-toggle">Toggle Pad</button>
+           <button type="button" class="cabinet-menu-tile primary" id="cabinet-resume">
+              <i>▶</i><span>Resume</span>
+           </button>
+           <button type="button" class="cabinet-menu-tile" id="cabinet-restart">
+              <i>↺</i><span>Restart</span>
+           </button>
+           <button type="button" class="cabinet-menu-tile" id="cabinet-save">
+              <i>💾</i><span>Save</span>
+           </button>
+           <button type="button" class="cabinet-menu-tile" id="cabinet-load">
+              <i>🎮</i><span>Load</span>
+           </button>
+           <button type="button" class="cabinet-menu-tile" id="cabinet-warp-open">
+              <i>✨</i><span>Warp</span>
+           </button>
+           <button type="button" class="cabinet-menu-tile" id="cabinet-pad-toggle">
+              <i>📱</i><span>Pad</span>
+           </button>
+        </div>
+
+        <div class="cabinet-menu-footer">
+           <button type="button" class="cabinet-menu-btn-wide" id="cabinet-filter-cycle">📺 Cycle Visuals</button>
+           <button type="button" class="cabinet-menu-btn-wide danger" id="cabinet-exit">✕ Exit Game</button>
         </div>
       </div>
-
-      <!-- Disc Swap Section -->
-      <div class="cabinet-menu-section" id="cabinet-disc-section" style="display:none;">
-        <div class="cabinet-menu-label">CD Console Controls</div>
-        <button type="button" class="full-width" id="cabinet-disc-toggle">💿 Swap Disc...</button>
-        <div id="cabinet-disc-list" class="cabinet-disc-list" style="display:none;"></div>
-      </div>
-
-      <!-- Visuals Section -->
-      <div class="cabinet-menu-section">
-        <div class="cabinet-menu-label">Visual Filters</div>
-        <div class="cabinet-menu-grid">
-          <button type="button" class="cabinet-filter-btn" data-filter="none" aria-pressed="true">Raw</button>
-          <button type="button" class="cabinet-filter-btn" data-filter="smooth">Smooth</button>
-          <button type="button" class="cabinet-filter-btn" data-filter="crt">CRT</button>
-          <button type="button" class="cabinet-filter-btn" data-filter="scanlines">Scanlines</button>
-        </div>
-      </div>
-
-      <!-- System Section -->
-      <div class="cabinet-menu-section">
-        <div class="cabinet-menu-label">System</div>
-        <div class="cabinet-menu-grid">
-          <button type="button" id="cabinet-warp-open" class="full-width">✨ Warp Link (QR)</button>
-          <button type="button" id="cabinet-exit" class="danger full-width">Exit Game</button>
-        </div>
-      </div>
-    </nav>
+    </div>
 
     <section class="cabinet-save-panel" id="cabinet-warp-panel" style="display:none; position:fixed; inset:0; z-index:1000000; background:rgba(0,0,0,0.9); backdrop-filter:blur(10px); align-items:center; justify-content:center;">
        <div style="width:min(90vw, 400px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center;">
@@ -717,6 +792,17 @@ function cabinetSetupMenu() {
   backdrop.onclick = function() { toggleMenu(false); };
   resumeBtn.onclick = function() { toggleMenu(false); };
   
+  var restartBtn = document.getElementById("cabinet-restart");
+  if (restartBtn) {
+    restartBtn.onclick = function() {
+      if (window.EJS_emulator && typeof window.EJS_emulator.restart === "function") {
+        window.EJS_emulator.restart();
+        cabinetToast("Game Restarted ↺");
+        toggleMenu(false);
+      }
+    };
+  }
+
   saveBtn.onclick = function() {
     if (!window.EJS_emulator) return;
     window.EJS_emulator.saveState();
@@ -741,18 +827,20 @@ function cabinetSetupMenu() {
     }, 400);
   };
 
-  // Visual Filters
-  document.querySelectorAll(".cabinet-filter-btn").forEach(function(fBtn) {
-    fBtn.onclick = function() {
-      var filter = fBtn.getAttribute("data-filter");
+  // Visual Filter Cycling
+  var filterCycleBtn = document.getElementById("cabinet-filter-cycle");
+  if (filterCycleBtn) {
+    var filters = ["none", "smooth", "crt", "scanlines"];
+    var currentFilterIdx = 0;
+    filterCycleBtn.onclick = function() {
+      currentFilterIdx = (currentFilterIdx + 1) % filters.length;
+      var filter = filters[currentFilterIdx];
       var gameEl = document.getElementById("game");
       gameEl.className = ""; 
       if (filter !== "none") gameEl.classList.add("filter-" + filter);
-      document.querySelectorAll(".cabinet-filter-btn").forEach(function(b) { b.setAttribute("aria-pressed", "false"); });
-      fBtn.setAttribute("aria-pressed", "true");
-      cabinetToast(filter.toUpperCase() + " Enabled");
+      cabinetToast("Filter: " + filter.toUpperCase());
     };
-  });
+  }
 
   // Warp Logic
   if (warpBtn) {

@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.94** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.95** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -86,6 +86,12 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.34.95
+- **Lemuroid-Style Menu Overhaul** — Completely redesigned the in-game menu to match the high-gloss aesthetic. Features a centered glass card with large icon tiles for quick access to common actions.
+- **Forced UI Hiding** — Implemented more aggressive overrides to ensure the default EmulatorJS overlay menu is completely hidden across all device types.
+- **Action Tiles** — Added dedicated, easy-to-tap tiles for "Save," "Load," "Restart," "Warp," and "Pad Toggle."
+- **Visual Filter Cycling** — Simplified visual filter management with a single "Cycle Visuals" button in the main menu.
 
 ### v2.34.94
 - **Fix: Netplay Synchronization** — Explicitly enabled the internal netplay engine flag in the bootstrap, ensuring that joined sessions correctly synchronize game state and inputs between players.
