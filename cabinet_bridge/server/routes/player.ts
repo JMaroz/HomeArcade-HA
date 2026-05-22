@@ -872,6 +872,7 @@ window.EJS_buttons = {
 };
 
 // ── Netplay Configuration ──
+window.EJS_netplay = ${netplayRoom ? "true" : "false"};
 var pathParts = window.location.pathname.split("/");
 var ingressBase = pathParts.slice(0, 4).join("/");
 window.EJS_netplayUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + ingressBase + "/api/netplay";

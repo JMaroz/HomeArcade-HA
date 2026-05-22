@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.93** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.94** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -86,6 +86,10 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.34.94
+- **Fix: Netplay Synchronization** — Explicitly enabled the internal netplay engine flag in the bootstrap, ensuring that joined sessions correctly synchronize game state and inputs between players.
+- **Improved Connection Handshake** — Refined the signaling sequence to more reliably trigger the emulator's P2P connection logic.
 
 ### v2.34.93
 - **Fix: PS1/PS2 Startup Hang** — Corrected a core naming mismatch that prevented BIOS files from being detected for PlayStation 1 and PlayStation 2 games, causing them to hang at the "finalizing" stage.
