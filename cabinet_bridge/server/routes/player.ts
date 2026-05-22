@@ -618,8 +618,9 @@ function cabinetSetupMenu() {
     aiImg.src = dataUrl;
 
     // 2. Call local AI API
+    console.log("[AI] Requesting analysis from Ollama...");
     try {
-      var res = await fetch("../../api/ai/analyze", {
+      var res = await fetch("../../ai/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -628,13 +629,18 @@ function cabinetSetupMenu() {
         })
       });
 
-      if (!res.ok) throw new Error("AI Assistant unavailable (" + res.status + ")");
+      if (!res.ok) {
+        var errBody = await res.json().catch(function(){return {};});
+        throw new Error(errBody.message || "AI Assistant unavailable (" + res.status + ")");
+      }
       
       var data = await res.json();
+      console.log("[AI] Analysis received:", data.response);
       aiLoading.style.display = "none";
       aiResponse.style.display = "block";
       aiResponse.textContent = data.response;
     } catch (err) {
+      console.error("[AI] Error:", err);
       aiLoading.style.display = "none";
       aiResponse.style.display = "block";
       aiResponse.textContent = "Error: " + err.message;
