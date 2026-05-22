@@ -15,8 +15,10 @@ export function registerAiRoutes(app: Express) {
       const basePrompt = prompt || "What is happening in this game screenshot? Give me a helpful hint on what to do next.";
       const baseSystem = systemPrompt || "You are a retro gaming expert assistant. You analyze screenshots and provide helpful, concise hints to players who are stuck. Be encouraging but cryptic to avoid major spoilers.";
 
+      const provider = settings.aiProvider || (settings.geminiApiKey ? "gemini" : "ollama");
+
       // ── Strategy 1: Google Gemini (Cloud) ─────────────────────────────────
-      if (settings.geminiApiKey) {
+      if (provider === "gemini" && settings.geminiApiKey) {
         log("Sending image to Google Gemini API", "ai");
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${settings.geminiApiKey}`;
         
@@ -43,9 +45,9 @@ export function registerAiRoutes(app: Express) {
         return res.json({ response: geminiResponse || "Gemini was unable to analyze the image." });
       }
 
-      // ── Strategy 2: Local Ollama (Fallback) ───────────────────────────────
+      // ── Strategy 2: Local Ollama (Fallback or Explicit) ───────────────────
       if (!settings.ollamaUrl) {
-        return res.status(400).json({ message: "Neither Gemini API Key nor Ollama URL are configured in Settings." });
+        return res.status(400).json({ message: "AI Provider is set to Ollama but no Ollama URL is configured." });
       }
 
       log(`Sending image to Ollama at ${settings.ollamaUrl} (model: ${settings.ollamaModel})`, "ai");
@@ -85,9 +87,11 @@ export function registerAiRoutes(app: Express) {
   app.get("/api/ai/test", async (_req, res) => {
     try {
       const settings = await storage.getIntegrationSettings();
+      const provider = settings.aiProvider || (settings.geminiApiKey ? "gemini" : "ollama");
       
-      // Test Gemini if key exists
-      if (settings.geminiApiKey) {
+      // Test Gemini if selected
+      if (provider === "gemini") {
+        if (!settings.geminiApiKey) throw new Error("Gemini selected but no API Key provided.");
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=${settings.geminiApiKey}`;
         const resp = await fetch(url);
         if (resp.ok) {

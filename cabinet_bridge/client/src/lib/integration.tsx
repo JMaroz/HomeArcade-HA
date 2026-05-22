@@ -79,6 +79,8 @@ export interface IntegrationConfig {
   ollamaUrl?: string;
   /** Ollama vision model */
   ollamaModel?: string;
+  /** AI Provider toggle */
+  aiProvider?: "ollama" | "gemini";
 }
 
 export type IntegrationSaveStatus = "idle" | "loading" | "saving" | "saved" | "error";
@@ -203,6 +205,7 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     ollamaUrl: typeof source.ollamaUrl === "string" ? source.ollamaUrl : "http://homeassistant.local:11434",
     ollamaModel: typeof source.ollamaModel === "string" ? source.ollamaModel : "llava",
     geminiApiKey: typeof source.geminiApiKey === "string" ? source.geminiApiKey : "",
+    aiProvider: (source.aiProvider === "ollama" || source.aiProvider === "gemini") ? source.aiProvider : "gemini",
   };
 }
 

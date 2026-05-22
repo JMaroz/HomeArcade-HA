@@ -343,6 +343,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
           <button type="button" id="cabinet-resume" class="primary full-width">Resume</button>
           <button type="button" id="cabinet-save">Save State</button>
           <button type="button" id="cabinet-load">Load State</button>
+          <button type="button" id="cabinet-hard-resume" class="full-width" style="display:none; color:#ec4899; border-color:rgba(236, 72, 153, 0.3);">⚠️ Force Resume</button>
         </div>
       </div>
 
@@ -366,7 +367,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
 
       <!-- AI Section -->
       <div class="cabinet-menu-section">
-        <div class="cabinet-menu-label">AI Assistant (Ollama)</div>
+        <div class="cabinet-menu-label">AI Assistant</div>
         <div class="cabinet-menu-grid">
           <button type="button" id="cabinet-ai-ask" class="full-width primary">🤖 Ask AI Guide...</button>
         </div>
@@ -395,7 +396,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
              </div>
           </div>
 
-          <div id="cabinet-ai-status" style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.3);">Ready for your question</div>
+          <div id="cabinet-ai-status" style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.3);">Ready for question</div>
           
           <div id="cabinet-ai-response" style="text-align:left; font-size:14px; color:rgba(255,255,255,0.9); line-height:1.6; max-height:180px; overflow-y:auto; padding:16px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.05); white-space: pre-wrap; display:none;"></div>
           
@@ -502,6 +503,7 @@ function cabinetSetupMenu() {
   var backdrop = document.getElementById("cabinet-menu-backdrop");
   var panel = document.getElementById("cabinet-menu-panel");
   var resumeBtn = document.getElementById("cabinet-resume");
+  var hardResumeBtn = document.getElementById("cabinet-hard-resume");
   var saveBtn = document.getElementById("cabinet-save");
   var loadBtn = document.getElementById("cabinet-load");
   var warpBtn = document.getElementById("cabinet-warp-open");
@@ -509,29 +511,43 @@ function cabinetSetupMenu() {
 
   if (!btn || !panel) return;
 
+  function shotgunUnpause() {
+    if (!window.EJS_emulator) return;
+    var emu = window.EJS_emulator;
+    console.log("[Menu] Shotgun unpause fired...");
+    try { if (typeof emu.unpause === "function") emu.unpause(); } catch(e){}
+    try { if (typeof emu.unPause === "function") emu.unPause(); } catch(e){}
+    try { if (typeof emu.resume === "function") emu.resume(); } catch(e){}
+    try { if (typeof emu.setPause === "function") emu.setPause(false); } catch(e){}
+    try { if (typeof emu.onPause === "function") emu.onPause(false); } catch(e){}
+    try { if (emu.gameManager && typeof emu.gameManager.resume === "function") emu.gameManager.resume(); } catch(e){}
+    
+    // Force browser interaction events
+    window.dispatchEvent(new Event('resize'));
+    var canvas = document.querySelector("#game canvas");
+    if (canvas) {
+       canvas.focus();
+       // Simulate a click on the canvas to satisfy browser autoplay/resume policies
+       canvas.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    }
+  }
+
   function toggleMenu(open) {
     panel.classList.toggle("is-open", open);
     backdrop.classList.toggle("is-open", open);
     btn.setAttribute("aria-expanded", open);
     
     if (window.EJS_emulator) {
-       // Multi-method robust unpause (Shotgun approach)
        if (open) {
-          console.log("[Menu] Pausing game...");
           if (typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
+          if (hardResumeBtn) hardResumeBtn.style.display = "none";
        } else {
-          console.log("[Menu] Resuming game (Shotgun unpause)...");
-          var emu = window.EJS_emulator;
-          try { if (typeof emu.unpause === "function") emu.unpause(); } catch(e){}
-          try { if (typeof emu.unPause === "function") emu.unPause(); } catch(e){}
-          try { if (typeof emu.resume === "function") emu.resume(); } catch(e){}
-          try { if (typeof emu.setPause === "function") emu.setPause(false); } catch(e){}
-          try { if (typeof emu.onPause === "function") emu.onPause(false); } catch(e){}
-          try { if (emu.gameManager && typeof emu.gameManager.resume === "function") emu.gameManager.resume(); } catch(e){}
-          
-          window.dispatchEvent(new Event('resize'));
-          var canvas = document.querySelector("#game canvas");
-          if (canvas) canvas.focus();
+          shotgunUnpause();
+          // Show hard resume recovery button after a delay if still in menu state internally?
+          // For now just show it if they click resume and it fails.
+          if (hardResumeBtn) {
+             setTimeout(function() { hardResumeBtn.style.display = "block"; }, 100);
+          }
        }
     }
   }
@@ -539,6 +555,13 @@ function cabinetSetupMenu() {
   btn.onclick = function() { toggleMenu(!panel.classList.contains("is-open")); };
   backdrop.onclick = function() { toggleMenu(false); };
   resumeBtn.onclick = function() { toggleMenu(false); };
+  
+  if (hardResumeBtn) {
+    hardResumeBtn.onclick = function() {
+       shotgunUnpause();
+       cabinetToast("Hard Resume Attempted 🚀");
+    };
+  }
 
   saveBtn.onclick = function() {
     if (!window.EJS_emulator) return;
@@ -639,7 +662,7 @@ function cabinetSetupMenu() {
     };
   }
 
-  // AI Assistant (Ollama)
+  // AI Assistant (Ollama/Gemini)
   var aiBtn = document.getElementById("cabinet-ai-ask");
   var aiOverlay = document.getElementById("cabinet-ai-overlay");
   var aiImg = document.getElementById("cabinet-ai-img");
@@ -679,7 +702,7 @@ function cabinetSetupMenu() {
         var question = aiInput.value.trim() || "What should I do next?";
         try {
           if (aiLoading) aiLoading.style.display = "flex";
-          if (aiStatus) aiStatus.textContent = "Talking to Ollama...";
+          if (aiStatus) aiStatus.textContent = "Processing image...";
           
           var ingressBase = window.location.pathname.split("/").slice(0, 4).join("/");
           var res = await fetch(ingressBase + "/api/ai/analyze", {
@@ -714,14 +737,7 @@ function cabinetSetupMenu() {
 
   var closeAi = function() {
     if (aiOverlay) aiOverlay.style.display = "none";
-    if (window.EJS_emulator) {
-       var emu = window.EJS_emulator;
-       try { if (typeof emu.unpause === "function") emu.unpause(); } catch(e){}
-       try { if (typeof emu.unPause === "function") emu.unPause(); } catch(e){}
-       try { if (typeof emu.resume === "function") emu.resume(); } catch(e){}
-       try { if (typeof emu.setPause === "function") emu.setPause(false); } catch(e){}
-       window.dispatchEvent(new Event('resize'));
-    }
+    shotgunUnpause();
   };
 
   if (aiClose) aiClose.onclick = closeAi;

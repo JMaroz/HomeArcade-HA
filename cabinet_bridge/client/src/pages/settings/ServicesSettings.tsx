@@ -63,26 +63,46 @@ function AiSettingsSection() {
   };
 
   return (
-    <Section title="AI Assistant (Intelligence)" description="Configure either local Ollama or Google Gemini to power the in-game Strategy Guide. Gemini is highly recommended for complex game analysis.">
+    <Section title="AI Assistant (Intelligence)" description="Choose between local Ollama or Google Gemini to power the in-game Strategy Guide. Gemini is highly recommended for complex game analysis.">
       <div className="space-y-6">
-        <div className="grid sm:grid-cols-1 gap-6">
-           <Field label="Gemini API Key" hint="Get a free key from Google AI Studio. If provided, HomeArcade will use Gemini 1.5 Flash for elite-tier intelligence.">
-            <div className="relative">
-              <Sparkles className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
-              <Input
-                type="password"
-                value={config.geminiApiKey}
-                onChange={(e) => setConfig({ geminiApiKey: e.target.value })}
-                placeholder="AIza..."
-                className="pl-9 font-mono text-sm border-primary/20 bg-primary/5 focus-visible:ring-primary/30"
-              />
-            </div>
-          </Field>
-        </div>
+        <Field label="Preferred AI Provider" hint="Gemini requires a cloud API key; Ollama runs entirely on your local hardware.">
+          <div className="flex gap-2 p-1 bg-muted/30 border border-border/50 rounded-lg w-fit">
+            <Button 
+              variant={config.aiProvider === "gemini" ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setConfig({ aiProvider: "gemini" })}
+              className="h-8 px-4 font-bold text-[10px] uppercase tracking-wider"
+            >
+              Google Gemini
+            </Button>
+            <Button 
+              variant={config.aiProvider === "ollama" ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setConfig({ aiProvider: "ollama" })}
+              className="h-8 px-4 font-bold text-[10px] uppercase tracking-wider"
+            >
+              Local Ollama
+            </Button>
+          </div>
+        </Field>
 
-        <div className="pt-4 border-t border-border/40">
-          <div className="font-display text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-4">Local Fallback (Ollama)</div>
-          <div className="grid sm:grid-cols-2 gap-6">
+        {config.aiProvider === "gemini" ? (
+          <div className="grid sm:grid-cols-1 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+             <Field label="Gemini API Key" hint="Get a free key from Google AI Studio. If provided, HomeArcade will use Gemini 1.5 Flash for elite-tier intelligence.">
+              <div className="relative">
+                <Sparkles className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
+                <Input
+                  type="password"
+                  value={config.geminiApiKey}
+                  onChange={(e) => setConfig({ geminiApiKey: e.target.value })}
+                  placeholder="AIza..."
+                  className="pl-9 font-mono text-sm border-primary/20 bg-primary/5 focus-visible:ring-primary/30"
+                />
+              </div>
+            </Field>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
             <Field label="Ollama URL" hint="The local address of your Ollama server.">
               <div className="relative">
                 <BrainCircuit className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -103,7 +123,7 @@ function AiSettingsSection() {
               />
             </Field>
           </div>
-        </div>
+        )}
 
         <div className="flex justify-end">
           <Button 
