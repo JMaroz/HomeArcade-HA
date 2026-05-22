@@ -353,6 +353,14 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
 
       <!-- System Section -->
       <div class="cabinet-menu-section">
+        <div class="cabinet-menu-label">AI Assistant (Ollama)</div>
+        <div class="cabinet-menu-grid">
+          <button type="button" id="cabinet-ai-ask" class="full-width primary">🤖 Ask for a Hint</button>
+        </div>
+      </div>
+
+      <!-- System Section -->
+      <div class="cabinet-menu-section">
         <div class="cabinet-menu-label">System</div>
         <div class="cabinet-menu-grid">
           <button type="button" id="cabinet-warp-open" class="full-width">✨ Warp Link (QR)</button>
@@ -360,6 +368,22 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         </div>
       </div>
     </nav>
+
+    <section class="cabinet-save-panel" id="cabinet-ai-panel" style="display:none; position:fixed; inset:0; z-index:1000000; background:rgba(0,0,0,0.9); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center;">
+       <div style="width:min(90vw, 500px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center;">
+          <div class="cabinet-menu-label" style="margin-bottom:20px;">AI Strategy Guide</div>
+          <div id="cabinet-ai-screenshot" style="width:100%; aspect-ratio:4/3; border-radius:12px; background:#000; margin-bottom:20px; overflow:hidden; border:1px solid rgba(255,255,255,0.1);">
+             <img id="cabinet-ai-img" src="" style="width:100%; height:100%; object-fit:contain;" />
+          </div>
+          <div id="cabinet-ai-loading" style="display:none; padding:20px;">
+             <div class="cabinet-menu-label animate-pulse">AI is analyzing screen...</div>
+          </div>
+          <div id="cabinet-ai-response" style="text-align:left; font-size:13px; color:rgba(255,255,255,0.8); line-height:1.6; margin-bottom:24px; max-height:200px; overflow-y:auto; padding:10px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+             <!-- AI text goes here -->
+          </div>
+          <button type="button" id="cabinet-ai-close" style="appearance:none; width:100%; padding:14px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; font:900 10px ui-monospace,monospace; text-transform:uppercase; cursor:pointer;">Back to Game</button>
+       </div>
+    </section>
 
     <section class="cabinet-save-panel" id="cabinet-warp-panel" style="display:none; position:fixed; inset:0; z-index:1000000; background:rgba(0,0,0,0.9); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center;">
        <div style="width:min(90vw, 400px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center;">
@@ -564,6 +588,62 @@ function cabinetSetupMenu() {
   document.getElementById("cabinet-warp-close").onclick = function() {
     document.getElementById("cabinet-warp-panel").style.display = "none";
     toggleMenu(true);
+  };
+
+  // AI Assistant (Ollama)
+  var aiBtn = document.getElementById("cabinet-ai-ask");
+  var aiPanel = document.getElementById("cabinet-ai-panel");
+  var aiImg = document.getElementById("cabinet-ai-img");
+  var aiLoading = document.getElementById("cabinet-ai-loading");
+  var aiResponse = document.getElementById("cabinet-ai-response");
+  var aiClose = document.getElementById("cabinet-ai-close");
+
+  aiBtn.onclick = async function() {
+    toggleMenu(false);
+    aiPanel.style.display = "flex";
+    aiLoading.style.display = "block";
+    aiResponse.style.display = "none";
+    aiResponse.textContent = "";
+
+    // 1. Capture screen from EmulatorJS canvas
+    var canvas = document.querySelector("#game canvas");
+    if (!canvas) {
+      aiLoading.style.display = "none";
+      aiResponse.style.display = "block";
+      aiResponse.textContent = "Error: Emulator screen not found.";
+      return;
+    }
+
+    var dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+    aiImg.src = dataUrl;
+
+    // 2. Call local AI API
+    try {
+      var res = await fetch("../../api/ai/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          image: dataUrl,
+          prompt: "I am playing " + ${JSON.stringify(title)} + ". Look at this screenshot and give me a helpful hint on what I should do next or where I am. Be concise and cryptic."
+        })
+      });
+
+      if (!res.ok) throw new Error("AI Assistant unavailable (" + res.status + ")");
+      
+      var data = await res.json();
+      aiLoading.style.display = "none";
+      aiResponse.style.display = "block";
+      aiResponse.textContent = data.response;
+    } catch (err) {
+      aiLoading.style.display = "none";
+      aiResponse.style.display = "block";
+      aiResponse.textContent = "Error: " + err.message;
+    }
+  };
+
+  aiClose.onclick = function() {
+    aiPanel.style.display = "none";
+    if (window.EJS_emulator) window.EJS_emulator.resume();
   };
 }
 

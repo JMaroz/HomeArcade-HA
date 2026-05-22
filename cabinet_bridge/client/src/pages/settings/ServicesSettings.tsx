@@ -10,7 +10,7 @@ import { apiUrl, queryClient } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Image, Loader2, RefreshCw, CheckCircle2, XCircle, Sparkles } from "lucide-react";
+import { Trophy, Image, Loader2, RefreshCw, CheckCircle2, XCircle, Sparkles, BrainCircuit } from "lucide-react";
 import { Section, Field } from "./SettingsShared";
 
 interface ScrapeResult {
@@ -290,6 +290,31 @@ export function ServicesSettings() {
             </div>
           )}
 
+        </div>
+      </Section>
+
+      {/* ── AI Assistant (Ollama) ───────────────────────────────────────── */}
+      <Section title="AI Assistant (Ollama)" description="Configure your local Ollama instance to power the in-game Strategy Guide. Requires a multimodal model like 'llava'.">
+        <div className="grid sm:grid-cols-2 gap-6">
+          <Field label="Ollama URL" hint="The local address of your Ollama server.">
+            <div className="relative">
+              <BrainCircuit className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={config.ollamaUrl}
+                onChange={(e) => setConfig({ ollamaUrl: e.target.value })}
+                placeholder="http://homeassistant.local:11434"
+                className="pl-9 font-mono text-sm"
+              />
+            </div>
+          </Field>
+          <Field label="Vision Model" hint="Must be a multimodal model (e.g. llava, moondream).">
+            <Input
+              value={config.ollamaModel}
+              onChange={(e) => setConfig({ ollamaModel: e.target.value })}
+              placeholder="llava"
+              className="font-mono text-sm"
+            />
+          </Field>
         </div>
       </Section>
     </div>

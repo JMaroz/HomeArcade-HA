@@ -16,6 +16,7 @@ import { registerKioskRoutes } from "./kiosk";
 import { registerBiosRoutes } from "./bios";
 import { registerGamepadRoutes } from "./gamepad";
 import { registerStatsRoutes } from "./stats";
+import { registerAiRoutes } from "./ai";
 
 export async function registerRoutes(_httpServer: Server, app: Express) {
   registerRomRoutes(app);
@@ -34,5 +35,6 @@ export async function registerRoutes(_httpServer: Server, app: Express) {
   registerBiosRoutes(app);
   registerGamepadRoutes(app);
   registerStatsRoutes(app);
+  registerAiRoutes(app);
 }
 
