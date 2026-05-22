@@ -21,7 +21,7 @@ function buildPlayerControls(
   customKeys: Record<number, string>,
   gamepadBindings: Record<number, number> = {},
 ): Record<number, { value: string; value2?: string }> {
-  const isPS = ["psx", "pcsx2", "ppsspp"].includes(core);
+  const isPS = ["psx", "play", "ppsspp"].includes(core);
   const maxBtn = isPS ? 15 : 11;
   const controls: Record<number, { value: string; value2?: string }> = {};
   for (let i = 0; i <= maxBtn; i++) {

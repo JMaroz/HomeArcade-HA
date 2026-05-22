@@ -31,7 +31,7 @@ export function buildPlayerControls(
   customKeys: Record<number, string>,
   gamepadBindings: Record<number, number> = {},
 ): Record<number, { value: string; value2?: string }> {
-  const isPS = ["psx", "pcsx2", "ppsspp"].includes(core);
+  const isPS = ["psx", "play", "ppsspp"].includes(core);
   const maxBtn = isPS ? 15 : 11;
   const controls: Record<number, { value: string; value2?: string }> = {};
   for (let i = 0; i <= maxBtn; i++) {
@@ -988,7 +988,7 @@ function cabinetRenderControls() {
   var body = document.querySelector("#cabinet-controls-body");
   var subtitle = document.querySelector("#cabinet-controls-subtitle");
   if (!body) return;
-  var isPsx = window.CABINET_CORE === "psx" || window.CABINET_CORE === "pcsx2";
+  var isPsx = window.CABINET_CORE === "psx" || window.CABINET_CORE === "play";
   var isGba = window.CABINET_CORE === "gba";
   var isGb  = window.CABINET_CORE === "gb" || window.CABINET_CORE === "gbc";
   var isN64 = window.CABINET_CORE === "n64";
@@ -1394,7 +1394,7 @@ function cabinetRenderRemapGrid() {
   if (!grid) return;
   var mapping = cabinetLoadRemap() || {};
   var defaultControls = (window.EJS_defaultControls && window.EJS_defaultControls[0]) || {};
-  var labels = window.CABINET_CORE === "psx" || window.CABINET_CORE === "pcsx2"
+  var labels = window.CABINET_CORE === "psx" || window.CABINET_CORE === "play"
     ? ["Cross", "Square", "Select", "Start", "Up", "Down", "Left", "Right", "Circle", "Triangle", "L1", "R1", "L2", "R2", "L3", "R3"]
     : CABINET_BUTTON_LABELS;
   grid.innerHTML = "";

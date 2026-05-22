@@ -7,7 +7,7 @@ export const REQUIRED_BIOS: Record<string, Array<{ filename: string; md5: string
     { filename: "scph5502.bin", md5: "32736f17079d0b2b7024407c39bd3050", label: "Europe" },
     { filename: "ps1_rom.bin",  md5: "00000000000000000000000000000000", label: "Custom" }, 
   ],
-  pcsx2: [
+  play: [
     { filename: "scph39001.bin", md5: "f396486008892150394e33458c9f086e", label: "USA v1.60" },
     { filename: "scph70008.bin", md5: "9a0a1a5b6c7d8e9f0a1b2c3d4e5f6a7b", label: "Generic v2.0" },
     { filename: "ps2_bios.bin",  md5: "00000000000000000000000000000000", label: "Custom" },     
