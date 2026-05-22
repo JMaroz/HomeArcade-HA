@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.88** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.89** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -87,11 +87,10 @@ Systems are listed in release-date order.
 
 ## Changelog
 
-### v2.34.88
-- **Auto-Resume ("Pick Up and Play")** — overhauled the emulator launch logic. The app now automatically triggers a `quickSave` on exit and a `quickLoad` on launch to provide a seamless experience.
-- **Lemuroid-style Touch Controls** — redesigned the virtual gamepad with larger, circular buttons, refined gradients, and haptic-like active states for a more professional feel.
-- **High-Performance Cores** — upgraded default cores to modern versions (mgba, snes9x, fceumm, genesis_plus_gx, mupen64plus_next) for better compatibility and performance.
-- **Dashboard "Resume" Button** — added a prominent "Resume" button to the game detail panel when a save state is available.
+### v2.34.89
+- **SNES-Themed Controller** — Added a specific on-screen skin for SNES games featuring the classic Red/Yellow/Blue/Green face button colors and a concave/convex physical feel.
+- **Unified Player Logic** — Consolidated emulator bootstrap and rendering logic into a single, optimized module.
+- **Improved Auto-Resume** — Refined the pick-up-and-play logic to be more robust across different cores and screen states.
 
 ### v2.32.0
 - **Unified Sidebar Navigation** — Wired in the full-featured `Sidebar.tsx` component for all secondary pages (Settings, History, Achievements). On desktop it renders as a collapsible icon sidebar; on mobile it automatically becomes a slide-out sheet panel.

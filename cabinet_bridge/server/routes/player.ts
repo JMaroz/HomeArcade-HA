@@ -10,10 +10,24 @@ const EJS_DEFAULT_KEYS: Record<number, string> = {
 };
 
 const EJS_VALUE2: Record<number, string> = {
-  0: "0", 1: "2", 2: "8", 3: "9",
-  4: "12", 5: "13", 6: "14", 7: "15",
-  8: "1", 9: "3", 10: "4", 11: "5",
-  12: "6", 13: "7", 14: "10", 15: "11",
+  // Standard W3C Gamepad API button indices — matches DEFAULT_GAMEPAD_MAP in Settings.tsx.
+  // EmulatorJS expects numeric-string indices here, not named constants.
+  0: "0",   // Retropad B   → A / Cross      (button 0)
+  1: "2",   // Retropad Y   → X / Square     (button 2)
+  2: "8",   // Retropad Sel → Select / Share (button 8)
+  3: "9",   // Retropad Sta → Start / Menu   (button 9)
+  4: "12",  // Retropad D↑  → D-pad Up       (button 12)
+  5: "13",  // Retropad D↓  → D-pad Down     (button 13)
+  6: "14",  // Retropad D←  → D-pad Left     (button 14)
+  7: "15",  // Retropad D→  → D-pad Right    (button 15)
+  8: "1",   // Retropad A   → B / Circle     (button 1)
+  9: "3",   // Retropad X   → Y / Triangle   (button 3)
+  10: "4",  // Retropad L   → LB / L1        (button 4)
+  11: "5",  // Retropad R   → RB / R1        (button 5)
+  12: "6",  // Retropad L2  → LT / L2        (button 6)
+  13: "7",  // Retropad R2  → RT / R2        (button 7)
+  14: "10", // Retropad L3  → Left stick     (button 10)
+  15: "11", // Retropad R3  → Right stick    (button 11)
 };
 
 function buildPlayerControls(
@@ -100,10 +114,11 @@ cabinetFailLaunchProgress(${JSON.stringify(message)});
 `;
 }
 
-export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { title: string; returnTo: string; romHash: string | null; queryString?: string }) {
+export function renderEmulatorPage({ title, returnTo, romHash, queryString, system }: { title: string; returnTo: string; romHash: string | null; queryString?: string; system?: string }) {
   const safeTitle = escapeHtml(title);
   const safeReturnTo = JSON.stringify(returnTo);
   const safeQueryString = queryString || "";
+  const safeSystem = system || "generic";
 
   return `<!doctype html>
 <html>
@@ -315,9 +330,95 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
       }
       .cabinet-progress-track { width: 100%; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); overflow: hidden; margin: 20px 0; }
       .cabinet-progress-bar { width: 0%; height: 100%; background: #ec4899; transition: width 200ms ease; }
+
+      /* Virtual Gamepad Layout & Styling */
+      .virtual-pad {
+        position: fixed;
+        z-index: 999997;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 250ms ease;
+      }
+      .virtual-pad.is-visible { opacity: 1; }
+      .virtual-pad button {
+        appearance: none;
+        pointer-events: auto;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 62px;
+        min-height: 62px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        background:
+          radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15), transparent 60%),
+          rgba(15, 15, 22, 0.65);
+        color: #f8fafc;
+        box-shadow:
+          0 8px 24px rgba(0, 0, 0, 0.45),
+          inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        font: 900 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), background 120ms ease, border-color 120ms ease;
+      }
+      .virtual-pad button.is-pressed,
+      .virtual-pad button:active {
+        background:
+          radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.4), rgba(236, 72, 153, 0.15)),
+          rgba(10, 10, 15, 0.8);
+        border-color: rgba(236, 72, 153, 0.9);
+        transform: scale(0.92) translateY(1px);
+        transition: transform 60ms cubic-bezier(0, 0, 0.2, 1);
+      }
+      
+      .vpad-dpad { position: absolute; left: max(20px, env(safe-area-inset-left)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 64px); gap: 4px; }
+      .vpad-dpad .up { grid-column: 2; grid-row: 1; border-radius: 18px 18px 6px 6px; }
+      .vpad-dpad .left { grid-column: 1; grid-row: 2; border-radius: 18px 6px 6px 18px; }
+      .vpad-dpad .right { grid-column: 3; grid-row: 2; border-radius: 6px 18px 18px 6px; }
+      .vpad-dpad .down { grid-column: 2; grid-row: 3; border-radius: 6px 6px 18px 18px; }
+
+      .vpad-face { position: absolute; right: max(20px, env(safe-area-inset-right)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 64px); gap: 8px; }
+      .vpad-face .y { grid-column: 1; grid-row: 2; }
+      .vpad-face .x { grid-column: 2; grid-row: 1; }
+      .vpad-face .b { grid-column: 2; grid-row: 3; }
+      .vpad-face .a { grid-column: 3; grid-row: 2; }
+
+      .vpad-shoulders { position: absolute; top: 12px; left: max(20px, env(safe-area-inset-left)); right: max(20px, env(safe-area-inset-right)); display: flex; justify-content: space-between; }
+      .vpad-shoulders button { min-width: min(28vw, 140px); min-height: 48px; border-radius: 20px; font-size: 11px; }
+
+      .vpad-system { position: absolute; left: 50%; bottom: max(32px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 16px; }
+      .vpad-system button { min-width: 92px; min-height: 42px; border-radius: 14px; font-size: 10px; }
+
+      /* ── SNES THEME ── */
+      body[data-system="snes"] .vpad-face .a { background: rgba(239, 68, 68, 0.6) !important; border-color: #ef4444 !important; } /* Red */
+      body[data-system="snes"] .vpad-face .b { background: rgba(234, 179, 8, 0.6) !important; border-color: #eab308 !important; } /* Yellow */
+      body[data-system="snes"] .vpad-face .x { background: rgba(59, 130, 246, 0.6) !important; border-color: #3b82f6 !important; } /* Blue */
+      body[data-system="snes"] .vpad-face .y { background: rgba(34, 197, 94, 0.6) !important; border-color: #22c55e !important; } /* Green */
+      
+      body[data-system="snes"] .vpad-face .x, 
+      body[data-system="snes"] .vpad-face .y {
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5); /* US SNES Concave feel */
+      }
+
+      body[data-system="snes"] .vpad-dpad button {
+        background: rgba(31, 41, 55, 0.8) !important;
+        border-color: #374151 !important;
+      }
+      
+      @media (max-width: 768px) {
+        .vpad-dpad { grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(3, 54px); }
+        .vpad-face { grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 58px); }
+        .vpad-dpad button, .vpad-face button { min-width: 54px; min-height: 54px; }
+      }
     </style>
   </head>
-  <body>
+  <body data-system="${safeSystem}">
     <button type="button" class="cabinet-menu-button" id="cabinet-menu-toggle">Menu</button>
     <div class="cabinet-menu-backdrop" id="cabinet-menu-backdrop"></div>
     
@@ -329,6 +430,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
           <button type="button" id="cabinet-resume" class="primary full-width">Resume Game</button>
           <button type="button" id="cabinet-save">Save State</button>
           <button type="button" id="cabinet-load">Load State</button>
+          <button type="button" id="cabinet-pad-toggle">Toggle Pad</button>
         </div>
       </div>
 
@@ -378,6 +480,29 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
       </div>
     </div>
 
+    <div class="virtual-pad" id="cabinet-vpad">
+      <div class="vpad-shoulders">
+        <button type="button" data-key="q" data-ejs-input="10">L</button>
+        <button type="button" data-key="w" data-ejs-input="11">R</button>
+      </div>
+      <div class="vpad-system">
+        <button type="button" data-key="Shift" data-ejs-input="2">SELECT</button>
+        <button type="button" data-key="Enter" data-ejs-input="3">START</button>
+      </div>
+      <div class="vpad-dpad">
+        <button type="button" class="up" data-key="ArrowUp" data-ejs-input="4">↑</button>
+        <button type="button" class="left" data-key="ArrowLeft" data-ejs-input="6">←</button>
+        <button type="button" class="right" data-key="ArrowRight" data-ejs-input="7">→</button>
+        <button type="button" class="down" data-key="ArrowDown" data-ejs-input="5">↓</button>
+      </div>
+      <div class="vpad-face">
+        <button type="button" class="x" data-key="s" data-ejs-input="9">X</button>
+        <button type="button" class="y" data-key="a" data-ejs-input="1">Y</button>
+        <button type="button" class="b" data-key="z" data-ejs-input="0">B</button>
+        <button type="button" class="a" data-key="x" data-ejs-input="8">A</button>
+      </div>
+    </div>
+
     <div class="cabinet-toast" id="cabinet-toast"></div>
     <div id="game"></div>
 
@@ -395,6 +520,7 @@ export function renderEmulatorBootstrap({
   gameId,
   romId,
   discs,
+  romHash,
   raUsername,
   raToken,
   controlDefaults,
@@ -410,42 +536,118 @@ export function renderEmulatorBootstrap({
   profileId,
   cheats,
   biosUrl,
-  netplayUrl,
   netplayRole,
   netplayRoom,
   netplaySyncMode,
 }: any) {
   return `"use strict";
-function cabinetToast(msg) {
-  var t = document.querySelector("#cabinet-toast");
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(function() { t.classList.remove("show"); }, 2500);
+function cabinetToast(message) {
+  var toast = document.querySelector("#cabinet-toast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  window.clearTimeout(window.__cabinetToastTimer);
+  window.__cabinetToastTimer = window.setTimeout(function () {
+    toast.classList.remove("show");
+  }, 1800);
 }
 
 var cabinetLaunchProgress = 0;
+var cabinetLaunchTimer = null;
 function cabinetSetLaunchProgress(percent, status) {
-  cabinetLaunchProgress = Math.max(cabinetLaunchProgress, percent);
+  cabinetLaunchProgress = Math.max(cabinetLaunchProgress, Math.min(100, percent));
   var bar = document.querySelector("#cabinet-progress-bar");
   var statusText = document.querySelector("#cabinet-launch-status");
   if (bar) bar.style.width = cabinetLaunchProgress + "%";
-  if (statusText) statusText.textContent = status || "Loading...";
+  if (statusText && status) statusText.textContent = status;
 }
 
-function cabinetFailLaunchProgress(msg) {
-  var bar = document.querySelector("#cabinet-progress-bar");
-  var statusText = document.querySelector("#cabinet-launch-status");
-  if (bar) {
-    bar.style.width = "100%";
-    bar.style.backgroundColor = "#ef4444";
+function cabinetStartLaunchProgress() {
+  cabinetSetLaunchProgress(10, "Booting core...");
+  var steps = [
+    { at: 30, status: "Fetching ROM data..." },
+    { at: 50, status: "Loading EmulatorJS core..." },
+    { at: 70, status: "Preparing controls..." },
+    { at: 90, status: "Finalizing..." }
+  ];
+  var index = 0;
+  cabinetLaunchTimer = setInterval(function () {
+    if (index < steps.length) {
+      var step = steps[index++];
+      cabinetSetLaunchProgress(step.at, step.status);
+    } else {
+      clearInterval(cabinetLaunchTimer);
+    }
+  }, 600);
+}
+
+function cabinetFinishLaunchProgress(status) {
+  cabinetSetLaunchProgress(100, status || "Ready");
+  clearInterval(cabinetLaunchTimer);
+  setTimeout(function () {
+    var overlay = document.querySelector("#cabinet-launch-overlay");
+    if (overlay) overlay.classList.add("is-hidden");
+  }, 500);
+}
+
+cabinetStartLaunchProgress();
+
+var cabinetPressedKeyCounts = {};
+var cabinetPressedInputCounts = {};
+
+function cabinetSimulateInput(inputValue, pressed) {
+  var emulator = window.EJS_emulator;
+  var value = pressed ? 1 : 0;
+  if (emulator && emulator.gameManager && typeof emulator.gameManager.simulateInput === "function") {
+    emulator.gameManager.simulateInput(0, inputValue, value);
+    return true;
   }
-  if (statusText) {
-    statusText.textContent = msg || "Launch failed";
-    statusText.style.color = "#ef4444";
-    statusText.style.opacity = "1";
-    statusText.style.fontWeight = "900";
+  return false;
+}
+
+function cabinetPressControl(control, pressed) {
+  var inputAttr = control.getAttribute("data-ejs-input");
+  var inputValue = inputAttr === null ? null : Number(inputAttr);
+  if (inputValue !== null) {
+     if (pressed) cabinetSimulateInput(inputValue, true);
+     else cabinetSimulateInput(inputValue, false);
   }
+}
+
+// ── Virtual Pad Setup ──────────────────────────────────────────────────────
+
+function cabinetSetupVirtualPad() {
+  var pad = document.querySelector("#cabinet-vpad");
+  var toggle = document.querySelector("#cabinet-pad-toggle");
+  if (!pad || !toggle) return;
+
+  var touchCapable = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  var visible = touchCapable;
+
+  function setPadVisible(v) {
+    visible = v;
+    pad.classList.toggle("is-visible", v);
+    toggle.setAttribute("aria-pressed", v ? "true" : "false");
+    toggle.textContent = v ? "Hide Pad" : "Show Pad";
+  }
+
+  toggle.onclick = function() { setPadVisible(!visible); };
+
+  pad.querySelectorAll("button").forEach(function(btn) {
+    btn.onpointerdown = function(e) {
+      e.preventDefault();
+      btn.classList.add("is-pressed");
+      cabinetPressControl(btn, true);
+      if (btn.setPointerCapture) btn.setPointerCapture(e.pointerId);
+    };
+    btn.onpointerup = btn.onpointercancel = function(e) {
+      e.preventDefault();
+      btn.classList.remove("is-pressed");
+      cabinetPressControl(btn, false);
+    };
+  });
+
+  setPadVisible(visible);
 }
 
 // ── Unified Menu Logic ──────────────────────────────────────────────────────
@@ -462,42 +664,13 @@ function cabinetSetupMenu() {
 
   if (!btn || !panel) return;
 
-  function forceUnpause() {
-    if (!window.EJS_emulator) return;
-    var emu = window.EJS_emulator;
-    console.log("[Menu] Force unpause sequence triggered...");
-    
-    // Attempt every known resume method sequentially
-    try { if (typeof emu.unpause === "function") emu.unpause(); } catch(e){}
-    try { if (typeof emu.unPause === "function") emu.unPause(); } catch(e){}
-    try { if (typeof emu.resume === "function") emu.resume(); } catch(e){}
-    try { if (typeof emu.setPause === "function") emu.setPause(false); } catch(e){}
-    try { if (typeof emu.onPause === "function") emu.onPause(false); } catch(e){}
-    try { if (emu.gameManager && typeof emu.gameManager.resume === "function") emu.gameManager.resume(); } catch(e){}
-    
-    // Hard browser-level wake up
-    window.dispatchEvent(new Event('resize'));
-    var canvas = document.querySelector("#game canvas");
-    if (canvas) {
-       canvas.focus();
-       // Satisfy browser interaction requirements
-       canvas.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-       canvas.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-       canvas.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    }
-  }
-
   function toggleMenu(open) {
     panel.classList.toggle("is-open", open);
     backdrop.classList.toggle("is-open", open);
     btn.setAttribute("aria-expanded", open);
-    
     if (window.EJS_emulator) {
-       if (open) {
-          if (typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
-       } else {
-          forceUnpause();
-       }
+       if (open) window.EJS_emulator.pause();
+       else window.EJS_emulator.unpause();
     }
   }
 
@@ -520,8 +693,13 @@ function cabinetSetupMenu() {
   };
 
   exitBtn.onclick = function() {
-    if (window.CABINET_RETURN_TO) window.location.href = window.CABINET_RETURN_TO;
-    else window.location.href = "/";
+    if (window.EJS_emulator && typeof window.EJS_emulator.saveState === "function") {
+      try { window.EJS_emulator.saveState(0); } catch(e){}
+    }
+    setTimeout(function() {
+      if (window.CABINET_RETURN_TO) window.location.href = window.CABINET_RETURN_TO;
+      else window.location.href = "/";
+    }, 400);
   };
 
   // Visual Filters
@@ -529,46 +707,13 @@ function cabinetSetupMenu() {
     fBtn.onclick = function() {
       var filter = fBtn.getAttribute("data-filter");
       var gameEl = document.getElementById("game");
-      gameEl.className = ""; // Clear all
+      gameEl.className = ""; 
       if (filter !== "none") gameEl.classList.add("filter-" + filter);
-      
       document.querySelectorAll(".cabinet-filter-btn").forEach(function(b) { b.setAttribute("aria-pressed", "false"); });
       fBtn.setAttribute("aria-pressed", "true");
       cabinetToast(filter.toUpperCase() + " Enabled");
     };
   });
-
-  // Disc Swapping (Multi-disc)
-  var discData = ${JSON.stringify(discs || [])};
-  if (discData && discData.length > 1) {
-    var discSection = document.getElementById("cabinet-disc-section");
-    var discToggle = document.getElementById("cabinet-disc-toggle");
-    var discList = document.getElementById("cabinet-disc-list");
-    if (discSection) discSection.style.display = "block";
-    
-    if (discToggle) {
-      discToggle.onclick = function() {
-        var hidden = discList.style.display === "none";
-        discList.style.display = hidden ? "flex" : "none";
-      };
-    }
-
-    if (discList) {
-      discData.forEach(function(disc, idx) {
-        var dBtn = document.createElement("button");
-        dBtn.className = "cabinet-disc-item";
-        dBtn.textContent = "Disc " + (idx + 1) + (disc.label ? ": " + disc.label : "");
-        dBtn.onclick = function() {
-          if (window.EJS_emulator && window.EJS_emulator.gameManager) {
-            window.EJS_emulator.gameManager.changeDisc(idx);
-            cabinetToast("Swapped to Disc " + (idx + 1));
-            toggleMenu(false);
-          }
-        };
-        discList.appendChild(dBtn);
-      });
-    }
-  }
 
   // Warp Logic
   if (warpBtn) {
@@ -605,13 +750,37 @@ function cabinetSetupMenu() {
   }
 }
 
-window.EJS_onGameStart = function() {
-  cabinetSetLaunchProgress(100, "Ready");
-  setTimeout(function() { 
-    var overlay = document.getElementById("cabinet-launch-overlay");
-    if (overlay) overlay.classList.add("is-hidden"); 
-  }, 500);
+// ── Auto-Resume Logic ───────────────────────────────────────────────────────
+
+var cabinetSaveSlots = [];
+var cabinetSaveSlotsFetched = false;
+
+async function cabinetFetchSaveSlots() {
+  try {
+    var response = await fetch("./save-states");
+    if (response.ok) cabinetSaveSlots = await response.json();
+  } catch (e) {} finally {
+    cabinetSaveSlotsFetched = true;
+  }
+}
+
+window.EJS_onGameStart = async function () {
+  cabinetFinishLaunchProgress("Game ready");
+  cabinetSetupVirtualPad();
   
+  // Auto-save on exit/hide
+  window.addEventListener("beforeunload", function () {
+    if (window.EJS_emulator && typeof window.EJS_emulator.saveState === "function") {
+      try { window.EJS_emulator.saveState(0); } catch (e) {}
+    }
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden && window.EJS_emulator && typeof window.EJS_emulator.saveState === "function") {
+      try { window.EJS_emulator.saveState(0); } catch (e) {}
+    }
+  });
+
+  // Resume warp if needed
   var params = new URLSearchParams(window.location.search);
   var loadSlot = params.get("loadSlot");
   if (loadSlot) {
@@ -619,11 +788,23 @@ window.EJS_onGameStart = function() {
       if (window.EJS_emulator) window.EJS_emulator.loadState(Number(loadSlot));
       cabinetToast("Warp Complete ✨");
     }, 2500);
+    return;
+  }
+
+  // ── Auto-Resume ──
+  await cabinetFetchSaveSlots();
+  var autoSaveSlot = cabinetSaveSlots.find(function(s) { return s.slot === 0; });
+  if (autoSaveSlot) {
+    setTimeout(function () {
+      cabinetToast("Resuming auto-save…");
+      if (window.EJS_emulator && typeof window.EJS_emulator.loadState === "function") {
+        try { window.EJS_emulator.loadState(0); } catch (_e) {}
+      }
+    }, 1800);
   }
 };
 
 cabinetSetupMenu();
-cabinetSetLaunchProgress(20, "Booting...");
 
 window.EJS_player = "#game";
 window.EJS_core = ${JSON.stringify(core)};
@@ -634,27 +815,10 @@ window.EJS_pathtodata = "../../emulatorjs/";
 ${biosUrl ? `window.EJS_biosUrl = ${JSON.stringify(biosUrl)};` : ""}
 window.EJS_startOnLoaded = true;
 
-// ── Performance & Quality ──
-window.EJS_webgl = true;
-window.EJS_fps = true;
-window.EJS_threads = false;
-window.EJS_cacheExtensions = true;
-
 // ── Hide built-in UI ──
 window.EJS_buttons = {
-  play_pause: false,
-  restart: false,
-  mute: false,
-  settings: false,
-  fullscreen: true,
-  save_state: false,
-  load_state: false,
-  screen_record: false,
-  screenshot: false,
-  quick_save: false,
-  quick_load: false,
-  cheat: false,
-  chancge_disc: false
+  play_pause: false, restart: false, mute: false, settings: false, fullscreen: true,
+  save_state: false, load_state: false, quick_save: false, quick_load: false
 };
 
 // ── Netplay Configuration ──
@@ -665,6 +829,8 @@ ${netplayRole ? `window.EJS_netplayRole = ${JSON.stringify(netplayRole)};` : ""}
 ${netplayRoom ? `window.EJS_netplayRoom = ${JSON.stringify(netplayRoom)};` : ""}
 window.EJS_netplayRollback = ${netplaySyncMode === "rollback" ? "true" : "false"};
 window.EJS_netplayManualSync = ${netplaySyncMode === "lockstep" ? "true" : "false"};
+
+window.EJS_defaultControls = ${JSON.stringify(buildEjsControls(core, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2))};
 
 var loader = document.createElement("script");
 loader.src = "../../emulatorjs/loader.js";

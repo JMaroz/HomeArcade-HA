@@ -533,7 +533,13 @@ export function registerRomRoutes(app: Express) {
     res.removeHeader("X-Frame-Options");
     const returnTo = typeof req.query.return === "string" ? req.query.return : "";
     const qString = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
-    res.send(renderEmulatorPage({ title: rom.title, returnTo, romHash: rom.romHash ?? null, queryString: qString }));
+    res.send(renderEmulatorPage({ 
+      title: rom.title, 
+      returnTo, 
+      romHash: rom.romHash ?? null, 
+      queryString: qString,
+      system: rom.system 
+    }));
   });
 
   app.get("/api/roms/:id/bootstrap.js", async (req, res) => {
