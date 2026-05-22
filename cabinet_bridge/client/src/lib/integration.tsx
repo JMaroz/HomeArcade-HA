@@ -75,6 +75,10 @@ export interface IntegrationConfig {
   globalAspectRatio?: string;
   /** Default emulator shader */
   globalShader?: string;
+  /** Ollama AI Assistant */
+  ollamaUrl?: string;
+  /** Ollama vision model */
+  ollamaModel?: string;
 }
 
 export type IntegrationSaveStatus = "idle" | "loading" | "saving" | "saved" | "error";
@@ -196,6 +200,8 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     showSystemLabels: typeof source.showSystemLabels === "boolean" ? source.showSystemLabels : true,
     globalAspectRatio: typeof source.globalAspectRatio === "string" ? source.globalAspectRatio : "auto",
     globalShader: typeof source.globalShader === "string" ? source.globalShader : "none",
+    ollamaUrl: typeof source.ollamaUrl === "string" ? source.ollamaUrl : "http://homeassistant.local:11434",
+    ollamaModel: typeof source.ollamaModel === "string" ? source.ollamaModel : "llava",
   };
 }
 
