@@ -258,7 +258,28 @@ export function registerRomRoutes(app: Express) {
 
   app.get("/api/roms", async (_req, res) => {
     const roms = await storage.listUploadedRoms();
-    res.json(roms);
+    // Trim null/empty fields to shrink payload size for large libraries
+    const trimmed = roms.map(rom => {
+      const lean: any = {
+        id: rom.id,
+        title: rom.title,
+        system: rom.system,
+        slug: rom.slug,
+        fileName: rom.fileName
+      };
+      if (rom.artUrl) lean.artUrl = rom.artUrl;
+      if (rom.favorite) lean.favorite = true;
+      if (rom.rating) lean.rating = rom.rating;
+      if (rom.lastPlayed) lean.lastPlayed = rom.lastPlayed;
+      if (rom.playCount) lean.playCount = rom.playCount;
+      if (rom.minutesPlayed) lean.minutesPlayed = rom.minutesPlayed;
+      if (rom.playStatus && rom.playStatus !== 'unset') lean.playStatus = rom.playStatus;
+      if (rom.romHash) lean.romHash = rom.romHash;
+      if (rom.discGroup) lean.discGroup = rom.discGroup;
+      if (rom.discNumber) lean.discNumber = rom.discNumber;
+      return lean;
+    });
+    res.json(trimmed);
   });
 
   app.get("/api/roms/:id", async (req, res) => {
