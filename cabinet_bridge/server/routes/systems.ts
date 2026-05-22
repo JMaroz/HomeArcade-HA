@@ -72,7 +72,10 @@ export function registerSystemRoutes(app: Express) {
 
   app.get("/api/system-images/:id", async (req, res) => {
     const id = req.params.id;
-    if (!isSystemImageId(id)) return res.status(404).json({ message: "Invalid system ID" });
+    if (!isSystemImageId(id)) {
+      console.error(`[Systems] 404: Invalid system ID "${id}"`);
+      return res.status(404).json({ message: "Invalid system ID" });
+    }
 
     const config = SYSTEM_IMAGES[id];
     const isPng = config.url.toLowerCase().endsWith(".png");
