@@ -4,7 +4,8 @@ import { log } from "../log";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { ensureDriveFolder } from "../google-drive";
+import { ensureDriveFolder, uploadToDrive, downloadFromDrive } from "../google-drive";
+import { SAVE_BACKUP_DIR } from "./shared";
 
 export function registerVaultRoutes(app: Express) {
   /**
@@ -112,7 +113,6 @@ export function registerVaultRoutes(app: Express) {
     try {
       const roms = await storage.listUploadedRoms();
       const settings = await storage.getIntegrationSettings();
-      const SAVE_BACKUP_DIR = path.resolve("data/save-backups"); // Simplified for now
       
       let uploadCount = 0;
       let downloadCount = 0;
