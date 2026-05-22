@@ -56,6 +56,8 @@ export function attachNetplayServer(httpServer: HttpServer) {
   wss.on("connection", (ws: WebSocket, req) => {
     // Disable Nagle's algorithm for lower latency
     (ws as any)._socket?.setNoDelay?.(true);
+    const ip = req.socket.remoteAddress;
+    console.log(`[Netplay] New connection from ${ip}`);
     
     let roomCode: string | null = null;
     let role: "host" | "client" | null = null;
@@ -67,33 +69,31 @@ export function attachNetplayServer(httpServer: HttpServer) {
         if (room) {
           const peer = role === "host" ? room.client : room.host;
           if (peer && peer.readyState === WebSocket.OPEN) {
-            // Relaying raw data (binary or string) without any processing
             peer.send(raw, { binary: isBinary });
             return;
           }
         }
       }
 
-      // Control path: only parse JSON if we are not yet in a stable relay state or need to handle commands
+      // Control path
       let msg: Record<string, unknown> | null = null;
       try { 
         msg = JSON.parse(raw.toString()); 
       } catch { 
-        return; // Not a control message, and no peer to relay to
+        return; 
       }
 
       if (msg) {
         const type = msg.type as string | undefined;
 
-        // PING/PONG for latency measurement
         if (type === "ping") {
           send(ws, { type: "pong", ts: msg.ts });
           return;
         }
 
-        // HOSTING or RE-JOINING as host
         if (type === "create-room" || type === "host") {
           const code = (msg.room as string | undefined)?.toUpperCase();
+          console.log(`[Netplay] Host request from ${ip} for room: ${code || "NEW"}`);
           
           if (code && rooms.has(code)) {
             const room = rooms.get(code)!;
@@ -105,13 +105,11 @@ export function attachNetplayServer(httpServer: HttpServer) {
             role = "host";
             room.host = ws;
             room.lastActive = Date.now();
-            if (room.deleteTimer) { clearTimeout(room.deleteTimer); delete room.deleteTimer; }
             send(ws, { type: "room-created", room: roomCode }); 
             return;
           }
 
-          if (roomCode) return;
-          roomCode = generateRoomCode();
+          roomCode = code || generateRoomCode();
           role = "host";
           rooms.set(roomCode, { 
             host: ws, 
@@ -120,38 +118,34 @@ export function attachNetplayServer(httpServer: HttpServer) {
             createdAt: Date.now(),
             lastActive: Date.now()
           });
+          console.log(`[Netplay] Room created: ${roomCode} by ${ip}`);
           send(ws, { type: "room-created", room: roomCode });
           return;
         }
 
-        // JOINING or RE-JOINING as client
         if (type === "join-room" || type === "client") {
           const code = ((msg.room ?? msg.roomId) as string | undefined)?.toUpperCase();
+          console.log(`[Netplay] Join request from ${ip} for room: ${code}`);
           if (!code) { send(ws, { type: "error", message: "Missing room code." }); return; }
           
           const room = rooms.get(code);
-          if (!room) { send(ws, { type: "error", message: "Room not found." }); return; }
+          if (!room) { 
+            console.log(`[Netplay] Join failed: Room ${code} not found`);
+            send(ws, { type: "error", message: "Room not found." }); 
+            return; 
+          }
           
           if (room.client && room.client !== ws) { 
             send(ws, { type: "error", message: "Room is full." }); 
             return; 
           }
 
-          // Validate ROM hash if both exist
-          if (room.romHash && msg.romHash && room.romHash !== msg.romHash) {
-            send(ws, { 
-              type: "error", 
-              message: "ROM Mismatch: Desync will occur." 
-            });
-            return;
-          }
-
           roomCode = code;
           role = "client";
           room.client = ws;
           room.lastActive = Date.now();
-          if (room.deleteTimer) { clearTimeout(room.deleteTimer); delete room.deleteTimer; }
           
+          console.log(`[Netplay] Peer ${ip} joined room ${roomCode}`);
           send(ws, { type: "room-joined", room: roomCode });
           if (room.host) send(room.host, { type: "peer-joined" });
           return;
@@ -160,6 +154,7 @@ export function attachNetplayServer(httpServer: HttpServer) {
     });
 
     ws.on("close", () => {
+      console.log(`[Netplay] Connection closed from ${ip}`);
       if (!roomCode) return;
       const room = rooms.get(roomCode);
       if (!room) return;
@@ -168,19 +163,9 @@ export function attachNetplayServer(httpServer: HttpServer) {
       else if (role === "client") room.client = null;
 
       room.lastActive = Date.now();
-
       const peer = role === "host" ? room.client : room.host;
       if (peer && peer.readyState === WebSocket.OPEN) {
         send(peer, { type: "peer-disconnected", role });
-      }
-
-      if (!room.host && !room.client) {
-        if (room.deleteTimer) clearTimeout(room.deleteTimer);
-        room.deleteTimer = setTimeout(() => {
-          if (!room.host && !room.client) {
-            rooms.delete(roomCode!);
-          }
-        }, 30000); 
       }
     });
 
