@@ -631,6 +631,7 @@ window.EJS_gameName = ${JSON.stringify(title)};
 window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
 ${discs?.length > 1 ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) => ({ fileName: `../${d.id}/file`, label: d.label })))};` : `window.EJS_gameUrl = \"./file\";`}
 window.EJS_pathtodata = "../../emulatorjs/";
+${biosUrl ? `window.EJS_biosUrl = ${JSON.stringify(biosUrl)};` : ""}
 window.EJS_startOnLoaded = true;
 
 // ── Performance & Quality ──

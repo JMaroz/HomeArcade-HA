@@ -14,6 +14,7 @@ export function registerVaultRoutes(app: Express) {
   app.get("/api/vault/health", async (_req, res) => {
     try {
       const roms = await storage.listUploadedRoms();
+      const bios = await storage.getBiosStatus();
       
       const summary = {
         total: roms.length,
@@ -22,6 +23,7 @@ export function registerVaultRoutes(app: Express) {
         missingYear: roms.filter(r => !r.releaseYear).length,
         missingGenre: roms.filter(r => !r.genre).length,
         failedScrapes: roms.filter(r => r.scrapeStatus === "failed").length,
+        bios,
       };
 
       res.json(summary);
@@ -109,6 +111,9 @@ export function registerVaultRoutes(app: Express) {
   app.post("/api/vault/cloud-sync", async (_req, res) => {
     try {
       const roms = await storage.listUploadedRoms();
+      const settings = await storage.getIntegrationSettings();
+      const SAVE_BACKUP_DIR = path.resolve("data/save-backups"); // Simplified for now
+      
       let uploadCount = 0;
       let downloadCount = 0;
 

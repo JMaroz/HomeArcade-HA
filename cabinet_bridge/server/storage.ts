@@ -469,6 +469,26 @@ export class DatabaseStorage implements IStorage {
   async getHallOfFame(limit = 3): Promise<UploadedRom[]> {
     return db.select().from(uploadedRoms).orderBy(desc(uploadedRoms.minutesPlayed)).limit(limit).all();
   }
+  async getBiosStatus(): Promise<any> {
+    const BIOS_ROOT = dataPath("bios");
+    const status: any = {};
+    for (const [core, files] of Object.entries(REQUIRED_BIOS)) {
+      status[core] = await Promise.all(
+        files.map(async (meta) => {
+          const filePath = path.join(BIOS_ROOT, meta.filename);
+          try {
+            await fs.access(filePath);
+            const buffer = await fs.readFile(filePath);
+            const actualMd5 = crypto.createHash("md5").update(buffer).digest("hex");
+            return { filename: meta.filename, exists: true, verified: actualMd5 === meta.md5 };
+          } catch {
+            return { filename: meta.filename, exists: false, verified: false };
+          }
+        })
+      );
+    }
+    return status;
+  }
 }
 
 export const storage = new DatabaseStorage();
