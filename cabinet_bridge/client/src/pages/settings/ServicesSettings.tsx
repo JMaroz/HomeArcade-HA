@@ -33,7 +33,7 @@ interface ScrapeComplete {
   total: number;
 }
 
-function OllamaSettingsSection() {
+function AiSettingsSection() {
   const { config, setConfig } = useIntegration();
   const { toast } = useToast();
   const [testing, setTesting] = useState(false);
@@ -44,10 +44,14 @@ function OllamaSettingsSection() {
       const res = await fetch(apiUrl("/api/ai/test"));
       const data = await res.json();
       if (data.ok) {
-        toast({ 
-          title: "Ollama Connected", 
-          description: `Found ${data.models.length} model(s). Vision (${config.ollamaModel}) is ${data.hasVisionModel ? "ready" : "MISSING"}.` 
-        });
+        if (data.provider === "gemini") {
+          toast({ title: "Gemini Connected", description: data.message });
+        } else {
+          toast({ 
+            title: "Ollama Connected", 
+            description: `Found ${data.models.length} model(s). Vision (${config.ollamaModel}) is ${data.hasVisionModel ? "ready" : "MISSING"}.` 
+          });
+        }
       } else {
         throw new Error(data.message);
       }
@@ -59,29 +63,48 @@ function OllamaSettingsSection() {
   };
 
   return (
-    <Section title="AI Assistant (Ollama)" description="Configure your local Ollama instance to power the in-game Strategy Guide. Requires a multimodal model like 'llava'.">
+    <Section title="AI Assistant (Intelligence)" description="Configure either local Ollama or Google Gemini to power the in-game Strategy Guide. Gemini is highly recommended for complex game analysis.">
       <div className="space-y-6">
-        <div className="grid sm:grid-cols-2 gap-6">
-          <Field label="Ollama URL" hint="The local address of your Ollama server.">
+        <div className="grid sm:grid-cols-1 gap-6">
+           <Field label="Gemini API Key" hint="Get a free key from Google AI Studio. If provided, HomeArcade will use Gemini 1.5 Flash for elite-tier intelligence.">
             <div className="relative">
-              <BrainCircuit className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Sparkles className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
               <Input
-                value={config.ollamaUrl}
-                onChange={(e) => setConfig({ ollamaUrl: e.target.value })}
-                placeholder="http://homeassistant.local:11434"
-                className="pl-9 font-mono text-sm"
+                type="password"
+                value={config.geminiApiKey}
+                onChange={(e) => setConfig({ geminiApiKey: e.target.value })}
+                placeholder="AIza..."
+                className="pl-9 font-mono text-sm border-primary/20 bg-primary/5 focus-visible:ring-primary/30"
               />
             </div>
           </Field>
-          <Field label="Vision Model" hint="Must be a multimodal model (e.g. llava, moondream).">
-            <Input
-              value={config.ollamaModel}
-              onChange={(e) => setConfig({ ollamaModel: e.target.value })}
-              placeholder="llava"
-              className="font-mono text-sm"
-            />
-          </Field>
         </div>
+
+        <div className="pt-4 border-t border-border/40">
+          <div className="font-display text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-4">Local Fallback (Ollama)</div>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <Field label="Ollama URL" hint="The local address of your Ollama server.">
+              <div className="relative">
+                <BrainCircuit className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={config.ollamaUrl}
+                  onChange={(e) => setConfig({ ollamaUrl: e.target.value })}
+                  placeholder="http://homeassistant.local:11434"
+                  className="pl-9 font-mono text-sm"
+                />
+              </div>
+            </Field>
+            <Field label="Vision Model" hint="Must be a multimodal model (e.g. llava, moondream).">
+              <Input
+                value={config.ollamaModel}
+                onChange={(e) => setConfig({ ollamaModel: e.target.value })}
+                placeholder="llava"
+                className="font-mono text-sm"
+              />
+            </Field>
+          </div>
+        </div>
+
         <div className="flex justify-end">
           <Button 
             variant="outline" 
@@ -360,7 +383,7 @@ export function ServicesSettings() {
         </div>
       </Section>
 
-      <OllamaSettingsSection />
+      <AiSettingsSection />
     </div>
   );
 }

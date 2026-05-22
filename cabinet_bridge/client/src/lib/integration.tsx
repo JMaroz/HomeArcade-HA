@@ -202,6 +202,7 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     globalShader: typeof source.globalShader === "string" ? source.globalShader : "none",
     ollamaUrl: typeof source.ollamaUrl === "string" ? source.ollamaUrl : "http://homeassistant.local:11434",
     ollamaModel: typeof source.ollamaModel === "string" ? source.ollamaModel : "llava",
+    geminiApiKey: typeof source.geminiApiKey === "string" ? source.geminiApiKey : "",
   };
 }
 
