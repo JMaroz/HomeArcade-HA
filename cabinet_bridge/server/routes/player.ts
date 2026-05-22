@@ -507,9 +507,8 @@ function cabinetSetupMenu() {
     backdrop.classList.toggle("is-open", open);
     btn.setAttribute("aria-expanded", open);
     if (window.EJS_emulator) {
-       // Pause/Unpause emulator when menu is open
-       if (open) window.EJS_emulator.pause();
-       else window.EJS_emulator.resume();
+       if (open && typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
+       else if (!open && typeof window.EJS_emulator.unpause === "function") window.EJS_emulator.unpause();
     }
   }
 
@@ -644,7 +643,7 @@ function cabinetSetupMenu() {
         var canvas = document.querySelector("#game canvas");
         if (!canvas) throw new Error("Could not find game canvas.");
 
-        if (window.EJS_emulator) window.EJS_emulator.pause();
+        if (window.EJS_emulator && typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
         if (panel) panel.classList.remove("is-open");
         if (backdrop) backdrop.classList.remove("is-open");
 
@@ -700,7 +699,7 @@ function cabinetSetupMenu() {
 
   var closeAi = function() {
     if (aiOverlay) aiOverlay.style.display = "none";
-    if (window.EJS_emulator) window.EJS_emulator.resume();
+    if (window.EJS_emulator && typeof window.EJS_emulator.unpause === "function") window.EJS_emulator.unpause();
   };
 
   if (aiClose) aiClose.onclick = closeAi;
