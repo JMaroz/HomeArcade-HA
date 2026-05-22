@@ -51,6 +51,12 @@ export interface IntegrationConfig {
   pcCpuEntityId?: string;
   pcRamEntityId?: string;
   pcAppEntityId?: string;
+  /** Netplay nickname */
+  netplayNickname?: string;
+  /** Netplay hosting port */
+  netplayPort?: number;
+  /** Netplay synchronization mode: lockstep or rollback */
+  netplaySyncMode?: "lockstep" | "rollback";
   /**
    * Per-system default key bindings.
    * Key: EmulatorJS core string (e.g. "psx", "snes", "nes").
@@ -132,6 +138,9 @@ const defaultConfig: IntegrationConfig = {
   showSystemLabels: true,
   globalAspectRatio: "auto",
   globalShader: "none",
+  netplayNickname: "HomeArcadePlayer",
+  netplayPort: 55435,
+  netplaySyncMode: "rollback",
 };
 
 const defaultPc: PcStatus = {
@@ -177,6 +186,9 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     pcCpuEntityId: typeof source.pcCpuEntityId === "string" ? source.pcCpuEntityId : "",
     pcRamEntityId: typeof source.pcRamEntityId === "string" ? source.pcRamEntityId : "",
     pcAppEntityId: typeof source.pcAppEntityId === "string" ? source.pcAppEntityId : "",
+    netplayNickname: typeof source.netplayNickname === "string" ? source.netplayNickname : "HomeArcadePlayer",
+    netplayPort: typeof source.netplayPort === "number" ? source.netplayPort : 55435,
+    netplaySyncMode: (source.netplaySyncMode === "lockstep" || source.netplaySyncMode === "rollback") ? source.netplaySyncMode : "rollback",
     controlDefaults: (source.controlDefaults && typeof source.controlDefaults === "object")
       ? source.controlDefaults as Record<string, Record<number, string>>
       : {},

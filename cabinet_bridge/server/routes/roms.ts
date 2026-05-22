@@ -625,6 +625,7 @@ export function registerRomRoutes(app: Express) {
       biosUrl,
       netplayRole,
       netplayRoom,
+      netplaySyncMode: bootstrapSettings.netplaySyncMode || "rollback",
     }));
     } catch (err: any) {
       console.error(`[HomeArcade] bootstrap.js error for ROM ${req.params.id}:`, err);

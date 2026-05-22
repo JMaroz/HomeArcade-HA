@@ -145,6 +145,7 @@ export const integrationSettingsSchema = z.object({
   pcAppEntityId: z.string().max(256).default(""),
   netplayNickname: z.string().max(64).default("HomeArcadePlayer"),
   netplayPort: z.number().int().default(55435),
+  netplaySyncMode: z.enum(["lockstep", "rollback"]).default("rollback"),
   controlDefaults: z.record(z.string(), z.record(z.coerce.number(), z.string().max(64))).default({}),
   gamepadRumble: z.boolean().default(true),
   language: z.string().max(10).default("en"),

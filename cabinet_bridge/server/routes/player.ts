@@ -413,6 +413,7 @@ export function renderEmulatorBootstrap({
   netplayUrl,
   netplayRole,
   netplayRoom,
+  netplaySyncMode,
 }: any) {
   return `"use strict";
 function cabinetToast(msg) {
@@ -661,6 +662,8 @@ var ingressBase = pathParts.slice(0, 4).join("/");
 window.EJS_netplayUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + ingressBase + "/api/netplay";
 ${netplayRole ? `window.EJS_netplayRole = ${JSON.stringify(netplayRole)};` : ""}
 ${netplayRoom ? `window.EJS_netplayRoom = ${JSON.stringify(netplayRoom)};` : ""}
+window.EJS_netplayRollback = ${netplaySyncMode === "rollback" ? "true" : "false"};
+window.EJS_netplayManualSync = ${netplaySyncMode === "lockstep" ? "true" : "false"};
 
 var loader = document.createElement("script");
 loader.src = "../../emulatorjs/loader.js";

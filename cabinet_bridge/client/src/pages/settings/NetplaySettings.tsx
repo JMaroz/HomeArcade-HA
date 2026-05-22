@@ -42,6 +42,25 @@ export function NetplaySettings() {
               />
             </div>
           </Field>
+
+          <Field label="Synchronization Mode" hint="Rollback is recommended for high-speed games. Lockstep is more stable on high-latency connections.">
+             <div className="flex gap-2 p-1 bg-muted/30 border border-border/50 rounded-lg w-fit">
+              <button
+                type="button"
+                onClick={() => setConfig({ netplaySyncMode: "rollback" })}
+                className={`h-8 px-4 font-bold text-[10px] uppercase tracking-wider rounded-md transition-all ${config.netplaySyncMode === "rollback" ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:bg-white/5"}`}
+              >
+                Rollback (Fast)
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfig({ netplaySyncMode: "lockstep" })}
+                className={`h-8 px-4 font-bold text-[10px] uppercase tracking-wider rounded-md transition-all ${config.netplaySyncMode === "lockstep" ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:bg-white/5"}`}
+              >
+                Lockstep (Stable)
+              </button>
+            </div>
+          </Field>
         </div>
       </Section>
 
