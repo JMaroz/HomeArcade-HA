@@ -1,15 +1,44 @@
 /**
  * Shared UI primitives used across all Settings sub-components.
  */
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
-export function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+export function Section({ 
+  title, 
+  description, 
+  children,
+  defaultOpen = false 
+}: { 
+  title: string; 
+  description: string; 
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
   return (
-    <section>
-      <h2 className="font-display text-base font-semibold tracking-tight">{title}</h2>
-      <p className="text-xs text-muted-foreground mt-0.5 mb-4 max-w-prose">{description}</p>
-      <div className="space-y-3">{children}</div>
+    <section className="group">
+      <button 
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between text-left group-hover:bg-accent/5 p-1 rounded-lg transition-colors"
+      >
+        <div className="flex-1 min-w-0 pr-4">
+          <h2 className="font-display text-base font-semibold tracking-tight">{title}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5 max-w-prose">{description}</p>
+        </div>
+        <div className="shrink-0 size-8 rounded-full border border-border flex items-center justify-center bg-card shadow-sm group-hover:border-primary/40 group-hover:text-primary transition-all">
+          {isOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+        </div>
+      </button>
+      
+      {isOpen && (
+        <div className="mt-6 space-y-3 pl-1 animate-in fade-in slide-in-from-top-2 duration-300">
+          {children}
+        </div>
+      )}
     </section>
   );
 }
