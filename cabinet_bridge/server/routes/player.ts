@@ -365,7 +365,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         </div>
       </div>
 
-      <!-- System Section -->
+      <!-- AI Section -->
       <div class="cabinet-menu-section">
         <div class="cabinet-menu-label">AI Assistant (Ollama)</div>
         <div class="cabinet-menu-grid">
@@ -556,55 +556,65 @@ function cabinetSetupMenu() {
     var discSection = document.getElementById("cabinet-disc-section");
     var discToggle = document.getElementById("cabinet-disc-toggle");
     var discList = document.getElementById("cabinet-disc-list");
-    discSection.style.display = "block";
+    if (discSection) discSection.style.display = "block";
     
-    discToggle.onclick = function() {
-      var hidden = discList.style.display === "none";
-      discList.style.display = hidden ? "flex" : "none";
-    };
-
-    discData.forEach(function(disc, idx) {
-      var dBtn = document.createElement("button");
-      dBtn.className = "cabinet-disc-item";
-      dBtn.textContent = "Disc " + (idx + 1) + (disc.label ? ": " + disc.label : "");
-      dBtn.onclick = function() {
-        if (window.EJS_emulator && window.EJS_emulator.gameManager) {
-          window.EJS_emulator.gameManager.changeDisc(idx);
-          cabinetToast("Swapped to Disc " + (idx + 1));
-          toggleMenu(false);
-        }
+    if (discToggle) {
+      discToggle.onclick = function() {
+        var hidden = discList.style.display === "none";
+        discList.style.display = hidden ? "flex" : "none";
       };
-      discList.appendChild(dBtn);
-    });
+    }
+
+    if (discList) {
+      discData.forEach(function(disc, idx) {
+        var dBtn = document.createElement("button");
+        dBtn.className = "cabinet-disc-item";
+        dBtn.textContent = "Disc " + (idx + 1) + (disc.label ? ": " + disc.label : "");
+        dBtn.onclick = function() {
+          if (window.EJS_emulator && window.EJS_emulator.gameManager) {
+            window.EJS_emulator.gameManager.changeDisc(idx);
+            cabinetToast("Swapped to Disc " + (idx + 1));
+            toggleMenu(false);
+          }
+        };
+        discList.appendChild(dBtn);
+      });
+    }
   }
 
   // Warp Logic
-  warpBtn.onclick = async function() {
-    toggleMenu(false);
-    document.getElementById("cabinet-warp-panel").style.display = "flex";
-    var qr = document.getElementById("cabinet-warp-qr");
-    qr.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#000; font:800 10px monospace;">GENERATING...</div>';
-    
-    var slot = 9;
-    if (window.EJS_emulator) {
-       window.EJS_emulator.saveState(slot);
-       // Wait for save to complete before QR
-       setTimeout(async function() {
-          var url = new URL(window.location.href);
-          url.searchParams.set("loadSlot", String(slot));
-          url.searchParams.set("warp", "true");
-          var response = await fetch("../warp-qr?url=" + encodeURIComponent(url.toString()));
-          var data = await response.json();
-          if (data.dataUrl) {
-            qr.innerHTML = '<img src="'+data.dataUrl+'" style="width:100%; height:auto;" />';
-          }
-       }, 1500);
-    }
-  };
-  document.getElementById("cabinet-warp-close").onclick = function() {
-    document.getElementById("cabinet-warp-panel").style.display = "none";
-    toggleMenu(true);
-  };
+  if (warpBtn) {
+    warpBtn.onclick = async function() {
+      toggleMenu(false);
+      var wPanel = document.getElementById("cabinet-warp-panel");
+      if (wPanel) wPanel.style.display = "flex";
+      var qr = document.getElementById("cabinet-warp-qr");
+      if (qr) qr.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#000; font:800 10px monospace;">GENERATING...</div>';
+      
+      var slot = 9;
+      if (window.EJS_emulator) {
+         window.EJS_emulator.saveState(slot);
+         setTimeout(async function() {
+            var url = new URL(window.location.href);
+            url.searchParams.set("loadSlot", String(slot));
+            url.searchParams.set("warp", "true");
+            var response = await fetch("../warp-qr?url=" + encodeURIComponent(url.toString()));
+            var data = await response.json();
+            if (data.dataUrl && qr) {
+              qr.innerHTML = '<img src="'+data.dataUrl+'" style="width:100%; height:auto;" />';
+            }
+         }, 1500);
+      }
+    };
+  }
+  var wClose = document.getElementById("cabinet-warp-close");
+  if (wClose) {
+    wClose.onclick = function() {
+      var wPanel = document.getElementById("cabinet-warp-panel");
+      if (wPanel) wPanel.style.display = "none";
+      toggleMenu(true);
+    };
+  }
 
   // AI Assistant (Ollama)
   var aiBtn = document.getElementById("cabinet-ai-ask");
@@ -621,7 +631,6 @@ function cabinetSetupMenu() {
       try {
         if (!aiOverlay) throw new Error("AI UI missing.");
         
-        // 0. Force Visibility
         aiOverlay.style.display = "flex";
         if (aiLoading) aiLoading.style.display = "flex";
         if (aiResponse) aiResponse.style.display = "none";
@@ -629,20 +638,16 @@ function cabinetSetupMenu() {
 
         function updateStatus(msg) {
           if (aiStatus) aiStatus.textContent = msg;
-          console.log("[AI] " + msg);
         }
 
-        // 1. Capture screen
         updateStatus("Capturing game screen...");
         var canvas = document.querySelector("#game canvas");
         if (!canvas) throw new Error("Could not find game canvas.");
 
-        // Pause
         if (window.EJS_emulator) window.EJS_emulator.pause();
         if (panel) panel.classList.remove("is-open");
         if (backdrop) backdrop.classList.remove("is-open");
 
-        // Resize
         var targetWidth = 640;
         var scale = targetWidth / canvas.width;
         var offscreen = document.createElement("canvas");
@@ -654,7 +659,6 @@ function cabinetSetupMenu() {
         var dataUrl = offscreen.toDataURL("image/jpeg", 0.6);
         if (aiImg) aiImg.src = dataUrl;
 
-        // 2. Request
         updateStatus("Talking to Ollama...");
         var ingressBase = window.location.pathname.match(/^\/api\/(?:hassio_)?ingress\/[^\/]+/)?.[0] || "";
         var aiUrl = ingressBase + "/api/ai/analyze";
@@ -683,7 +687,7 @@ function cabinetSetupMenu() {
           aiResponse.textContent = data.response;
         }
       } catch (err) {
-        updateStatus("Failed: " + err.message);
+        if (aiStatus) aiStatus.textContent = "Failed: " + err.message;
         if (aiLoading) aiLoading.style.display = "none";
         if (aiResponse) {
           aiResponse.style.display = "block";
@@ -731,10 +735,10 @@ window.EJS_pathtodata = "../../emulatorjs/";
 window.EJS_startOnLoaded = true;
 
 // ── Performance & Quality ──
-window.EJS_webgl = true; // Use hardware acceleration
-window.EJS_fps = true;   // Show FPS counter (useful for users to see performance)
-window.EJS_threads = ${["psx", "n64", "pcsx2", "ppsspp", "melonds"].includes(core) ? "true" : "false"}; // Enable multi-threading for heavy cores
-window.EJS_cacheExtensions = true; // Use browser cache for assets
+window.EJS_webgl = true;
+window.EJS_fps = true;
+window.EJS_threads = ${["psx", "n64", "pcsx2", "ppsspp", "melonds"].includes(core) ? "true" : "false"};
+window.EJS_cacheExtensions = true;
 
 // ── Hide built-in UI ──
 window.EJS_buttons = {
@@ -742,7 +746,7 @@ window.EJS_buttons = {
   restart: false,
   mute: false,
   settings: false,
-  fullscreen: true, // Keep fullscreen as it's useful
+  fullscreen: true,
   save_state: false,
   load_state: false,
   screen_record: false,
