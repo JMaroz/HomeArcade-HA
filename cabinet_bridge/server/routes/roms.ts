@@ -6,7 +6,7 @@ import {
   EMULATORJS_CORES, ROM_ROOT, getUserFromRequest 
 } from "./shared";
 import { renderEmulatorPage, renderEmulatorBootstrap, renderPlayerError, renderBootstrapError } from "./player";
-import { REQUIRED_BIOS } from "./bios";
+import { REQUIRED_BIOS } from "@shared/bios-metadata";
 import { dataPath } from "../data-dir";
 import path from "node:path";
 import fs from "node:fs/promises";
