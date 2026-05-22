@@ -1,8 +1,9 @@
 /**
  * Settings — Main settings page shell.
  * Tab content is split into focused sub-components under ./settings/.
+ * Redesigned for a categorized sidebar (desktop) and dropdown (mobile).
  */
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "wouter";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,9 +12,12 @@ import { useIntegration } from "@/lib/integration";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import {
+  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Check, RotateCcw, ShieldAlert, Loader2,
   Palette, Gamepad2, Database, Activity, Wifi, HelpCircle, Zap,
-  ChevronRight
+  Layers, Sparkles, Link2, Settings2, Cpu
 } from "lucide-react";
 import { DisplaySettings } from "./settings/DisplaySettings";
 import { ControlsSettings } from "./settings/ControlsSettings";
@@ -25,10 +29,55 @@ import { VaultSettings } from "./settings/VaultSettings";
 import { BiosManager } from "@/components/BiosManager";
 import { Section, Step, Code } from "./settings/SettingsShared";
 
+// ── Category Configuration ───────────────────────────────────────────────────
+
+const GROUPS = [
+  {
+    id: "experience",
+    label: "Experience",
+    icon: Sparkles,
+    tabs: [
+      { id: "display", label: "Interface", icon: Palette },
+      { id: "controls", label: "Input", icon: Gamepad2 },
+      { id: "netplay", label: "Multiplayer", icon: Wifi },
+    ]
+  },
+  {
+    id: "library",
+    label: "Library",
+    icon: Layers,
+    tabs: [
+      { id: "library", label: "Management", icon: Database },
+      { id: "vault", label: "The Vault", icon: ShieldAlert },
+      { id: "health", label: "Firmware", icon: Activity },
+    ]
+  },
+  {
+    id: "connectivity",
+    label: "Connectivity",
+    icon: Link2,
+    tabs: [
+      { id: "services", label: "Online Services", icon: Wifi },
+      { id: "automations", label: "Automations", icon: Zap },
+    ]
+  },
+  {
+    id: "system",
+    label: "System",
+    icon: Settings2,
+    tabs: [
+      { id: "help", label: "Help & Support", icon: HelpCircle },
+    ]
+  }
+];
+
+const ALL_TABS = GROUPS.flatMap(g => g.tabs);
+
 export default function Settings() {
   const { resetConfig, saveStatus } = useIntegration();
   const { t } = useTranslation();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("display");
 
   const handleReset = () => {
     if (confirm(t("common.reset") + "?")) {
@@ -37,178 +86,163 @@ export default function Settings() {
     }
   };
 
+  const currentTab = ALL_TABS.find(t => t.id === activeTab) || ALL_TABS[0];
+
   return (
-    <div className="flex h-full">
-      <main className="flex-1 min-w-0 flex flex-col bg-background/30 overflow-y-auto overscroll-y-contain">
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 space-y-8 pb-24 lg:pb-12">
-          {/* Header */}
-          <div className="flex flex-col gap-1 mb-8">
-            <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-primary">
-              {t("settings.header")}
-            </div>
-            <h1 className="font-display text-4xl sm:text-5xl font-black leading-none tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
-              {t("settings.title")}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Configure your global arcade experience and interface preferences.
-            </p>
-            <div className="flex items-center gap-3 mt-2">
-              {saveStatus === "saving" && (
-                <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
-                  <Loader2 className="size-3 animate-spin" /> {t("common.saveStatus.saving")}
-                </div>
-              )}
-              {saveStatus === "saved" && (
-                <div className="flex items-center gap-2 font-mono text-[10px] text-accent uppercase tracking-wider">
-                  <Check className="size-3" /> {t("common.saveStatus.saved")}
-                </div>
-              )}
-              {saveStatus === "error" && (
-                <div className="flex items-center gap-2 font-mono text-[10px] text-destructive uppercase tracking-wider">
-                  <ShieldAlert className="size-3" /> {t("common.saveStatus.error")}
-                </div>
-              )}
-            </div>
+    <div className="flex flex-col md:flex-row h-full overflow-hidden bg-[#0a0a0f]">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col md:flex-row w-full h-full overflow-hidden">
+        
+        {/* ── Left Sidebar (Desktop Only) ─────────────────────────────────── */}
+        <aside className="hidden md:flex flex-col w-64 border-r border-white/5 bg-[#0f0f14] shrink-0 p-6 overflow-y-auto">
+          <div className="flex flex-col gap-1 mb-8 px-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary/80">Control Panel</div>
+            <h1 className="font-display text-2xl font-black tracking-tight text-foreground">Settings</h1>
           </div>
 
-          <Tabs defaultValue="display" className="w-full">
-            <TabsList className="w-full justify-start bg-[#1a1a1a] border border-white/10 rounded-2xl p-1 mb-8 overflow-x-auto scrollbar-none flex-nowrap shrink-0">
-              <TabsTrigger value="display" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
-                <Palette className="size-4" /> {t("settings.tabs.display")}
-              </TabsTrigger>
-              <TabsTrigger value="controls" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
-                <Gamepad2 className="size-4" /> {t("settings.tabs.controls")}
-              </TabsTrigger>
-              <TabsTrigger value="library" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
-                <Database className="size-4" /> {t("settings.tabs.library")}
-              </TabsTrigger>
-              <TabsTrigger value="health" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
-                <Activity className="size-4" /> {t("settings.tabs.health")}
-              </TabsTrigger>
-              <TabsTrigger value="services" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
-                <Wifi className="size-4" /> {t("settings.tabs.services")}
-              </TabsTrigger>
-              <TabsTrigger value="vault" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
-                <ShieldAlert className="size-4" /> {t("settings.tabs.vault")}
-              </TabsTrigger>
-              <TabsTrigger value="netplay" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
-                <Wifi className="size-4" /> Netplay
-              </TabsTrigger>
-              <TabsTrigger value="automations" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
-                <Zap className="size-4" /> Automations
-              </TabsTrigger>
-              <TabsTrigger value="help" className="flex-1 gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(176,93,252,0.4)]">
-                <HelpCircle className="size-4" /> {t("settings.tabs.help")}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="display" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-8">
-                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Global Preferences</div>
-                <h3 className="font-display text-xl font-bold">Interface &amp; Layout</h3>
-                <p className="text-xs text-muted-foreground mt-1">Configure your global arcade experience and interface preferences.</p>
+          <nav className="flex-1 space-y-8">
+            {GROUPS.map((group) => (
+              <div key={group.id} className="space-y-2">
+                <div className="flex items-center gap-2 px-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                  <group.icon className="size-3" />
+                  {group.label}
+                </div>
+                <TabsList className="flex flex-col w-full h-auto bg-transparent p-0 gap-0.5">
+                  {group.tabs.map((tab) => (
+                    <TabsTrigger 
+                      key={tab.id} 
+                      value={tab.id}
+                      className="w-full justify-start gap-3 py-2.5 px-3 rounded-xl text-xs font-semibold tracking-wide transition-all text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground hover:bg-white/5"
+                    >
+                      <tab.icon className="size-4 shrink-0" />
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
               </div>
-              <DisplaySettings />
-            </TabsContent>
+            ))}
+          </nav>
 
-            <TabsContent value="controls" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-8">
-                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Advanced Controls</div>
-                <h3 className="font-display text-xl font-bold">Input &amp; Calibration</h3>
-                <p className="text-xs text-muted-foreground mt-1">Configure deadzones, haptics, and controller mapping.</p>
-              </div>
-              <ControlsSettings />
-            </TabsContent>
-
-            <TabsContent value="library" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-8">
-                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Game Library</div>
-                <h3 className="font-display text-xl font-bold">ROM Management</h3>
-                <p className="text-xs text-muted-foreground mt-1">Scanner, uploads, and metadata settings.</p>
-              </div>
-              <LibrarySettings />
-            </TabsContent>
-
-            <TabsContent value="health" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-8">
-                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">System Health</div>
-                <h3 className="font-display text-xl font-bold">Diagnostics</h3>
-                <p className="text-xs text-muted-foreground mt-1">Monitor BIOS files and system health.</p>
-              </div>
-              <Section title={t("settings.sections.health.title")} description={t("settings.sections.health.description")}>
-                <BiosManager />
-              </Section>
-            </TabsContent>
-
-            <TabsContent value="services" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-8">
-                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Connectivity</div>
-                <h3 className="font-display text-xl font-bold">Online Services</h3>
-                <p className="text-xs text-muted-foreground mt-1">Configure RetroAchievements, TheGamesDB, and Screenscraper.</p>
-              </div>
-              <ServicesSettings />
-            </TabsContent>
-
-            <TabsContent value="vault" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-8">
-                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Library Intelligence</div>
-                <h3 className="font-display text-xl font-bold">The Vault</h3>
-                <p className="text-xs text-muted-foreground mt-1">Audit, clean, and optimize your collection.</p>
-              </div>
-              <VaultSettings />
-            </TabsContent>
-
-            <TabsContent value="netplay" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-8">
-                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Multiplayer</div>
-                <h3 className="font-display text-xl font-bold">Netplay Configuration</h3>
-                <p className="text-xs text-muted-foreground mt-1">Set your nickname and hosting preferences for online sessions.</p>
-              </div>
-              <NetplaySettings />
-            </TabsContent>
-
-            <TabsContent value="automations" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-8">
-                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">Home Assistant</div>
-                <h3 className="font-display text-xl font-bold">Automations</h3>
-                <p className="text-xs text-muted-foreground mt-1">Expose game state as HA entities and trigger automations when you play.</p>
-              </div>
-              <AutomationsSettings />
-            </TabsContent>
-
-            <TabsContent value="help" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <Section title={t("settings.sections.help.title")} description={t("settings.sections.help.description")}>
-                <ul className="space-y-6">
-                  <Step n={1} title="Add as Sidebar Item (Optional)">
-                    Add this to your `configuration.yaml` to see HomeArcade in the HA sidebar:
-                    <Code>{`panel_iframe:\n  cabinet:\n    title: "Cabinet"\n    icon: mdi:gamepad-variant\n    url: "\${window.location.origin}\${window.location.pathname}"`}</Code>
-                  </Step>
-                  <Step n={2} title="Configure PC Sensors">
-                    Install <strong>HASS.Agent</strong> or <strong>IOT Link</strong> on your Windows PC to provide CPU, RAM, and Online sensors back to Home Assistant.
-                  </Step>
-                  <Step n={3} title="Set Up ROM Watch Directory">
-                    Set <code>CABINET_ROM_WATCH_DIR</code> in the add-on configuration to enable automatic ROM imports from a folder.
-                  </Step>
-                </ul>
-              </Section>
-            </TabsContent>
-          </Tabs>
-
-          <Separator className="bg-border/60" />
-
-          {/* Footer actions */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-              <ShieldAlert className="size-3.5" />
-              {t("settings.autoSaved")}
+          <div className="pt-6 border-t border-white/5 mt-auto px-2 space-y-4">
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
+               {saveStatus === "saving" ? (
+                 <><Loader2 className="size-3 animate-spin text-primary" /> {t("common.saveStatus.saving")}</>
+               ) : saveStatus === "saved" ? (
+                 <><Check className="size-3 text-accent" /> {t("common.saveStatus.saved")}</>
+               ) : (
+                 <><ShieldAlert className="size-3 text-muted-foreground/40" /> {t("settings.autoSaved")}</>
+               )}
             </div>
             <Button variant="ghost" size="sm" onClick={handleReset}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5">
-              <RotateCcw className="size-3.5" /> {t("settings.buttons.resetDefaults")}
+              className="w-full justify-start px-0 text-destructive/60 hover:text-destructive hover:bg-destructive/5 gap-2 text-[10px] uppercase font-bold tracking-widest">
+              <RotateCcw className="size-3" /> {t("settings.buttons.resetDefaults")}
             </Button>
           </div>
-        </div>
-      </main>
+        </aside>
+
+        {/* ── Main Content Area ────────────────────────────────────────────── */}
+        <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-background/20 relative">
+          
+          {/* Mobile Category Dropdown (Sticky Top) */}
+          <header className="md:hidden flex flex-col shrink-0 p-4 border-b border-white/5 bg-[#0f0f14]/80 backdrop-blur-md sticky top-0 z-20 gap-4">
+            <div className="flex items-center justify-between">
+               <h1 className="font-display text-xl font-black tracking-tight">Settings</h1>
+               {saveStatus === "saving" && <Loader2 className="size-4 animate-spin text-primary" />}
+            </div>
+            
+            <Select value={activeTab} onValueChange={setActiveTab}>
+              <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl px-4 font-bold text-xs uppercase tracking-wider focus:ring-primary/40">
+                <div className="flex items-center gap-3">
+                   <currentTab.icon className="size-4 text-primary" />
+                   <SelectValue />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a1f] border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                {GROUPS.map((group) => (
+                  <SelectGroup key={group.id}>
+                    <SelectLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 py-2 px-4 border-b border-white/5 bg-white/[0.02]">
+                      {group.label}
+                    </SelectLabel>
+                    {group.tabs.map((tab) => (
+                      <SelectItem 
+                        key={tab.id} 
+                        value={tab.id} 
+                        className="py-3 px-4 focus:bg-primary/20 focus:text-primary transition-colors text-xs font-bold uppercase tracking-wide"
+                      >
+                        <div className="flex items-center gap-3">
+                           <tab.icon className="size-4" />
+                           {tab.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+          </header>
+
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-8 py-8 md:py-12">
+            <div className="max-w-3xl mx-auto w-full space-y-12 pb-24 md:pb-12">
+              
+              {/* Header Title (Shows on both Mobile/Desktop inside scroll area) */}
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">
+                   {GROUPS.find(g => g.tabs.some(t => t.id === activeTab))?.label || "General"}
+                </div>
+                <h2 className="font-display text-3xl font-black tracking-tight">{currentTab.label}</h2>
+                <p className="text-xs text-muted-foreground mt-1 max-w-prose">
+                  {activeTab === "display" && "Language, Layout, and Visual Shaders."}
+                  {activeTab === "controls" && "Input calibration and key remapping."}
+                  {activeTab === "library" && "ROM scanning and collection filters."}
+                  {activeTab === "health" && "BIOS firmware status and verification."}
+                  {activeTab === "services" && "RetroAchievements and metadata scrapers."}
+                  {activeTab === "vault" && "Dead link pruning and Cloud Save synchronization."}
+                  {activeTab === "netplay" && "Nickname and multiplayer hosting options."}
+                  {activeTab === "automations" && "Home Assistant entities and game state triggers."}
+                  {activeTab === "help" && "Setup guides and integration snippets."}
+                </p>
+              </div>
+
+              {/* Tab Contents */}
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <TabsContent value="display" className="m-0 focus-visible:outline-none"><DisplaySettings /></TabsContent>
+                <TabsContent value="controls" className="m-0 focus-visible:outline-none"><ControlsSettings /></TabsContent>
+                <TabsContent value="library" className="m-0 focus-visible:outline-none"><LibrarySettings /></TabsContent>
+                <TabsContent value="health" className="m-0 focus-visible:outline-none">
+                  <Section title={t("settings.sections.health.title")} description={t("settings.sections.health.description")}>
+                    <BiosManager />
+                  </Section>
+                </TabsContent>
+                <TabsContent value="services" className="m-0 focus-visible:outline-none"><ServicesSettings /></TabsContent>
+                <TabsContent value="vault" className="m-0 focus-visible:outline-none"><VaultSettings /></TabsContent>
+                <TabsContent value="netplay" className="m-0 focus-visible:outline-none"><NetplaySettings /></TabsContent>
+                <TabsContent value="automations" className="m-0 focus-visible:outline-none"><AutomationsSettings /></TabsContent>
+                <TabsContent value="help" className="m-0 focus-visible:outline-none">
+                   <ul className="space-y-6">
+                    <Step n={1} title="Add as Sidebar Item (Optional)">
+                      Add this to your `configuration.yaml` to see HomeArcade in the HA sidebar:
+                      <Code>{`panel_iframe:\n  cabinet:\n    title: "Cabinet"\n    icon: mdi:gamepad-variant\n    url: "\${window.location.origin}\${window.location.pathname}"`}</Code>
+                    </Step>
+                    <Step n={2} title="Configure PC Sensors">
+                      Install <strong>HASS.Agent</strong> or <strong>IOT Link</strong> on your Windows PC to provide CPU, RAM, and Online sensors back to Home Assistant.
+                    </Step>
+                    <Step n={3} title="Set Up ROM Watch Directory">
+                      Set <code>CABINET_ROM_WATCH_DIR</code> in the add-on configuration to enable automatic ROM imports from a folder.
+                    </Step>
+                  </ul>
+                </TabsContent>
+              </div>
+            </div>
+          </div>
+          
+          {/* Mobile-only reset button footer */}
+          <footer className="md:hidden p-4 shrink-0 border-t border-white/5 bg-[#0f0f14]/80 backdrop-blur-md">
+             <Button variant="ghost" size="sm" onClick={handleReset}
+                className="w-full text-destructive hover:bg-destructive/10 gap-1.5 py-6 font-bold uppercase tracking-widest text-[10px]">
+                <RotateCcw className="size-4" /> {t("settings.buttons.resetDefaults")}
+              </Button>
+          </footer>
+        </main>
+      </Tabs>
     </div>
   );
 }
