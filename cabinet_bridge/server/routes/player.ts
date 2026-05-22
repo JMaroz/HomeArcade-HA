@@ -929,6 +929,31 @@ window.EJS_onGameStart = async function () {
   }
 };
 
+// ── Gamepad Logic ──────────────────────────────────────────────────────────
+
+function cabinetSetupGamepad() {
+  window.addEventListener("gamepadconnected", function(e) {
+    var gp = e.gamepad;
+    console.log("[Gamepad] Connected:", gp.id);
+    cabinetToast("🎮 " + gp.id.split(" (")[0] + " connected");
+    
+    // Auto-detect and set mapping type for the engine
+    var id = gp.id.toLowerCase();
+    var type = "generic";
+    if (id.indexOf("xbox") !== -1 || id.indexOf("xinput") !== -1) type = "xbox";
+    else if (id.indexOf("dualshock") !== -1 || id.indexOf("dualsense") !== -1 || id.indexOf("playstation") !== -1) type = "playstation";
+    else if (id.indexOf("nintendo") !== -1 || id.indexOf("switch") !== -1 || id.indexOf("joy-con") !== -1) type = "nintendo";
+    
+    console.log("[Gamepad] Auto-mapping as:", type);
+    // You can extend this to update EJS_defaultControls dynamically if the engine supports it
+  });
+
+  window.addEventListener("gamepaddisconnected", function(e) {
+    cabinetToast("🔌 Gamepad disconnected");
+  });
+}
+
+cabinetSetupGamepad();
 cabinetSetupMenu();
 
 window.EJS_player = "#game";
