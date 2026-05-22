@@ -304,6 +304,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         z-index: 2000000;
         background: rgba(0, 0, 0, 0.96);
         display: none;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         padding: 24px;
@@ -345,13 +346,11 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         </div>
       </div>
 
-      <!-- Disc Swap Section (Hidden by default, shown by JS if discs exist) -->
+      <!-- Disc Swap Section -->
       <div class="cabinet-menu-section" id="cabinet-disc-section" style="display:none;">
         <div class="cabinet-menu-label">CD Console Controls</div>
         <button type="button" class="full-width" id="cabinet-disc-toggle">💿 Swap Disc...</button>
-        <div id="cabinet-disc-list" class="cabinet-disc-list" style="display:none;">
-          <!-- Populated by JS -->
-        </div>
+        <div id="cabinet-disc-list" class="cabinet-disc-list" style="display:none;"></div>
       </div>
 
       <!-- Visuals Section -->
@@ -369,7 +368,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
       <div class="cabinet-menu-section">
         <div class="cabinet-menu-label">AI Assistant (Ollama)</div>
         <div class="cabinet-menu-grid">
-          <button type="button" id="cabinet-ai-ask" class="full-width primary">🤖 Ask for a Hint</button>
+          <button type="button" id="cabinet-ai-ask" class="full-width primary">🤖 Ask AI Guide...</button>
         </div>
       </div>
 
@@ -383,21 +382,29 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
       </div>
     </nav>
 
+    <!-- AI Chat Overlay -->
     <section class="cabinet-ai-overlay" id="cabinet-ai-overlay">
        <button type="button" id="cabinet-ai-cancel" style="position:fixed; top:20px; right:20px; width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:24px; cursor:pointer; z-index:2000001; display:flex; align-items:center; justify-content:center;">&times;</button>
-       <div style="width:min(90vw, 500px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
-          <div class="cabinet-menu-label" style="margin-bottom:20px; color:rgba(236, 72, 153, 0.8);">🤖 AI Strategy Guide</div>
-          <div id="cabinet-ai-screenshot" style="width:100%; aspect-ratio:16/9; border-radius:12px; background:#000; margin-bottom:20px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); position:relative;">
+       <div style="width:min(94vw, 520px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:24px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.8); display:flex; flex-direction:column; gap:16px;">
+          <div class="cabinet-menu-label" style="color:rgba(236, 72, 153, 0.8); margin:0;">🤖 AI Strategy Guide</div>
+          
+          <div id="cabinet-ai-screenshot" style="width:100%; aspect-ratio:16/9; border-radius:12px; background:#000; overflow:hidden; border:1px solid rgba(255,255,255,0.1); position:relative;">
              <img id="cabinet-ai-img" src="" style="width:100%; height:100%; object-fit:contain;" />
              <div id="cabinet-ai-loading" style="position:absolute; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center;">
                 <div class="cabinet-menu-label animate-pulse" style="color:#fff;">Analyzing...</div>
              </div>
           </div>
-          <div id="cabinet-ai-status" style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.3); margin-bottom:12px;">Initializing...</div>
-          <div id="cabinet-ai-response" style="text-align:left; font-size:14px; color:rgba(255,255,255,0.9); line-height:1.6; margin-bottom:24px; max-height:220px; overflow-y:auto; padding:16px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.05); white-space: pre-wrap;">
-             <!-- AI text goes here -->
+
+          <div id="cabinet-ai-status" style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.3);">Ready for question</div>
+          
+          <div id="cabinet-ai-response" style="text-align:left; font-size:14px; color:rgba(255,255,255,0.9); line-height:1.6; max-height:180px; overflow-y:auto; padding:16px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.05); white-space: pre-wrap; display:none;"></div>
+          
+          <div style="display:flex; gap:8px;">
+             <input type="text" id="cabinet-ai-input" placeholder="Ask anything about this screen..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 16px; color:#fff; font-family:inherit; font-size:13px; outline:none;" />
+             <button type="button" id="cabinet-ai-send" style="background:#ec4899; color:#fff; border:none; border-radius:12px; padding:0 20px; font:900 10px monospace; text-transform:uppercase; cursor:pointer;">Ask</button>
           </div>
-          <button type="button" id="cabinet-ai-close" style="appearance:none; width:100%; padding:14px; border-radius:12px; background:rgba(236, 72, 153, 0.2); border:1px solid rgba(236, 72, 153, 0.4); color:#fff; font:900 10px ui-monospace,monospace; text-transform:uppercase; cursor:pointer;">Back to Game</button>
+
+          <button type="button" id="cabinet-ai-close" style="appearance:none; width:100%; padding:12px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; font:900 10px ui-monospace,monospace; text-transform:uppercase; cursor:pointer; margin-top:8px;">Back to Game</button>
        </div>
     </section>
 
@@ -506,9 +513,19 @@ function cabinetSetupMenu() {
     panel.classList.toggle("is-open", open);
     backdrop.classList.toggle("is-open", open);
     btn.setAttribute("aria-expanded", open);
+    
     if (window.EJS_emulator) {
-       if (open && typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
-       else if (!open && typeof window.EJS_emulator.unpause === "function") window.EJS_emulator.unpause();
+       // Multi-method robust unpause
+       if (open) {
+          if (typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
+       } else {
+          if (typeof window.EJS_emulator.unpause === "function") window.EJS_emulator.unpause();
+          else if (typeof window.EJS_emulator.resume === "function") window.EJS_emulator.resume();
+          else if (typeof window.EJS_emulator.onPause === "function") window.EJS_emulator.onPause(false);
+          
+          // Force UI repaint
+          window.dispatchEvent(new Event('resize'));
+       }
     }
   }
 
@@ -622,88 +639,88 @@ function cabinetSetupMenu() {
   var aiLoading = document.getElementById("cabinet-ai-loading");
   var aiResponse = document.getElementById("cabinet-ai-response");
   var aiStatus = document.getElementById("cabinet-ai-status");
+  var aiInput = document.getElementById("cabinet-ai-input");
+  var aiSend = document.getElementById("cabinet-ai-send");
   var aiClose = document.getElementById("cabinet-ai-close");
   var aiCancel = document.getElementById("cabinet-ai-cancel");
 
   if (aiBtn) {
-    aiBtn.onclick = async function() {
-      try {
-        if (!aiOverlay) throw new Error("AI UI missing.");
-        
-        aiOverlay.style.display = "flex";
-        if (aiLoading) aiLoading.style.display = "flex";
-        if (aiResponse) aiResponse.style.display = "none";
-        if (aiStatus) aiStatus.textContent = "Initializing Assistant...";
-
-        function updateStatus(msg) {
-          if (aiStatus) aiStatus.textContent = msg;
-        }
-
-        updateStatus("Capturing game screen...");
-        var canvas = document.querySelector("#game canvas");
-        if (!canvas) throw new Error("Could not find game canvas.");
-
-        if (window.EJS_emulator && typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
-        if (panel) panel.classList.remove("is-open");
-        if (backdrop) backdrop.classList.remove("is-open");
-
-        var targetWidth = 640;
-        var scale = targetWidth / canvas.width;
-        var offscreen = document.createElement("canvas");
-        offscreen.width = targetWidth;
-        offscreen.height = canvas.height * scale;
-        var ctx = offscreen.getContext("2d");
-        ctx.drawImage(canvas, 0, 0, offscreen.width, offscreen.height);
-
-        var dataUrl = offscreen.toDataURL("image/jpeg", 0.6);
-        if (aiImg) aiImg.src = dataUrl;
-
-        updateStatus("Talking to Ollama...");
-        var pathParts = window.location.pathname.split("/");
-        var ingressBase = pathParts.slice(0, 4).join("/");
-        var aiUrl = ingressBase + "/api/ai/analyze";
-        
-        var controller = new AbortController();
-        var timeoutId = setTimeout(() => controller.abort(), 60000);
-
-        var res = await fetch(aiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({ 
-            image: dataUrl,
-            prompt: "I am playing " + ${JSON.stringify(title)} + ". Look at this screenshot and give me a helpful hint on what I should do next. Be concise."
-          })
-        });
-
-        clearTimeout(timeoutId);
-        if (!res.ok) throw new Error("AI Error (" + res.status + ")");
-        
-        var data = await res.json();
-        updateStatus("Analysis complete.");
-        if (aiLoading) aiLoading.style.display = "none";
-        if (aiResponse) {
-          aiResponse.style.display = "block";
-          aiResponse.textContent = data.response;
-        }
-      } catch (err) {
-        if (aiStatus) aiStatus.textContent = "Failed: " + err.message;
-        if (aiLoading) aiLoading.style.display = "none";
-        if (aiResponse) {
-          aiResponse.style.display = "block";
-          aiResponse.innerHTML = '<div style="color:#ef4444; font-weight:900;">ERROR</div>' + err.message;
-        }
+    aiBtn.onclick = function() {
+      // Show overlay instantly
+      aiOverlay.style.display = "flex";
+      aiResponse.style.display = "none";
+      if (aiStatus) aiStatus.textContent = "Ready for your question.";
+      
+      // Capture screen context
+      var canvas = document.querySelector("#game canvas");
+      if (canvas && aiImg) {
+         var offscreen = document.createElement("canvas");
+         offscreen.width = 640;
+         offscreen.height = canvas.height * (640 / canvas.width);
+         var ctx = offscreen.getContext("2d");
+         ctx.drawImage(canvas, 0, 0, offscreen.width, offscreen.height);
+         aiImg.src = offscreen.toDataURL("image/jpeg", 0.6);
       }
+
+      if (window.EJS_emulator && typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
+      if (panel) panel.classList.remove("is-open");
+      if (backdrop) backdrop.classList.remove("is-open");
+      
+      if (aiInput) aiInput.focus();
     };
+
+    if (aiSend) {
+      aiSend.onclick = async function() {
+        var question = aiInput.value.trim() || "What should I do next?";
+        try {
+          if (aiLoading) aiLoading.style.display = "flex";
+          if (aiStatus) aiStatus.textContent = "Talking to Ollama...";
+          
+          var ingressBase = window.location.pathname.split("/").slice(0, 4).join("/");
+          var res = await fetch(ingressBase + "/api/ai/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              image: aiImg.src,
+              prompt: "I am playing " + ${JSON.stringify(title)} + ". " + question
+            })
+          });
+
+          if (!res.ok) throw new Error("AI Error (" + res.status + ")");
+          var data = await res.json();
+          
+          if (aiStatus) aiStatus.textContent = "Analysis complete.";
+          if (aiResponse) {
+            aiResponse.style.display = "block";
+            aiResponse.textContent = data.response;
+          }
+        } catch (err) {
+          if (aiStatus) aiStatus.textContent = "Failed: " + err.message;
+          if (aiResponse) {
+            aiResponse.style.display = "block";
+            aiResponse.innerHTML = '<div style="color:#ef4444; font-weight:900;">ERROR</div>' + err.message;
+          }
+        } finally {
+          if (aiLoading) aiLoading.style.display = "none";
+        }
+      };
+    }
   }
 
   var closeAi = function() {
     if (aiOverlay) aiOverlay.style.display = "none";
-    if (window.EJS_emulator && typeof window.EJS_emulator.unpause === "function") window.EJS_emulator.unpause();
+    if (window.EJS_emulator) {
+       if (typeof window.EJS_emulator.unpause === "function") window.EJS_emulator.unpause();
+       else if (typeof window.EJS_emulator.resume === "function") window.EJS_emulator.resume();
+       window.dispatchEvent(new Event('resize'));
+    }
   };
 
   if (aiClose) aiClose.onclick = closeAi;
   if (aiCancel) aiCancel.onclick = closeAi;
+  if (aiInput) {
+    aiInput.onkeydown = function(e) { if (e.key === "Enter") aiSend.click(); };
+  }
 }
 
 window.EJS_onGameStart = function() {
