@@ -28,6 +28,9 @@ import { dataPath, ensureDir, getDataDir } from "./data-dir";
 import { log } from "./log";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import fs from "node:fs/promises";
+import crypto from "node:crypto";
+import { REQUIRED_BIOS } from "@shared/bios-metadata";
 
 export let sqlite: Database.Database;
 export let db: any;
