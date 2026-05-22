@@ -85,6 +85,12 @@ export function attachNetplayServer(httpServer: HttpServer) {
       if (msg) {
         const type = msg.type as string | undefined;
 
+        // PING/PONG for latency measurement
+        if (type === "ping") {
+          send(ws, { type: "pong", ts: msg.ts });
+          return;
+        }
+
         // HOSTING or RE-JOINING as host
         if (type === "create-room" || type === "host") {
           const code = (msg.room as string | undefined)?.toUpperCase();

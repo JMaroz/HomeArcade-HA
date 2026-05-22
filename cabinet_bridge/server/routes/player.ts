@@ -298,6 +298,30 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       }
       .cabinet-toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
 
+      /* Netplay Ping Indicator */
+      .cabinet-netplay-status {
+        position: fixed;
+        z-index: 999999;
+        top: max(12px, env(safe-area-inset-top));
+        right: max(12px, env(safe-area-inset-right));
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 99px;
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        font: 900 10px ui-monospace, monospace;
+        color: #f8fafc;
+        opacity: 0;
+        transition: opacity 300ms ease;
+      }
+      .cabinet-netplay-status.is-active { opacity: 1; }
+      .cabinet-ping-dot { width: 6px; height: 6px; border-radius: 999px; background: #22c55e; }
+      .cabinet-ping-dot.laggy { background: #eab308; }
+      .cabinet-ping-dot.slow { background: #ef4444; }
+
       #game { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; }
       
       /* Filter Overlays (on #game container) */
@@ -422,6 +446,11 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
   <body data-system="${safeSystem}">
     <button type="button" class="cabinet-menu-button" id="cabinet-menu-toggle">Menu</button>
     <div class="cabinet-menu-backdrop" id="cabinet-menu-backdrop"></div>
+
+    <div class="cabinet-netplay-status" id="cabinet-netplay-status">
+      <div class="cabinet-ping-dot" id="cabinet-ping-dot"></div>
+      <span id="cabinet-ping-text">-- ms</span>
+    </div>
     
     <nav class="cabinet-menu-panel" id="cabinet-menu-panel">
       <!-- Game Section -->
@@ -816,6 +845,15 @@ window.EJS_pathtodata = "../../emulatorjs/";
 ${biosUrl ? `window.EJS_biosUrl = ${JSON.stringify(biosUrl)};` : ""}
 window.EJS_startOnLoaded = true;
 
+// ── WebRTC STUN Servers for Netplay ──
+window.EJS_iceServers = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:stun2.l.google.com:19302" },
+  { urls: "stun:stun3.l.google.com:19302" },
+  { urls: "stun:stun4.l.google.com:19302" }
+];
+
 // ── Hide built-in UI ──
 window.EJS_virtualGamepad = false;
 window.EJS_buttons = {
@@ -831,6 +869,44 @@ ${netplayRole ? `window.EJS_netplayRole = ${JSON.stringify(netplayRole)};` : ""}
 ${netplayRoom ? `window.EJS_netplayRoom = ${JSON.stringify(netplayRoom)};` : ""}
 window.EJS_netplayRollback = ${netplaySyncMode === "rollback" ? "true" : "false"};
 window.EJS_netplayManualSync = ${netplaySyncMode === "lockstep" ? "true" : "false"};
+
+// ── Netplay Ping Logic ───────────────────────────────────────────────────
+(function() {
+  if (!${JSON.stringify(netplayRoom)}) return;
+  var statusEl = document.getElementById("cabinet-netplay-status");
+  var pingDot = document.getElementById("cabinet-ping-dot");
+  var pingText = document.getElementById("cabinet-ping-text");
+  if (statusEl) statusEl.classList.add("is-active");
+
+  Object.defineProperty(window, "EJS_netplaySocket", {
+    configurable: true,
+    set: function(ws) {
+      this._ejs_ws = ws;
+      var oldOnMessage = ws.onmessage;
+      ws.onmessage = function(e) {
+        try {
+          var msg = JSON.parse(e.data);
+          if (msg.type === "pong") {
+            var rtt = Date.now() - msg.ts;
+            if (pingText) pingText.textContent = rtt + " ms";
+            if (pingDot) {
+              pingDot.className = "cabinet-ping-dot" + (rtt > 150 ? " slow" : (rtt > 80 ? " laggy" : ""));
+            }
+            return;
+          }
+        } catch(_e) {}
+        if (oldOnMessage) oldOnMessage.apply(this, arguments);
+      };
+      
+      setInterval(function() {
+        if (ws.readyState === 1) {
+          ws.send(JSON.stringify({ type: "ping", ts: Date.now() }));
+        }
+      }, 2000);
+    },
+    get: function() { return this._ejs_ws; }
+  });
+})();
 
 window.EJS_defaultControls = ${JSON.stringify(buildEjsControls(core, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2))};
 

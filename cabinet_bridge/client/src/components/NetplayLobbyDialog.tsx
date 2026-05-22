@@ -136,27 +136,37 @@ export function NetplayLobbyDialog({
         className="sm:max-w-md bg-card border-card-border"
         data-testid="dialog-netplay-lobby"
       >
-        <DialogTitle className="flex items-center gap-2 font-display text-lg text-white">
-          <Wifi className="size-4 text-primary" />
-          Netplay — {game.title}
+        <DialogTitle className="flex items-center gap-3 font-display text-xl text-white pb-2 border-b border-white/10">
+          <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shadow-[0_0_15px_rgba(236,72,153,0.3)]">
+            <Wifi className="size-5 text-primary" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-mono uppercase tracking-widest text-primary/80">Multiplayer</span>
+            <span className="leading-none">{game.title}</span>
+          </div>
         </DialogTitle>
 
         {/* ── Lobby ─────────────────────────────────────────────── */}
         {view === "lobby" && (
-          <div className="space-y-5">
+          <div className="space-y-6 pt-4">
             {/* Open rooms */}
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                Open rooms{" "}
-                <span className="opacity-40">· refreshes every 5s</span>
-              </p>
-              {rooms.length === 0 ? (
-                <p className="py-4 text-center text-sm text-muted-foreground border border-dashed border-border rounded-md">
-                  No open rooms yet. Host one below!
+            <div className="relative">
+              <div className="flex items-center justify-between mb-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                  <Users className="size-3" /> Open rooms
                 </p>
-              ) : (
-                <div className="space-y-1.5">
-                  {rooms.map((r) => {
+                <span className="text-[9px] font-mono text-primary animate-pulse uppercase tracking-wider">Auto-refreshing</span>
+              </div>
+              
+              <div className="max-h-[280px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+                {rooms.length === 0 ? (
+                  <div className="py-12 text-center rounded-2xl border border-dashed border-white/10 bg-black/20 backdrop-blur-md">
+                    <WifiOff className="size-8 text-muted-foreground/20 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground font-medium">No open rooms yet.</p>
+                    <p className="text-[10px] text-muted-foreground/50 uppercase tracking-tight">Host one below to play with friends</p>
+                  </div>
+                ) : (
+                  rooms.map((r) => {
                     const isCompatible = !r.romHash || !game.romHash || r.romHash === game.romHash;
                     return (
                       <button
@@ -164,142 +174,182 @@ export function NetplayLobbyDialog({
                         type="button"
                         onClick={() => isCompatible && handleJoinCode(r.code)}
                         disabled={!isCompatible}
-                        className={`w-full flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2 transition-all ${
+                        className={`w-full group relative overflow-hidden rounded-xl border transition-all duration-300 ${
                           isCompatible 
-                            ? "hover:border-primary/40 hover:bg-primary/5 cursor-pointer" 
-                            : "opacity-40 cursor-not-allowed bg-black/20"
+                            ? "bg-gradient-to-r from-white/5 to-white/[0.02] border-white/10 hover:border-primary/50 hover:bg-primary/5 hover:shadow-[0_0_20px_rgba(236,72,153,0.1)] active:scale-[0.98]" 
+                            : "opacity-40 cursor-not-allowed bg-black/40 border-white/5"
                         }`}
                         data-testid={`button-join-open-room-${r.code}`}
                       >
-                        <div className="flex flex-col items-start">
-                          <span className="font-mono text-sm tracking-[0.25em] font-bold">
-                            {r.code}
-                          </span>
-                          {!isCompatible && (
-                            <span className="text-[8px] text-red-400 font-bold uppercase tracking-tight">ROM Mismatch</span>
-                          )}
+                        {isCompatible && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        )}
+                        <div className="relative z-10 flex items-center justify-between px-4 py-3.5">
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="font-display text-lg tracking-[0.3em] font-black text-white group-hover:text-primary transition-colors">
+                              {r.code}
+                            </span>
+                            {!isCompatible && (
+                              <span className="px-1.5 py-0.5 rounded-sm bg-red-500/20 text-[8px] text-red-400 font-bold uppercase tracking-widest border border-red-500/30">ROM Mismatch</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-1 text-right">
+                             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-mono font-bold uppercase">
+                                <span className="size-1.5 rounded-full bg-green-500 animate-pulse" />
+                                1/2 players
+                             </div>
+                             <span className="text-[9px] text-muted-foreground/60 font-mono italic">
+                               Started {formatAge(r.createdAt)} ago
+                             </span>
+                          </div>
                         </div>
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Users className="size-3" />
-                          1/2{" · "}{formatAge(r.createdAt)}
-                          {isCompatible && <ArrowRight className="size-3 text-primary" />}
-                        </span>
                       </button>
                     );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Host new room */}
-            <Button
-              onClick={handleHostRoom}
-              disabled={wsStatus === "connecting"}
-              className="w-full gap-2"
-              data-testid="button-host-room"
-            >
-              {wsStatus === "connecting"
-                ? <Loader2 className="size-4 animate-spin" />
-                : <Wifi className="size-4" />}
-              Host a room
-            </Button>
-
-            {/* Join by code */}
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                Or enter a room code
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
-                  onKeyDown={(e) => e.key === "Enter" && handleJoinCode(joinCode)}
-                  placeholder="XXXXXX"
-                  maxLength={6}
-                  className="flex-1 rounded-md border border-border bg-background/70 px-3 py-2 font-mono text-sm tracking-[0.3em] text-center text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary uppercase"
-                  data-testid="input-join-room-code"
-                />
-                <Button
-                  onClick={() => handleJoinCode(joinCode)}
-                  disabled={joinCode.length !== 6 || wsStatus === "connecting"}
-                  variant="outline"
-                  className="gap-1.5"
-                  data-testid="button-join-room"
-                >
-                  Join
-                </Button>
+                  })
+                )}
               </div>
             </div>
 
+            <div className="relative">
+               <div className="absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-card to-transparent pointer-events-none z-20" />
+               <div className="grid grid-cols-1 gap-4 pt-2">
+                  {/* Host new room */}
+                  <Button
+                    size="lg"
+                    onClick={handleHostRoom}
+                    disabled={wsStatus === "connecting"}
+                    className="w-full h-14 relative group overflow-hidden bg-primary hover:bg-primary/90 text-white border-b-4 border-black/20 active:border-b-0 active:translate-y-[2px] transition-all"
+                    data-testid="button-host-room"
+                  >
+                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="flex items-center justify-center gap-3 font-display font-black uppercase tracking-widest">
+                      {wsStatus === "connecting"
+                        ? <Loader2 className="size-5 animate-spin" />
+                        : <Wifi className="size-5" />}
+                      Host New Room
+                    </div>
+                  </Button>
+
+                  {/* Join by code */}
+                  <div className="relative group">
+                    <div className="absolute -inset-px rounded-xl bg-gradient-to-r from-primary/30 to-blue-500/30 opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm" />
+                    <div className="relative flex gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 group-focus-within:border-primary/50 transition-all">
+                      <input
+                        type="text"
+                        value={joinCode}
+                        onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
+                        onKeyDown={(e) => e.key === "Enter" && handleJoinCode(joinCode)}
+                        placeholder="ROOM CODE"
+                        maxLength={6}
+                        className="flex-1 bg-transparent px-4 py-2 font-display text-lg tracking-[0.4em] font-black text-white placeholder:text-white/10 focus:outline-none uppercase"
+                        data-testid="input-join-room-code"
+                      />
+                      <Button
+                        onClick={() => handleJoinCode(joinCode)}
+                        disabled={joinCode.length !== 6 || wsStatus === "connecting"}
+                        variant="secondary"
+                        className="h-10 px-6 font-display font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-white border-white/10"
+                        data-testid="button-join-room"
+                      >
+                        Join
+                      </Button>
+                    </div>
+                  </div>
+               </div>
+            </div>
+
             {(wsStatus === "error" || errorMsg) && (
-              <p className="text-xs text-destructive font-bold flex flex-col gap-1.5 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                <span className="flex items-center gap-1.5"><WifiOff className="size-3" /> {errorMsg || "Connection error — please try again."}</span>
-              </p>
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive animate-in fade-in slide-in-from-top-2 duration-300">
+                <WifiOff className="size-5 shrink-0" />
+                <p className="text-[11px] font-mono font-black uppercase tracking-tight leading-tight">
+                  {errorMsg || "Signaling server disconnected. Please try again."}
+                </p>
+              </div>
             )}
           </div>
         )}
 
         {/* ── Hosting ───────────────────────────────────────────── */}
         {view === "hosting" && (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 text-center space-y-3">
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                Your room code
-              </p>
-              <p
-                className="font-display text-4xl font-bold tracking-[0.3em] text-primary select-all"
-                data-testid="text-room-code"
-              >
-                {dispCode}
-              </p>
-              <button
-                type="button"
-                onClick={() => navigator.clipboard?.writeText(dispCode)}
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-mono transition-colors"
-                data-testid="button-copy-room-code"
-              >
-                <Copy className="size-3" /> Copy to clipboard
-              </button>
+          <div className="space-y-6 pt-4 animate-in zoom-in-95 duration-300">
+            <div className="relative group">
+              <div className="absolute -inset-2 rounded-2xl bg-primary/20 blur-xl animate-pulse opacity-50" />
+              <div className="relative rounded-2xl border-2 border-primary/50 bg-black/60 p-8 text-center space-y-4 shadow-[0_0_40px_rgba(236,72,153,0.2)]">
+                <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-primary/80 font-black">
+                  Lobby Active
+                </p>
+                <div className="relative flex items-center justify-center">
+                  <p
+                    className="font-display text-6xl font-black tracking-[0.2em] text-white select-all drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+                    data-testid="text-room-code"
+                  >
+                    {dispCode}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(dispCode);
+                    // Could add a local "Copied" toast here if needed
+                  }}
+                  className="h-8 gap-2 text-[10px] text-primary hover:text-primary hover:bg-primary/10 font-black uppercase tracking-widest"
+                  data-testid="button-copy-room-code"
+                >
+                  <Copy className="size-3" /> Copy Code
+                </Button>
+              </div>
             </div>
 
-            {peerJoined ? (
-              <div className="rounded-md border border-green-500/30 bg-green-500/10 p-3 text-center">
-                <p className="text-sm text-green-400 font-mono">
-                  Friend joined! Launching game…
-                </p>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" />
-                Waiting for a friend to join…
-              </div>
-            )}
+            <div className="space-y-4">
+              {peerJoined ? (
+                <div className="flex items-center justify-center gap-3 p-4 rounded-xl border-2 border-green-500/50 bg-green-500/10 text-green-400 animate-bounce">
+                  <Users className="size-5" />
+                  <p className="text-xs font-display font-black uppercase tracking-widest">
+                    Player 2 Connected!
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-4 py-4">
+                  <div className="flex gap-2">
+                    <div className="size-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+                    <div className="size-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+                    <div className="size-2 rounded-full bg-primary animate-bounce" />
+                  </div>
+                  <p className="text-[11px] font-mono font-black text-muted-foreground uppercase tracking-widest">
+                    Waiting for Peer...
+                  </p>
+                </div>
+              )}
 
-            <Button
-              variant="outline"
-              onClick={() => { wsRef.current?.close(); setView("lobby"); setDispCode(""); setPeerJoined(false); setWsStatus("idle"); }}
-              className="w-full text-white"
-            >
-              Cancel
-            </Button>
+              <Button
+                variant="outline"
+                onClick={() => { wsRef.current?.close(); setView("lobby"); setDispCode(""); setPeerJoined(false); setWsStatus("idle"); }}
+                className="w-full h-12 text-white/50 hover:text-white border-white/10 hover:bg-white/5 font-display font-black uppercase tracking-widest"
+              >
+                Close Room
+              </Button>
+            </div>
           </div>
         )}
 
         {/* ── Joining ───────────────────────────────────────────── */}
         {view === "joining" && (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-5 text-center space-y-2">
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                Joining room
+          <div className="space-y-6 pt-4 text-center animate-in zoom-in-95 duration-300">
+            <div className="rounded-2xl border-2 border-green-500/50 bg-black/60 p-8 space-y-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-green-400 font-black">
+                Joining Session
               </p>
-              <p className="font-display text-3xl font-bold tracking-[0.3em] text-green-400">
+              <p className="font-display text-5xl font-black tracking-[0.2em] text-white">
                 {dispCode}
               </p>
             </div>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              Launching game…
+            
+            <div className="flex flex-col items-center gap-4 py-4">
+              <Loader2 className="size-10 text-green-400 animate-spin" />
+              <p className="text-xs font-display font-black text-white/50 uppercase tracking-widest animate-pulse">
+                Synchronizing Game State...
+              </p>
             </div>
           </div>
         )}

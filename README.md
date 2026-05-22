@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.90** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.91** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -87,10 +87,11 @@ Systems are listed in release-date order.
 
 ## Changelog
 
-### v2.34.90
-- **Fix: Button Overlap** — Resolved a bug where default EmulatorJS buttons were rendering underneath the custom SNES skin ("buttons on top of buttons").
-- **High-Gloss Aesthetic** — Refined the virtual gamepad with 3D bulb highlights, deeper shadows, and authentic SNES concave/convex button geometry to match professional handheld standards.
-- **Improved Ergonomics** — Rotated and centered the system buttons (Start/Select) and increased the touch precision of the D-Pad.
+### v2.34.91
+- **Netplay Pro Lobby** — Overhauled the Netplay lobby with a high-fidelity "glass console" UI. Features better room management, automatic compatibility checks, and a "Lemuroid-style" aesthetic.
+- **Connection Stability** — Integrated Google's public STUN servers into the signaling layer to improve Peer-to-Peer connectivity and reduce lag.
+- **Live Ping Indicator** — Added a real-time connection quality indicator to the player UI, helping users monitor their netplay performance.
+- **Relay Optimization** — Enhanced the backend signaling server for lower latency and better message throughput.
 
 ### v2.32.0
 - **Unified Sidebar Navigation** — Wired in the full-featured `Sidebar.tsx` component for all secondary pages (Settings, History, Achievements). On desktop it renders as a collapsible icon sidebar; on mobile it automatically becomes a slide-out sheet panel.
