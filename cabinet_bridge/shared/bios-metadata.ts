@@ -2,10 +2,10 @@
 // Expanded to include common regional variants to avoid "Bad Dump" errors.
 export const REQUIRED_BIOS: Record<string, Array<{ filename: string; md5: string; label?: string }>> = {
   psx: [
-    { filename: "scph5501.bin", md5: "8a3563914948a6058221b0665b1d4715", label: "USA" },
-    { filename: "scph5500.bin", md5: "ff3eeb2491a92e1ef23f81e3309a473e", label: "Japan" },
-    { filename: "scph5502.bin", md5: "32736f17079d0b2b7024407c39ad3050", label: "Europe" },
-    { filename: "scph101.bin",  md5: "6e373516599786c12563333333333333", label: "USA (PSone)" }, 
+    { filename: "scph5501.bin", md5: "490f666e1afb15b7362b406ed1cea246", label: "USA" },
+    { filename: "scph5500.bin", md5: "8dd7d5296a650fac7319bce665a6a53c", label: "Japan" },
+    { filename: "scph5502.bin", md5: "32736f17079d0b2b7024407c39bd3050", label: "Europe" },
+    { filename: "ps1_rom.bin",  md5: "00000000000000000000000000000000", label: "Custom" }, 
   ],
   pcsx2: [
     { filename: "scph39001.bin", md5: "f396486008892150394e33458c9f086e", label: "USA v1.60" },
