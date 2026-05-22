@@ -395,7 +395,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
              </div>
           </div>
 
-          <div id="cabinet-ai-status" style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.3);">Ready for question</div>
+          <div id="cabinet-ai-status" style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.3);">Ready for your question</div>
           
           <div id="cabinet-ai-response" style="text-align:left; font-size:14px; color:rgba(255,255,255,0.9); line-height:1.6; max-height:180px; overflow-y:auto; padding:16px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.05); white-space: pre-wrap; display:none;"></div>
           
@@ -515,16 +515,23 @@ function cabinetSetupMenu() {
     btn.setAttribute("aria-expanded", open);
     
     if (window.EJS_emulator) {
-       // Multi-method robust unpause
+       // Multi-method robust unpause (Shotgun approach)
        if (open) {
+          console.log("[Menu] Pausing game...");
           if (typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
        } else {
-          if (typeof window.EJS_emulator.unpause === "function") window.EJS_emulator.unpause();
-          else if (typeof window.EJS_emulator.resume === "function") window.EJS_emulator.resume();
-          else if (typeof window.EJS_emulator.onPause === "function") window.EJS_emulator.onPause(false);
+          console.log("[Menu] Resuming game (Shotgun unpause)...");
+          var emu = window.EJS_emulator;
+          try { if (typeof emu.unpause === "function") emu.unpause(); } catch(e){}
+          try { if (typeof emu.unPause === "function") emu.unPause(); } catch(e){}
+          try { if (typeof emu.resume === "function") emu.resume(); } catch(e){}
+          try { if (typeof emu.setPause === "function") emu.setPause(false); } catch(e){}
+          try { if (typeof emu.onPause === "function") emu.onPause(false); } catch(e){}
+          try { if (emu.gameManager && typeof emu.gameManager.resume === "function") emu.gameManager.resume(); } catch(e){}
           
-          // Force UI repaint
           window.dispatchEvent(new Event('resize'));
+          var canvas = document.querySelector("#game canvas");
+          if (canvas) canvas.focus();
        }
     }
   }
@@ -646,12 +653,10 @@ function cabinetSetupMenu() {
 
   if (aiBtn) {
     aiBtn.onclick = function() {
-      // Show overlay instantly
       aiOverlay.style.display = "flex";
       aiResponse.style.display = "none";
       if (aiStatus) aiStatus.textContent = "Ready for your question.";
       
-      // Capture screen context
       var canvas = document.querySelector("#game canvas");
       if (canvas && aiImg) {
          var offscreen = document.createElement("canvas");
@@ -666,7 +671,7 @@ function cabinetSetupMenu() {
       if (panel) panel.classList.remove("is-open");
       if (backdrop) backdrop.classList.remove("is-open");
       
-      if (aiInput) aiInput.focus();
+      if (aiInput) { aiInput.value = ""; aiInput.focus(); }
     };
 
     if (aiSend) {
@@ -710,8 +715,11 @@ function cabinetSetupMenu() {
   var closeAi = function() {
     if (aiOverlay) aiOverlay.style.display = "none";
     if (window.EJS_emulator) {
-       if (typeof window.EJS_emulator.unpause === "function") window.EJS_emulator.unpause();
-       else if (typeof window.EJS_emulator.resume === "function") window.EJS_emulator.resume();
+       var emu = window.EJS_emulator;
+       try { if (typeof emu.unpause === "function") emu.unpause(); } catch(e){}
+       try { if (typeof emu.unPause === "function") emu.unPause(); } catch(e){}
+       try { if (typeof emu.resume === "function") emu.resume(); } catch(e){}
+       try { if (typeof emu.setPause === "function") emu.setPause(false); } catch(e){}
        window.dispatchEvent(new Event('resize'));
     }
   };
