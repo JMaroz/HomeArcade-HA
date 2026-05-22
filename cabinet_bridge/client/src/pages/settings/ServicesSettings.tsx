@@ -6,13 +6,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { useIntegration } from "@/lib/integration";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
-import { apiUrl, queryClient, apiRequest } from "@/lib/queryClient";
+import { apiUrl, queryClient } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Label } from "@/components/ui/label";
-import { useQuery } from "@tanstack/react-query";
-import { Trophy, Image, Loader2, RefreshCw, CheckCircle2, XCircle, Sparkles, BrainCircuit } from "lucide-react";
+import { Trophy, Image, Loader2, RefreshCw, CheckCircle2, XCircle, Sparkles } from "lucide-react";
 import { Section, Field } from "./SettingsShared";
 
 interface ScrapeResult {
@@ -31,115 +29,6 @@ interface ScrapeComplete {
   matched: number;
   failed: number;
   total: number;
-}
-
-function AiSettingsSection() {
-  const { config, setConfig } = useIntegration();
-  const { toast } = useToast();
-  const [testing, setTesting] = useState(false);
-
-  const handleTestConnection = async () => {
-    setTesting(true);
-    try {
-      const res = await fetch(apiUrl("/api/ai/test"));
-      const data = await res.json();
-      if (data.ok) {
-        if (data.provider === "gemini") {
-          toast({ title: "Gemini Connected", description: data.message });
-        } else {
-          toast({ 
-            title: "Ollama Connected", 
-            description: `Found ${data.models.length} model(s). Vision (${config.ollamaModel}) is ${data.hasVisionModel ? "ready" : "MISSING"}.` 
-          });
-        }
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (err: any) {
-      toast({ title: "Connection Failed", description: err.message, variant: "destructive" });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  return (
-    <Section title="AI Assistant (Intelligence)" description="Choose between local Ollama or Google Gemini to power the in-game Strategy Guide. Gemini is highly recommended for complex game analysis.">
-      <div className="space-y-6">
-        <Field label="Preferred AI Provider" hint="Gemini requires a cloud API key; Ollama runs entirely on your local hardware.">
-          <div className="flex gap-2 p-1 bg-muted/30 border border-border/50 rounded-lg w-fit">
-            <Button 
-              variant={config.aiProvider === "gemini" ? "default" : "ghost"} 
-              size="sm" 
-              onClick={() => setConfig({ aiProvider: "gemini" })}
-              className="h-8 px-4 font-bold text-[10px] uppercase tracking-wider"
-            >
-              Google Gemini
-            </Button>
-            <Button 
-              variant={config.aiProvider === "ollama" ? "default" : "ghost"} 
-              size="sm" 
-              onClick={() => setConfig({ aiProvider: "ollama" })}
-              className="h-8 px-4 font-bold text-[10px] uppercase tracking-wider"
-            >
-              Local Ollama
-            </Button>
-          </div>
-        </Field>
-
-        {config.aiProvider === "gemini" ? (
-          <div className="grid sm:grid-cols-1 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
-             <Field label="Gemini API Key" hint="Get a free key from Google AI Studio. If provided, HomeArcade will use Gemini 1.5 Flash for elite-tier intelligence.">
-              <div className="relative">
-                <Sparkles className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
-                <Input
-                  type="password"
-                  value={config.geminiApiKey}
-                  onChange={(e) => setConfig({ geminiApiKey: e.target.value })}
-                  placeholder="AIza..."
-                  className="pl-9 font-mono text-sm border-primary/20 bg-primary/5 focus-visible:ring-primary/30"
-                />
-              </div>
-            </Field>
-          </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
-            <Field label="Ollama URL" hint="The local address of your Ollama server.">
-              <div className="relative">
-                <BrainCircuit className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={config.ollamaUrl}
-                  onChange={(e) => setConfig({ ollamaUrl: e.target.value })}
-                  placeholder="http://homeassistant.local:11434"
-                  className="pl-9 font-mono text-sm"
-                />
-              </div>
-            </Field>
-            <Field label="Vision Model" hint="Must be a multimodal model (e.g. llava, moondream).">
-              <Input
-                value={config.ollamaModel}
-                onChange={(e) => setConfig({ ollamaModel: e.target.value })}
-                placeholder="llava"
-                className="font-mono text-sm"
-              />
-            </Field>
-          </div>
-        )}
-
-        <div className="flex justify-end">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleTestConnection} 
-            disabled={testing} 
-            className="gap-2 h-9 px-4 font-black uppercase tracking-wider text-[10px]"
-          >
-            {testing ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
-            Test Connection
-          </Button>
-        </div>
-      </div>
-    </Section>
-  );
 }
 
 export function ServicesSettings() {
@@ -402,8 +291,6 @@ export function ServicesSettings() {
           )}
         </div>
       </Section>
-
-      <AiSettingsSection />
     </div>
   );
 }

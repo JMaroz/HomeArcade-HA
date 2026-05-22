@@ -297,20 +297,6 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
       }
       #game.filter-smooth canvas { image-rendering: auto !important; filter: blur(0.4px) brightness(1.05); }
 
-      /* AI Overlay */
-      .cabinet-ai-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 2000000;
-        background: rgba(0, 0, 0, 0.96);
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 24px;
-        backdrop-filter: blur(15px);
-      }
-      
       .cabinet-launch-overlay {
         position: fixed;
         z-index: 999998;
@@ -340,10 +326,9 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
       <div class="cabinet-menu-section">
         <div class="cabinet-menu-label">Game Controls</div>
         <div class="cabinet-menu-grid">
-          <button type="button" id="cabinet-resume" class="primary full-width">Resume</button>
+          <button type="button" id="cabinet-resume" class="primary full-width">Resume Game</button>
           <button type="button" id="cabinet-save">Save State</button>
           <button type="button" id="cabinet-load">Load State</button>
-          <button type="button" id="cabinet-hard-resume" class="full-width" style="display:none; color:#ec4899; border-color:rgba(236, 72, 153, 0.3);">⚠️ Force Resume</button>
         </div>
       </div>
 
@@ -365,14 +350,6 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         </div>
       </div>
 
-      <!-- AI Section -->
-      <div class="cabinet-menu-section">
-        <div class="cabinet-menu-label">AI Assistant</div>
-        <div class="cabinet-menu-grid">
-          <button type="button" id="cabinet-ai-ask" class="full-width primary">🤖 Ask AI Guide...</button>
-        </div>
-      </div>
-
       <!-- System Section -->
       <div class="cabinet-menu-section">
         <div class="cabinet-menu-label">System</div>
@@ -382,32 +359,6 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString }: { 
         </div>
       </div>
     </nav>
-
-    <!-- AI Chat Overlay -->
-    <section class="cabinet-ai-overlay" id="cabinet-ai-overlay">
-       <button type="button" id="cabinet-ai-cancel" style="position:fixed; top:20px; right:20px; width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:24px; cursor:pointer; z-index:2000001; display:flex; align-items:center; justify-content:center;">&times;</button>
-       <div style="width:min(94vw, 520px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:24px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.8); display:flex; flex-direction:column; gap:16px;">
-          <div class="cabinet-menu-label" style="color:rgba(236, 72, 153, 0.8); margin:0;">🤖 AI Strategy Guide</div>
-          
-          <div id="cabinet-ai-screenshot" style="width:100%; aspect-ratio:16/9; border-radius:12px; background:#000; overflow:hidden; border:1px solid rgba(255,255,255,0.1); position:relative;">
-             <img id="cabinet-ai-img" src="" style="width:100%; height:100%; object-fit:contain;" />
-             <div id="cabinet-ai-loading" style="position:absolute; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center;">
-                <div class="cabinet-menu-label animate-pulse" style="color:#fff;">Analyzing...</div>
-             </div>
-          </div>
-
-          <div id="cabinet-ai-status" style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.3);">Ready for question</div>
-          
-          <div id="cabinet-ai-response" style="text-align:left; font-size:14px; color:rgba(255,255,255,0.9); line-height:1.6; max-height:180px; overflow-y:auto; padding:16px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.05); white-space: pre-wrap; display:none;"></div>
-          
-          <div style="display:flex; gap:8px;">
-             <input type="text" id="cabinet-ai-input" placeholder="Ask anything about this screen..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 16px; color:#fff; font-family:inherit; font-size:13px; outline:none;" />
-             <button type="button" id="cabinet-ai-send" style="background:#ec4899; color:#fff; border:none; border-radius:12px; padding:0 20px; font:900 10px monospace; text-transform:uppercase; cursor:pointer;">Ask</button>
-          </div>
-
-          <button type="button" id="cabinet-ai-close" style="appearance:none; width:100%; padding:12px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; font:900 10px ui-monospace,monospace; text-transform:uppercase; cursor:pointer; margin-top:8px;">Back to Game</button>
-       </div>
-    </section>
 
     <section class="cabinet-save-panel" id="cabinet-warp-panel" style="display:none; position:fixed; inset:0; z-index:1000000; background:rgba(0,0,0,0.9); backdrop-filter:blur(10px); align-items:center; justify-content:center;">
        <div style="width:min(90vw, 400px); background:#0a0a0f; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:32px; text-align:center;">
@@ -503,7 +454,6 @@ function cabinetSetupMenu() {
   var backdrop = document.getElementById("cabinet-menu-backdrop");
   var panel = document.getElementById("cabinet-menu-panel");
   var resumeBtn = document.getElementById("cabinet-resume");
-  var hardResumeBtn = document.getElementById("cabinet-hard-resume");
   var saveBtn = document.getElementById("cabinet-save");
   var loadBtn = document.getElementById("cabinet-load");
   var warpBtn = document.getElementById("cabinet-warp-open");
@@ -511,10 +461,12 @@ function cabinetSetupMenu() {
 
   if (!btn || !panel) return;
 
-  function shotgunUnpause() {
+  function forceUnpause() {
     if (!window.EJS_emulator) return;
     var emu = window.EJS_emulator;
-    console.log("[Menu] Shotgun unpause fired...");
+    console.log("[Menu] Force unpause sequence triggered...");
+    
+    // Attempt every known resume method sequentially
     try { if (typeof emu.unpause === "function") emu.unpause(); } catch(e){}
     try { if (typeof emu.unPause === "function") emu.unPause(); } catch(e){}
     try { if (typeof emu.resume === "function") emu.resume(); } catch(e){}
@@ -522,13 +474,15 @@ function cabinetSetupMenu() {
     try { if (typeof emu.onPause === "function") emu.onPause(false); } catch(e){}
     try { if (emu.gameManager && typeof emu.gameManager.resume === "function") emu.gameManager.resume(); } catch(e){}
     
-    // Force browser interaction events
+    // Hard browser-level wake up
     window.dispatchEvent(new Event('resize'));
     var canvas = document.querySelector("#game canvas");
     if (canvas) {
        canvas.focus();
-       // Simulate a click on the canvas to satisfy browser autoplay/resume policies
-       canvas.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+       // Satisfy browser interaction requirements
+       canvas.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+       canvas.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+       canvas.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     }
   }
 
@@ -540,14 +494,8 @@ function cabinetSetupMenu() {
     if (window.EJS_emulator) {
        if (open) {
           if (typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
-          if (hardResumeBtn) hardResumeBtn.style.display = "none";
        } else {
-          shotgunUnpause();
-          // Show hard resume recovery button after a delay if still in menu state internally?
-          // For now just show it if they click resume and it fails.
-          if (hardResumeBtn) {
-             setTimeout(function() { hardResumeBtn.style.display = "block"; }, 100);
-          }
+          forceUnpause();
        }
     }
   }
@@ -556,13 +504,6 @@ function cabinetSetupMenu() {
   backdrop.onclick = function() { toggleMenu(false); };
   resumeBtn.onclick = function() { toggleMenu(false); };
   
-  if (hardResumeBtn) {
-    hardResumeBtn.onclick = function() {
-       shotgunUnpause();
-       cabinetToast("Hard Resume Attempted 🚀");
-    };
-  }
-
   saveBtn.onclick = function() {
     if (!window.EJS_emulator) return;
     window.EJS_emulator.saveState();
@@ -660,90 +601,6 @@ function cabinetSetupMenu() {
       if (wPanel) wPanel.style.display = "none";
       toggleMenu(true);
     };
-  }
-
-  // AI Assistant (Ollama/Gemini)
-  var aiBtn = document.getElementById("cabinet-ai-ask");
-  var aiOverlay = document.getElementById("cabinet-ai-overlay");
-  var aiImg = document.getElementById("cabinet-ai-img");
-  var aiLoading = document.getElementById("cabinet-ai-loading");
-  var aiResponse = document.getElementById("cabinet-ai-response");
-  var aiStatus = document.getElementById("cabinet-ai-status");
-  var aiInput = document.getElementById("cabinet-ai-input");
-  var aiSend = document.getElementById("cabinet-ai-send");
-  var aiClose = document.getElementById("cabinet-ai-close");
-  var aiCancel = document.getElementById("cabinet-ai-cancel");
-
-  if (aiBtn) {
-    aiBtn.onclick = function() {
-      aiOverlay.style.display = "flex";
-      aiResponse.style.display = "none";
-      if (aiStatus) aiStatus.textContent = "Ready for your question.";
-      
-      var canvas = document.querySelector("#game canvas");
-      if (canvas && aiImg) {
-         var offscreen = document.createElement("canvas");
-         offscreen.width = 640;
-         offscreen.height = canvas.height * (640 / canvas.width);
-         var ctx = offscreen.getContext("2d");
-         ctx.drawImage(canvas, 0, 0, offscreen.width, offscreen.height);
-         aiImg.src = offscreen.toDataURL("image/jpeg", 0.6);
-      }
-
-      if (window.EJS_emulator && typeof window.EJS_emulator.pause === "function") window.EJS_emulator.pause();
-      if (panel) panel.classList.remove("is-open");
-      if (backdrop) backdrop.classList.remove("is-open");
-      
-      if (aiInput) { aiInput.value = ""; aiInput.focus(); }
-    };
-
-    if (aiSend) {
-      aiSend.onclick = async function() {
-        var question = aiInput.value.trim() || "What should I do next?";
-        try {
-          if (aiLoading) aiLoading.style.display = "flex";
-          if (aiStatus) aiStatus.textContent = "Processing image...";
-          
-          var ingressBase = window.location.pathname.split("/").slice(0, 4).join("/");
-          var res = await fetch(ingressBase + "/api/ai/analyze", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              image: aiImg.src,
-              prompt: "I am playing " + ${JSON.stringify(title)} + ". " + question
-            })
-          });
-
-          if (!res.ok) throw new Error("AI Error (" + res.status + ")");
-          var data = await res.json();
-          
-          if (aiStatus) aiStatus.textContent = "Analysis complete.";
-          if (aiResponse) {
-            aiResponse.style.display = "block";
-            aiResponse.textContent = data.response;
-          }
-        } catch (err) {
-          if (aiStatus) aiStatus.textContent = "Failed: " + err.message;
-          if (aiResponse) {
-            aiResponse.style.display = "block";
-            aiResponse.innerHTML = '<div style="color:#ef4444; font-weight:900;">ERROR</div>' + err.message;
-          }
-        } finally {
-          if (aiLoading) aiLoading.style.display = "none";
-        }
-      };
-    }
-  }
-
-  var closeAi = function() {
-    if (aiOverlay) aiOverlay.style.display = "none";
-    shotgunUnpause();
-  };
-
-  if (aiClose) aiClose.onclick = closeAi;
-  if (aiCancel) aiCancel.onclick = closeAi;
-  if (aiInput) {
-    aiInput.onkeydown = function(e) { if (e.key === "Enter") aiSend.click(); };
   }
 }
 
