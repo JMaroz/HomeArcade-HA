@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.49** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.88** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -60,11 +60,11 @@ Systems are listed in release-date order.
 |---|---|---|
 | Arcade (MAME) | mame2003 | `.zip` |
 | Atari 2600 | stella2014 | `.a26` `.bin` `.zip` |
-| NES | nes | `.nes` `.zip` |
+| NES | fceumm | `.nes` `.zip` |
 | Atari 7800 | prosystem | `.a78` `.bin` `.zip` |
 | Sega Master System | smsgg | `.sms` `.zip` |
 | TurboGrafx-16 / PC Engine | pce | `.pce` `.zip` |
-| Genesis / Mega Drive | segaMD | `.md` `.bin` `.smd` `.zip` |
+| Genesis / Mega Drive | genesis_plus_gx | `.md` `.bin` `.smd` `.zip` |
 | Game Boy | gambatte | `.gb" ".zip` |
 | Atari Lynx | mednafen_lynx | `.lnx` `.zip` |
 | Game Gear | smsgg | `.gg" ".zip` |
@@ -73,9 +73,9 @@ Systems are listed in release-date order.
 | Sega CD | segaCD | `.cue+.bin" ".iso" ".chd" ".zip` |
 | Sega 32X | picodrive | `.32x" ".bin" ".zip` |
 | Saturn | yabause | `.iso" ".bin" ".zip` |
-| PlayStation 1 | pcsx | `.cue+.bin" ".iso" ".pbp" ".chd" ".zip` |
+| PlayStation 1 | pcsx_rearmed | `.cue+.bin" ".iso" ".pbp" ".chd" ".zip` |
 | Virtual Boy | beetle_vb | `.vb" ".zip` |
-| Nintendo 64 | mupen64plus | `.n64" ".z64" ".v64" ".zip` |
+| Nintendo 64 | mupen64plus_next | `.n64" ".z64" ".v64" ".zip` |
 | Game Boy Color | gambatte | `.gbc" ".zip` |
 | Dreamcast | reicast | `.cdi" ".gdi" ".chd" ".zip` |
 | PlayStation 2 | pcsx2 | `.iso" ".bin" ".zip` |
@@ -86,6 +86,12 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.34.88
+- **Auto-Resume ("Pick Up and Play")** — overhauled the emulator launch logic. The app now automatically triggers a `quickSave` on exit and a `quickLoad` on launch to provide a seamless experience.
+- **Lemuroid-style Touch Controls** — redesigned the virtual gamepad with larger, circular buttons, refined gradients, and haptic-like active states for a more professional feel.
+- **High-Performance Cores** — upgraded default cores to modern versions (mgba, snes9x, fceumm, genesis_plus_gx, mupen64plus_next) for better compatibility and performance.
+- **Dashboard "Resume" Button** — added a prominent "Resume" button to the game detail panel when a save state is available.
 
 ### v2.32.0
 - **Unified Sidebar Navigation** — Wired in the full-featured `Sidebar.tsx` component for all secondary pages (Settings, History, Achievements). On desktop it renders as a collapsible icon sidebar; on mobile it automatically becomes a slide-out sheet panel.

@@ -614,124 +614,104 @@ export function renderEmulatorPage({ title, returnTo, romHash }: { title: string
       }
       .virtual-pad button {
         appearance: none;
-        min-width: 54px;
-        min-height: 54px;
-        border: 1px solid rgba(255, 255, 255, 0.22);
+        min-width: 62px;
+        min-height: 62px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
         border-radius: 999px;
         background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07)),
-          rgba(5, 5, 7, 0.58);
+          radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15), transparent 60%),
+          rgba(15, 15, 22, 0.65);
         color: #f8fafc;
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.16),
-          0 10px 28px rgba(0, 0, 0, 0.38);
+          0 8px 24px rgba(0, 0, 0, 0.45),
+          inset 0 1px 1px rgba(255, 255, 255, 0.1);
         cursor: pointer;
-        font: 800 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing: 0.08em;
+        font: 900 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        letter-spacing: 0.04em;
         pointer-events: auto;
         text-transform: uppercase;
         touch-action: none;
         user-select: none;
         -webkit-user-select: none;
         -webkit-tap-highlight-color: transparent;
+        transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), background 120ms ease, border-color 120ms ease;
       }
       .virtual-pad button:focus-visible {
-        border-color: rgba(236, 72, 153, 0.9);
-        outline: 2px solid rgba(236, 72, 153, 0.42);
-        outline-offset: 3px;
+        border-color: #ec4899;
+        outline: 2px solid rgba(236, 72, 153, 0.4);
+        outline-offset: 4px;
       }
       .virtual-pad button.is-pressed,
       .virtual-pad button:active {
         background:
-          linear-gradient(180deg, rgba(236, 72, 153, 0.54), rgba(236, 72, 153, 0.26)),
-          rgba(5, 5, 7, 0.66);
-        border-color: rgba(236, 72, 153, 0.95);
-        transform: translateY(2px) scale(0.97);
+          radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.4), rgba(236, 72, 153, 0.15)),
+          rgba(10, 10, 15, 0.8);
+        border-color: rgba(236, 72, 153, 0.9);
+        transform: scale(0.92) translateY(1px);
+        transition: transform 60ms cubic-bezier(0, 0, 0.2, 1);
       }
       .virtual-pad__shoulders {
         position: absolute;
-        top: 8px;
-        left: max(18px, env(safe-area-inset-left));
-        right: max(18px, env(safe-area-inset-right));
+        top: 12px;
+        left: max(20px, env(safe-area-inset-left));
+        right: max(20px, env(safe-area-inset-right));
         display: flex;
         justify-content: space-between;
       }
       .virtual-pad__shoulders button {
-        min-width: min(26vw, 128px);
-        border-radius: 18px;
+        min-width: min(28vw, 140px);
+        min-height: 48px;
+        border-radius: 20px;
+        font-size: 11px;
       }
       .virtual-pad__dpad {
         position: absolute;
-        left: max(18px, env(safe-area-inset-left));
-        bottom: max(24px, env(safe-area-inset-bottom));
+        left: max(20px, env(safe-area-inset-left));
+        bottom: max(32px, env(safe-area-inset-bottom));
         display: grid;
-        grid-template-columns: repeat(3, 58px);
-        grid-template-rows: repeat(3, 58px);
-        gap: 6px;
+        grid-template-columns: repeat(3, 64px);
+        grid-template-rows: repeat(3, 64px);
+        gap: 4px;
         pointer-events: none;
       }
-      .virtual-pad__dpad .up {
-        grid-column: 2;
-        grid-row: 1;
-      }
-      .virtual-pad__dpad .left {
-        grid-column: 1;
-        grid-row: 2;
-      }
-      .virtual-pad__dpad .right {
-        grid-column: 3;
-        grid-row: 2;
-      }
-      .virtual-pad__dpad .down {
-        grid-column: 2;
-        grid-row: 3;
-      }
+      .virtual-pad__dpad .up { grid-column: 2; grid-row: 1; border-radius: 18px 18px 6px 6px; }
+      .virtual-pad__dpad .left { grid-column: 1; grid-row: 2; border-radius: 18px 6px 6px 18px; }
+      .virtual-pad__dpad .right { grid-column: 3; grid-row: 2; border-radius: 6px 18px 18px 6px; }
+      .virtual-pad__dpad .down { grid-column: 2; grid-row: 3; border-radius: 6px 6px 18px 18px; }
       .virtual-pad__dpad-core {
         grid-column: 2;
         grid-row: 2;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.1);
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
       }
       .virtual-pad__face {
         position: absolute;
-        right: max(18px, env(safe-area-inset-right));
-        bottom: max(28px, env(safe-area-inset-bottom));
+        right: max(20px, env(safe-area-inset-right));
+        bottom: max(32px, env(safe-area-inset-bottom));
         display: grid;
-        grid-template-columns: repeat(3, 58px);
-        grid-template-rows: repeat(3, 58px);
-        gap: 6px;
+        grid-template-columns: repeat(3, 64px);
+        grid-template-rows: repeat(3, 64px);
+        gap: 8px;
         pointer-events: none;
       }
-      .virtual-pad__face .y {
-        grid-column: 1;
-        grid-row: 2;
-      }
-      .virtual-pad__face .x {
-        grid-column: 2;
-        grid-row: 1;
-      }
-      .virtual-pad__face .b {
-        grid-column: 2;
-        grid-row: 3;
-      }
-      .virtual-pad__face .a {
-        grid-column: 3;
-        grid-row: 2;
-      }
+      .virtual-pad__face .y { grid-column: 1; grid-row: 2; }
+      .virtual-pad__face .x { grid-column: 2; grid-row: 1; }
+      .virtual-pad__face .b { grid-column: 2; grid-row: 3; }
+      .virtual-pad__face .a { grid-column: 3; grid-row: 2; }
       .virtual-pad__system {
         position: absolute;
         left: 50%;
-        bottom: max(28px, env(safe-area-inset-bottom));
+        bottom: max(32px, env(safe-area-inset-bottom));
         display: flex;
-        gap: 12px;
+        gap: 16px;
         transform: translateX(-50%);
       }
       .virtual-pad__system button {
-        min-width: 86px;
-        min-height: 44px;
-        border-radius: 16px;
+        min-width: 92px;
+        min-height: 42px;
+        border-radius: 14px;
         font-size: 10px;
+        font-weight: 800;
       }
       @media (max-width: 720px) {
         body.cabinet-pad-mobile.cabinet-pad-on #game {

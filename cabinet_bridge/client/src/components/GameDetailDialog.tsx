@@ -770,6 +770,17 @@ export function GameDetailDialog({
               >
                 <Play className="size-4 fill-current" /> {launching ? "Launching…" : game.romId ? "Play" : "Launch"}
               </Button>
+              {latestSave && (
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  onClick={launch}
+                  className="font-mono uppercase tracking-wider gap-2 border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary"
+                  data-testid="button-detail-resume"
+                >
+                  <Zap className="size-4 fill-current" /> Resume
+                </Button>
+              )}
               <Button
                 size="lg"
                 variant="outline"

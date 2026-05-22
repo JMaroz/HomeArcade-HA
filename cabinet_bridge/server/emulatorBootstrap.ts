@@ -299,6 +299,7 @@ function cabinetSendInput(inputValue, fallbackKey) {
 var cabinetRomId = ${JSON.stringify(romId)};
 var cabinetRomHash = ${JSON.stringify(romHash || "")};
 var cabinetSaveSlots = [];
+var cabinetSaveSlotsFetched = false;
 var cabinetCurrentSaveSlot = 1;
 function cabinetSaveStateEndpoint(slot) {
   return "./save-states" + (slot ? "/" + slot : "");
@@ -341,6 +342,8 @@ async function cabinetFetchSaveSlots() {
     cabinetSaveSlots = await response.json();
   } catch (_error) {
     cabinetSaveSlots = [];
+  } finally {
+    cabinetSaveSlotsFetched = true;
   }
   cabinetRenderSaveSlots();
 }
@@ -1932,7 +1935,7 @@ window.EJS_ready = function () {
   cabinetSetLaunchProgress(62, "Emulator ready. Loading game…", "Core ready");
 };
 var cabinetSessionStart = 0;
-window.EJS_onGameStart = function () {
+window.EJS_onGameStart = async function () {
   cabinetFinishLaunchProgress("Game ready");
   cabinetInitDisplay();
   cabinetSessionStart = Date.now();
@@ -1953,7 +1956,6 @@ window.EJS_onGameStart = function () {
       try {
         window.EJS_emulator.saveState(0);
         cabinetCaptureThumb("auto");
-        localStorage.setItem("cabinet_autosave_" + (window.EJS_gameID || ""), String(Date.now()));
       } catch (_e) {}
     }
   });
@@ -1963,20 +1965,24 @@ window.EJS_onGameStart = function () {
       try { window.EJS_emulator.saveState(0); } catch (_e) {}
     }
   });
-  // Restore auto-save from previous session (if tab was hidden mid-game)
-  var _autoKey = "cabinet_autosave_" + (window.EJS_gameID || "");
-  var _autoTs = null;
-  try { _autoTs = localStorage.getItem(_autoKey); } catch (_e) {}
-  if (_autoTs) {
-    try { localStorage.removeItem(_autoKey); } catch (_e) {}
-    var _autoMins = Math.round((Date.now() - Number(_autoTs)) / 60000);
-    var _autoLabel = _autoMins < 1 ? "just now" : _autoMins + " min ago";
+  
+  // ── Auto-Resume ──
+  // Wait for save slots to be fetched if they haven't been already
+  for (var i = 0; i < 30; i++) { // wait up to 3 seconds
+    if (cabinetSaveSlotsFetched) break;
+    await new Promise(function(r) { setTimeout(r, 100); });
+  }
+
+  var autoSaveSlot = cabinetSaveSlots.find(function(s) { return s.slot === 0; });
+  if (autoSaveSlot) {
+    var diff = Date.now() - autoSaveSlot.updatedAt;
+    var label = cabinetRelativeTime(autoSaveSlot.updatedAt);
     setTimeout(function () {
-      cabinetToast("Resuming auto-save from " + _autoLabel + "…");
+      cabinetToast("Resuming auto-save from " + label + "…");
       if (window.EJS_emulator && typeof window.EJS_emulator.loadState === "function") {
         try { window.EJS_emulator.loadState(0); } catch (_e) {}
       }
-    }, 2500);
+    }, 1800); // Small delay to let the core settle before loading
   }
 };
 window.EJS_player = "#game";
