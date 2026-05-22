@@ -205,14 +205,14 @@
     "header": "Integration",
     "autoSaved": "Settings are saved automatically to the local database.",
     "tabs": {
-      "connection": "Connection",
       "display": "Display",
-      "automation": "Automation",
       "controls": "Controls",
       "library": "Library",
       "health": "Health",
       "services": "Services",
-      "kiosk": "Kiosk",
+      "vault": "The Vault",
+      "netplay": "Netplay",
+      "automations": "Automations",
       "help": "Help"
     },
     "sections": {
@@ -272,6 +272,10 @@
       "bulk": {
         "title": "Bulk Actions",
         "description": "Process multiple ROMs at once. These operations can take several minutes."
+      },
+      "vault": {
+        "title": "Library Audit & Cleanup",
+        "description": "Powerful tools to optimize your collection. Find missing artwork, remove dead links, and identify duplicate ROMs."
       },
       "health": {
         "title": "System Health & Firmware",
