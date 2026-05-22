@@ -569,6 +569,10 @@ export function registerRomRoutes(app: Express) {
     const netplayRole = req.query.netplay_role ? String(req.query.netplay_role) : null;
     const netplayRoom = req.query.netplay_room ? String(req.query.netplay_room) : null;
 
+    // Detect the Home Assistant Ingress base path for injected URLs
+    const ingressMatch = req.originalUrl.match(/^\/api\/(?:hassio_)?ingress\/[^\/]+/);
+    const ingressBase = ingressMatch ? ingressMatch[0] : "";
+
     res.setHeader("Content-Type", "application/javascript; charset=utf-8");
     // Bootstrap content is stable for a given ROM+profile combination;
     // a short cache avoids regenerating it on every page reload.
@@ -583,7 +587,7 @@ export function registerRomRoutes(app: Express) {
     for (const meta of coreBios) {
       try {
         await fs.access(path.join(BIOS_ROOT, meta.filename));
-        biosUrl = `/api/bios/file/${meta.filename}`;
+        biosUrl = `${ingressBase}/api/bios/file/${meta.filename}`;
         break;
       } catch {
       }

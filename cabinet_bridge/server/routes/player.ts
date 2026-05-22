@@ -637,7 +637,7 @@ window.EJS_startOnLoaded = true;
 // ── Performance & Quality ──
 window.EJS_webgl = true;
 window.EJS_fps = true;
-window.EJS_threads = ${["psx", "n64", "pcsx2", "ppsspp", "melonds"].includes(core) ? "true" : "false"};
+window.EJS_threads = false;
 window.EJS_cacheExtensions = true;
 
 // ── Hide built-in UI ──
