@@ -118,7 +118,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .cabinet-toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
 
       /* Netplay Status */
-      .cabinet-netplay-status { position: fixed; z-index: 999999; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 99px; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); font: 900 10px ui-monospace, monospace; color: #f8fafc; opacity: 0; transition: opacity 300ms ease; }
+      .cabinet-netplay-status { position: fixed; z-index: 999999; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); font: 900 10px ui-monospace, monospace; color: #f8fafc; opacity: 0; transition: opacity 300ms ease; }
       .cabinet-netplay-status.is-active { opacity: 1; }
       .cabinet-ping-dot { width: 6px; height: 6px; border-radius: 999px; background: #22c55e; }
       .cabinet-ping-dot.laggy { background: #eab308; }
@@ -295,7 +295,7 @@ export function renderEmulatorBootstrap({
   core, title, gameId, romId, discs, romHash, userId, userName, profileId, biosUrl, netplayRole, netplayRoom, netplaySyncMode, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2
 }: any) {
   const ejsDiscs = discs?.length > 1 
-    ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) => ({ fileName: `../${d.id}/file`, label: d.label })))};`
+    ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) => ({ fileName: '../' + d.id + '/file', label: d.label })))};`
     : `window.EJS_gameUrl = "./file";`;
 
   return `"use strict";
