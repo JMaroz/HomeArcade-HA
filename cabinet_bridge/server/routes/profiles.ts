@@ -424,8 +424,8 @@ export function registerProfileRoutes(app: Express) {
         publishGameStarted({
           romId: rom.id, title: rom.title, system: rom.system,
           profileName, playCount: rom.playCount ?? 0,
-          genre: rom.genre, developer: rom.developer,
-          releaseYear: rom.releaseYear, artUrl: rom.artUrl,
+          genre: rom.genre ?? undefined, developer: rom.developer ?? undefined,
+          releaseYear: rom.releaseYear ?? undefined, artUrl: rom.artUrl ?? undefined,
         }).catch(() => {});
       } else {
         publishGameEnded({

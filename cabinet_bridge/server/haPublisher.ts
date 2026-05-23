@@ -18,6 +18,28 @@
 import { storage } from "./storage";
 import { log } from "./log";
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+export interface GameStartedPayload {
+  title: string;
+  system: string;
+  romId: number;
+  profileName: string;
+  playCount?: number;
+  genre?: string;
+  developer?: string;
+  releaseYear?: number;
+  artUrl?: string;
+}
+
+export interface GameEndedPayload {
+  romId: number;
+  title: string;
+  system: string;
+  profileName: string;
+  durationSeconds: number;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getSupervisorToken(): string | null {

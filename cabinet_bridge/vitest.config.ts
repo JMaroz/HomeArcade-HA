@@ -8,6 +8,7 @@ export default defineConfig({
     include: [
       'client/src/__tests__/**/*.test.ts',
       'server/__tests__/**/*.test.ts',
+      'shared/__tests__/**/*.test.ts',
     ],
     alias: {
       '@': path.resolve(__dirname, 'client/src'),

@@ -81,7 +81,7 @@ export async function fetchTheGamesDBMeta(system: string, title: string, apiKey:
     const pubsMap = (include?.publishers as any)?.data as Record<string, { name?: string }> | undefined;
     const pubIds = game.publishers as number[] | undefined;
     let publisher: string | null = null;
-    if (pubsMap && Array.isArray(devIds) && devIds.length > 0) {
+    if (pubsMap && Array.isArray(pubIds) && pubIds.length > 0) {
       publisher = pubsMap[pubIds[0]]?.name ?? null;
     }
 

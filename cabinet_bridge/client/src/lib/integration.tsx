@@ -81,6 +81,18 @@ export interface IntegrationConfig {
   globalAspectRatio?: string;
   /** Default emulator shader */
   globalShader?: string;
+  /** Watch paths for mounted library scanning */
+  libraryWatchPaths?: string;
+  /** Enable cloud (Google Drive) save sync */
+  cloudSaveEnabled?: boolean;
+  /** Google Drive OAuth client ID */
+  googleDriveClientId?: string;
+  /** Google Drive OAuth client secret */
+  googleDriveClientSecret?: string;
+  /** Google Drive refresh token */
+  googleDriveRefreshToken?: string;
+  /** Google Drive folder ID for saves */
+  googleDriveFolderId?: string;
 }
 
 export type IntegrationSaveStatus = "idle" | "loading" | "saving" | "saved" | "error";

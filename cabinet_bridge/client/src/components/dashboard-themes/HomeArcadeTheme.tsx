@@ -231,7 +231,8 @@ export default function HomeArcadeTheme() {
     },
     onFocusChange: (idx) => {
       if (idx >= 0 && (view === "system" || searchQuery)) setActiveGameIdx(idx);
-    }
+    },
+    onFav: () => {},
   });
 
   // Sync manual mouse selection back to grid nav focus

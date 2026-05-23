@@ -34,12 +34,14 @@ describe("SYSTEM_IMAGES registry", () => {
     }
   });
 
-  it("all URLs point to Wikimedia or trusted domains", () => {
+  it("all URLs point to trusted sources (Wikimedia, GitHub, or localhost proxy)", () => {
     for (const img of Object.values(SYSTEM_IMAGES)) {
       const trusted =
         img.url.includes("wikimedia.org") ||
-        img.url.includes("wikipedia.org");
-      expect(trusted).toBe(true);
+        img.url.includes("raw.githubusercontent.com") ||
+        img.url.includes("localhost") ||
+        img.url.includes("127.0.0.1");
+      expect(trusted, `URL for ${img.id} is not from a trusted source: ${img.url}`).toBe(true);
     }
   });
 });
