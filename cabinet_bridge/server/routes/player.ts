@@ -105,7 +105,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .cabinet-ping-dot.slow { background: #ef4444; }
 
       #game { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; }
-      .ejs-virtual-gamepad, #emulator-parent > div[style*="z-index: 1000"], div[class*="virtual-gamepad"], #virtual-gamepad, .ejs-vpad, [id*="virtual-gamepad"], canvas + div { display: none !important; opacity: 0 !important; pointer-events: none !important; visibility: hidden !important; }
+      .ejs-virtual-gamepad, div[class*="virtual-gamepad"], #virtual-gamepad, .ejs-vpad, [id*="virtual-gamepad"] { display: none !important; opacity: 0 !important; pointer-events: none !important; visibility: hidden !important; }
 
       /* Filters */
       #game.filter-crt canvas { filter: contrast(1.1) brightness(0.9) saturate(1.1); }
