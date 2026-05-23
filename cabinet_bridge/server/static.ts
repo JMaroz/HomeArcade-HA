@@ -16,8 +16,8 @@ function staticLog(message: string) {
 // Applied to every static asset response so HA ingress cannot override them.
 function setCrossOriginHeaders(res: Response) {
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
-  res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
   res.setHeader("Access-Control-Expose-Headers", "Content-Length, Accept-Ranges");
   res.removeHeader("X-Frame-Options");
 }
