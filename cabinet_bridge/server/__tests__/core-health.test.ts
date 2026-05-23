@@ -50,4 +50,13 @@ describe("Core Health & BIOS Validation", () => {
     expect(EMULATORJS_CORES["ps2"]).toBe("play");
     expect(REQUIRED_BIOS["play"]).toBeDefined();
   });
+
+  it("should use the verified 'n64' alias to ensure cross-device playback", () => {
+    // We use the generic 'n64' alias because explicitly forcing 'mupen64plus_next'
+    // can break loading on mobile/Safari where the WASM files are named differently.
+    expect(EMULATORJS_CORES["n64"]).toBe("n64");
+    
+    // N64 should NOT have a BIOS requirement that blocks loading in the standard gate
+    expect(REQUIRED_BIOS["n64"]).toBeUndefined();
+  });
 });
