@@ -348,10 +348,15 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       /* Force-hide any default EmulatorJS UI elements that might leak through */
       .ejs-virtual-gamepad, 
       #emulator-parent > div[style*="z-index: 1000"],
-      div[class*="virtual-gamepad"] { 
+      div[class*="virtual-gamepad"],
+      #virtual-gamepad,
+      .ejs-vpad,
+      [id*="virtual-gamepad"],
+      canvas + div { 
         display: none !important; 
         opacity: 0 !important; 
         pointer-events: none !important; 
+        visibility: hidden !important;
       }
       
       /* Filter Overlays (on #game container) */
@@ -411,7 +416,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         justify-content: center;
         min-width: calc(66px * var(--vpad-scale));
         min-height: calc(66px * var(--vpad-scale));
-        border: 1px solid rgba(255, 255, 255, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.28);
         border-radius: 999px;
         background:
           radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.25) 0%, transparent 50%),
@@ -442,7 +447,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .vpad-dpad .up { grid-column: 2; grid-row: 1; border-radius: 16px 16px 4px 4px; border-bottom: none; }
       .vpad-dpad .left { grid-column: 1; grid-row: 2; border-radius: 16px 4px 4px 16px; border-right: none; }
       .vpad-dpad .right { grid-column: 3; grid-row: 2; border-radius: 4px 16px 16px 4px; border-left: none; }
-      .vpad-dpad .down { grid-column: 2; grid-row: 3; border-radius: 4px 16px 16px 4px; border-top: none; }
+      .vpad-dpad .down { grid-column: 2; grid-row: 3; border-radius: 4px 4px 16px 16px; border-top: none; }
       .vpad-dpad-core { grid-column: 2; grid-row: 2; background: rgba(15, 15, 20, 0.9); border: 1px solid rgba(255,255,255,0.05); }
 
       .vpad-face { position: absolute; right: max(32px, env(safe-area-inset-right)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, calc(72px * var(--vpad-scale))); grid-template-rows: repeat(3, calc(72px * var(--vpad-scale))); gap: 6px; }
@@ -1015,6 +1020,7 @@ window.EJS_upscale = localStorage.getItem("cabinet_hd_mode") === "true";
 // ── Hide built-in UI ──
 window.EJS_onMobile = false;
 window.EJS_virtualGamepad = false;
+window.EJS_gamepad = false;
 window.EJS_buttons = {
   play_pause: false, restart: false, mute: false, settings: false, fullscreen: true,
   save_state: false, load_state: false, quick_save: false, quick_load: false
