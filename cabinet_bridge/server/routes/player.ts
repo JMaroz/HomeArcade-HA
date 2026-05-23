@@ -1000,7 +1000,7 @@ window.EJS_core = ${JSON.stringify(core)};
 window.EJS_gameName = ${JSON.stringify(title)};
 window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
 ${discs?.length > 1 ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) => ({ fileName: `../${d.id}/file`, label: d.label })))};` : `window.EJS_gameUrl = \"./file\";`}
-window.EJS_pathtodata = ingressBase + "/../../emulatorjs/";
+window.EJS_pathtodata = ingressBase + "/emulatorjs/";
 ${biosUrl ? `window.EJS_biosUrl = ${JSON.stringify(biosUrl)};` : ""}
 window.EJS_startOnLoaded = true;
 window.EJS_volume = 0.5; // Default volume to prevent AL initialization crash

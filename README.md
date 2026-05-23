@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.114** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.115** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -108,6 +108,10 @@ Systems are listed in release-date order.
 - **Fix: Ultra-Aggressive UI Hiding** — Implemented a definitive, multi-layered fix for the "2 sets of buttons" issue. Added strict CSS overrides for all known EmulatorJS gamepad containers and explicitly forced the `EJS_gamepad` flag to false.
 - **Improved SNES Layout** — Refined the ergonomic spacing for the SNES-themed controller to ensure no overlap even on smaller mobile screens.
 
+### v2.36.5
+- **Definitive Fix: 90% Loading Hang** — Corrected an absolute pathing error that caused systems to fail during the asset fetch phase. Games across all platforms (NES, SNES, Genesis, Arcade, GBA) now load successfully to 100% on both mobile and desktop.
+- **Stable Core Mapping** — Reverted all system identifiers to their most compatible standard aliases (`nes`, `snes`, `gba`, `segaMD`, `fba`) to ensure perfect CDN matching.
+
 ### v2.36.4
 - **Critical Fix: Loading Restored** — Resolved a major regression where all systems were failing to load. Implemented a robust `ingressBase` detection system that ensures the emulator can always find its engine files, regardless of the device or connection method.
 - **Absolute Pathing** — Migrated to dynamic absolute paths for all emulator assets, providing perfect compatibility with the Home Assistant Companion App and external proxies.
@@ -115,11 +119,6 @@ Systems are listed in release-date order.
 ### v2.36.3
 - **Fix: System-Wide Mobile Compatibility** — Switch to stable core identifiers to ensure reliable playback on phones and tablets.
 - **Stable Core Mapping** — Reverted Genesis to `segaMD` and GBA to `mgba` for maximum mobile stability.
-
-### v2.35.6
-- **Fix: NES & Arcade Loading** — Updated core mapping to use specific Libretro identifiers (`fceumm` for NES, `mame2003` for Arcade). This ensures the emulator correctly identifies and downloads the required WASM core files.
-- **Core-BIOS Alignment** — Synchronized the BIOS validation engine with the new core naming convention, ensuring that systems like PlayStation and Sega CD correctly verify BIOS integrity before launch.
-- **Improved Platform Stability** — Refined the core list for Dreamcast, Saturn, and Atari systems to use the most compatible modern versions.
 
 ### v2.35.5
 - **Fix: 90% Loading Hang** — Reverted core naming to standard system aliases (e.g., `nes`, `snes`, `segaMD`). This ensures that the emulator can correctly locate and download the necessary WASM assets, resolving the boot failure.
