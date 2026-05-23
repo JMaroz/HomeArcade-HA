@@ -454,8 +454,7 @@ window.EJS_gameName = ${JSON.stringify(title)};
 window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
 ${ejsDiscs}
 
-// Fallback to CDN for assets if local files are missing (v2.41.3)
-window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+window.EJS_pathtodata = window.CABINET_INGRESS_BASE + "/api/emulatorjs/";
 window.EJS_startOnLoaded = true;
 window.EJS_volume = 0.5;
 window.EJS_onMobile = false;
