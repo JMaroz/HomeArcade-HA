@@ -500,13 +500,14 @@ export function registerRomRoutes(app: Express) {
       `${ROM_ROOT}${path.sep}`,
       ...watchPaths.map((p) => `${p}${path.sep}`)
     ];
-    const resolved = path.resolve(rom.filePath);
+    const resolved = path.resolve(rom.filePath).replace(/\\/g, "/");
     const isWin = process.platform === "win32";
     const isSafe = safeRoots.some((root) => {
+      const normalizedRoot = root.replace(/\\/g, "/");
       if (isWin) {
-        return resolved.toLowerCase().startsWith(root.toLowerCase());
+        return resolved.toLowerCase().startsWith(normalizedRoot.toLowerCase());
       }
-      return resolved.startsWith(root);
+      return resolved.startsWith(normalizedRoot);
     });
     if (!isSafe) {
       return res.status(403).json({ message: "ROM path is outside the storage directory." });
@@ -708,15 +709,15 @@ export function registerRomRoutes(app: Express) {
     const id = Number(req.params.id);
     const deleted = await storage.deleteUploadedRom(id);
     if (!deleted) return res.status(404).json({ message: "Uploaded ROM not found." });
-    const safeRoot = `${ROM_ROOT}${path.sep}`;
-    const resolved = path.resolve(deleted.filePath);
+    const safeRoot = `${ROM_ROOT}${path.sep}`.replace(/\\/g, "/");
+    const resolved = path.resolve(deleted.filePath).replace(/\\/g, "/");
     let fileRemoved = false;
     const isWin = process.platform === "win32";
     const isMatched = isWin
       ? resolved.toLowerCase().startsWith(safeRoot.toLowerCase())
       : resolved.startsWith(safeRoot);
     if (isMatched) {
-      try { await fs.unlink(resolved); fileRemoved = true; } catch { fileRemoved = false; }
+      try { await fs.unlink(path.resolve(deleted.filePath)); fileRemoved = true; } catch { fileRemoved = false; }
     }
     res.json({ deleted: true, id: deleted.id, fileRemoved });
   });
