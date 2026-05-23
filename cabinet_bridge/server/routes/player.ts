@@ -22,8 +22,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         var apiIdx = path.indexOf("/api/roms");
         var base = apiIdx !== -1 ? path.substring(0, apiIdx) : "";
         window.CABINET_INGRESS_BASE = base;
-        
-        // Dynamic BASE tag ensures relative requests point to the Ingress root
+        window.CABINET_RETURN_TO = ${safeReturnTo};
         var baseTag = document.createElement("base");
         baseTag.href = base + "/";
         document.head.appendChild(baseTag);
@@ -464,11 +463,11 @@ window.EJS_buttons = { play_pause: false, restart: false, mute: false, settings:
 var loader = document.createElement("script");
 loader.src = window.CABINET_INGRESS_BASE + "/emulatorjs/loader.js";
 document.body.appendChild(loader);
-\`;
+`;
 }
 
 export function renderPlayerError(message: string) {
-  return \`<!doctype html>
+  return `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -485,12 +484,12 @@ export function renderPlayerError(message: string) {
       }
     </style>
   </head>
-  <body>\${escapeHtml(message)}</body>
-</html>\`;
+  <body>${escapeHtml(message)}</body>
+</html>`;
 }
 
 export function renderBootstrapError(message: string) {
-  return \`"use strict";
+  return `"use strict";
 function cabinetFailLaunchProgress(msg) {
   var bar = document.querySelector("#cabinet-progress-bar");
   var statusText = document.querySelector("#cabinet-launch-status");
@@ -505,6 +504,6 @@ function cabinetFailLaunchProgress(msg) {
     statusText.style.fontWeight = "900";
   }
 }
-cabinetFailLaunchProgress(\${JSON.stringify(message)});
-\`;
+cabinetFailLaunchProgress(${JSON.stringify(message)});
+`;
 }
