@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.109** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.110** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -86,6 +86,10 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.36.0
+- **Automated Core Health Checks** — Introduced a new automated test suite (`core-health.test.ts`) that systematically verifies every system's core mapping and BIOS requirements. This prevents future regressions and ensures that every console boots correctly before an update is released.
+- **Improved BIOS Alignment** — Fine-tuned the BIOS validation logic for PlayStation systems to ensure perfect synchronization between core engines and metadata.
 
 ### v2.35.9
 - **Fix: Conditional Sega BIOS** — Implemented a smart BIOS check for Sega systems. Standard Genesis and Master System games now correctly bypass the BIOS requirement, while Sega CD titles correctly retain the prompt.

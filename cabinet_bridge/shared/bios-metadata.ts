@@ -1,7 +1,7 @@
 // Standard BIOS metadata from RetroPie / Libretro standards
 // Expanded to include common regional variants to avoid "Bad Dump" errors.
 export const REQUIRED_BIOS: Record<string, Array<{ filename: string; md5: string; label?: string }>> = {
-  pcsx_rearmed: [
+  psx: [
     { filename: "scph5501.bin", md5: "490f666e1afb15b7362b406ed1cea246", label: "USA" },
     { filename: "scph5500.bin", md5: "8dd7d5296a650fac7319bce665a6a53c", label: "Japan" },
     { filename: "scph5502.bin", md5: "32736f17079d0b2b7024407c39bd3050", label: "Europe" },
