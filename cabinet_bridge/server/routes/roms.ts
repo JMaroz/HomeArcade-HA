@@ -491,9 +491,18 @@ export function registerRomRoutes(app: Express) {
     if (!rom) {
       return res.status(404).json({ message: "Uploaded ROM not found." });
     }
-    const safeRoot = `${ROM_ROOT}${path.sep}`;
+    const settings = await storage.getIntegrationSettings();
+    const watchPaths = (settings.libraryWatchPaths ?? "")
+      .split(",")
+      .map((p) => path.resolve(p.trim()))
+      .filter(Boolean);
+    const safeRoots = [
+      `${ROM_ROOT}${path.sep}`,
+      ...watchPaths.map((p) => `${p}${path.sep}`)
+    ];
     const resolved = path.resolve(rom.filePath);
-    if (!resolved.startsWith(safeRoot)) {
+    const isSafe = safeRoots.some((root) => resolved.startsWith(root));
+    if (!isSafe) {
       return res.status(403).json({ message: "ROM path is outside the storage directory." });
     }
 
