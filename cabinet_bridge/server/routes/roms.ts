@@ -615,8 +615,10 @@ export function registerRomRoutes(app: Express) {
 
     // BIOS gate: if this core requires a BIOS and none is present, surface a
     // clear error in the launch overlay instead of silently hanging.
-    // Return 200 so the script actually executes and shows the error message.
-    if (coreBios.length > 0 && !biosUrl) {
+    // NOTE: For genesis_plus_gx, we ONLY require a BIOS if the system is Sega CD.
+    const skipBiosCheck = (core === "genesis_plus_gx" && rom.system !== "segacd");
+
+    if (coreBios.length > 0 && !biosUrl && !skipBiosCheck) {
       const missing = coreBios.map(m => m.filename).join(" or ");
       return res.send(renderBootstrapError(`BIOS required — upload ${missing} in the BIOS tab before playing this system.`));
     }
