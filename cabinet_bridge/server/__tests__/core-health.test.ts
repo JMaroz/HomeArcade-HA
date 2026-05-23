@@ -20,13 +20,12 @@ describe("Core Health & BIOS Validation", () => {
 
   it("should have correct BIOS keys matching core names", () => {
     // Systems that definitely MUST have BIOS metadata defined (even if files are optional)
-    const coresRequiringMetadata = ["psx", "play", "flycast", "mgba", "yabause", "genesis_plus_gx"];
+    const coresRequiringMetadata = ["psx", "play", "flycast", "gba", "saturn", "segacd"];
     
     coresRequiringMetadata.forEach(core => {
       // Find the key in REQUIRED_BIOS that matches this core
-      // Note: we use the value from EMULATORJS_CORES to check metadata alignment
-      const metadata = REQUIRED_BIOS[core] || Object.values(EMULATORJS_CORES).includes(core);
-      expect(metadata, `Core '${core}' is used but missing from REQUIRED_BIOS keys`).toBeTruthy();
+      const metadata = REQUIRED_BIOS[core];
+      expect(metadata, `Core '${core}' is used but missing from REQUIRED_BIOS keys`).toBeDefined();
     });
   });
 
@@ -34,11 +33,16 @@ describe("Core Health & BIOS Validation", () => {
     const genesisCore = EMULATORJS_CORES["genesis"];
     const segacdCore = EMULATORJS_CORES["segacd"];
     
-    expect(genesisCore).toBe("genesis_plus_gx");
-    expect(segacdCore).toBe("genesis_plus_gx");
+    expect(genesisCore).toBe("md");
+    expect(segacdCore).toBe("segacd");
     
-    // The BIOS metadata should exist for this core
-    expect(REQUIRED_BIOS["genesis_plus_gx"]).toBeDefined();
+    // The BIOS metadata should exist for Sega CD
+    expect(REQUIRED_BIOS["segacd"]).toBeDefined();
+  });
+
+  it("should use standard naming for NES and Arcade to ensure playback", () => {
+    expect(EMULATORJS_CORES["nes"]).toBe("nes");
+    expect(EMULATORJS_CORES["arcade"]).toBe("arcade");
   });
 
   it("should use standard naming for Game Boy systems to prevent 90% hang", () => {
