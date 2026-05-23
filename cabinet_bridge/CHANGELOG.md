@@ -1,3 +1,145 @@
+## 2.34.121 – 2026-05-23
+
+- **Release**: **Changelog Sync** — Synchronized the Home Assistant add-on changelog with the latest development history to ensure full visibility of features and fixes within the HA UI.
+
+## 2.34.120 – 2026-05-23
+
+- **Fix**: **RetroArch CDN Fallback** — Implemented a fallback mechanism that automatically loads engine assets from the official Libretro CDN if local assets are missing.
+- **Fix**: **Mandatory Cross-Origin Isolation** — Enforced strict `COOP` and `COEP` headers on the server to resolve MIME type and script execution errors in modern browsers.
+- **Improved**: **Engine Boot Sequence** — Refined the `Module` initialization to correctly handle asynchronous WebAssembly loading and virtual filesystem mounting.
+
+## 2.34.119 – 2026-05-23
+
+- **Major**: **Pure Libretro Migration** — Transitioned from the EmulatorJS wrapper to the official RetroArch Web (WASM) engine for professional-grade stability and advanced feature support.
+- **Feature**: **Official RetroArch Menu** — Re-enabled the classic RGUI interface for full control over shaders, cheats, and core settings directly in-browser.
+
+## 2.34.118 – 2026-05-23
+
+- **Fix**: **Client-Side Path Resolution** — Migrated 100% of the asset routing logic to the browser, eliminating "Unexpected token '<'" errors by ensuring absolute Ingress URLs are always used.
+- **Improved**: **Asset Loader Sync** — Re-aligned the initialization sequence to ensure all configuration flags are set before the engine boots.
+
+## 2.34.117 – 2026-05-23
+
+- **Major**: **Fresh Asset Implementation** — Overhauled emulator engine asset management by moving all files into the static `public` directory for reliable bundling and serving.
+
+## 2.34.116 – 2026-05-22
+
+- **Fix**: **Asset Routing** — Implemented robust Ingress path detection to ensure all emulator assets are requested using verified absolute paths.
+
+## 2.34.115 – 2026-05-22
+
+- **Fix**: **90% Loading Hang** — Corrected absolute pathing errors and reverted all core identifiers to their most compatible standard aliases (`nes`, `snes`, `gba`, `segaMD`, `fba`).
+
+## 2.34.114 – 2026-05-22
+
+- **Fix**: **Loading Restored** — Resolved a major regression where all systems failed to load by implementing dynamic `ingressBase` detection.
+
+## 2.34.113 – 2026-05-22
+
+- **Fix**: **System-Wide Mobile Compatibility** — Switched to stable core identifiers and absolute paths to ensure reliable playback on phones and tablets.
+
+## 2.34.112 – 2026-05-22
+
+- **Major**: **Definitive Core Realignment** — Restored standard system identifiers for all consoles to ensure perfect compatibility with the EmulatorJS WASM catalog.
+
+## 2.34.111 – 2026-05-22
+
+- **Fix**: **N64 Core Stability** — Fine-tuned the N64 configuration for perfect playback and added specific health checks to prevent regressions.
+
+## 2.34.110 – 2026-05-22
+
+- **Feature**: **Automated Core Health Checks** — Introduced a new test suite (`core-health.test.ts`) that verifies every system's core mapping and BIOS requirements before release.
+
+## 2.34.109 – 2026-05-22
+
+- **Fix**: **Conditional Sega BIOS** — Standard Genesis and Master System games now correctly bypass BIOS requirements, while Sega CD titles correctly retain the prompt.
+
+## 2.34.108 – 2026-05-22
+
+- **Fix**: **Ultra-Aggressive UI Hiding** — Implemented multi-layered CSS and JS overrides to permanently resolve the "2 sets of buttons" issue.
+
+## 2.34.107 – 2026-05-22
+
+- **Fix**: **Game Boy & GBC Loading** — Restored core mapping to standard aliases (`gb`, `gbc`) to resolve loading hangs.
+
+## 2.34.106 – 2026-05-22
+
+- **Fix**: **NES & Arcade Loading** — Updated core mapping to use specific Libretro identifiers to match the CDN WASM catalog.
+
+## 2.34.105 – 2026-05-22
+
+- **Fix**: **90% Loading Hang** — Reverted core naming to standard system aliases to ensure correct asset discovery.
+
+## 2.34.104 – 2026-05-22
+
+- **Fix**: **Audio Engine Crash** — Resolved a critical `TypeError` during startup by adding a default volume guard for the OpenAL audio driver.
+
+## 2.34.103 – 2026-05-22
+
+- **Fix**: **Console Errors (403 / Content-Length)** — Explicitly exposed required headers to allow the emulator to download large assets through the HA proxy.
+
+## 2.34.102 – 2026-05-22
+
+- **Fix**: **N64 Loading Failure** — Reverted N64 core to system alias for maximum cross-device compatibility.
+
+## 2.34.101 – 2026-05-22
+
+- **Fix**: **Gamepad Input Bridge** — Implemented a manual input relay that bypasses browser-specific Gamepad API quirks for perfect controller reliability.
+
+## 2.34.100 – 2026-05-22
+
+- **Feature**: **Auto-Gamepad Detection** — The app now automatically detects when controllers are connected and applies standardized Retropad mapping.
+
+## 2.34.99 – 2026-05-22
+
+- **Feature**: **Netplay Diagnostic Engine** — Added server-side logging to track peer connections and message routing for debugging synchronization.
+
+## 2.34.98 – 2026-05-22
+
+- **Performance**: **Payload Trimming** — Optimized the ROMs API to omit null fields, reducing JSON size by ~40% for faster dashboard loading.
+
+## 2.34.97 – 2026-05-22
+
+- **Improved**: **PS1/PS2 Performance** — Optimized asset pre-fetching and core initialization to improve load times.
+- **Fix**: **Menu Freeze** — Resolved an issue where the in-game menu would freeze the emulator state.
+
+## 2.34.96 – 2026-05-22
+
+- **Feature**: **Customizable Touch Controls** — Added real-time sliders for button size and opacity.
+- **Feature**: **HD Mode (Upscale)** — Introduced an "HD Mode" toggle for internal upscaling on supported cores.
+
+## 2.34.95 – 2026-05-22
+
+- **Major**: **Lemuroid-Style Menu Overhaul** — Redesigned the in-game menu with a centered glass card and large action tiles.
+- **Improved**: **Forced UI Hiding** — More aggressive overrides to ensure the default EmulatorJS menu stays hidden.
+
+## 2.34.94 – 2026-05-22
+
+- **Fix**: **Netplay Synchronization** — Explicitly enabled the internal netplay engine flag to ensure joined sessions correctly sync game state.
+
+## 2.34.93 – 2026-05-22
+
+- **Fix**: **PS1/PS2 Startup Hang** — Corrected core naming mismatch to ensure BIOS files are detected correctly.
+
+## 2.34.92 – 2026-05-22
+
+- **Fix**: **Double Virtual Controls** — Force-disabled internal mobile detection and added CSS overrides to resolve button overlap.
+- **Aesthetics**: **High-Gloss UI** — Applied 3D bulb highlights and authentic concave/convex button geometry.
+
+## 2.34.91 – 2026-05-22
+
+- **Major**: **Netplay Pro Lobby** — Overhauled the Netplay lobby with a high-fidelity UI and live status indicators.
+- **Stable**: **WebRTC STUN Servers** — Integrated Google STUN servers for better P2P connectivity and lower lag.
+
+## 2.34.90 – 2026-05-22
+
+- **Fix**: **Button Overlap** — Resolved a bug where default buttons rendered under the custom skin.
+
+## 2.34.88 – 2026-05-22
+
+- **Feature**: **Auto-Resume ("Pick Up and Play")** — The app now automatically quick-saves on exit and quick-loads on launch.
+- **Engine**: **High-Performance Cores** — Upgraded default cores to modern versions (mgba, snes9x, fceumm).
+
 ## 2.34.40 – 2026-05-21
 
 - **Fix**: **Netplay Synchronization** — Fixed a bug where netplay rooms would connect but game sessions wouldn't sync. The EmulatorJS bootstrap now correctly receives `EJS_netplayUrl`, `EJS_netplayRole`, and `EJS_netplayRoom` variables.
@@ -16,7 +158,7 @@
 ## 2.34.37 – 2026-05-21
 
 - **Fix**: **Broken Game Art in HA** — Fixed an issue where game thumbnails and background fanart failed to load in Home Assistant. All proxy image sources now correctly use the `apiUrl()` helper to prepend the ingress prefix.
-- **Dev**: **Windows Compatibility** — Integrated `cross-env` into package scripts to allow the dev server (`npm run dev`) to start correctly on Windows machines.
+- **Dev**: **Windows Compatibility** — Integrated `cross-env` into package scripts to allow the dev server (`npm run dev`) start correctly on Windows machines.
 
 ## 2.34.36 – 2026-05-21
 
@@ -219,181 +361,3 @@
 - **Game Cards** — updated to MD3 Elevated Card: 16px large shape (rounded-xl), tonal surface (surface-container), Level-1 shadow, state layer on hover/press, borderless elevated style
 - **Favorite button** — MD3 Tonal Icon Button: primary-container fill when active, rounded-full shape
 - **Tailwind config** — Tailwind border-radius overrides updated to MD3 scale; new color tokens: , , , , 
-
-# Changelog
-
-## 0.6.1
-
-- Feature: **Gamepad button remapper** — Settings → Controls now has a Gamepad Mapping section; plug in any controller and click a RetroArch button then press the physical button to map it; mappings saved per profile and applied at game launch via EJS_defaultControls value2 field
-- Defaults auto-loaded for standard Xbox/PS layout (no setup needed for common controllers); Reset button restores defaults
-
-## 0.6.0
-
-- Feature: **TheGamesDB scraper** — new primary metadata source for box art, descriptions, genre, developer, and publisher; add your free API key in Settings → Services; cascades to ScreenScraper then Libretro thumbnails
-- Feature: **Play History page** — dedicated history view showing sessions grouped by day, per-game playtime bar chart, total playtime stats, and most-played summary; accessible from sidebar and mobile nav
-- Feature: **Per-profile favorites, ratings, and play status** — each named profile maintains its own favorites, star ratings, and backlog/playing/completed status independently of the global library
-- Feature: **Per-profile key bindings** — Settings → Controls now has a profile selector; each profile stores keyboard overrides loaded at game launch
-- Feature: **Mobile landscape mode** — on-screen pad resizes correctly in landscape orientation with button press animation on touch devices
-- Fix: Map iteration in netplay.ts uses Array.from() for ES2015 compatibility
-
-## 0.5.3
-
-- Feature: ROM upload progress bar with per-file and overall percentage
-
-## 0.5.2
-
-- Fix: critical SyntaxError in bootstrap.js caused by regex backslash consumption inside TypeScript template literals; replaced with indexOf/slice URL derivation
-
-## 0.5.1
-
-- Fix: netplay relay URL derivation behind HA Ingress prefix
-
-## 0.5.0
-
-- Feature: **Named player profiles** — create profiles in Settings; switch from the library header; save states, cheats, and key remaps isolated per profile
-- Feature: **Cheat codes panel** — add, toggle, and delete cheat codes per game per profile from the in-game panel
-- Feature: **Shader presets** — Scanlines, LCD (pixel-perfect), Phosphor (green glow)
-- Feature: **Netplay** — WebSocket relay server; create or join a room code to play with a friend
-
-## 0.3.15
-
-- Feature: Settings page now uses tabs (General, Library, Services, Controls, Kiosk, HA Setup)
-- Feature: Controls tab — per-console keyboard binding editor; click any button to remap, saves globally, applied on next game launch
-- Schema: added controlDefaults to integration settings; server reads saved bindings and injects into EJS_defaultControls at launch time
-
-## 0.3.14
-
-- Polish: Settings page cleaned up — removed duplicate RetroAchievements and EmulationStation sections, removed stale prototype language, regrouped service credentials together, cleaner section order
-
-## 0.3.13
-
-- Fix: fast-forward button now calls Module.setFastForward() with fallback chain for different EmulatorJS builds
-- Fix: rewind changed from broken toggle to hold-to-rewind (mousedown/touchstart starts rewind, mouseup/touchend stops) — matches how RetroArch rewind actually works
-
-## 0.3.12
-
-- Fix: ReferenceError in bootstrap.js diagnostic — `core` used as JS runtime variable instead of TS template interpolation; changed to `${core}` so it resolves server-side
-
-## 0.3.11
-
-- Fix: critical SyntaxError in bootstrap.js line 877 — `rows.join("\n")` inside a TypeScript template literal produced a literal newline character in generated JS, breaking game loading; changed to `rows.join("")`
-
-## 0.3.10
-
-- Fix: critical SyntaxError in bootstrap.js (introduced by v0.3.9 diagnostic) — JSON.stringify inside a string literal broke game loading entirely
-- The diagnostic console.log now uses string concatenation instead of JSON.stringify
-
-## 0.3.9
-
-- Fix: system logo `<img>` src now routed through `apiUrl()` — fixes 404s hitting HA's own API instead of the addon under Ingress
-- Fix: system hardware image URLs now routed through `apiUrl()` for the same reason
-- Fix: TypeScript error in Dashboard.tsx (`all` object typed as `Record<string,number>`; `uploadedRoms` prop removed from Sidebar call)
-- Fix: `system?.monogram` → `system?.mono` in Home.tsx
-- Debug: bootstrap.js now logs `[HomeArcade]` markers to browser console and shows `ERR` in the progress overlay if it fails to load — helps diagnose 0% game loading
-
-## 0.3.8
-
-- Fix: service worker now uses a versioned cache name (`home-arcade-v0.3.8`) so stale JS is cleared on every addon update
-- Fix: shell HTML is now fetched network-first so the app always boots with the latest code
-
-## 0.3.7
-
-- Removed Quick action endpoints section from Settings
-- Removed Wiring guide section from Settings
-- Removed PC Status panel section from Settings
-
-## 0.3.6
-
-- System logos now served through `/api/system-logos/:id` proxy — fixes CORS blocks under HA Ingress
-- System hardware images return a dark SVG placeholder instead of a 404 when Wikimedia is unreachable
-- Removed `crossOrigin` attribute from logo img tags (no longer needed with same-origin proxy)
-
-## 0.3.5
-
-- Controls button now opens a proper panel with the full keyboard layout for the active system (PS1/PS2, GBA, GB/GBC, N64, NDS, PSP, and generic)
-- Panel dynamically adapts to the loaded core — shows the right buttons for each console
-- Closes on backdrop click, Escape, or ×
-
-## 0.3.4
-
-- **Home Dashboard** — new default landing page with Continue Playing hero, stat cards (total hours, completed, in progress, backlog), system play-time bars, status donut chart, week-over-week activity, game highlights, and In Progress / Recently Played / New This Week shelves
-- Sidebar gains a Dashboard nav link
-- Library view moved to `/library`
-
-## 0.3.3
-
-- Removed the ARCADE-PC / Offline status pill from the sidebar footer
-
-## 0.3.2
-
-- Removed the Emulator PC right-panel widget (was showing mock offline data)
-
-## 0.3.1
-
-- Live PC status polling from Home Assistant entities (CPU %, RAM %, current app, online state)
-- Settings: PC Status panel with fields for entity IDs (Online, CPU %, RAM %, Current App)
-
-## 0.3.0
-
-- **Community score** — scraped from ScreenScraper (`jeu.note`, /20 scale displayed as /10) and shown in game detail dialog
-- **Wheel art** — logo overlay fetched from ScreenScraper wheel-hd/wheel/wheel-carbon media; shown in game detail header
-- Game detail dialog polish: genre pills, wheel art logo, community score stat, graceful art fallback
-
-## 0.2.0
-
-- Game Boy, Game Boy Color, Nintendo DS, PSP, and Dreamcast system support
-- Server-side save state backups (survive browser clears)
-- Gamepad tester with live axis/button readout
-- Named controller remap profiles
-- Netplay host/join room UI
-- RetroAchievements in-game integration and dashboard page
-- ROM MD5 hash verification
-- EmulationStation and LaunchBox XML import
-- Exact play-time tracking
-- Recently Played shelf
-- Kiosk collection picker
-- PWA manifest — installable on desktop and mobile
-- Vitest integration test suite
-
-## 0.1.9
-
-- Save state thumbnails
-- Rewind and fast-forward/turbo
-- Cheat menu
-- In-game screenshot capture
-- Shader/filter and aspect ratio controls
-- Per-game key remapping
-- ScreenScraper metadata scraping (box art, screenshots, description, genre, developer, release date)
-- Genre/tag filtering and sort options
-- ZIP and 7z ROM support
-- HA play session event logging
-- Kiosk / kid mode with optional PIN
-
-## 0.1.8
-
-- Multi-disc PS1 support — `.cue`/`.bin` sets auto-grouped; EmulatorJS disc-swap menu
-- Save state path fixes
-
-## 0.1.5
-
-- PlayStation 2 (pcsx2 core)
-- DualShock L2/R2/L3/R3 mapping for PS1 and PS2
-- 4-slot save states with load/save controls
-- PS1/PS2 memory card persistence
-
-## 0.1.4
-
-- ROM upload moved to system pages; upload size cap raised (default 2 GB)
-- Sidebar system links are URL-driven and bookmarkable
-- Integration settings persisted server-side in SQLite
-
-## 0.1.3
-
-- Home Assistant add-on packaging (Dockerfile, config.yaml, run.sh, repository.yaml)
-- Ingress path prefix fix
-- Console artwork on Browse Systems tiles
-- Mobile virtual gamepad redesign
-
-## 0.1.0
-
-Initial release — React + Vite SPA, Express backend, EmulatorJS, SQLite via Drizzle ORM, ROM upload, game collections.

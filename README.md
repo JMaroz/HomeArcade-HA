@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.120** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.121** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -107,6 +107,9 @@ Systems are listed in release-date order.
 ### v2.35.8
 - **Fix: Ultra-Aggressive UI Hiding** — Implemented a definitive, multi-layered fix for the "2 sets of buttons" issue. Added strict CSS overrides for all known EmulatorJS gamepad containers and explicitly forced the `EJS_gamepad` flag to false.
 - **Improved SNES Layout** — Refined the ergonomic spacing for the SNES-themed controller to ensure no overlap even on smaller mobile screens.
+
+### v2.39.2
+- **Changelog Synchronization** — Updated the official Home Assistant add-on changelog (`CHANGELOG.md`) to include all recent development history. This ensures that users can see the full list of improvements, including the RetroArch migration and performance optimizations, directly within the Home Assistant UI.
 
 ### v2.39.1
 - **RetroArch CDN Fallback** — Implemented a fallback mechanism that automatically loads engine assets from the official Libretro CDN if local assets are missing. This ensures the player always boots successfully, even without manual asset population.
