@@ -136,7 +136,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         var base = apiIdx !== -1 ? path.substring(0, apiIdx) : "";
         window.CABINET_INGRESS_BASE = base;
         
-        // Inject BASE tag dynamically to force relative paths to the root
+        // Dynamic BASE tag ensures relative requests point to the Ingress root
         var baseTag = document.createElement("base");
         baseTag.href = base + "/";
         document.head.appendChild(baseTag);
@@ -294,62 +294,33 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .cabinet-disc-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        margin-top: 10px;
+        gap: 6px; margin-top: 10px;
       }
-      .cabinet-disc-item {
-        justify-content: flex-start !important;
-        padding-left: 16px !important;
-      }
+      .cabinet-disc-item { justify-content: flex-start !important; padding-left: 16px !important; }
 
       /* Forced Menu Hide for Default EmulatorJS */
       #emulator-parent > div[style*="z-index: 1001"],
       .ejs-menu, .ejs-overlay, div[class*="overlay-menu"] {
-        display: none !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        visibility: hidden !important;
+        display: none !important; opacity: 0 !important; pointer-events: none !important; visibility: hidden !important;
       }
 
       /* In-game Toast */
       .cabinet-toast {
-        position: fixed;
-        z-index: 1000000;
-        top: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 12px 24px;
-        border-radius: 99px;
-        background: rgba(236, 72, 153, 0.95);
-        color: white;
-        font: 900 11px ui-monospace, monospace;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        opacity: 0;
-        pointer-events: none;
-        transition: all 200ms ease;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        position: fixed; z-index: 1000000; top: 24px; left: 50%; transform: translateX(-50%);
+        padding: 12px 24px; border-radius: 99px; background: rgba(236, 72, 153, 0.95);
+        color: white; font: 900 11px ui-monospace, monospace; letter-spacing: 0.1em;
+        text-transform: uppercase; opacity: 0; pointer-events: none;
+        transition: all 200ms ease; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
       }
       .cabinet-toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
 
       /* Netplay Ping Indicator */
       .cabinet-netplay-status {
-        position: fixed;
-        z-index: 999999;
-        top: max(12px, env(safe-area-inset-top));
-        right: max(12px, env(safe-area-inset-right));
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border-radius: 99px;
-        background: rgba(0, 0, 0, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(12px);
-        font: 900 10px ui-monospace, monospace;
-        color: #f8fafc;
-        opacity: 0;
-        transition: opacity 300ms ease;
+        position: fixed; z-index: 999999; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right));
+        display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 99px;
+        background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px); font: 900 10px ui-monospace, monospace; color: #f8fafc;
+        opacity: 0; transition: opacity 300ms ease;
       }
       .cabinet-netplay-status.is-active { opacity: 1; }
       .cabinet-ping-dot { width: 6px; height: 6px; border-radius: 999px; background: #22c55e; }
@@ -361,18 +332,11 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       /* Force-hide any default EmulatorJS UI elements that might leak through */
       .ejs-virtual-gamepad, 
       #emulator-parent > div[style*="z-index: 1000"],
-      div[class*="virtual-gamepad"],
-      #virtual-gamepad,
-      .ejs-vpad,
-      [id*="virtual-gamepad"],
-      canvas + div { 
-        display: none !important; 
-        opacity: 0 !important; 
-        pointer-events: none !important; 
-        visibility: hidden !important;
+      div[class*="virtual-gamepad"], #virtual-gamepad, .ejs-vpad, [id*="virtual-gamepad"], canvas + div { 
+        display: none !important; opacity: 0 !important; pointer-events: none !important; visibility: hidden !important;
       }
       
-      /* Filter Overlays (on #game container) */
+      /* Filter Overlays */
       #game.filter-crt canvas { filter: contrast(1.1) brightness(0.9) saturate(1.1); }
       #game.filter-crt::after {
         content: ""; pointer-events: none; position: absolute; inset: 0; z-index: 10;
@@ -388,71 +352,35 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       #game.filter-smooth canvas { image-rendering: auto !important; filter: blur(0.4px) brightness(1.05); }
 
       .cabinet-launch-overlay {
-        position: fixed;
-        z-index: 999998;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #000;
-        color: #f8fafc;
-        transition: opacity 300ms ease;
+        position: fixed; z-index: 999998; inset: 0; display: flex; align-items: center; justify-content: center;
+        background: #000; color: #f8fafc; transition: opacity 300ms ease;
       }
       .cabinet-launch-overlay.is-hidden { opacity: 0; visibility: hidden; }
-      .cabinet-launch-card {
-        width: 300px;
-        text-align: center;
-      }
+      .cabinet-launch-card { width: 300px; text-align: center; }
       .cabinet-progress-track { width: 100%; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); overflow: hidden; margin: 20px 0; }
       .cabinet-progress-bar { width: 0%; height: 100%; background: #ec4899; transition: width 200ms ease; }
 
-      /* Virtual Gamepad Layout & Styling */
+      /* Virtual Gamepad Styling */
       .virtual-pad {
-        position: fixed;
-        z-index: 999997;
-        inset: 0;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 250ms ease;
-        opacity: var(--vpad-opacity);
+        position: fixed; z-index: 999997; inset: 0; pointer-events: none; opacity: 0;
+        transition: opacity 250ms ease; opacity: var(--vpad-opacity);
       }
       .virtual-pad.is-visible { opacity: var(--vpad-opacity); }
       .virtual-pad button {
-        appearance: none;
-        pointer-events: auto;
-        touch-action: none;
-        user-select: none;
-        -webkit-user-select: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: calc(66px * var(--vpad-scale));
-        min-height: calc(66px * var(--vpad-scale));
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        border-radius: 999px;
-        background:
-          radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.25) 0%, transparent 50%),
-          radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 80%),
-          rgba(15, 15, 22, 0.75);
-        color: #fff;
-        box-shadow:
-          0 10px 25px rgba(0, 0, 0, 0.5),
-          inset 0 1px 1px rgba(255, 255, 255, 0.2),
-          inset 0 -2px 5px rgba(0, 0, 0, 0.3);
+        appearance: none; pointer-events: auto; touch-action: none; user-select: none;
+        -webkit-user-select: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        min-width: calc(66px * var(--vpad-scale)); min-height: calc(66px * var(--vpad-scale));
+        border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px;
+        background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.25) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 80%), rgba(15, 15, 22, 0.75);
+        color: #fff; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2), inset 0 -2px 5px rgba(0, 0, 0, 0.3);
         font: 900 calc(15px * var(--vpad-scale)) ui-monospace, SFMono-Regular, monospace;
-        letter-spacing: 0.02em;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        letter-spacing: 0.02em; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         transition: transform 80ms cubic-bezier(0.2, 0, 0, 1), background 120ms ease, box-shadow 80ms ease;
       }
-      .virtual-pad button.is-pressed,
-      .virtual-pad button:active {
-        background:
-          radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.4), rgba(236, 72, 153, 0.15)),
-          rgba(10, 10, 15, 0.85);
+      .virtual-pad button.is-pressed, .virtual-pad button:active {
+        background: radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.4), rgba(236, 72, 153, 0.15)), rgba(10, 10, 15, 0.85);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 2px 10px rgba(0, 0, 0, 0.4);
-        transform: scale(0.94) translateY(2px);
-        transition: transform 40ms ease;
+        transform: scale(0.94) translateY(2px); transition: transform 40ms ease;
       }
       
       .vpad-dpad { position: absolute; left: max(32px, env(safe-area-inset-left)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, calc(68px * var(--vpad-scale))); grid-template-rows: repeat(3, calc(68px * var(--vpad-scale))); gap: 2px; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6)); }
@@ -476,10 +404,8 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .vpad-system { position: absolute; left: 50%; bottom: max(32px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 24px; }
       .vpad-system button { width: calc(90px * var(--vpad-scale)); height: calc(32px * var(--vpad-scale)); border-radius: 999px; font-size: calc(9px * var(--vpad-scale)); font-weight: 900; background: rgba(255, 255, 255, 0.05); border-color: rgba(255,255,255,0.1); transform: rotate(-15deg); }
 
-      /* ── SNES THEME (High Gloss) ── */
-      body[data-system="snes"] .vpad-face button {
-        background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.4) 0%, transparent 60%);
-      }
+      /* SNES THEME */
+      body[data-system="snes"] .vpad-face button { background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.4) 0%, transparent 60%); }
       body[data-system="snes"] .vpad-face .a { background-color: rgba(220, 38, 38, 0.8) !important; border-color: #ef4444 !important; }
       body[data-system="snes"] .vpad-face .b { background-color: rgba(202, 138, 4, 0.8) !important; border-color: #facc15 !important; }
       body[data-system="snes"] .vpad-face .x { background-color: rgba(37, 99, 235, 0.8) !important; border-color: #60a5fa !important; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.5); }
@@ -601,21 +527,20 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
     <div id="game"></div>
 
     <script>
-      window.CABINET_RETURN_TO = ${safeReturnTo};
       (function() {
         var path = window.location.pathname;
         var apiIdx = path.indexOf("/api/roms");
         var base = apiIdx !== -1 ? path.substring(0, apiIdx) : "";
         window.CABINET_INGRESS_BASE = base;
+        window.CABINET_RETURN_TO = ${safeReturnTo};
+        
+        // Inject BASE tag dynamically to force relative paths to the root
+        var baseTag = document.createElement("base");
+        baseTag.href = base + "/";
+        document.head.appendChild(baseTag);
       })();
     </script>
-    <script>
-      (function() {
-        var loader = document.createElement("script");
-        loader.src = window.CABINET_INGRESS_BASE + "/emulatorjs/loader.js${safeQueryString}";
-        document.body.appendChild(loader);
-      })();
-    </script>
+    <script src="./bootstrap.js${safeQueryString}"></script>
   </body>
 </html>`;
 }
@@ -1025,7 +950,9 @@ window.EJS_core = ${JSON.stringify(core)};
 window.EJS_gameName = ${JSON.stringify(title)};
 window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
 ${discs?.length > 1 ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) => ({ fileName: `../${d.id}/file`, label: d.label })))};` : `window.EJS_gameUrl = \"./file\";`}
-window.EJS_pathtodata = ingressBase + "/emulatorjs/";
+
+// Use absolute base for pathtodata
+window.EJS_pathtodata = window.CABINET_INGRESS_BASE + "/emulatorjs/";
 ${biosUrl ? `window.EJS_biosUrl = ${JSON.stringify(biosUrl)};` : ""}
 window.EJS_startOnLoaded = true;
 window.EJS_volume = 0.5; // Default volume to prevent AL initialization crash
@@ -1053,7 +980,7 @@ window.EJS_buttons = {
 
 // ── Netplay Configuration ──
 window.EJS_netplay = ${netplayRoom ? "true" : "false"};
-var ingressBase = window.location.pathname.substring(0, window.location.pathname.indexOf("/api/roms"));
+var ingressBase = window.CABINET_INGRESS_BASE;
 window.EJS_netplayUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + ingressBase + "/api/netplay";
 ${netplayRole ? `window.EJS_netplayRole = ${JSON.stringify(netplayRole)};` : ""}
 ${netplayRoom ? `window.EJS_netplayRoom = ${JSON.stringify(netplayRoom)};` : ""}
@@ -1101,7 +1028,7 @@ window.EJS_netplayManualSync = ${netplaySyncMode === "lockstep" ? "true" : "fals
 window.EJS_defaultControls = ${JSON.stringify(buildEjsControls(core, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2))};
 
 var loader = document.createElement("script");
-loader.src = ingressBase + "/emulatorjs/loader.js";
+loader.src = window.CABINET_INGRESS_BASE + "/emulatorjs/loader.js";
 document.body.appendChild(loader);
 `;
 }
