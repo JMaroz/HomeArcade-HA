@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.102** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.103** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -86,6 +86,10 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.35.3
+- **Fix: Console Errors (403 / Content-Length)** — Implemented a critical fix for browser console errors. Explicitly exposed the `Content-Length` and `Accept-Ranges` headers, allowing the emulator to correctly download large assets through the Home Assistant proxy.
+- **Improved Static Security** — Refined the CORS and COOP/COEP headers to ensure compatibility with modern browser security policies while maintaining seamless Ingress support.
 
 ### v2.35.2
 - **Fix: N64 Loading Failure** — Reverted the N64 core to its system alias to restore compatibility across all devices. This allows the emulator to dynamically select the best WASM core for the user's specific hardware.
