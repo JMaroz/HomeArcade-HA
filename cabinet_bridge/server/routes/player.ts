@@ -416,7 +416,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         justify-content: center;
         min-width: calc(66px * var(--vpad-scale));
         min-height: calc(66px * var(--vpad-scale));
-        border: 1px solid rgba(255, 255, 255, 0.28);
+        border: 1px solid rgba(255, 255, 255, 0.35);
         border-radius: 999px;
         background:
           radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.25) 0%, transparent 50%),
@@ -1000,7 +1000,7 @@ window.EJS_core = ${JSON.stringify(core)};
 window.EJS_gameName = ${JSON.stringify(title)};
 window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
 ${discs?.length > 1 ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) => ({ fileName: `../${d.id}/file`, label: d.label })))};` : `window.EJS_gameUrl = \"./file\";`}
-window.EJS_pathtodata = "../../emulatorjs/";
+window.EJS_pathtodata = ingressBase + "/../../emulatorjs/";
 ${biosUrl ? `window.EJS_biosUrl = ${JSON.stringify(biosUrl)};` : ""}
 window.EJS_startOnLoaded = true;
 window.EJS_volume = 0.5; // Default volume to prevent AL initialization crash

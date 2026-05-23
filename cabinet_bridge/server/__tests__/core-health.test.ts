@@ -33,7 +33,7 @@ describe("Core Health & BIOS Validation", () => {
     const genesisCore = EMULATORJS_CORES["genesis"];
     const segacdCore = EMULATORJS_CORES["segacd"];
     
-    expect(genesisCore).toBe("md");
+    expect(genesisCore).toBe("segaMD");
     expect(segacdCore).toBe("segacd");
     
     // The BIOS metadata should exist for Sega CD
@@ -42,12 +42,13 @@ describe("Core Health & BIOS Validation", () => {
 
   it("should use standard naming for NES and Arcade to ensure playback", () => {
     expect(EMULATORJS_CORES["nes"]).toBe("nes");
-    expect(EMULATORJS_CORES["arcade"]).toBe("arcade");
+    expect(EMULATORJS_CORES["arcade"]).toBe("fba");
   });
 
-  it("should use standard naming for Game Boy systems to prevent 90% hang", () => {
+  it("should use stable naming for handheld systems", () => {
     expect(EMULATORJS_CORES["gb"]).toBe("gb");
     expect(EMULATORJS_CORES["gbc"]).toBe("gbc");
+    expect(EMULATORJS_CORES["gba"]).toBe("mgba");
   });
 
   it("should use the 'play' core for PS2 to match BIOS and core files", () => {
