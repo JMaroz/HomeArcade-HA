@@ -545,7 +545,7 @@ export function registerRomRoutes(app: Express) {
       fsSync.createReadStream(resolvedPath, { start, end }).pipe(res);
     } else {
       res.setHeader("Content-Length", String(stat.size));
-      fsSync.createReadStream(resolved).pipe(res);
+      fsSync.createReadStream(resolvedPath).pipe(res);
     }
   });
 
