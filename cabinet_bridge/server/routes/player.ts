@@ -438,7 +438,7 @@ window.EJS_onGameStart = function () {
   cabinetSetupVirtualPad();
   cabinetSetupGamepad();
   
-  fetch("./save-states").then(r => r.json()).then(slots => {
+  fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + ${JSON.stringify(romId)} + "/save-states").then(r => r.json()).then(slots => {
     var auto = slots.find(s => s.slot === 0);
     if (auto && window.EJS_emulator) {
        setTimeout(() => { cabinetToast("Auto-Resuming..."); window.EJS_emulator.loadState(0); }, 1500);
