@@ -16,7 +16,7 @@ import { Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { z } from "zod";
 import { insertUploadedRomSchema } from "@shared/schema";
-import { extractFirstRomFromZip, titleFromFileName, slugify } from "./utils";
+import { extractFirstRomFromZip, titleFromFileName, slugify, getAbsoluteFilePath } from "./utils";
 import { fetchTheGamesDBMeta, fetchScreenScraperMeta, findLibretroBoxArt } from "./scrape";
 import { getHltbData } from "../hltb";
 import QRCode from "qrcode";
@@ -500,7 +500,8 @@ export function registerRomRoutes(app: Express) {
       `${ROM_ROOT}${path.sep}`,
       ...watchPaths.map((p) => `${p}${path.sep}`)
     ];
-    const resolved = path.resolve(rom.filePath).replace(/\\/g, "/");
+    const resolvedPath = getAbsoluteFilePath(rom, watchPaths);
+    const resolved = resolvedPath.replace(/\\/g, "/");
     const isWin = process.platform === "win32";
     const isSafe = safeRoots.some((root) => {
       const normalizedRoot = root.replace(/\\/g, "/");
@@ -515,7 +516,7 @@ export function registerRomRoutes(app: Express) {
 
     let stat: fsSync.Stats;
     try {
-      stat = fsSync.statSync(resolved);
+      stat = fsSync.statSync(resolvedPath);
     } catch {
       return res.status(404).json({ message: "ROM file not found on disk." });
     }
@@ -710,14 +711,20 @@ export function registerRomRoutes(app: Express) {
     const deleted = await storage.deleteUploadedRom(id);
     if (!deleted) return res.status(404).json({ message: "Uploaded ROM not found." });
     const safeRoot = `${ROM_ROOT}${path.sep}`.replace(/\\/g, "/");
-    const resolved = path.resolve(deleted.filePath).replace(/\\/g, "/");
+    const settings = await storage.getIntegrationSettings();
+    const watchPaths = (settings.libraryWatchPaths ?? "")
+      .split(",")
+      .map((p) => path.resolve(p.trim()))
+      .filter(Boolean);
+    const resolvedPath = getAbsoluteFilePath(deleted, watchPaths);
+    const resolved = resolvedPath.replace(/\\/g, "/");
     let fileRemoved = false;
     const isWin = process.platform === "win32";
     const isMatched = isWin
       ? resolved.toLowerCase().startsWith(safeRoot.toLowerCase())
       : resolved.startsWith(safeRoot);
     if (isMatched) {
-      try { await fs.unlink(path.resolve(deleted.filePath)); fileRemoved = true; } catch { fileRemoved = false; }
+      try { await fs.unlink(resolvedPath); fileRemoved = true; } catch { fileRemoved = false; }
     }
     res.json({ deleted: true, id: deleted.id, fileRemoved });
   });

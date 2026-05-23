@@ -6,6 +6,7 @@ import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { ensureDriveFolder, uploadToDrive, downloadFromDrive } from "../google-drive";
 import { SAVE_BACKUP_DIR } from "./shared";
+import { getAbsoluteFilePath } from "./utils";
 
 export function registerVaultRoutes(app: Express) {
   /**
@@ -45,9 +46,16 @@ export function registerVaultRoutes(app: Express) {
       const deadLinks: any[] = [];
       const hashGroups: Record<string, any[]> = {};
 
+      const settings = await storage.getIntegrationSettings();
+      const watchPaths = (settings.libraryWatchPaths ?? "")
+        .split(",")
+        .map((p) => path.resolve(p.trim()))
+        .filter(Boolean);
+
       for (const rom of roms) {
+        const resolvedPath = getAbsoluteFilePath(rom, watchPaths);
         // Check if file exists
-        if (!existsSync(rom.filePath)) {
+        if (!existsSync(resolvedPath)) {
           deadLinks.push({ id: rom.id, title: rom.title, path: rom.filePath });
         }
 
@@ -79,8 +87,15 @@ export function registerVaultRoutes(app: Express) {
       const roms = await storage.listUploadedRoms();
       let count = 0;
 
+      const settings = await storage.getIntegrationSettings();
+      const watchPaths = (settings.libraryWatchPaths ?? "")
+        .split(",")
+        .map((p) => path.resolve(p.trim()))
+        .filter(Boolean);
+
       for (const rom of roms) {
-        if (!existsSync(rom.filePath)) {
+        const resolvedPath = getAbsoluteFilePath(rom, watchPaths);
+        if (!existsSync(resolvedPath)) {
           await storage.deleteUploadedRom(rom.id);
           count++;
         }

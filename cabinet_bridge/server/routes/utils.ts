@@ -1,5 +1,7 @@
 import path from "node:path";
 import zlib from "node:zlib";
+import fs from "node:fs";
+
 
 /**
  * Minimal ZIP extractor using Node built-in zlib.
@@ -118,3 +120,30 @@ export function normalizeSearchTitle(value: string) {
 export function numberTokens(tokens: string[]) {
   return tokens.filter((token) => /^\d+$/.test(token));
 }
+
+export function getAbsoluteFilePath(
+  rom: { filePath: string; system: string; fileName: string },
+  watchPaths: string[]
+): string {
+  const directPath = path.resolve(rom.filePath);
+  if (fs.existsSync(directPath)) {
+    return directPath;
+  }
+
+  const normalisedPath = rom.filePath.replace(/\\/g, "/");
+  const sysSegment = `/${rom.system.toLowerCase()}/`;
+  const sysIdx = normalisedPath.toLowerCase().indexOf(sysSegment);
+  
+  if (sysIdx !== -1) {
+    const relativePath = normalisedPath.slice(sysIdx + 1); // e.g. "nes/Bases Loaded II.nes"
+    for (const wp of watchPaths) {
+      const localPath = path.resolve(wp, relativePath);
+      if (fs.existsSync(localPath)) {
+        return localPath;
+      }
+    }
+  }
+  
+  return directPath;
+}
+
