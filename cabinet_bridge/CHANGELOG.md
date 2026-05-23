@@ -1,3 +1,7 @@
+## 2.42.0 – 2026-05-23
+
+- **Stabilization**: **Foundation Finalized** — Verified all build manifests and synchronized versions across the new repository for definitive Home Assistant deployment.
+
 ## 2.40.0 – 2026-05-23
 
 - **Major**: **Pure Libretro Foundation Finalized** — Resolved the conflicting security headers that were preventing the RetroArch Web engine from initializing.
