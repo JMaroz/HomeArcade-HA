@@ -74,11 +74,11 @@ export const STEAMGRIDDB_PLATFORM_IDS: Record<string, number> = {
 };
 
 export const EMULATORJS_CORES: Record<string, string> = {
-  nes: "fceumm",
-  snes: "snes9x",
+  nes: "nes",
+  snes: "snes",
   n64: "n64",
-  gba: "mgba",
-  genesis: "genesis_plus_gx",
+  gba: "gba",
+  genesis: "segaMD",
   ps1: "psx",
   ps2: "play",
   arcade: "mame2003",

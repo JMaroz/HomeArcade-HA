@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.104** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.105** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -86,6 +86,10 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.35.5
+- **Fix: 90% Loading Hang** — Reverted core naming to standard system aliases (e.g., `nes`, `snes`, `segaMD`). This ensures that the emulator can correctly locate and download the necessary WASM assets, resolving the boot failure.
+- **Improved Core Discovery** — The app now uses the most reliable core naming convention for the EmulatorJS ecosystem.
 
 ### v2.35.4
 - **Fix: Audio Engine Crash (AL/OpenAL)** — Resolved a critical `TypeError` where the emulator would crash while attempting to apply saved volume settings before the audio engine was ready. Added a robust fallback and initialization guard.
