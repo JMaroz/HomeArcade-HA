@@ -464,5 +464,47 @@ window.EJS_buttons = { play_pause: false, restart: false, mute: false, settings:
 var loader = document.createElement("script");
 loader.src = window.CABINET_INGRESS_BASE + "/emulatorjs/loader.js";
 document.body.appendChild(loader);
-`;
+\`;
+}
+
+export function renderPlayerError(message: string) {
+  return \`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        background: #050507;
+        color: #f8fafc;
+        font: 14px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      }
+    </style>
+  </head>
+  <body>\${escapeHtml(message)}</body>
+</html>\`;
+}
+
+export function renderBootstrapError(message: string) {
+  return \`"use strict";
+function cabinetFailLaunchProgress(msg) {
+  var bar = document.querySelector("#cabinet-progress-bar");
+  var statusText = document.querySelector("#cabinet-launch-status");
+  if (bar) {
+    bar.style.width = "100%";
+    bar.style.backgroundColor = "#ef4444";
+  }
+  if (statusText) {
+    statusText.textContent = msg || "Launch failed";
+    statusText.style.color = "#ef4444";
+    statusText.style.opacity = "1";
+    statusText.style.fontWeight = "900";
+  }
+}
+cabinetFailLaunchProgress(\${JSON.stringify(message)});
+\`;
 }
