@@ -16,26 +16,6 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>${safeTitle} · HomeArcade</title>
-    <script>
-      (function() {
-        var path = window.location.pathname;
-        var apiIdx = path.indexOf("/api/roms");
-        var base = apiIdx !== -1 ? path.substring(0, apiIdx) : "";
-        window.CABINET_INGRESS_BASE = base;
-        window.CABINET_RETURN_TO = ${safeReturnTo};
-        
-        var baseTag = document.createElement("base");
-        baseTag.href = base + "/";
-        document.head.appendChild(baseTag);
-        
-        // Final Fix: Absolute path for bootstrap with ROM ID
-        var script = document.createElement("script");
-        var romIdMatch = path.match(/\\/api\\/roms\\/(\\d+)\\//);
-        var romId = romIdMatch ? romIdMatch[1] : "";
-        script.src = base + "/api/roms/" + romId + "/bootstrap.js" + window.location.search;
-        document.body.appendChild(script);
-      })();
-    </script>
     <style>
       :root {
         --vpad-scale: 1;
@@ -118,7 +98,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .cabinet-toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
 
       /* Netplay Status */
-      .cabinet-netplay-status { position: fixed; z-index: 999999; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); font: 900 10px ui-monospace, monospace; color: #f8fafc; opacity: 0; transition: opacity 300ms ease; }
+      .cabinet-netplay-status { position: fixed; z-index: 999999; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 99px; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); font: 900 10px ui-monospace, monospace; color: #f8fafc; opacity: 0; transition: opacity 300ms ease; }
       .cabinet-netplay-status.is-active { opacity: 1; }
       .cabinet-ping-dot { width: 6px; height: 6px; border-radius: 999px; background: #22c55e; }
       .cabinet-ping-dot.laggy { background: #eab308; }
@@ -279,12 +259,14 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         baseTag.href = base + "/";
         document.head.appendChild(baseTag);
         
-        // Final Fix: Absolute path for bootstrap with ROM ID
-        var script = document.createElement("script");
-        var romIdMatch = path.match(/\\/api\\/roms\\/(\\d+)\\//);
-        var romId = romIdMatch ? romIdMatch[1] : "";
-        script.src = base + "/api/roms/" + romId + "/bootstrap.js" + window.location.search;
-        document.body.appendChild(script);
+        // Use timeout to ensure body is ready for appendChild
+        setTimeout(function() {
+          var script = document.createElement("script");
+          var romIdMatch = path.match(/\\/api\\/roms\\/(\\d+)\\//);
+          var romId = romIdMatch ? romIdMatch[1] : "";
+          script.src = base + "/api/roms/" + romId + "/bootstrap.js" + window.location.search;
+          document.body.appendChild(script);
+        }, 0);
       })();
     </script>
   </body>
@@ -471,7 +453,9 @@ window.EJS_core = ${JSON.stringify(core)};
 window.EJS_gameName = ${JSON.stringify(title)};
 window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
 ${ejsDiscs}
-window.EJS_pathtodata = window.CABINET_INGRESS_BASE + "/emulatorjs/";
+
+// Fallback to CDN for assets if local files are missing (v2.41.3)
+window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
 window.EJS_startOnLoaded = true;
 window.EJS_volume = 0.5;
 window.EJS_onMobile = false;
@@ -480,7 +464,7 @@ window.EJS_gamepad = false;
 window.EJS_buttons = { play_pause: false, restart: false, mute: false, settings: false, fullscreen: true, save_state: false, load_state: false, quick_save: false, quick_load: false };
 
 var loader = document.createElement("script");
-loader.src = window.CABINET_INGRESS_BASE + "/emulatorjs/loader.js";
+loader.src = window.EJS_pathtodata + "loader.js";
 document.body.appendChild(loader);
 `;
 }
