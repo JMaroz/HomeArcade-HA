@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.113** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.114** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -108,9 +108,13 @@ Systems are listed in release-date order.
 - **Fix: Ultra-Aggressive UI Hiding** — Implemented a definitive, multi-layered fix for the "2 sets of buttons" issue. Added strict CSS overrides for all known EmulatorJS gamepad containers and explicitly forced the `EJS_gamepad` flag to false.
 - **Improved SNES Layout** — Refined the ergonomic spacing for the SNES-themed controller to ensure no overlap even on smaller mobile screens.
 
-### v2.35.7
-- **Fix: Game Boy & GBC Loading** — Restored core mapping for handheld systems to use standard system aliases (`gb`, `gbc`). This resolves the loading failure where these systems would get stuck at 90%.
-- **Optimized Handheld Performance** — Fine-tuned the initialization sequence for lower-power systems to ensure smoother startup on mobile devices.
+### v2.36.4
+- **Critical Fix: Loading Restored** — Resolved a major regression where all systems were failing to load. Implemented a robust `ingressBase` detection system that ensures the emulator can always find its engine files, regardless of the device or connection method.
+- **Absolute Pathing** — Migrated to dynamic absolute paths for all emulator assets, providing perfect compatibility with the Home Assistant Companion App and external proxies.
+
+### v2.36.3
+- **Fix: System-Wide Mobile Compatibility** — Switch to stable core identifiers to ensure reliable playback on phones and tablets.
+- **Stable Core Mapping** — Reverted Genesis to `segaMD` and GBA to `mgba` for maximum mobile stability.
 
 ### v2.35.6
 - **Fix: NES & Arcade Loading** — Updated core mapping to use specific Libretro identifiers (`fceumm` for NES, `mame2003` for Arcade). This ensures the emulator correctly identifies and downloads the required WASM core files.

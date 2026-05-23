@@ -1028,8 +1028,7 @@ window.EJS_buttons = {
 
 // ── Netplay Configuration ──
 window.EJS_netplay = ${netplayRoom ? "true" : "false"};
-var pathParts = window.location.pathname.split("/");
-var ingressBase = pathParts.slice(0, 4).join("/");
+var ingressBase = window.location.pathname.substring(0, window.location.pathname.indexOf("/api/roms"));
 window.EJS_netplayUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + ingressBase + "/api/netplay";
 ${netplayRole ? `window.EJS_netplayRole = ${JSON.stringify(netplayRole)};` : ""}
 ${netplayRoom ? `window.EJS_netplayRoom = ${JSON.stringify(netplayRoom)};` : ""}
@@ -1077,7 +1076,7 @@ window.EJS_netplayManualSync = ${netplaySyncMode === "lockstep" ? "true" : "fals
 window.EJS_defaultControls = ${JSON.stringify(buildEjsControls(core, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2))};
 
 var loader = document.createElement("script");
-loader.src = "../../emulatorjs/loader.js";
+loader.src = ingressBase + "/emulatorjs/loader.js";
 document.body.appendChild(loader);
 `;
 }
