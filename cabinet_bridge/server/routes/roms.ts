@@ -542,7 +542,7 @@ export function registerRomRoutes(app: Express) {
       res.setHeader("Content-Range", `bytes ${start}-${end}/${stat.size}`);
       res.setHeader("Content-Length", String(chunkSize));
       res.status(206);
-      fsSync.createReadStream(resolved, { start, end }).pipe(res);
+      fsSync.createReadStream(resolvedPath, { start, end }).pipe(res);
     } else {
       res.setHeader("Content-Length", String(stat.size));
       fsSync.createReadStream(resolved).pipe(res);
