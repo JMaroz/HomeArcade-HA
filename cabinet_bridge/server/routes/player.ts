@@ -277,8 +277,8 @@ export function renderEmulatorBootstrap({
   core, title, gameId, romId, discs, romHash, userId, userName, profileId, biosUrl, netplayRole, netplayRoom, netplaySyncMode, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2
 }: any) {
   const ejsDiscs = discs?.length > 1 
-    ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) => ({ fileName: '../' + d.id + '/file', label: d.label })))};`
-    : `window.EJS_gameUrl = "./file";`;
+    ? `window.EJS_discs = [${discs.map((d: any) => `{ fileName: window.CABINET_INGRESS_BASE + "/api/roms/${d.id}/file", label: ${JSON.stringify(d.label)} }`).join(", ")}];`
+    : `window.EJS_gameUrl = window.CABINET_INGRESS_BASE + "/api/roms/" + ${JSON.stringify(romId)} + "/file";`;
 
   return `"use strict";
 function cabinetToast(message) {
