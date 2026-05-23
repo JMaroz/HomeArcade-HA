@@ -1,7 +1,7 @@
 // Standard BIOS metadata from RetroPie / Libretro standards
 // Expanded to include common regional variants to avoid "Bad Dump" errors.
 export const REQUIRED_BIOS: Record<string, Array<{ filename: string; md5: string; label?: string }>> = {
-  psx: [
+  pcsx_rearmed: [
     { filename: "scph5501.bin", md5: "490f666e1afb15b7362b406ed1cea246", label: "USA" },
     { filename: "scph5500.bin", md5: "8dd7d5296a650fac7319bce665a6a53c", label: "Japan" },
     { filename: "scph5502.bin", md5: "32736f17079d0b2b7024407c39bd3050", label: "Europe" },
@@ -17,7 +17,7 @@ export const REQUIRED_BIOS: Record<string, Array<{ filename: string; md5: string
     { filename: "bios_CD_E.bin", md5: "e402bcd0e6f2122602735183884e9334", label: "Europe" },
     { filename: "bios_CD_J.bin", md5: "278a9397cc3f62834e8b082ae2906b3a", label: "Japan" },
   ],
-  gba: [{ filename: "gba_bios.bin", md5: "a860e8c0b6d573d191e4ec7db1b1e4f6", label: "World" }],
+  mgba: [{ filename: "gba_bios.bin", md5: "a860e8c0b6d573d191e4ec7db1b1e4f6", label: "World" }],
   saturn: [{ filename: "saturn_bios.bin", md5: "af5828fdff51384f99b3c4926be27762", label: "World" }],
   flycast: [
     { filename: "dc_boot.bin", md5: "e10c53c2f8b90bab96ead2d368858623", label: "Dreamcast Boot" },

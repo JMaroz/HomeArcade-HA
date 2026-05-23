@@ -20,7 +20,7 @@ describe("Core Health & BIOS Validation", () => {
 
   it("should have correct BIOS keys matching core names", () => {
     // Systems that definitely MUST have BIOS metadata defined (even if files are optional)
-    const coresRequiringMetadata = ["psx", "play", "flycast", "gba", "saturn", "segacd"];
+    const coresRequiringMetadata = ["pcsx_rearmed", "play", "flycast", "mgba", "saturn", "segacd"];
     
     coresRequiringMetadata.forEach(core => {
       // Find the key in REQUIRED_BIOS that matches this core
@@ -42,7 +42,7 @@ describe("Core Health & BIOS Validation", () => {
 
   it("should use standard naming for NES and Arcade to ensure playback", () => {
     expect(EMULATORJS_CORES["nes"]).toBe("nes");
-    expect(EMULATORJS_CORES["arcade"]).toBe("fba");
+    expect(EMULATORJS_CORES["arcade"]).toBe("fbneo");
   });
 
   it("should use stable naming for handheld systems", () => {

@@ -501,7 +501,13 @@ export function registerRomRoutes(app: Express) {
       ...watchPaths.map((p) => `${p}${path.sep}`)
     ];
     const resolved = path.resolve(rom.filePath);
-    const isSafe = safeRoots.some((root) => resolved.startsWith(root));
+    const isWin = process.platform === "win32";
+    const isSafe = safeRoots.some((root) => {
+      if (isWin) {
+        return resolved.toLowerCase().startsWith(root.toLowerCase());
+      }
+      return resolved.startsWith(root);
+    });
     if (!isSafe) {
       return res.status(403).json({ message: "ROM path is outside the storage directory." });
     }
@@ -705,7 +711,11 @@ export function registerRomRoutes(app: Express) {
     const safeRoot = `${ROM_ROOT}${path.sep}`;
     const resolved = path.resolve(deleted.filePath);
     let fileRemoved = false;
-    if (resolved.startsWith(safeRoot)) {
+    const isWin = process.platform === "win32";
+    const isMatched = isWin
+      ? resolved.toLowerCase().startsWith(safeRoot.toLowerCase())
+      : resolved.startsWith(safeRoot);
+    if (isMatched) {
       try { await fs.unlink(resolved); fileRemoved = true; } catch { fileRemoved = false; }
     }
     res.json({ deleted: true, id: deleted.id, fileRemoved });
