@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.105** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.106** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -86,6 +86,11 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.35.6
+- **Fix: NES & Arcade Loading** — Updated core mapping to use specific Libretro identifiers (`fceumm` for NES, `mame2003` for Arcade). This ensures the emulator correctly identifies and downloads the required WASM core files.
+- **Core-BIOS Alignment** — Synchronized the BIOS validation engine with the new core naming convention, ensuring that systems like PlayStation and Sega CD correctly verify BIOS integrity before launch.
+- **Improved Platform Stability** — Refined the core list for Dreamcast, Saturn, and Atari systems to use the most compatible modern versions.
 
 ### v2.35.5
 - **Fix: 90% Loading Hang** — Reverted core naming to standard system aliases (e.g., `nes`, `snes`, `segaMD`). This ensures that the emulator can correctly locate and download the necessary WASM assets, resolving the boot failure.
