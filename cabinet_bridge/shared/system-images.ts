@@ -81,11 +81,10 @@ export const SYSTEM_IMAGES: Record<SystemImageId, SystemImage> = {
   },
   ps2: {
     id: "ps2",
-    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/PS2-Fat-Console-Set.jpg/640px-PS2-Fat-Console-Set.jpg",
-    source: "Evan-Amos / Vanamo Online Game Museum",
-    sourceUrl:
-      "https://commons.wikimedia.org/wiki/File:PS2-Fat-Console-Set.jpg",
-    license: "Public domain",
+    url: "https://raw.githubusercontent.com/KyleBing/retro-game-console-icons/main/series_trimui/600w@2x/PS2.png",
+    source: "KyleBing",
+    sourceUrl: "https://github.com/KyleBing/retro-game-console-icons",
+    license: "CC-BY-NC-4.0",
   },
   arcade: {
     id: "arcade",
