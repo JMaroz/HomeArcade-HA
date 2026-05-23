@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.100** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.101** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -86,6 +86,11 @@ Systems are listed in release-date order.
 ---
 
 ## Changelog
+
+### v2.35.1
+- **Gamepad Input Bridge** — Implemented a robust input relay that bypasses browser-specific Gamepad API quirks. This ensures that physical controllers work reliably even if the emulator engine's internal detection fails.
+- **Manual Input Injection** — The app now actively polls connected gamepads and injects button presses directly into the core, providing near-zero latency response times.
+- **Nintendo Layout Support** — Added automatic button swapping for Nintendo Switch and 8BitDo controllers to ensure A/B and X/Y positions match the physical layout.
 
 ### v2.35.0
 - **Auto-Gamepad Detection** — The app now automatically detects when a physical controller (Xbox, PlayStation, or Nintendo) is connected or disconnected.

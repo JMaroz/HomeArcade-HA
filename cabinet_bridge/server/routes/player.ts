@@ -932,25 +932,59 @@ window.EJS_onGameStart = async function () {
 // ── Gamepad Logic ──────────────────────────────────────────────────────────
 
 function cabinetSetupGamepad() {
+  var activeGP = null;
+  var mapping = { 0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10, 11:11, 12:12, 13:13, 14:14, 15:15 };
+
   window.addEventListener("gamepadconnected", function(e) {
     var gp = e.gamepad;
     console.log("[Gamepad] Connected:", gp.id);
     cabinetToast("🎮 " + gp.id.split(" (")[0] + " connected");
+    activeGP = gp.index;
     
-    // Auto-detect and set mapping type for the engine
     var id = gp.id.toLowerCase();
-    var type = "generic";
-    if (id.indexOf("xbox") !== -1 || id.indexOf("xinput") !== -1) type = "xbox";
-    else if (id.indexOf("dualshock") !== -1 || id.indexOf("dualsense") !== -1 || id.indexOf("playstation") !== -1) type = "playstation";
-    else if (id.indexOf("nintendo") !== -1 || id.indexOf("switch") !== -1 || id.indexOf("joy-con") !== -1) type = "nintendo";
-    
-    console.log("[Gamepad] Auto-mapping as:", type);
-    // You can extend this to update EJS_defaultControls dynamically if the engine supports it
+    if (id.indexOf("nintendo") !== -1 || id.indexOf("switch") !== -1) {
+      // Nintendo swap: B=1, A=0, Y=3, X=2
+      mapping[0] = 1; mapping[8] = 0; mapping[1] = 3; mapping[9] = 2;
+    }
   });
 
   window.addEventListener("gamepaddisconnected", function(e) {
     cabinetToast("🔌 Gamepad disconnected");
+    if (activeGP === e.gamepad.index) activeGP = null;
   });
+
+  // Gamepad Bridge: Poll and inject inputs directly into core
+  var lastStates = {};
+  function pollGamepad() {
+    if (activeGP !== null) {
+      var gp = navigator.getGamepads()[activeGP];
+      if (gp) {
+        for (var i = 0; i < gp.buttons.length; i++) {
+          var pressed = gp.buttons[i].pressed;
+          var retropadIdx = mapping[i] !== undefined ? mapping[i] : i;
+          if (pressed !== lastStates[retropadIdx]) {
+            cabinetSimulateInput(retropadIdx, pressed);
+            lastStates[retropadIdx] = pressed;
+          }
+        }
+        // Handle D-Pad (Axes 6/7 or Buttons 12-15)
+        var dpad = [
+          { idx: 4, val: gp.buttons[12]?.pressed }, // Up
+          { idx: 5, val: gp.buttons[13]?.pressed }, // Down
+          { idx: 6, val: gp.buttons[14]?.pressed }, // Left
+          { idx: 7, val: gp.buttons[15]?.pressed }  // Right
+        ];
+        dpad.forEach(function(d) {
+           if (d.val !== undefined && d.val !== lastStates[d.idx]) {
+             cabinetSimulateInput(d.idx, d.val);
+             lastStates[d.idx] = d.val;
+           }
+        });
+      }
+    }
+    requestAnimationFrame(pollGamepad);
+  }
+  pollGamepad();
 }
 
 cabinetSetupGamepad();
