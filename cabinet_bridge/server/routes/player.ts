@@ -998,6 +998,7 @@ ${discs?.length > 1 ? `window.EJS_discs = ${JSON.stringify(discs.map((d: any) =>
 window.EJS_pathtodata = "../../emulatorjs/";
 ${biosUrl ? `window.EJS_biosUrl = ${JSON.stringify(biosUrl)};` : ""}
 window.EJS_startOnLoaded = true;
+window.EJS_volume = 0.5; // Default volume to prevent AL initialization crash
 
 // ── WebRTC STUN Servers for Netplay ──
 window.EJS_iceServers = [
