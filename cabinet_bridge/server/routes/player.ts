@@ -249,6 +249,70 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
 
     <script>
       (function() {
+        // Intercept global errors to show on the launch overlay in case boot fails
+        window.addEventListener("error", function(e) {
+          var target = e.target;
+          var statusText = document.querySelector("#cabinet-launch-status");
+          var bar = document.querySelector("#cabinet-progress-bar");
+          var msg = e.message || "Unknown error";
+          
+          if (target && (target.src || target.href)) {
+            msg = "Failed to load resource: " + (target.src || target.href);
+          }
+          
+          if (statusText) {
+            statusText.textContent = "Boot Error: " + msg;
+            statusText.style.color = "#ef4444";
+            statusText.style.opacity = "1";
+            statusText.style.fontWeight = "900";
+          }
+          if (bar) {
+            bar.style.width = "100%";
+            bar.style.backgroundColor = "#ef4444";
+          }
+        }, true);
+
+        window.addEventListener("unhandledrejection", function(e) {
+          var statusText = document.querySelector("#cabinet-launch-status");
+          var bar = document.querySelector("#cabinet-progress-bar");
+          if (statusText) {
+            var msg = e.reason && e.reason.message ? e.reason.message : String(e.reason);
+            statusText.textContent = "Boot Promise Error: " + msg;
+            statusText.style.color = "#ef4444";
+            statusText.style.opacity = "1";
+            statusText.style.fontWeight = "900";
+          }
+          if (bar) {
+            bar.style.width = "100%";
+            bar.style.backgroundColor = "#ef4444";
+          }
+        });
+
+        // Intercept console.error to catch resource fetch status messages (403, 404, etc.)
+        var originalConsoleError = console.error;
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var msg = args.map(function(arg) {
+            return typeof arg === "object" ? JSON.stringify(arg) : String(arg);
+          }).join(" ");
+          
+          if (msg.indexOf("Failed to load resource") !== -1 || msg.indexOf("403") !== -1 || msg.indexOf("404") !== -1 || msg.indexOf("TypeError") !== -1) {
+            var statusText = document.querySelector("#cabinet-launch-status");
+            var bar = document.querySelector("#cabinet-progress-bar");
+            if (statusText) {
+              statusText.textContent = "Core Error: " + msg;
+              statusText.style.color = "#ef4444";
+              statusText.style.opacity = "1";
+              statusText.style.fontWeight = "900";
+            }
+            if (bar) {
+              bar.style.width = "100%";
+              bar.style.backgroundColor = "#ef4444";
+            }
+          }
+          originalConsoleError.apply(console, arguments);
+        };
+
         var path = window.location.pathname;
         var apiIdx = path.indexOf("/api/roms");
         var base = apiIdx !== -1 ? path.substring(0, apiIdx) : "";
@@ -262,7 +326,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         // Use timeout to ensure body is ready for appendChild
         setTimeout(function() {
           var script = document.createElement("script");
-          var romIdMatch = path.match(/\\/api\\/roms\\/(\\d+)\\//);
+          var romIdMatch = path.match(/\/api\/roms\/(\d+)\//);
           var romId = romIdMatch ? romIdMatch[1] : "";
           script.src = base + "/api/roms/" + romId + "/bootstrap.js" + window.location.search;
           document.body.appendChild(script);
