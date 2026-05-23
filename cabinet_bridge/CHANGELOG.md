@@ -1,6 +1,7 @@
-## 2.34.121 – 2026-05-23
+## 2.40.0 – 2026-05-23
 
-- **Release**: **Changelog Sync** — Synchronized the Home Assistant add-on changelog with the latest development history to ensure full visibility of features and fixes within the HA UI.
+- **Major**: **Pure Libretro Foundation Finalized** — Resolved the conflicting security headers that were preventing the RetroArch Web engine from initializing.
+- **Release**: **Changelog Sync** — Synchronized the Home Assistant add-on changelog with the latest development history.
 
 ## 2.34.120 – 2026-05-23
 
