@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.118** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.119** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -107,6 +107,11 @@ Systems are listed in release-date order.
 ### v2.35.8
 - **Fix: Ultra-Aggressive UI Hiding** — Implemented a definitive, multi-layered fix for the "2 sets of buttons" issue. Added strict CSS overrides for all known EmulatorJS gamepad containers and explicitly forced the `EJS_gamepad` flag to false.
 - **Improved SNES Layout** — Refined the ergonomic spacing for the SNES-themed controller to ensure no overlap even on smaller mobile screens.
+
+### v2.39.0
+- **Pure Libretro Migration** — Transitioned from the EmulatorJS wrapper to the official RetroArch Web (WASM) engine. This provides a professional-grade, highly stable emulation foundation with native support for advanced features like Shaders, Cheats, and Rewind.
+- **Official RetroArch Menu** — Re-enabled the classic RGUI interface, giving users full control over core-specific settings and advanced Libretro features directly within the browser.
+- **Improved Performance** — Ditched the heavy UI layers to prioritize raw WASM execution speed and lower input latency.
 
 ### v2.37.1
 - **Definitive Fix: Client-Side Path Resolution** — Migrated 100% of the asset routing logic to the browser. This eliminates the "Unexpected token '<'" error by ensuring the emulator always requests its engine files from the correct absolute Ingress URL, bypassing fragile server-side detection.
