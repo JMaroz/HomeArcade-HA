@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.116** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.117** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -107,6 +107,11 @@ Systems are listed in release-date order.
 ### v2.35.8
 - **Fix: Ultra-Aggressive UI Hiding** — Implemented a definitive, multi-layered fix for the "2 sets of buttons" issue. Added strict CSS overrides for all known EmulatorJS gamepad containers and explicitly forced the `EJS_gamepad` flag to false.
 - **Improved SNES Layout** — Refined the ergonomic spacing for the SNES-themed controller to ensure no overlap even on smaller mobile screens.
+
+### v2.37.0
+- **Fresh Asset Implementation** — Completely overhauled how emulator engine files are stored and served. Moved all engine assets into the static `public` directory, ensuring they are correctly bundled and reliably served through standard routes.
+- **Definitive Pathing Foundation** — Replaced fragile dynamic path detection with a robust, absolute Ingress-root foundation. This permanently resolves the `Unexpected token '<'` and `404 Not Found` errors across all device types and network environments.
+- **Un-Flattened Engine Structure** — Restored the native subfolder structure for emulator assets (localization, cores, compression), ensuring 100% compatibility with the internal EmulatorJS loader.
 
 ### v2.36.6
 - **Definitive Fix: Asset Routing** — Implemented an ultra-robust Ingress path detection system. This resolves the `SyntaxError: Unexpected token '<'` and `404 Not Found` errors by ensuring all emulator assets (scripts, CSS, and WASM cores) are requested using absolute paths relative to the Home Assistant proxy root.

@@ -166,18 +166,6 @@ async function initApp() {
 
   if (process.env.NODE_ENV === "production") {
     const distPath = path.resolve(process.cwd(), "dist", "public");
-    const ejsCachePath = path.resolve(process.cwd(), "ejs_cache");
-
-    // Serve emulator engine from root ejs_cache folder
-    if (fs.existsSync(ejsCachePath)) {
-      app.use("/emulatorjs", express.static(ejsCachePath, {
-        setHeaders(res) {
-          res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-          res.setHeader("Access-Control-Expose-Headers", "Content-Length, Accept-Ranges");
-        }
-      }));
-      log(`Serving emulator engine from ${ejsCachePath}`, "boot");
-    }
 
     if (!fs.existsSync(distPath)) {
       log(`WARNING: dist/public not found at ${distPath} - UI will not be served`, "boot");

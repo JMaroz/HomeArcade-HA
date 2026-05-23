@@ -129,6 +129,19 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>${safeTitle} · HomeArcade</title>
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var apiIdx = path.indexOf("/api/roms");
+        var base = apiIdx !== -1 ? path.substring(0, apiIdx) : "";
+        window.CABINET_INGRESS_BASE = base;
+        
+        // Inject BASE tag dynamically to force relative paths to the root
+        var baseTag = document.createElement("base");
+        baseTag.href = base + "/";
+        document.head.appendChild(baseTag);
+      })();
+    </script>
     <style>
       :root {
         --vpad-scale: 1;
