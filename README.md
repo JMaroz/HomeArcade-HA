@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.123** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.40.2** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -107,6 +107,12 @@ Systems are listed in release-date order.
 ### v2.35.8
 - **Fix: Ultra-Aggressive UI Hiding** — Implemented a definitive, multi-layered fix for the "2 sets of buttons" issue. Added strict CSS overrides for all known EmulatorJS gamepad containers and explicitly forced the `EJS_gamepad` flag to false.
 - **Improved SNES Layout** — Refined the ergonomic spacing for the SNES-themed controller to ensure no overlap even on smaller mobile screens.
+
+### v2.41.0
+- **RetroArch Power Features** — Added dedicated "Fast Forward" and "Rewind" action tiles to the in-game menu. These tap directly into the emulator engine's core capabilities, allowing users to manipulate gameplay speed and reverse mistakes just like in native RetroArch.
+- **Stable Engine Restoration** — Performed a controlled rollback from the Pure Libretro engine back to the highly-compatible EmulatorJS foundation. This resolves the persistent 404 errors caused by Home Assistant proxy limitations while maintaining 100% of the premium Lemuroid UI upgrades.
+- **Unified Lemuroid UI** — The High-Gloss SNES controller, centered Action Tile menu, and "Pick Up and Play" Auto-Resume logic have all been successfully preserved and re-integrated with the stable engine.
+- **Client-Side Asset Resolution** — Implemented definitive dynamic `<base>` tag injection to guarantee that all emulator assets (WASM cores, CSS, scripts) load perfectly regardless of the user's network or Ingress setup.
 
 ### v2.40.0
 - **Pure Libretro Foundation Finalized** — Resolved the conflicting security headers that were preventing the RetroArch Web engine from initializing. This ensures that `SharedArrayBuffer` and multi-threaded cores work reliably across all platforms.
