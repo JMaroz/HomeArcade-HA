@@ -1,3 +1,7 @@
+## 2.42.12 – 2026-05-23
+
+- **Fix**: **ROM Range Download Path** — Fixed the Range-response branch in `/api/roms/:id/file` that was using a forward-slash–normalized string path instead of the OS-native path for `fsSync.createReadStream`. On Windows, streaming a ROM with a forward-slash path returns empty content, causing games to fail to load with a silent black screen.
+
 ## 2.42.0 – 2026-05-23
 
 - **Stabilization**: **Foundation Finalized** — Verified all build manifests and synchronized versions across the new repository for definitive Home Assistant deployment.
