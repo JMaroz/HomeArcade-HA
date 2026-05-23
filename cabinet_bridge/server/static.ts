@@ -47,10 +47,17 @@ export function serveStatic(app: Express) {
     },
   }));
 
-  // SPA fallback - serve index.html for all non-API routes
-  // Express 5 requires named wildcard: /{*path} instead of bare *
+  // SPA fallback - serve index.html for all non-API and non-asset routes
   app.get("/{*path}", (req: Request, res: Response, next: NextFunction) => {
-    if (req.path.startsWith("/api")) return next();
+    const p = req.path;
+    if (p.startsWith("/api")) return next();
+    
+    // Do not return HTML for missing static assets
+    const assetExtensions = [".js", ".wasm", ".data", ".css", ".png", ".jpg", ".jpeg", ".svg", ".json", ".bin"];
+    if (assetExtensions.some(ext => p.toLowerCase().endsWith(ext))) {
+      return res.status(404).send("Not Found");
+    }
+
     const indexPath = path.resolve(distPath, "index.html");
     if (fs.existsSync(indexPath)) {
       setCrossOriginHeaders(res);

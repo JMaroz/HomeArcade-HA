@@ -2,12 +2,27 @@ import { escapeHtml } from "./utils";
 
 /**
  * Renders the Pure Libretro (RetroArch Web) Player.
- * Uses official Libretro CDN as a fallback for core engine files.
+ * Powered by the official Libretro Web Player foundation.
  */
 export function renderEmulatorPage({ title, returnTo, romHash, queryString, system }: { title: string; returnTo: string; romHash: string | null; queryString?: string; system?: string }) {
   const safeTitle = escapeHtml(title);
   const safeReturnTo = JSON.stringify(returnTo);
   const safeSystem = system || "generic";
+  
+  // Mapping system slugs to RetroArch core identifiers
+  const CORE_MAP: Record<string, string> = {
+    nes: "fceumm",
+    snes: "snes9x",
+    gba: "mgba",
+    gb: "gambatte",
+    gbc: "gambatte",
+    genesis: "genesis_plus_gx",
+    ps1: "pcsx_rearmed",
+    ps2: "play",
+    n64: "mupen64plus_next",
+    arcade: "fbneo"
+  };
+  const coreName = CORE_MAP[safeSystem] || "genesis_plus_gx";
 
   return `<!doctype html>
 <html>
@@ -20,7 +35,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #000;
         font-family: ui-monospace, SFMono-Regular, monospace;
       }
-      #canvas { width: 100vw; height: 100vh; display: block; }
+      #canvas { width: 100vw; height: 100vh; display: block; touch-action: none; }
       .overlay {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -50,11 +65,6 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
 
     <script>
       (function() {
-        var path = window.location.pathname;
-        var apiIdx = path.indexOf("/api/roms");
-        var base = apiIdx !== -1 ? path.substring(0, apiIdx) : "";
-        window.CABINET_BASE = base;
-        
         var status = document.getElementById('loader-status');
         var bar = document.getElementById('progress-bar');
         
@@ -77,24 +87,21 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
             }, 500);
           },
           locateFile: function(path, prefix) {
-             // Fallback to local build, then to official Libretro CDN
-             if (path.endsWith(".wasm") || path.endsWith(".data")) {
-               return window.CABINET_BASE + "/retroarch/" + path;
-             }
-             return prefix + path;
-          }
+             // Force use of official Libretro CDN for engine assets
+             return "https://web.libretro.com/" + path;
+          },
+          preRun: [function() {
+             // Potential for ROM mounting logic here
+          }]
         };
 
-        // Standard Asset Loading
-        updateProgress(20, "Fetching Game Data...");
+        updateProgress(30, "Downloading Engine...");
         
         var script = document.createElement('script');
-        // Try local build first, fallback to CDN if not found
-        script.src = window.CABINET_BASE + "/retroarch/retroarch.js";
+        script.src = "https://web.libretro.com/retroarch.js";
         script.onerror = function() {
-           console.warn("Local RetroArch build not found, falling back to CDN...");
-           script.src = "https://web.libretro.com/retroarch.js";
-           document.body.appendChild(script);
+           status.textContent = "CDN Load Failed. Please check your internet connection.";
+           status.style.color = "#ef4444";
         };
         document.body.appendChild(script);
       })();
