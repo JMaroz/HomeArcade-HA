@@ -589,8 +589,20 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
 
     <script>
       window.CABINET_RETURN_TO = ${safeReturnTo};
+      (function() {
+        var path = window.location.pathname;
+        var apiIdx = path.indexOf("/api/roms");
+        var base = apiIdx !== -1 ? path.substring(0, apiIdx) : "";
+        window.CABINET_INGRESS_BASE = base;
+      })();
     </script>
-    <script src="./bootstrap.js${safeQueryString}"></script>
+    <script>
+      (function() {
+        var loader = document.createElement("script");
+        loader.src = window.CABINET_INGRESS_BASE + "/emulatorjs/loader.js${safeQueryString}";
+        document.body.appendChild(loader);
+      })();
+    </script>
   </body>
 </html>`;
 }

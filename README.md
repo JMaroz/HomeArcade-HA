@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.34.115** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
+**Current version: 2.34.116** · [Report a bug](https://github.com/GlerschNersch/token/issues/new) · [View source](https://github.com/GlerschNersch/token)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -107,6 +107,10 @@ Systems are listed in release-date order.
 ### v2.35.8
 - **Fix: Ultra-Aggressive UI Hiding** — Implemented a definitive, multi-layered fix for the "2 sets of buttons" issue. Added strict CSS overrides for all known EmulatorJS gamepad containers and explicitly forced the `EJS_gamepad` flag to false.
 - **Improved SNES Layout** — Refined the ergonomic spacing for the SNES-themed controller to ensure no overlap even on smaller mobile screens.
+
+### v2.36.6
+- **Definitive Fix: Asset Routing** — Implemented an ultra-robust Ingress path detection system. This resolves the `SyntaxError: Unexpected token '<'` and `404 Not Found` errors by ensuring all emulator assets (scripts, CSS, and WASM cores) are requested using absolute paths relative to the Home Assistant proxy root.
+- **Improved CDN Matching** — Re-synchronized the core engine identifiers to ensure perfect matching with the EmulatorJS WASM catalog on all platforms.
 
 ### v2.36.5
 - **Definitive Fix: 90% Loading Hang** — Corrected an absolute pathing error that caused systems to fail during the asset fetch phase. Games across all platforms (NES, SNES, Genesis, Arcade, GBA) now load successfully to 100% on both mobile and desktop.
