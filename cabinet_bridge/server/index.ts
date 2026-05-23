@@ -65,9 +65,8 @@ app.use(express.urlencoded({ limit: "50mb", extended: false }));
 // Global security headers to ensure assets load correctly under HA Ingress
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  // Explicitly disable isolation policies that break in HA iframes
-  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
-  res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
+  // Security policies (COOP/COEP) are now handled surgically in static.ts and player routes
+  // to ensure compatibility with both the HA iframe and RetroArch's WASM requirements.
   next();
 });
 

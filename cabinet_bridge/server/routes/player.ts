@@ -87,18 +87,16 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
             }, 500);
           },
           locateFile: function(path, prefix) {
-             // Force use of official Libretro CDN for engine assets
-             return "https://web.libretro.com/" + path;
+             // Use official Libretro Buildbot CDN for all engine assets
+             return "https://buildbot.libretro.com/nightly/emscripten/" + path;
           },
-          preRun: [function() {
-             // Potential for ROM mounting logic here
-          }]
+          preRun: []
         };
 
         updateProgress(30, "Downloading Engine...");
         
         var script = document.createElement('script');
-        script.src = "https://web.libretro.com/retroarch.js";
+        script.src = "https://buildbot.libretro.com/nightly/emscripten/retroarch.js";
         script.onerror = function() {
            status.textContent = "CDN Load Failed. Please check your internet connection.";
            status.style.color = "#ef4444";
