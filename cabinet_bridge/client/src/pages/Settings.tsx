@@ -17,13 +17,14 @@ import {
 import {
   Check, RotateCcw, ShieldAlert, Loader2,
   Palette, Gamepad2, Database, Activity, Wifi, HelpCircle, Zap,
-  Layers, Sparkles, Link2, Settings2, Cpu
+  Layers, Sparkles, Link2, Settings2, Cpu, BarChart3
 } from "lucide-react";
 import { DisplaySettings } from "./settings/DisplaySettings";
 import { ControlsSettings } from "./settings/ControlsSettings";
 import { LibrarySettings } from "./settings/LibrarySettings";
 import { ServicesSettings } from "./settings/ServicesSettings";
 import { AutomationsSettings } from "./settings/AutomationsSettings";
+import { PlayStats } from "@/components/PlayStats";
 import { NetplaySettings } from "./settings/NetplaySettings";
 import { VaultSettings } from "./settings/VaultSettings";
 import { BiosManager } from "@/components/BiosManager";
@@ -67,6 +68,7 @@ const GROUPS = [
     icon: Settings2,
     tabs: [
       { id: "help", label: "Help & Support", icon: HelpCircle },
+      { id: "stats", label: "Stats", icon: BarChart3 },
     ]
   }
 ];
@@ -199,6 +201,7 @@ export default function Settings() {
                   {activeTab === "netplay" && "Nickname and multiplayer hosting options."}
                   {activeTab === "automations" && "Home Assistant entities and game state triggers."}
                   {activeTab === "help" && "Setup guides and integration snippets."}
+                  {activeTab === "stats" && "Play time statistics and recent sessions."}
                 </p>
               </div>
 
@@ -216,6 +219,9 @@ export default function Settings() {
                 <TabsContent value="vault" className="m-0 focus-visible:outline-none"><VaultSettings /></TabsContent>
                 <TabsContent value="netplay" className="m-0 focus-visible:outline-none"><NetplaySettings /></TabsContent>
                 <TabsContent value="automations" className="m-0 focus-visible:outline-none"><AutomationsSettings /></TabsContent>
+                <TabsContent value="stats" className="m-0 focus-visible:outline-none p-6 overflow-y-auto flex-1">
+                  <PlayStats />
+                </TabsContent>
                 <TabsContent value="help" className="m-0 focus-visible:outline-none">
                    <ul className="space-y-6">
                     <Step n={1} title="Add as Sidebar Item (Optional)">
