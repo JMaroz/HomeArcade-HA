@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Sparkles, ScanLine, Loader2 } from "lucide-react";
 import { RomUpload } from "@/components/RomUpload";
 import { Section } from "./SettingsShared";
+import { Trash2 } from "lucide-react";
 import type { SmartFilterRules } from "@shared/schema";
 
 interface ScannerStatusData {
@@ -48,7 +49,25 @@ function ScannerStatusSection() {
   const { config, setConfig } = useIntegration();
   const { toast } = useToast();
   const [scanning, setScanning] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const { data: status } = useQuery<ScannerStatusData>({ queryKey: ["/api/scanner/status"], refetchInterval: 30_000 });
+
+  const handleClearLibrary = async () => {
+    if (!confirm("This will permanently delete all ROMs and their files from the directory. Are you sure?")) return;
+    setClearing(true);
+    try {
+      const res = await apiRequest("DELETE", "/api/roms");
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? "Error");
+      const data = await res.json();
+      await queryClient.invalidateQueries({ queryKey: ["/api/roms"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/scanner/status"] });
+      toast({ title: "Library cleared", description: `${data.romsRemoved} ROM(s) removed (${data.filesRemoved} files deleted, ${data.filesFailed} files failed).` });
+    } catch (err) {
+      toast({ title: "Failed to clear library", description: String(err), variant: "destructive" });
+    } finally {
+      setClearing(false);
+    }
+  };
 
   const handleScanNow = async () => {
     setScanning(true);
@@ -112,6 +131,16 @@ function ScannerStatusSection() {
           >
             {scanning ? <Loader2 className="size-3.5 animate-spin" /> : <ScanLine className="size-3.5" />}
             {t("settings.buttons.scanNow")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearLibrary}
+            disabled={clearing}
+            className="gap-1.5 h-9 px-4 font-black uppercase tracking-wider text-[10px] text-destructive/80 border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
+          >
+            {clearing ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+            Clear All
           </Button>
         </div>
 

@@ -706,6 +706,35 @@ export function registerRomRoutes(app: Express) {
     res.json(updated);
   });
 
+  app.delete("/api/roms", async (req, res) => {
+    const settings = await storage.getIntegrationSettings();
+    const watchPaths = (settings.libraryWatchPaths ?? "")
+      .split(",")
+      .map((p) => path.resolve(p.trim()))
+      .filter(Boolean);
+
+    const safeRoot = `${ROM_ROOT}${path.sep}`.replace(/\\/g, "/");
+    const isWin = process.platform === "win32";
+
+    const allRoms = await storage.listUploadedRoms();
+    let filesRemoved = 0;
+    let filesFailed = 0;
+
+    for (const rom of allRoms) {
+      const resolvedPath = getAbsoluteFilePath(rom, watchPaths);
+      const resolved = resolvedPath.replace(/\\/g, "/");
+      const isMatched = isWin
+        ? resolved.toLowerCase().startsWith(safeRoot.toLowerCase())
+        : resolved.startsWith(safeRoot);
+      if (isMatched) {
+        try { await fs.unlink(resolvedPath); filesRemoved++; } catch { filesFailed++; }
+      }
+      await storage.deleteUploadedRom(rom.id);
+    }
+
+    res.json({ deleted: true, romsRemoved: allRoms.length, filesRemoved, filesFailed });
+  });
+
   app.delete("/api/roms/:id", async (req, res) => {
     const id = Number(req.params.id);
     const deleted = await storage.deleteUploadedRom(id);
