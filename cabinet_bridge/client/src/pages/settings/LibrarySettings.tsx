@@ -2,7 +2,7 @@
  * LibrarySettings — ROM Management tab content for Settings page.
  * Covers scanner status, manual uploads, and smart filter collections.
  */
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useIntegration } from "@/lib/integration";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Sparkles, ScanLine, Loader2, FolderOpen } from "lucide-react";
+import { Sparkles, ScanLine, Loader2, FolderOpen, ImageIcon, RefreshCw } from "lucide-react";
 import { RomUpload } from "@/components/RomUpload";
 import { Section } from "./SettingsShared";
 import { Trash2 } from "lucide-react";
@@ -50,6 +50,9 @@ function ScannerStatusSection() {
   const { toast } = useToast();
   const [scanning, setScanning] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [refreshingArt, setRefreshingArt] = useState(false);
+  const [artProgress, setArtProgress] = useState<{ current: number; total: number; title: string } | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
   const { data: status } = useQuery<ScannerStatusData>({ queryKey: ["/api/scanner/status"], refetchInterval: 30_000 });
   const { data: debugInfo } = useQuery<{ romRoot: string }>({ queryKey: ["/api/debug"], refetchInterval: false });
 
@@ -68,6 +71,60 @@ function ScannerStatusSection() {
     } finally {
       setClearing(false);
     }
+  };
+
+  // Cleanup EventSource on unmount
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleRefreshArt = () => {
+    if (refreshingArt) return;
+    setRefreshingArt(true);
+    setArtProgress(null);
+
+    const es = new EventSource("/api/roms/scrape-all");
+    eventSourceRef.current = es;
+    let succeeded = 0;
+    let failed = 0;
+
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === "start") {
+          setArtProgress({ current: 0, total: data.total, title: "" });
+        } else if (data.type === "progress") {
+          setArtProgress({ current: data.current, total: data.total, title: data.title });
+        } else if (data.type === "result") {
+          if (data.status === "success") succeeded++;
+          else failed++;
+        } else if (data.type === "complete") {
+          es.close();
+          eventSourceRef.current = null;
+          setRefreshingArt(false);
+          setArtProgress(null);
+          toast({
+            title: "Art refresh complete!",
+            description: `${succeeded} succeeded, ${failed} failed.`,
+          });
+        }
+      } catch {
+        // ignore parse errors
+      }
+    };
+
+    es.onerror = () => {
+      es.close();
+      eventSourceRef.current = null;
+      setRefreshingArt(false);
+      setArtProgress(null);
+      toast({ title: "Art refresh error", description: "Connection lost during scrape.", variant: "destructive" });
+    };
   };
 
   const handleScanNow = async () => {
@@ -133,11 +190,28 @@ function ScannerStatusSection() {
             </div>
           </div>
 
+          {artProgress && (
+            <span className="flex items-center gap-1.5 text-[10px] font-mono text-accent">
+              <RefreshCw className="size-3 animate-spin" />
+              Scraping {artProgress.current}/{artProgress.total}: {artProgress.title}
+            </span>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefreshArt}
+            disabled={scanning || refreshingArt}
+            className="gap-1.5 h-9 px-4 font-black uppercase tracking-wider text-[10px] bg-accent/10 border-accent/20 hover:bg-accent/20 text-accent"
+            title="Refresh all ROM artwork"
+          >
+            {refreshingArt ? <Loader2 className="size-3.5 animate-spin" /> : <ImageIcon className="size-3.5" />}
+            Refresh All Art
+          </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={handleScanNow}
-            disabled={scanning}
+            disabled={scanning || refreshingArt}
             className="gap-1.5 h-9 px-4 font-black uppercase tracking-wider text-[10px] bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary"
           >
             {scanning ? <Loader2 className="size-3.5 animate-spin" /> : <ScanLine className="size-3.5" />}
@@ -147,7 +221,7 @@ function ScannerStatusSection() {
             variant="outline"
             size="sm"
             onClick={handleClearLibrary}
-            disabled={clearing}
+            disabled={clearing || refreshingArt}
             className="gap-1.5 h-9 px-4 font-black uppercase tracking-wider text-[10px] text-destructive/80 border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
           >
             {clearing ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}

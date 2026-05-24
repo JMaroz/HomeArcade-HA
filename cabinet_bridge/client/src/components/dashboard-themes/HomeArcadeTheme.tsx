@@ -55,6 +55,7 @@ import { useGridNav } from "@/lib/useGridNav";
 import Fuse from "fuse.js";
 import { useLocation } from "wouter";
 import { WarpLinkDialog } from "@/components/WarpLinkDialog";
+import { FilterBar, type SortOption, type FilterStatus } from "@/components/FilterBar";
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
@@ -143,7 +144,35 @@ export function WarpScanner({
 export default function HomeArcadeTheme() {
   const { config } = useIntegration();
   const { t } = useTranslation();
-  const { data: roms = [], isLoading: isRomsLoading } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
+
+  // Pagination state
+  const [limit] = useState(100);
+  const [offset, setOffset] = useState(0);
+  const [totalGames, setTotalGames] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [allRoms, setAllRoms] = useState<UploadedRom[]>([]);
+
+  const {
+    data: pageData,
+    isLoading: isRomsLoading,
+    isFetching,
+  } = useQuery<{ roms: UploadedRom[]; total: number; hasMore: boolean }>({
+    queryKey: ["/api/roms", { limit, offset }],
+    queryFn: async () => {
+      const res = await fetch(apiUrl(`/api/roms?limit=${limit}&offset=${offset}`));
+      if (!res.ok) throw new Error("Failed to fetch roms");
+      return res.json();
+    },
+  });
+
+  // Sync incoming pages into accumulated list
+  useEffect(() => {
+    if (!pageData) return;
+    setAllRoms(prev => offset === 0 ? pageData.roms : [...prev, ...pageData.roms]);
+    setTotalGames(pageData.total);
+    setHasMore(pageData.hasMore);
+  }, [pageData, offset]);
+
   const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({ queryKey: ["/api/collections"] });
 
   const {
@@ -161,15 +190,27 @@ export default function HomeArcadeTheme() {
   const [view, setView] = useState<"portals" | "system">("portals");
   const [activeSystemId, setActiveSystemId] = useState<SystemId | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sort, setSort] = useState<"recent" | "title" | "year" | "rating" | "plays">("recent");
+  // ── Sort/Filter State (persisted to localStorage) ──────────────────────────
+  const [sortBy, setSortBy] = useState<SortOption>(() => {
+    const stored = localStorage.getItem("cabinet_sort");
+    return (stored as SortOption) || "title";
+  });
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>(() => {
+    const stored = localStorage.getItem("cabinet_filter_status");
+    return (stored as FilterStatus) || "all";
+  });
+
+  // Persist sort/filter preferences
+  useEffect(() => { localStorage.setItem("cabinet_sort", sortBy); }, [sortBy]);
+  useEffect(() => { localStorage.setItem("cabinet_filter_status", filterStatus); }, [filterStatus]);
   const [activeGameIdx, setActiveGameIdx] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Filter games based on current view/system
   const allGames = useMemo(() => {
-    const uploaded = roms.map(uploadedRomToGame);
+    const uploaded = allRoms.map(uploadedRomToGame);
     return [...uploaded, ...GAMES];
-  }, [roms]);
+  }, [allRoms]);
 
   const systemsWithGames = useMemo(() => {
     return SYSTEMS.filter(s => allGames.some(g => g.system === s.id));
@@ -193,20 +234,28 @@ export default function HomeArcadeTheme() {
       list = fuse.search(searchQuery.trim()).map((r) => r.item);
     }
 
-    // Sort: Default to A-Z within portals, Recent in global
-    const effectiveSort = searchQuery ? sort : (activeSystemId ? "title" : "recent");
+    // Apply playStatus filter
+    if (filterStatus !== "all") {
+      list = list.filter(g => {
+        const status = (g as any).playStatus ?? "unset";
+        return status === filterStatus;
+      });
+    }
+
+    // Sort: default to A-Z within portals, Recent in global (only when not searching/filtering)
+    const effectiveSort = searchQuery || filterStatus !== "all" ? sortBy : (activeSystemId ? "title" : "lastPlayed");
 
     return [...list].sort((a, b) => {
       switch (effectiveSort) {
         case "title": return a.title.localeCompare(b.title);
         case "year": return (a.year || 0) - (b.year || 0);
         case "rating": return (b.rating || 0) - (a.rating || 0);
-        case "plays": return (b.minutesPlayed ?? 0) - (a.minutesPlayed ?? 0);
-        case "recent":
+        case "playCount": return (b.minutesPlayed ?? 0) - (a.minutesPlayed ?? 0);
+        case "lastPlayed":
         default: return (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0);
       }
     });
-  }, [allGames, activeSystemId, searchQuery, sort]);
+  }, [allGames, activeSystemId, searchQuery, sortBy, filterStatus]);
 
   const activeGame = filteredGames[activeGameIdx];
 
@@ -299,7 +348,7 @@ export default function HomeArcadeTheme() {
               <h1 className="font-display text-2xl font-black tracking-tight flex items-center gap-2">
                 {searchQuery ? "Search Results" : view === "system" ? SYSTEMS.find(s => s.id === activeSystemId)?.name : "Game Library"}
                 <span className="text-[10px] font-mono text-white/20 uppercase tracking-[0.2em] ml-2">
-                  {filteredGames.length} Titles
+                  {filteredGames.length}{totalGames > 0 ? ` / ${totalGames}` : ''} Titles
                 </span>
               </h1>
             </div>
@@ -320,6 +369,17 @@ export default function HomeArcadeTheme() {
               </Link>
             </div>
           </div>
+
+          {/* Filter / Sort Toolbar */}
+          {(view === "system" || searchQuery) && (
+            <FilterBar
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              filterStatus={filterStatus}
+              onFilterChange={setFilterStatus}
+              totalGames={filteredGames.length}
+            />
+          )}
         </header>
 
         <main ref={gridRef} className="flex-1 overflow-y-auto px-6 pb-24 scrollbar-none overscroll-contain">
@@ -392,7 +452,28 @@ export default function HomeArcadeTheme() {
                 )}
               </motion.div>
             )}
-          </AnimatePresence>
+
+            {/* Load More */}
+              {hasMore && (
+                <div className="flex flex-col items-center pt-8 pb-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setOffset(prev => prev + limit)}
+                    disabled={isFetching}
+                    className="rounded-full px-8 h-12 bg-white/5 border-white/10 hover:bg-white/10 text-white/70 hover:text-white font-bold tracking-widest uppercase text-xs"
+                  >
+                    {isFetching ? (
+                      <><Loader2 className="size-4 mr-2 animate-spin" />Loading…</>
+                    ) : (
+                      <><Plus className="size-4 mr-2" />Load More</>
+                    )}
+                  </Button>
+                  <span className="mt-3 text-[10px] font-mono text-white/20 uppercase tracking-widest">
+                    Showing {allRoms.length} of {totalGames} games
+                  </span>
+                </div>
+              )}
+            </AnimatePresence>
 
           <GameDetailDialog
             game={dialogGame}
@@ -407,7 +488,7 @@ export default function HomeArcadeTheme() {
         </main>
       </div>
 
-      <WelcomeDialog hasRoms={roms.length > 0} />
+      <WelcomeDialog hasRoms={allRoms.length > 0} />
     </div>
   );
 }

@@ -133,6 +133,8 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   listUploadedRoms(): Promise<UploadedRom[]>;
+  listUploadedRomsPaginated(limit: number, offset: number): Promise<UploadedRom[]>;
+  countUploadedRoms(): Promise<number>;
   getUploadedRom(id: number): Promise<UploadedRom | undefined>;
   createUploadedRom(rom: InsertUploadedRom): Promise<UploadedRom>;
   deleteUploadedRom(id: number): Promise<UploadedRom | undefined>;
@@ -197,6 +199,13 @@ export class DatabaseStorage implements IStorage {
   async getUserByUsername(username: string): Promise<User | undefined> { return db.select().from(users).where(eq(users.username, username)).get(); }
   async createUser(insertUser: InsertUser): Promise<User> { return db.insert(users).values(insertUser).returning().get(); }
   async listUploadedRoms(): Promise<UploadedRom[]> { return db.select().from(uploadedRoms).orderBy(desc(uploadedRoms.createdAt)).all(); }
+  async listUploadedRomsPaginated(limit: number, offset: number): Promise<UploadedRom[]> {
+    return db.select().from(uploadedRoms).orderBy(desc(uploadedRoms.createdAt)).limit(limit).offset(offset).all();
+  }
+  async countUploadedRoms(): Promise<number> {
+    const row = db.select({ count: sql<number>`count(*)` }).from(uploadedRoms).get();
+    return row?.count ?? 0;
+  }
   async getUploadedRom(id: number): Promise<UploadedRom | undefined> { return db.select().from(uploadedRoms).where(eq(uploadedRoms.id, id)).get(); }
   async listRomsByDiscGroup(discGroup: string): Promise<UploadedRom[]> { return db.select().from(uploadedRoms).where(eq(uploadedRoms.discGroup, discGroup)).orderBy(uploadedRoms.discNumber).all(); }
   async createUploadedRom(rom: InsertUploadedRom): Promise<UploadedRom> { return db.insert(uploadedRoms).values(rom).returning().get(); }
