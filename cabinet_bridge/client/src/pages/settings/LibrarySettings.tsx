@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Sparkles, ScanLine, Loader2 } from "lucide-react";
+import { Sparkles, ScanLine, Loader2, FolderOpen } from "lucide-react";
 import { RomUpload } from "@/components/RomUpload";
 import { Section } from "./SettingsShared";
 import { Trash2 } from "lucide-react";
@@ -51,6 +51,7 @@ function ScannerStatusSection() {
   const [scanning, setScanning] = useState(false);
   const [clearing, setClearing] = useState(false);
   const { data: status } = useQuery<ScannerStatusData>({ queryKey: ["/api/scanner/status"], refetchInterval: 30_000 });
+  const { data: debugInfo } = useQuery<{ romRoot: string }>({ queryKey: ["/api/debug"], refetchInterval: false });
 
   const handleClearLibrary = async () => {
     if (!confirm("This will permanently delete all ROMs and their files from the directory. Are you sure?")) return;
@@ -100,6 +101,16 @@ function ScannerStatusSection() {
             Separate multiple paths with commas. These folders will be scanned automatically every 60 seconds.
             You can also set <code className="bg-muted px-1 rounded text-[9px]">CABINET_ROM_WATCH_DIR</code> in your environment.
           </p>
+          {debugInfo?.romRoot && (
+            <a
+              href={`${window.location.origin}/#${debugInfo.romRoot}`}
+              className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-accent hover:text-accent/80 transition-colors"
+              title={debugInfo.romRoot}
+            >
+              <FolderOpen className="size-3" />
+              ROM Storage: {debugInfo.romRoot}
+            </a>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 p-4 rounded-xl border border-white/5 bg-white/[0.02]">
@@ -121,12 +132,12 @@ function ScannerStatusSection() {
               {status?.lastScanAt ? <span>Last run: <span className="text-foreground">{new Date(status.lastScanAt).toLocaleTimeString()}</span></span> : null}
             </div>
           </div>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleScanNow} 
-            disabled={scanning} 
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleScanNow}
+            disabled={scanning}
             className="gap-1.5 h-9 px-4 font-black uppercase tracking-wider text-[10px] bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary"
           >
             {scanning ? <Loader2 className="size-3.5 animate-spin" /> : <ScanLine className="size-3.5" />}

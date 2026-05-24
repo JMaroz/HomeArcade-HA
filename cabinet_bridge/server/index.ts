@@ -114,6 +114,7 @@ app.get("/api/debug", (_req: Request, res: Response) => {
     nodeEnv: process.env.NODE_ENV,
     appReady,
     cwd: process.cwd(),
+    romRoot: ROM_ROOT,
     distExists: fs.existsSync(distPath),
     indexExists: fs.existsSync(indexPath),
     entryScript,
