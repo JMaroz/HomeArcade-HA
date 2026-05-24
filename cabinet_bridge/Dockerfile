@@ -1,5 +1,5 @@
 ARG BUILD_ARCH=amd64
-FROM ghcr.io/home-assistant/${BUILD_ARCH}-base:latest
+FROM --platform=linux/${BUILD_ARCH} ghcr.io/home-assistant/${BUILD_ARCH}-base:latest
 
 # Build arguments provided by the HA builder / GitHub Actions workflow
 ARG BUILD_VERSION="dev"
