@@ -1,4 +1,10 @@
+## 2.43.11 – 2026-05-24
+
+- **Fix**: **Save Grid Template Literal Escaping** — Fixed `SyntaxError: Unexpected identifier 'color'` on game launch caused by HTML attributes with unescaped double quotes inside the outer template literal in `renderSaveGrid`. All HTML attribute values in save/load buttons now use single-quoted strings, eliminating the `\"` escaping issue that was being consumed by the template processor.
+
 ## 2.42.15 – 2026-05-23
+
+- **Fix**: **Player Page Regex Syntax Error** — Fixed the regex `/api/roms/` inside the template literal for `renderEmulatorPage`. The forward slashes in the regex were being stripped during template evaluation, producing invalid JS like `path.match(//api/roms/(d+)//)` instead of `path.match(/\/api\/roms\/(\d+)\/)/`. This caused "Unexpected token 'var'" on all system pages.## 2.42.15 – 2026-05-23
 
 - **Fix**: **Player Page Regex Syntax Error** — Fixed the regex `/api/roms/` inside the template literal for `renderEmulatorPage`. The forward slashes in the regex were being stripped during template evaluation, producing invalid JS like `path.match(//api/roms/(d+)//)` instead of `path.match(/\/api\/roms\/(\d+)\/)/`. This caused "Unexpected token 'var'" on all system pages.
 
