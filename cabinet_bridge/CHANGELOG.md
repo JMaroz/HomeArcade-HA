@@ -1,3 +1,7 @@
+## 2.42.15 – 2026-05-23
+
+- **Fix**: **Player Page Regex Syntax Error** — Fixed the regex `/api/roms/` inside the template literal for `renderEmulatorPage`. The forward slashes in the regex were being stripped during template evaluation, producing invalid JS like `path.match(//api/roms/(d+)//)` instead of `path.match(/\/api\/roms\/(\d+)\/)/`. This caused "Unexpected token 'var'" on all system pages.
+
 ## 2.42.12 – 2026-05-23
 
 - **Fix**: **ROM Range Download Path** — Fixed the Range-response branch in `/api/roms/:id/file` that was using a forward-slash–normalized string path instead of the OS-native path for `fsSync.createReadStream`. On Windows, streaming a ROM with a forward-slash path returns empty content, causing games to fail to load with a silent black screen.
