@@ -326,7 +326,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         // Use timeout to ensure body is ready for appendChild
         setTimeout(function() {
           var script = document.createElement("script");
-          var romIdMatch = path.match(/\/api\/roms\/(\d+)\//);
+          var romIdMatch = path.match(/\\/api\\/roms\\/(\\d+)\\//);
           var romId = romIdMatch ? romIdMatch[1] : "";
           script.src = base + "/api/roms/" + romId + "/bootstrap.js" + window.location.search;
           document.body.appendChild(script);
