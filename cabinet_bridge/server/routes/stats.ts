@@ -2,6 +2,16 @@ import { Express } from "express";
 import { storage } from "../storage";
 
 export function registerStatsRoutes(app: Express) {
+  app.get("/api/sessions", async (_req, res) => {
+    try {
+      const sessions = await storage.listRecentSessions(100);
+      res.json(sessions);
+    } catch (err) {
+      res.status(500).json({ message: String(err) });
+    }
+  });
+
+
   app.get("/api/stats/summary", async (_req, res) => {
     try {
       const summary = await storage.getPlayStatsSummary();

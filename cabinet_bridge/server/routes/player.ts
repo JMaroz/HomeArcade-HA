@@ -532,6 +532,8 @@ window.EJS_volume = 0.5;
 window.EJS_onMobile = false;
 window.EJS_virtualGamepad = false;
 window.EJS_gamepad = false;
+window.EJS_color = "#1a1a2e";
+window.EJS_backgroundColor = "#000000";
 window.EJS_buttons = { play_pause: false, restart: false, mute: false, settings: false, fullscreen: true, save_state: false, load_state: false, quick_save: false, quick_load: false };
 
 var loader = document.createElement("script");
