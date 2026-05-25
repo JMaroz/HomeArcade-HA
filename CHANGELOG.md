@@ -4,6 +4,16 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.27] — 2026-05-25
+
+### Fix: Mobile Game Display Placement & Virtual Controls Overlay
+
+- **Repositioned Mobile Game Canvas** — Added `padding-top: 50px` for screen sizes smaller than `768px` in [player.ts](file:///C:/Users/matt/.gemini/antigravity/scratch/HomeArcade-HA/cabinet_bridge/server/routes/player.ts) to push the game display down on mobile screens, clearing it from the Home Assistant Lovelace / Ingress header bar and preventing top-edge clipping.
+- **Robust Virtual Gamepad Hidden Styles** — Configured `window.EJS_VirtualGamepadSettings` with an off-screen dummy button to bypass EmulatorJS's default controls fallback logic.
+- **Expanded CSS Hiding Selectors** — Expanded the CSS hiding rules to target all underscore-based (`.ejs_virtualGamepad`, `.ejs_vpad`) and camelCase class/ID selectors used internally by the emulator.
+
+---
+
 ## [2.43.26] — 2026-05-25
 
 ### Fix: Duplicate Mobile Virtual Gamepads

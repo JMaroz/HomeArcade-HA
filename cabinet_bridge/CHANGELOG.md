@@ -1,3 +1,7 @@
+## 2.43.27 - 2026-05-25
+
+- **Fix**: **Mobile game display padding & hidden touch controls** - Added `padding-top: 50px` on mobile layouts to move the game display down and clear the header. Expanded virtual gamepad hiding CSS rules and configured an off-screen dummy button for `EJS_VirtualGamepadSettings` to fully disable the default EmulatorJS touch controls.
+
 ## 2.43.26 - 2026-05-25
 
 - **Fix**: **Duplicate mobile virtual gamepads** - Set `window.EJS_VirtualGamepadSettings = []` and corrected the casing of `window.EJS_Buttons` to prevent EmulatorJS's default virtual controller overlay from appearing on mobile devices alongside HomeArcade's custom virtual gamepad.

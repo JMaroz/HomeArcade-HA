@@ -105,7 +105,10 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .cabinet-ping-dot.slow { background: #ef4444; }
 
       #game { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; }
-      .ejs-virtual-gamepad, div[class*="virtual-gamepad"], #virtual-gamepad, .ejs-vpad, [id*="virtual-gamepad"] { display: none !important; opacity: 0 !important; pointer-events: none !important; visibility: hidden !important; }
+      @media (max-width: 768px) {
+        #game { padding-top: 50px; box-sizing: border-box; }
+      }
+      .ejs-virtual-gamepad, .ejs_virtualGamepad, .ejs_virtual_gamepad, div[class*="virtual-gamepad"], div[class*="virtualGamepad"], div[class*="virtual_gamepad"], #virtual-gamepad, #virtualGamepad, #virtual_gamepad, .ejs-vpad, .ejs_vpad, .ejs_virtualGamepad_open, [id*="virtual-gamepad"], [id*="virtual_gamepad"], [id*="virtualGamepad"] { display: none !important; opacity: 0 !important; pointer-events: none !important; visibility: hidden !important; }
 
       /* Filters */
       #game.filter-crt canvas { filter: contrast(1.1) brightness(0.9) saturate(1.1); }
@@ -669,7 +672,7 @@ window.EJS_startOnLoaded = true;
 window.EJS_volume = 0.5;
 window.EJS_onMobile = false;
 window.EJS_virtualGamepad = false;
-window.EJS_VirtualGamepadSettings = [];
+window.EJS_VirtualGamepadSettings = [{ type: "button", id: "dummy_btn", text: "", location: "left", left: "-9999px", top: "-9999px" }];
 window.EJS_gamepad = false;
 window.EJS_color = "#1a1a2e";
 window.EJS_backgroundColor = "#000000";
