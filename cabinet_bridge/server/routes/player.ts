@@ -838,11 +838,127 @@ function cabinetSetupMenu() {
   var hdToggle = document.getElementById("cabinet-set-hd");
   if (!btn || !panel) return;
 
+  window.CabinetSaveSaveSlot = function(slotId, cb) {
+    if (!window.EJS_emulator || !window.EJS_emulator.gameManager) {
+      if (cb) cb(false);
+      return;
+    }
+    try {
+      var stateData = window.EJS_emulator.gameManager.getState();
+      window.EJS_emulator.gameManager.FS.writeFile("/" + slotId + "-quick.state", stateData);
+      window.EJS_emulator.gameManager.screenshot().then(function(screenshotBuf) {
+        var screenshotUrl = null;
+        if (screenshotBuf) {
+          var blob = new Blob([screenshotBuf], { type: "image/png" });
+          var reader = new FileReader();
+          reader.onloadend = function() {
+            var dataUrl = reader.result;
+            uploadBackup(slotId, stateData, dataUrl, cb);
+          };
+          reader.readAsDataURL(blob);
+        } else {
+          uploadBackup(slotId, stateData, null, cb);
+        }
+      }).catch(function() {
+        uploadBackup(slotId, stateData, null, cb);
+      });
+    } catch(e) {
+      console.error("Save error:", e);
+      cabinetToast("Save failed ❌");
+      if (cb) cb(false);
+    }
+  };
+
+  function uploadBackup(slot, data, screenshot, cb) {
+    fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + window.CABINET_ROM_ID + "/save-states/" + slot, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label: "Slot " + slot })
+    }).then(function(r) {
+      if (!r.ok) throw new Error();
+      return fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + window.CABINET_ROM_ID + "/save-backup/" + slot, {
+        method: "PUT",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: data
+      });
+    }).then(function(r) {
+      if (!r.ok) throw new Error();
+      if (screenshot) {
+        return fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + window.CABINET_ROM_ID + "/save-thumb/" + slot, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dataUrl: screenshot })
+        });
+      }
+    }).then(function() {
+      console.log("[SaveSync] Auto-backed up slot " + slot);
+      if (window.CabinetRefreshSaveGrid) window.CabinetRefreshSaveGrid();
+      if (cb) cb(true);
+    }).catch(function(err) {
+      console.error("[SaveSync] Auto-backup failed:", err);
+      if (cb) cb(false);
+    });
+  }
+
+  window.CabinetLoadSaveSlot = function(slotId, cb) {
+    if (!window.EJS_emulator || !window.EJS_emulator.gameManager) {
+      if (cb) cb(false);
+      return;
+    }
+    cabinetToast("Loading state...");
+    fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + window.CABINET_ROM_ID + "/save-backup/" + slotId)
+      .then(function(res) {
+        if (res.ok) return res.arrayBuffer();
+        throw new Error();
+      })
+      .then(function(buf) {
+        try {
+          var arr = new Uint8Array(buf);
+          window.EJS_emulator.gameManager.FS.writeFile("/" + slotId + "-quick.state", arr);
+          window.EJS_emulator.gameManager.quickLoad(slotId);
+          cabinetToast("Loaded Slot " + slotId + " ✅");
+          if (cb) cb(true);
+        } catch(e) {
+          console.error("Load import error:", e);
+          cabinetToast("Load failed ❌");
+          if (cb) cb(false);
+        }
+      })
+      .catch(function() {
+        try {
+          var path = "/" + slotId + "-quick.state";
+          if (window.EJS_emulator.gameManager.FS.analyzePath(path).exists) {
+            window.EJS_emulator.gameManager.quickLoad(slotId);
+            cabinetToast("Loaded Slot " + slotId + " (Local) ✅");
+            if (cb) cb(true);
+            return;
+          }
+        } catch(e) {}
+        cabinetToast("No save found ❌");
+        if (cb) cb(false);
+      });
+  };
+
+  window.CabinetDeleteSaveSlot = function(slotId) {
+    if (confirm("Delete Save Slot " + slotId + "?")) {
+      fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + window.CABINET_ROM_ID + "/save-states/" + slotId, {
+        method: "DELETE"
+      }).then(function(res) {
+        if (res.ok) {
+          cabinetToast("Deleted Slot " + slotId);
+          window.CabinetRefreshSaveGrid();
+        }
+      }).catch(function() {
+        cabinetToast("Delete failed ❌");
+      });
+    }
+  };
+
   function toggleMenu(open) {
     panel.classList.toggle("is-open", open);
     backdrop.classList.toggle("is-open", open);
     if (window.EJS_emulator) {
-       if (open) window.EJS_emulator.pause(); else window.EJS_emulator.unpause();
+       if (open) window.EJS_emulator.pause(); else window.EJS_emulator.play();
     }
   }
 
@@ -855,13 +971,18 @@ function cabinetSetupMenu() {
   backdrop.onclick = function() { toggleMenu(false); };
   safeOnClick("cabinet-resume", function() { toggleMenu(false); });
   safeOnClick("cabinet-restart", function() { 
-    if (window.EJS_emulator) { window.EJS_emulator.restart(); cabinetToast("Restarted ↺"); toggleMenu(false); }
+    if (window.EJS_emulator && window.EJS_emulator.gameManager) { window.EJS_emulator.gameManager.restart(); cabinetToast("Restarted ↺"); toggleMenu(false); }
   });
-  safeOnClick("cabinet-save", function() { if (window.EJS_emulator) { window.EJS_emulator.saveState(); cabinetToast("Saved ✨"); toggleMenu(false); } });
-  safeOnClick("cabinet-load", function() { if (window.EJS_emulator) { window.EJS_emulator.loadState(); cabinetToast("Loaded 🎮"); toggleMenu(false); } });
+  safeOnClick("cabinet-save", function() { window.CabinetSaveSaveSlot(1); toggleMenu(false); });
+  safeOnClick("cabinet-load", function() { window.CabinetLoadSaveSlot(1); toggleMenu(false); });
   safeOnClick("cabinet-saves", function() { toggleMenu(false); var panel = document.getElementById("cabinet-save-panel"); if (panel) { panel.classList.add("is-open"); document.getElementById("cabinet-save-user").textContent = userName || "Guest"; window.CabinetRefreshSaveGrid(); } });
   var saveGrid = document.getElementById("cabinet-save-grid");
-  window.CabinetGetSaveSlots = function(cb) { if (!window.EJS_emulator) { cb([]); return; } window.EJS_emulator.saveStates(function(slots) { cb(slots || []); }); };
+  window.CabinetGetSaveSlots = function(cb) {
+    fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + window.CABINET_ROM_ID + "/save-states")
+      .then(function(r) { return r.json(); })
+      .then(function(slots) { cb(slots || []); })
+      .catch(function() { cb([]); });
+  };
   function renderSaveGrid(slots) {
     if (!saveGrid) return;
     saveGrid.innerHTML = '';
@@ -885,12 +1006,9 @@ function cabinetSetupMenu() {
         var action = btn.getAttribute('data-action');
         var slotId = Number(btn.getAttribute('data-slot'));
         if (action === 'load') {
-          window.EJS_emulator.loadState(slotId);
-          cabinetToast('Loaded slot ' + slotId + ' ✅');
+          window.CabinetLoadSaveSlot(slotId);
         } else if (action === 'delete') {
-          window.EJS_emulator.deleteState(slotId);
-          cabinetToast('Deleted slot ' + slotId + ' 🗑️');
-          window.CabinetGetSaveSlots(renderSaveGrid);
+          window.CabinetDeleteSaveSlot(slotId);
         }
       };
     }
@@ -912,9 +1030,9 @@ function cabinetSetupMenu() {
                throw new Error();
              })
              .then(function(buf) {
-               if (window.EJS_emulator) {
+               if (window.EJS_emulator && window.EJS_emulator.gameManager) {
                  try {
-                   window.EJS_emulator.importSaveState(serverSlot.slot, new Uint8Array(buf));
+                   window.EJS_emulator.gameManager.FS.writeFile("/" + serverSlot.slot + "-quick.state", new Uint8Array(buf));
                  } catch(e) {
                    console.error("[SaveSync] Import error:", e);
                  }
@@ -942,24 +1060,28 @@ function cabinetSetupMenu() {
     var warpPanel = document.getElementById("cabinet-warp-panel");
     var qrImg = document.getElementById("cabinet-warp-qr-image");
     if (warpPanel && qrImg) {
-      cabinetToast("Generating QR...");
-      if (window.EJS_emulator) {
-        window.EJS_emulator.saveState(0);
-      }
-      var pageUrl = window.location.href;
-      fetch(window.CABINET_INGRESS_BASE + "/api/roms/warp-qr?url=" + encodeURIComponent(pageUrl))
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (data && data.dataUrl) {
-            qrImg.src = data.dataUrl;
-            warpPanel.classList.add("is-open");
-          } else {
-            cabinetToast("Failed to load QR");
-          }
-        })
-        .catch(function() {
-          cabinetToast("Failed to load QR");
-        });
+      cabinetToast("Saving session state...");
+      window.CabinetSaveSaveSlot(0, function(success) {
+        if (!success) {
+          cabinetToast("Warp failed (could not save state) ❌");
+          return;
+        }
+        cabinetToast("Generating QR...");
+        var pageUrl = window.location.href;
+        fetch(window.CABINET_INGRESS_BASE + "/api/roms/warp-qr?url=" + encodeURIComponent(pageUrl))
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data && data.dataUrl) {
+              qrImg.src = data.dataUrl;
+              warpPanel.classList.add("is-open");
+            } else {
+              cabinetToast("Failed to load QR ❌");
+            }
+          })
+          .catch(function() {
+            cabinetToast("Failed to load QR ❌");
+          });
+      });
     }
   });
   safeOnClick("cabinet-warp-close", function() {
@@ -1038,12 +1160,12 @@ window.EJS_onGameStart = function () {
             throw new Error();
           })
           .then(function(buf) {
-            if (window.EJS_emulator) {
+            if (window.EJS_emulator && window.EJS_emulator.gameManager) {
               try {
-                window.EJS_emulator.importSaveState(0, new Uint8Array(buf));
+                window.EJS_emulator.gameManager.FS.writeFile("/0-quick.state", new Uint8Array(buf));
                 setTimeout(function() {
                   cabinetToast("Auto-Resuming...");
-                  window.EJS_emulator.loadState(0);
+                  window.EJS_emulator.gameManager.quickLoad(0);
                 }, 1200);
               } catch(e) {
                 console.error("[Warp] Auto-resume import error:", e);

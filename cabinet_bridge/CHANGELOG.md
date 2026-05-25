@@ -1,4 +1,9 @@
+## 2.43.32 - 2026-05-25
+
+- **Fix**: **Pause Menu Action Bindings** - Corrected the pause menu actions (Restart, Save, Load, Saves panel, and Warp QR generation) by mapping them to the proper nested `EJS_emulator.gameManager` functions instead of non-existent top-level methods. Fixed the `unpause()` runtime crash by calling `play()`.
+
 ## 2.43.31 - 2026-05-25
+
 
 - **Fix**: **Home Assistant Repository Sync** - Corrected the repository URL in `repository.yaml` to ensure the Supervisor Add-on Store discovers new updates cleanly.
 

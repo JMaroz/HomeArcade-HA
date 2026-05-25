@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.32] — 2026-05-25
+
+### Fix: Pause Menu Action Bindings
+
+- **Emulator Actions** — Re-routed pause menu action buttons (Restart, Save, Load, Saves panel, and Warp QR generation) to access correct nested `EJS_emulator.gameManager` endpoints.
+- **Unpause Crash** — Replaced the invalid call to `unpause()` with `play()`, fixing a runtime crash when closing the pause menu.
+
+---
+
 ## [2.43.31] — 2026-05-25
 
 ### Fix: Home Assistant Repository Sync
