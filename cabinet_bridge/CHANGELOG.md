@@ -1,3 +1,7 @@
+## 2.43.22 - 2026-05-25
+
+- **Fix**: **Wired missing Save manager HTML and secured onclick registrations** - Added the missing `cabinet-save-panel` HTML structure and CSS styling inside `renderEmulatorPage` so that the saves panel displays correctly. Additionally, introduced a `safeOnClick` guard for all pause menu elements in `cabinetSetupMenu` to prevent `Uncaught TypeError: Cannot set properties of null (setting 'onclick')` crashes when any optional menu controls/panels are absent in the DOM.
+
 ## 2.43.21 - 2026-05-25
 
 - **Fix**: **Escape slot variables in player.ts** - Escaped `slot.slot` template variable interpolations in the onclick load/delete button handlers inside the renderEmulatorPage template literal. This resolves the server-side "slot is not defined" ReferenceError.

@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.22] — 2026-05-25
+
+### Fix: Pause Menu Element Null Reference Crashes
+
+- **Wired Missing Save Manager HTML and Styles** — Embedded the missing `cabinet-save-panel` HTML section and CSS styles inside `renderEmulatorPage` so that the Saves panel loads and opens correctly.
+- **Implemented Null-Safe Button Bindings** — Secured the event listener setup by introducing a `safeOnClick` helper for setting element `.onclick` handlers. This prevents any `TypeError: Cannot set properties of null` crashes if certain controls (e.g. sync buttons) are not present in the DOM.
+
+---
+
 ## [2.43.21] — 2026-05-25
 
 ### Fix: Save State Slot ReferenceError

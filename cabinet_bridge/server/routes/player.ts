@@ -157,10 +157,96 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       body[data-system="snes"] .vpad-face .b { background-color: rgba(202, 138, 4, 0.8) !important; border-color: #facc15 !important; }
       body[data-system="snes"] .vpad-face .x { background-color: rgba(37, 99, 235, 0.8) !important; border-color: #60a5fa !important; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.5); }
       body[data-system="snes"] .vpad-face .y { background-color: rgba(22, 163, 74, 0.8) !important; border-color: #4ade80 !important; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.5); }
+
+      /* Save Manager Panel styling */
+      .cabinet-save-panel {
+        position: fixed;
+        z-index: 1000000;
+        left: 50%;
+        top: 50%;
+        width: min(94vw, 760px);
+        max-height: min(86vh, 720px);
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 24px;
+        background: rgba(11, 11, 16, 0.9);
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.66);
+        color: #f8fafc;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, -48%) scale(0.98);
+        transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+        visibility: hidden;
+        backdrop-filter: blur(20px);
+      }
+      .cabinet-save-panel.is-open {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, -50%) scale(1);
+        visibility: visible;
+      }
+      .cabinet-save-panel__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 18px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .cabinet-save-title {
+        margin: 0;
+        color: #f8fafc;
+        font: 900 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .cabinet-save-subtitle {
+        margin: 6px 0 0;
+        color: rgba(248, 250, 252, 0.6);
+        font: 700 10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        letter-spacing: 0.08em;
+        line-height: 1.5;
+        text-transform: uppercase;
+      }
+      .cabinet-save-close {
+        appearance: none;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #f8fafc;
+        cursor: pointer;
+        font: 900 16px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        min-height: 40px;
+        min-width: 40px;
+      }
+      .cabinet-save-close:hover,
+      .cabinet-save-close:focus-visible {
+        background: rgba(236, 72, 153, 0.34);
+        border-color: rgba(236, 72, 153, 0.75);
+        outline: none;
+      }
+      .cabinet-save-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        max-height: calc(min(86vh, 720px) - 94px);
+        overflow-y: auto;
+        padding: 14px 18px 18px;
+      }
       
       @media (max-width: 768px) {
         .vpad-dpad { left: 20px; bottom: 20px; }
         .vpad-face { right: 20px; bottom: 20px; }
+        .cabinet-save-panel {
+          width: calc(100vw - 24px);
+          max-height: calc(100dvh - 34px);
+        }
+        .cabinet-save-grid {
+          grid-template-columns: 1fr;
+          gap: 8px;
+          max-height: calc(100dvh - 128px);
+          padding: 10px 12px 14px;
+        }
       }
     </style>
   </head>
@@ -244,6 +330,20 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         <button type="button" class="a" data-ejs-input="8">A</button>
       </div>
     </div>
+
+    <section class="cabinet-save-panel" id="cabinet-save-panel" aria-label="Save state manager" aria-hidden="true" data-testid="panel-save-manager">
+      <div class="cabinet-save-panel__header">
+        <div>
+          <p class="cabinet-save-title">Save-state Manager</p>
+          <p class="cabinet-save-subtitle">Nine browser-local slots for this game · saved as <strong id="cabinet-save-user"></strong></p>
+        </div>
+        <button type="button" class="cabinet-save-close" id="cabinet-save-manager-close" aria-label="Close save-state manager" data-testid="button-close-save-manager">×</button>
+      </div>
+      <div class="cabinet-save-grid" id="cabinet-save-grid" data-testid="grid-save-slots"></div>
+      <div style="padding:8px 14px 12px;display:flex;justify-content:flex-end;">
+        <button type="button" id="cabinet-sync-from-server" style="appearance:none;border:1px solid rgba(99,179,237,0.35);border-radius:10px;background:rgba(99,179,237,0.08);color:#93c5fd;cursor:pointer;font:700 9px ui-monospace,monospace;letter-spacing:0.1em;padding:7px 12px;text-transform:uppercase;" data-testid="button-sync-from-server" title="Pull any server backup slots that are missing locally">☁ Sync from server</button>
+      </div>
+    </section>
 
     <div class="cabinet-toast" id="cabinet-toast"></div>
     <div id="game"></div>
@@ -463,29 +563,32 @@ function cabinetSetupMenu() {
     }
   }
 
+  function safeOnClick(id, handler) {
+    var el = document.getElementById(id);
+    if (el) el.onclick = handler;
+  }
+
   btn.onclick = function() { toggleMenu(!panel.classList.contains("is-open")); };
   backdrop.onclick = function() { toggleMenu(false); };
-  document.getElementById("cabinet-resume").onclick = function() { toggleMenu(false); };
-  document.getElementById("cabinet-restart").onclick = function() { 
+  safeOnClick("cabinet-resume", function() { toggleMenu(false); });
+  safeOnClick("cabinet-restart", function() { 
     if (window.EJS_emulator) { window.EJS_emulator.restart(); cabinetToast("Restarted ↺"); toggleMenu(false); }
-  };
-  document.getElementById("cabinet-save").onclick = function() { if (window.EJS_emulator) { window.EJS_emulator.saveState(); cabinetToast("Saved ✨"); toggleMenu(false); } };
-  document.getElementById("cabinet-load").onclick = function() { if (window.EJS_emulator) { window.EJS_emulator.loadState(); cabinetToast("Loaded 🎮"); toggleMenu(false); } };
-  document.getElementById("cabinet-saves").onclick = function() { toggleMenu(false); var panel = document.getElementById("cabinet-save-panel"); if (panel) { panel.classList.add("is-open"); document.getElementById("cabinet-save-user").textContent = userName || "Guest"; window.CabinetRefreshSaveGrid(); } };
+  });
+  safeOnClick("cabinet-save", function() { if (window.EJS_emulator) { window.EJS_emulator.saveState(); cabinetToast("Saved ✨"); toggleMenu(false); } });
+  safeOnClick("cabinet-load", function() { if (window.EJS_emulator) { window.EJS_emulator.loadState(); cabinetToast("Loaded 🎮"); toggleMenu(false); } });
+  safeOnClick("cabinet-saves", function() { toggleMenu(false); var panel = document.getElementById("cabinet-save-panel"); if (panel) { panel.classList.add("is-open"); document.getElementById("cabinet-save-user").textContent = userName || "Guest"; window.CabinetRefreshSaveGrid(); } });
   var saveGrid = document.getElementById("cabinet-save-grid");
   window.CabinetGetSaveSlots = function(cb) { if (!window.EJS_emulator) { cb([]); return; } window.EJS_emulator.saveStates(function(slots) { cb(slots || []); }); };
   function renderSaveGrid(slots) { if (!saveGrid) return; saveGrid.innerHTML = ''; if (!slots || slots.length === 0) { saveGrid.innerHTML = '<p style="color:rgba(248,250,252,0.35);font:600 11px ui-monospace,monospace;text-align:center;padding:32px 0;">No saves yet. Use Save to create one.</p>'; return; } slots.forEach(function(slot) { var div = document.createElement("div"); div.style.cssText = "display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,0.04);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"; var img = slot.thumbnail ? '<img src="' + slot.thumbnail + '" style="width:100%;aspect-ratio:16/9;object-fit:contain;background:#000;" />' : '<div style="width:100%;aspect-ratio:16/9;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font:700 20px ui-monospace,monospace;">' + (slot.slot ?? "?") + '</div>'; var date = slot.timestamp ? new Date(slot.timestamp * 1000).toLocaleString() : "No date"; div.innerHTML = img + '<div style="padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;"><div style="font:700 10px ui-monospace,monospace;color:rgba(248,250,252,0.5);letter-spacing:0.1em;text-transform:uppercase;">Slot ' + slot.slot + '</div><div style="font:500 10px ui-monospace,monospace;color:rgba(248,250,252,0.3);">' + date + '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:2px;"><button onclick="if(window.EJS_emulator){window.EJS_emulator.loadState(' + slot.slot + ');cabinetToast(\`Loaded slot \${slot.slot} \u2705\`);} " style="padding:5px 8px;border-radius:6px;font:700 9px ui-monospace,monospace;letter-spacing:0.08em;background:rgba(99,179,237,0.15);color:#93c5fd;border:1px solid rgba(99,179,237,0.25);cursor:pointer;">Load</button><button onclick="if(window.EJS_emulator){window.EJS_emulator.deleteState(' + slot.slot + ');cabinetToast(\`Deleted slot \${slot.slot} \uD83D\uDDD1\uFE0F\`);window.CabinetGetSaveSlots(renderSaveGrid);} " style="padding:5px 8px;border-radius:6px;font:700 9px ui-monospace,monospace;letter-spacing:0.08em;background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);cursor:pointer;">Delete</button></div></div></div>'; saveGrid.appendChild(div); }); }
   window.CabinetRefreshSaveGrid = function() { window.CabinetGetSaveSlots(renderSaveGrid); };
-  document.getElementById("cabinet-sync-from-server").onclick = function() { cabinetToast("Syncing..."); fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + ${JSON.stringify(romId)} + "/save-states").then(function(r) { return r.json(); }).then(function(slots) { slots.forEach(function(serverSlot) { if (window.EJS_emulator && serverSlot.data) { try { window.EJS_emulator.importSaveState(serverSlot.slot, serverSlot.data); } catch(e) { console.error("[SaveSync]", e); } } }); setTimeout(function() { window.CabinetRefreshSaveGrid(); cabinetToast("Sync complete ✓"); }, 500); }).catch(function() { cabinetToast("Sync failed"); }); };
-  document.getElementById("cabinet-save-manager-close").onclick = function() { var panel = document.getElementById("cabinet-save-panel"); if (panel) panel.classList.remove("is-open"); };
-  document.getElementById("cabinet-exit").onclick = function() { window.location.href = window.CABINET_RETURN_TO || "/"; };
+  safeOnClick("cabinet-sync-from-server", function() { cabinetToast("Syncing..."); fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + ${JSON.stringify(romId)} + "/save-states").then(function(r) { return r.json(); }).then(function(slots) { slots.forEach(function(serverSlot) { if (window.EJS_emulator && serverSlot.data) { try { window.EJS_emulator.importSaveState(serverSlot.slot, serverSlot.data); } catch(e) { console.error("[SaveSync]", e); } } }); setTimeout(function() { window.CabinetRefreshSaveGrid(); cabinetToast("Sync complete ✓"); }, 500); }).catch(function() { cabinetToast("Sync failed"); }); });
+  safeOnClick("cabinet-save-manager-close", function() { var panel = document.getElementById("cabinet-save-panel"); if (panel) panel.classList.remove("is-open"); });
+  safeOnClick("cabinet-exit", function() { window.location.href = window.CABINET_RETURN_TO || "/"; });
 
   if (hdToggle) {
     hdToggle.checked = localStorage.getItem("cabinet_hd_mode") === "true";
     hdToggle.onchange = function() { localStorage.setItem("cabinet_hd_mode", hdToggle.checked); cabinetToast("HD Mode Updated"); };
   }
-}
-
 function cabinetSetupGamepad() {
   var activeGP = null;
   window.addEventListener("gamepadconnected", function(e) { cabinetToast("🎮 Controller Connected"); activeGP = e.gamepad.index; });
