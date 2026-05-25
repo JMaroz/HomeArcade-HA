@@ -1,3 +1,16 @@
+## 2.43.31 - 2026-05-25
+
+- **Fix**: **Home Assistant Repository Sync** - Corrected the repository URL in `repository.yaml` to ensure the Supervisor Add-on Store discovers new updates cleanly.
+
+## 2.43.30 - 2026-05-25
+
+
+- **UX/UI Redesign**: **Pause Menu Glassmorphism Redesign & Warp Play** - Redesigned the pause menu layout with glassmorphic cards and buttons. Replaced raw emojis with animated inline SVG icons. Implemented a fully functional Warp QR code panel that uploads session states to the server in real-time and enables users to scan the QR code to auto-resume play on another device. Fixed sync-from-server to download binary save backups.
+
+## 2.43.29 - 2026-05-25
+
+- **Fix**: **Interface accordion visibility & E2E spec selectors** - Configured Interface settings section to be defaultOpen so controls are visible to automated test scripts. Corrected theme label E2E selectors to prevent strict-mode violations, and updated Sidebar/History to map paginated ROM query responses.
+
 ## 2.43.28 - 2026-05-25
 
 - **UX/UI Redesign**: **Ergonomic Virtual Gamepad Redesign** - Redesigned the touch virtual gamepad layout in `player.ts` with premium glassmorphic circular plates for both the D-pad and face buttons. Added a classic center-pivot cap overlay for the D-pad cross. Relocated the L and R trigger buttons to be positioned ergonomically directly above the left and right controller zones to prevent overlaps with the Menu button. Implemented CSS variables and responsive media query scaling so that the layout shrinks from 64px to 46px base button size on screens under 480px, avoiding middle overlap in portrait mode.

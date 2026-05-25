@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Continue'
-$v = "2.43.30"
+$v = "2.43.31"
 
 # Bump package.json
 $pkg = Get-Content package.json -Raw | ConvertFrom-Json
@@ -13,7 +13,7 @@ $cfg = $cfg -replace '^version:.*', "version: $v"
 [System.IO.File]::WriteAllText("$PWD\config.yaml", $cfg, [System.Text.UTF8Encoding]::new($false))
 
 git add package.json config.yaml
-git commit -m "fix: Redesign pause menu UI with premium glassmorphic styling, custom animated SVG icons, and add fully functional Warp QR code portal"
+git commit -m "bump: version 2.43.30 -> 2.43.31 (fix repository sync URL)"
 git tag "v$v"
 git push
-git push origin "v$v"
+git push origin "v$v"

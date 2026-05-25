@@ -4,6 +4,14 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.31] — 2026-05-25
+
+### Fix: Home Assistant Repository Sync
+
+- **Repository URL** — Corrected the repository URL in `repository.yaml` to ensure the Supervisor Add-on Store discovers new updates cleanly.
+
+---
+
 ## [2.43.30] — 2026-05-25
 
 ### UX/UI Redesign: Pause Menu Glassmorphism Redesign & Warp Play
