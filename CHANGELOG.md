@@ -4,6 +4,15 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.23] — 2026-05-25
+
+### Refactor: Clean Event Delegation for Save Grid
+
+- **Replaced Inline Handlers** — Refactored the Save manager's slot list rendering in `player.ts` to use data attributes instead of inline `onclick` string templates.
+- **Event Delegation** — Added a single click handler to the grid container that catches clicks from action buttons and maps them dynamically. This completely removes the multi-layer nesting/escaping difficulty.
+
+---
+
 ## [2.43.22] — 2026-05-25
 
 ### Fix: Pause Menu Element Null Reference Crashes

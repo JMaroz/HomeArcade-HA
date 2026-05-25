@@ -1,3 +1,7 @@
+## 2.43.23 - 2026-05-25
+
+- **Refactor**: **Clean event delegation for Save grid** - Refactored `renderSaveGrid` to use HTML5 data attributes (`data-action`, `data-slot`) and container-level event delegation instead of complex nested inline `onclick` string attributes. This cleanly separates markup from JS logic, makes the code easier to read, and prevents any escaping/nesting bugs.
+
 ## 2.43.22 - 2026-05-25
 
 - **Fix**: **Wired missing Save manager HTML and secured onclick registrations** - Added the missing `cabinet-save-panel` HTML structure and CSS styling inside `renderEmulatorPage` so that the saves panel displays correctly. Additionally, introduced a `safeOnClick` guard for all pause menu elements in `cabinetSetupMenu` to prevent `Uncaught TypeError: Cannot set properties of null (setting 'onclick')` crashes when any optional menu controls/panels are absent in the DOM.
