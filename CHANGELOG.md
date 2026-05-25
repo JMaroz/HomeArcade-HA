@@ -4,7 +4,40 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.30] — 2026-05-25
+
+### UX/UI Redesign: Pause Menu Glassmorphism Redesign & Warp Play
+
+- **Pause Menu Glassmorphism** — Redesigned the pause menu layout with glassmorphic cards and buttons.
+- **Animated Inline SVG Icons** — Replaced raw emojis with custom-tailored animated inline SVG icons.
+- **Warp Play QR Code** — Implemented a fully functional Warp QR code portal that uploads session states to the server in real-time and enables users to scan the QR code to auto-resume play on another device.
+- **Binary Sync** — Fixed sync-from-server to download binary save backups rather than metadata templates.
+
+---
+
+## [2.43.29] — 2026-05-25
+
+### Fix: Interface Accordion Visibility & E2E Spec Selectors
+
+- **Interface accordion visibility** — Configured Interface settings section to be defaultOpen so controls are visible to automated test scripts.
+- **E2E Spec Selectors** — Corrected theme label E2E selectors to prevent strict-mode violations.
+- **ROM queries** — Updated Sidebar/History to map paginated ROM query responses correctly.
+
+---
+
+## [2.43.28] — 2026-05-25
+
+### UX/UI Redesign: Ergonomic Virtual Gamepad Redesign
+
+- **Premium Plates** — Redesigned the touch virtual gamepad layout in `player.ts` with premium glassmorphic circular plates for both the D-pad and face buttons.
+- **D-pad Cap Overlay** — Added a classic center-pivot cap overlay for the D-pad cross.
+- **Trigger Relocation** — Relocated the L and R trigger buttons to be positioned ergonomically directly above the left and right controller zones to prevent overlaps with the Menu button.
+- **Responsive Layout** — Implemented CSS variables and responsive media query scaling so that the layout shrinks from 64px to 46px base button size on screens under 480px, avoiding middle overlap in portrait mode.
+
+---
+
 ## [2.43.27] — 2026-05-25
+
 
 ### Fix: Mobile Game Display Placement & Virtual Controls Overlay
 
