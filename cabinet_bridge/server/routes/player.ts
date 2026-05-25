@@ -446,6 +446,7 @@ export function renderEmulatorBootstrap({
     : `window.EJS_gameUrl = window.CABINET_INGRESS_BASE + "/api/roms/" + ${JSON.stringify(romId)} + "/file";`;
 
   return `"use strict";
+window.CABINET_ROM_ID = ${JSON.stringify(romId)};
 function cabinetToast(message) {
   var toast = document.querySelector("#cabinet-toast");
   if (!toast) return;
@@ -613,7 +614,7 @@ function cabinetSetupMenu() {
     }
   }
   window.CabinetRefreshSaveGrid = function() { window.CabinetGetSaveSlots(renderSaveGrid); };
-  safeOnClick("cabinet-sync-from-server", function() { cabinetToast("Syncing..."); fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + ${JSON.stringify(romId)} + "/save-states").then(function(r) { return r.json(); }).then(function(slots) { slots.forEach(function(serverSlot) { if (window.EJS_emulator && serverSlot.data) { try { window.EJS_emulator.importSaveState(serverSlot.slot, serverSlot.data); } catch(e) { console.error("[SaveSync]", e); } } }); setTimeout(function() { window.CabinetRefreshSaveGrid(); cabinetToast("Sync complete ✓"); }, 500); }).catch(function() { cabinetToast("Sync failed"); }); });
+  safeOnClick("cabinet-sync-from-server", function() { cabinetToast("Syncing..."); fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + window.CABINET_ROM_ID + "/save-states").then(function(r) { return r.json(); }).then(function(slots) { slots.forEach(function(serverSlot) { if (window.EJS_emulator && serverSlot.data) { try { window.EJS_emulator.importSaveState(serverSlot.slot, serverSlot.data); } catch(e) { console.error("[SaveSync]", e); } } }); setTimeout(function() { window.CabinetRefreshSaveGrid(); cabinetToast("Sync complete ✓"); }, 500); }).catch(function() { cabinetToast("Sync failed"); }); });
   safeOnClick("cabinet-save-manager-close", function() { var panel = document.getElementById("cabinet-save-panel"); if (panel) panel.classList.remove("is-open"); });
   safeOnClick("cabinet-exit", function() { window.location.href = window.CABINET_RETURN_TO || "/"; });
 
@@ -647,7 +648,7 @@ window.EJS_onGameStart = function () {
   cabinetSetupVirtualPad();
   cabinetSetupGamepad();
   
-  fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + ${JSON.stringify(romId)} + "/save-states").then(r => r.json()).then(slots => {
+  fetch(window.CABINET_INGRESS_BASE + "/api/roms/" + window.CABINET_ROM_ID + "/save-states").then(r => r.json()).then(slots => {
     var auto = slots.find(s => s.slot === 0);
     if (auto && window.EJS_emulator) {
        setTimeout(() => { cabinetToast("Auto-Resuming..."); window.EJS_emulator.loadState(0); }, 1500);
