@@ -1,3 +1,7 @@
+## 2.43.26 - 2026-05-25
+
+- **Fix**: **Duplicate mobile virtual gamepads** - Set `window.EJS_VirtualGamepadSettings = []` and corrected the casing of `window.EJS_Buttons` to prevent EmulatorJS's default virtual controller overlay from appearing on mobile devices alongside HomeArcade's custom virtual gamepad.
+
 ## 2.43.25 - 2026-05-25
 
 - **Feature**: **Expose Port 5000 Config Mapping** - Added `ports` configuration mapping in `config.yaml` for port `5000/tcp` to enable direct network access via the Home Assistant host, bypassing the Supervisor Ingress proxy.

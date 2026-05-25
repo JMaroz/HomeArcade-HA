@@ -4,6 +4,14 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.26] — 2026-05-25
+
+### Fix: Duplicate Mobile Virtual Gamepads
+
+- **Disabled Default EmulatorJS Touch Controls** — Configured `window.EJS_VirtualGamepadSettings = []` and corrected capitalization of `window.EJS_Buttons` to prevent EmulatorJS from rendering its default virtual controller overlay alongside HomeArcade's custom virtual gamepad.
+
+---
+
 ## [2.43.25] — 2026-05-25
 
 ### Feature: Expose Port 5000 Config Mapping
