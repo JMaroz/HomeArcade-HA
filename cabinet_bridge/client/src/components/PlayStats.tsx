@@ -100,8 +100,8 @@ export function PlayStats() {
     gameMap.set(key, gExisting);
   }
 
-  const topSystems = [...systemMap.values()].sort((a, b) => b.totalMinutes - a.totalMinutes).slice(0, 6);
-  const topGames = [...gameMap.values()].sort((a, b) => b.totalMinutes - a.totalMinutes).slice(0, 8);
+  const topSystems = Array.from(systemMap.values()).sort((a, b) => b.totalMinutes - a.totalMinutes).slice(0, 6);
+  const topGames = Array.from(gameMap.values()).sort((a, b) => b.totalMinutes - a.totalMinutes).slice(0, 8);
   const maxSystemMins = topSystems[0]?.totalMinutes ?? 1;
 
   // Recent sessions (last 10 with duration)

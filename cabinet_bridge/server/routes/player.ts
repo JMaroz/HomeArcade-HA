@@ -621,6 +621,8 @@ function cabinetSetupMenu() {
     hdToggle.checked = localStorage.getItem("cabinet_hd_mode") === "true";
     hdToggle.onchange = function() { localStorage.setItem("cabinet_hd_mode", hdToggle.checked); cabinetToast("HD Mode Updated"); };
   }
+}
+
 function cabinetSetupGamepad() {
   var activeGP = null;
   window.addEventListener("gamepadconnected", function(e) { cabinetToast("🎮 Controller Connected"); activeGP = e.gamepad.index; });

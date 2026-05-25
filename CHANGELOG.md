@@ -4,6 +4,14 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.24] — 2026-05-25
+
+### Fix: Bootstrap Syntax Error
+
+- **Added Missing Closing Curly Brace** — Re-inserted the missing closing curly brace `}` for the `cabinetSetupMenu` function. This resolves the `Uncaught SyntaxError: Unexpected end of input` crash that was introduced during cleanup.
+
+---
+
 ## [2.43.23] — 2026-05-25
 
 ### Refactor: Clean Event Delegation for Save Grid

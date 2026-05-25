@@ -1,3 +1,7 @@
+## 2.43.24 - 2026-05-25
+
+- **Fix**: **Missing closing brace on cabinetSetupMenu** - Added the missing closing curly brace `}` for the `cabinetSetupMenu` function that was accidentally cut during clean-ups. This resolves the `Uncaught SyntaxError: Unexpected end of input` crash at game load.
+
 ## 2.43.23 - 2026-05-25
 
 - **Refactor**: **Clean event delegation for Save grid** - Refactored `renderSaveGrid` to use HTML5 data attributes (`data-action`, `data-slot`) and container-level event delegation instead of complex nested inline `onclick` string attributes. This cleanly separates markup from JS logic, makes the code easier to read, and prevents any escaping/nesting bugs.
