@@ -1,7 +1,9 @@
+# BUILD_ARCH must be declared BEFORE the first FROM that references it
 ARG BUILD_ARCH=amd64
 FROM --platform=linux/${BUILD_ARCH} ghcr.io/home-assistant/${BUILD_ARCH}-base:latest
 
 # Build arguments provided by the HA builder / GitHub Actions workflow
+ARG BUILD_ARCH=amd64
 ARG BUILD_VERSION="dev"
 
 # Required labels for Home Assistant Supervisor to recognise the image
@@ -14,19 +16,20 @@ ENV LANG=C.UTF-8 \
     PORT=5000 \
     NODE_ENV=production
 
-# Install Node.js + native build deps for better-sqlite3
+# Install Node.js + native build deps for better-sqlite3, plus pnpm
 RUN apk add --no-cache \
       --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main \
       nodejs npm && \
     apk add --no-cache python3 make g++ sqlite-libs libstdc++ && \
-    node --version && npm --version
+    npm install -g pnpm && \
+    node --version && npm --version && pnpm --version
 
 WORKDIR /app
 
-# Install dependencies
-COPY package.json package-lock.json ./
-RUN NODE_ENV=development npm install --no-audit --no-fund --ignore-scripts
-RUN npm rebuild better-sqlite3
+# Install dependencies (project uses pnpm — no package-lock.json)
+COPY package.json pnpm-lock.yaml ./
+RUN NODE_ENV=development pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm rebuild better-sqlite3
 
 # Cache-bust arg — increment this to force a full source re-copy and rebuild.
 # This ensures Docker never serves a stale compiled bundle from a previous layer.
@@ -41,13 +44,13 @@ COPY script   ./script
 COPY migrations ./migrations
 
 # Build client (Vite) + server (esbuild -> dist/index.cjs)
-RUN NODE_ENV=production npm run build
+RUN NODE_ENV=production pnpm run build
 
 # Hard-fail the image build if the server bundle is missing
 RUN test -f dist/index.cjs || { echo "ERROR: dist/index.cjs not found after build"; exit 1; }
 
 # Prune dev deps to keep the image lean
-RUN npm prune --omit=dev
+RUN pnpm prune --prod
 
 # Install s6-overlay v3 service files
 COPY rootfs /
