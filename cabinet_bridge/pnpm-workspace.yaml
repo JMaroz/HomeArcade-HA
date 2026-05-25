@@ -1,4 +1,4 @@
 allowBuilds:
-  better-sqlite3: false
-  bufferutil: false
-  esbuild: false
+  better-sqlite3: true
+  bufferutil: true
+  esbuild: true
