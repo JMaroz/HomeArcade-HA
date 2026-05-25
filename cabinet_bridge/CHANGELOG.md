@@ -1,3 +1,7 @@
+## 2.43.25 - 2026-05-25
+
+- **Feature**: **Expose Port 5000 Config Mapping** - Added `ports` configuration mapping in `config.yaml` for port `5000/tcp` to enable direct network access via the Home Assistant host, bypassing the Supervisor Ingress proxy.
+
 ## 2.43.24 - 2026-05-25
 
 - **Fix**: **Missing closing brace on cabinetSetupMenu** - Added the missing closing curly brace `}` for the `cabinetSetupMenu` function that was accidentally cut during clean-ups. This resolves the `Uncaught SyntaxError: Unexpected end of input` crash at game load.

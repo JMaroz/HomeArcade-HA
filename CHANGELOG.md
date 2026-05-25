@@ -4,6 +4,14 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.25] — 2026-05-25
+
+### Feature: Expose Port 5000 Config Mapping
+
+- **Added Ports Exposing Configuration** — Added standard port `5000/tcp` mapping setting in `config.yaml` to allow exposing the add-on directly to the local network via Home Assistant.
+
+---
+
 ## [2.43.24] — 2026-05-25
 
 ### Fix: Bootstrap Syntax Error

@@ -1,5 +1,5 @@
 name: "HomeArcade"
-version: "2.43.24"
+version: "2.43.25"
 slug: "cabinet_bridge"
 description: "The premium retro gaming frontend for Home Assistant. Manage ROMs, browse systems, and launch games from your sidebar or TV."
 url: "https://github.com/GlerschNersch/HomeArcade-HA"
@@ -11,6 +11,8 @@ init: false
 ingress: true
 ingress_port: 5000
 ingress_stream: true
+ports:
+  5000/tcp: null
 map:
   - "media:rw"
 panel_icon: "mdi:gamepad-variant"
