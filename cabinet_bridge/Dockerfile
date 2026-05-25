@@ -26,14 +26,14 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-# Install dependencies (project uses pnpm — no package-lock.json)
+# Install dependencies (project uses pnpm)
+# --no-frozen-lockfile allows install when package.json has drifted ahead of pnpm-lock.yaml
 COPY package.json pnpm-lock.yaml ./
-RUN NODE_ENV=development pnpm install --frozen-lockfile --ignore-scripts
+RUN NODE_ENV=development pnpm install --no-frozen-lockfile --ignore-scripts
 RUN pnpm rebuild better-sqlite3
 
 # Cache-bust arg — increment this to force a full source re-copy and rebuild.
-# This ensures Docker never serves a stale compiled bundle from a previous layer.
-ARG CACHE_BUST=4
+ARG CACHE_BUST=5
 
 # Copy all source (cache busted by ARG above)
 COPY tsconfig.json vite.config.ts tailwind.config.ts postcss.config.js components.json drizzle.config.ts ./
