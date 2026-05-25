@@ -28,9 +28,8 @@ WORKDIR /app
 
 # Install dependencies (project uses pnpm)
 # --no-frozen-lockfile allows install when package.json has drifted ahead of pnpm-lock.yaml
-COPY package.json pnpm-lock.yaml ./
-RUN NODE_ENV=development pnpm install --no-frozen-lockfile --ignore-scripts
-RUN pnpm rebuild better-sqlite3
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN NODE_ENV=development pnpm install --no-frozen-lockfile
 
 # Cache-bust arg — increment this to force a full source re-copy and rebuild.
 ARG CACHE_BUST=5
