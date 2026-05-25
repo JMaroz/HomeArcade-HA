@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Continue'
-$v = "2.43.11"
+$v = "2.43.28"
 
 # Bump package.json
 $pkg = Get-Content package.json -Raw | ConvertFrom-Json

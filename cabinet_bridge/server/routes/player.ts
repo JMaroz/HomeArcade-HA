@@ -20,6 +20,16 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       :root {
         --vpad-scale: 1;
         --vpad-opacity: 1;
+        --vpad-btn-size: 64px;
+        --vpad-gap: 4px;
+        --vpad-padding: 8px;
+      }
+      @media (max-width: 480px) {
+        :root {
+          --vpad-btn-size: 46px;
+          --vpad-gap: 2px;
+          --vpad-padding: 6px;
+        }
       }
       html, body {
         width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #000;
@@ -128,38 +138,154 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .virtual-pad.is-visible { opacity: var(--vpad-opacity); }
       .virtual-pad button {
         appearance: none; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        min-width: calc(66px * var(--vpad-scale)); min-height: calc(66px * var(--vpad-scale)); border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px;
-        background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.25) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 80%), rgba(15, 15, 22, 0.75);
-        color: #fff; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2), inset 0 -2px 5px rgba(0, 0, 0, 0.3);
-        font: 900 calc(15px * var(--vpad-scale)) ui-monospace, SFMono-Regular, monospace; letter-spacing: 0.02em; text-shadow: 0 2px 4px rgba(0,0,0,0.5); transition: transform 80ms cubic-bezier(0.2, 0, 0, 1), background 120ms ease, box-shadow 80ms ease;
+        color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+        transition: transform 80ms cubic-bezier(0.2, 0, 0, 1), background 120ms ease, box-shadow 80ms ease;
       }
-      .virtual-pad button.is-pressed, .virtual-pad button:active { background: radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.4), rgba(236, 72, 153, 0.15)), rgba(10, 10, 15, 0.85); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 2px 10px rgba(0, 0, 0, 0.4); transform: scale(0.94) translateY(2px); transition: transform 40ms ease; }
+      .virtual-pad button.is-pressed, .virtual-pad button:active {
+        transform: scale(0.92) translateY(1px);
+        transition: transform 40ms ease;
+      }
       
-      .vpad-dpad { position: absolute; left: max(32px, env(safe-area-inset-left)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, calc(68px * var(--vpad-scale))); grid-template-rows: repeat(3, calc(68px * var(--vpad-scale))); gap: 2px; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6)); }
-      .vpad-dpad button { border-radius: 8px; min-width: calc(68px * var(--vpad-scale)); min-height: calc(68px * var(--vpad-scale)); background: rgba(20, 20, 25, 0.85); border-color: rgba(255,255,255,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
-      .vpad-dpad .up { grid-column: 2; grid-row: 1; border-radius: 16px 16px 4px 4px; }
-      .vpad-dpad .left { grid-column: 1; grid-row: 2; border-radius: 16px 4px 4px 16px; }
-      .vpad-dpad .right { grid-column: 3; grid-row: 2; border-radius: 4px 16px 16px 4px; }
-      .vpad-dpad .down { grid-column: 2; grid-row: 3; border-radius: 4px 4px 16px 16px; }
+      .vpad-dpad {
+        position: absolute;
+        left: max(16px, env(safe-area-inset-left));
+        bottom: max(24px, env(safe-area-inset-bottom));
+        display: grid;
+        grid-template-columns: repeat(3, calc(var(--vpad-btn-size) * var(--vpad-scale)));
+        grid-template-rows: repeat(3, calc(var(--vpad-btn-size) * var(--vpad-scale)));
+        gap: calc(var(--vpad-gap) * var(--vpad-scale));
+        padding: calc(var(--vpad-padding) * var(--vpad-scale));
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 70%, transparent 100%), rgba(15, 15, 20, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: inset 0 4px 12px rgba(255,255,255,0.05), inset 0 -4px 12px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.6);
+        backdrop-filter: blur(8px);
+      }
+      .vpad-dpad button {
+        border-radius: calc(6px * var(--vpad-scale));
+        min-width: 100%;
+        min-height: 100%;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        font-size: calc(18px * var(--vpad-scale));
+      }
+      .vpad-dpad button.is-pressed, .vpad-dpad button:active {
+        background: rgba(236, 72, 153, 0.25) !important;
+        border-color: rgba(236, 72, 153, 0.5) !important;
+      }
+      .vpad-dpad .up { grid-column: 2; grid-row: 1; border-radius: calc(10px * var(--vpad-scale)) calc(10px * var(--vpad-scale)) calc(4px * var(--vpad-scale)) calc(4px * var(--vpad-scale)); border-bottom: none; }
+      .vpad-dpad .left { grid-column: 1; grid-row: 2; border-radius: calc(10px * var(--vpad-scale)) calc(4px * var(--vpad-scale)) calc(4px * var(--vpad-scale)) calc(10px * var(--vpad-scale)); border-right: none; }
+      .vpad-dpad .right { grid-column: 3; grid-row: 2; border-radius: calc(4px * var(--vpad-scale)) calc(10px * var(--vpad-scale)) calc(10px * var(--vpad-scale)) calc(4px * var(--vpad-scale)); border-left: none; }
+      .vpad-dpad .down { grid-column: 2; grid-row: 3; border-radius: calc(4px * var(--vpad-scale)) calc(4px * var(--vpad-scale)) calc(10px * var(--vpad-scale)) calc(10px * var(--vpad-scale)); border-top: none; }
+      
+      .vpad-dpad::after {
+        content: "";
+        grid-column: 2;
+        grid-row: 2;
+        background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.06) 0%, transparent 60%), rgba(20, 20, 25, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+        width: 80%;
+        height: 80%;
+        margin: auto;
+        pointer-events: none;
+        z-index: 2;
+      }
 
-      .vpad-face { position: absolute; right: max(32px, env(safe-area-inset-right)); bottom: max(32px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, calc(72px * var(--vpad-scale))); grid-template-rows: repeat(3, calc(72px * var(--vpad-scale))); gap: 6px; }
-      .vpad-face button { border-radius: 999px; width: calc(72px * var(--vpad-scale)); height: calc(72px * var(--vpad-scale)); }
+      .vpad-face {
+        position: absolute;
+        right: max(16px, env(safe-area-inset-right));
+        bottom: max(24px, env(safe-area-inset-bottom));
+        display: grid;
+        grid-template-columns: repeat(3, calc(var(--vpad-btn-size) * var(--vpad-scale)));
+        grid-template-rows: repeat(3, calc(var(--vpad-btn-size) * var(--vpad-scale)));
+        gap: calc(var(--vpad-gap) * var(--vpad-scale));
+        padding: calc(var(--vpad-padding) * var(--vpad-scale));
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 70%, transparent 100%), rgba(15, 15, 20, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: inset 0 4px 12px rgba(255,255,255,0.05), inset 0 -4px 12px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.6);
+        backdrop-filter: blur(8px);
+      }
+      .vpad-face button {
+        border-radius: 50%;
+        width: 100%;
+        height: 100%;
+        font-size: calc(16px * var(--vpad-scale));
+        font-weight: 900;
+        background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.15) 0%, transparent 60%), rgba(20, 20, 25, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      }
+      .vpad-face button.is-pressed, .vpad-face button:active {
+        background: radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.4), rgba(236, 72, 153, 0.15)), rgba(10, 10, 15, 0.85);
+        border-color: rgba(236, 72, 153, 0.5);
+      }
       .vpad-face .y { grid-column: 1; grid-row: 2; }
       .vpad-face .x { grid-column: 2; grid-row: 1; }
       .vpad-face .b { grid-column: 2; grid-row: 3; }
       .vpad-face .a { grid-column: 3; grid-row: 2; }
 
-      .vpad-shoulders { position: absolute; top: 12px; left: max(20px, env(safe-area-inset-left)); right: max(20px, env(safe-area-inset-right)); display: flex; justify-content: space-between; }
-      .vpad-shoulders button { width: min(30vw, calc(160px * var(--vpad-scale))); height: calc(52px * var(--vpad-scale)); border-radius: 20px; font-size: calc(12px * var(--vpad-scale)); background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); }
+      .vpad-shoulders {
+        position: absolute;
+        bottom: calc(((var(--vpad-btn-size) * 3 + var(--vpad-gap) * 2 + var(--vpad-padding) * 2) * var(--vpad-scale)) + max(24px, env(safe-area-inset-bottom)) + 12px);
+        left: 0;
+        right: 0;
+        pointer-events: none;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+      }
+      .vpad-shoulders button {
+        pointer-events: auto;
+        width: calc(90px * var(--vpad-scale));
+        height: calc(38px * var(--vpad-scale));
+        border-radius: calc(10px * var(--vpad-scale));
+        font-size: calc(11px * var(--vpad-scale));
+        font-weight: 900;
+        background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.12) 0%, transparent 65%), rgba(20, 20, 25, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+      }
+      .vpad-shoulders button.is-pressed, .vpad-shoulders button:active {
+        background: radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.45), rgba(236, 72, 153, 0.15)), rgba(10, 10, 15, 0.85);
+        border-color: rgba(236, 72, 153, 0.5);
+      }
 
-      .vpad-system { position: absolute; left: 50%; bottom: max(32px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 24px; }
-      .vpad-system button { width: calc(90px * var(--vpad-scale)); height: calc(32px * var(--vpad-scale)); border-radius: 999px; font-size: calc(9px * var(--vpad-scale)); font-weight: 900; background: rgba(255, 255, 255, 0.05); border-color: rgba(255,255,255,0.1); transform: rotate(-15deg); }
+      .vpad-system {
+        position: absolute;
+        left: 50%;
+        bottom: max(24px, env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        display: flex;
+        gap: calc(12px * var(--vpad-scale));
+        z-index: 10;
+      }
+      .vpad-system button {
+        width: calc(64px * var(--vpad-scale));
+        height: calc(26px * var(--vpad-scale));
+        border-radius: 999px;
+        font-size: calc(8px * var(--vpad-scale));
+        font-weight: 900;
+        background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.1) 0%, transparent 65%), rgba(20, 20, 25, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+        color: rgba(255, 255, 255, 0.7);
+        letter-spacing: 0.05em;
+      }
+      .vpad-system button.is-pressed, .vpad-system button:active {
+        background: rgba(236, 72, 153, 0.3) !important;
+        border-color: rgba(236, 72, 153, 0.5) !important;
+        color: #fff;
+      }
 
       body[data-system="snes"] .vpad-face button { background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.4) 0%, transparent 60%); }
-      body[data-system="snes"] .vpad-face .a { background-color: rgba(220, 38, 38, 0.8) !important; border-color: #ef4444 !important; }
-      body[data-system="snes"] .vpad-face .b { background-color: rgba(202, 138, 4, 0.8) !important; border-color: #facc15 !important; }
-      body[data-system="snes"] .vpad-face .x { background-color: rgba(37, 99, 235, 0.8) !important; border-color: #60a5fa !important; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.5); }
-      body[data-system="snes"] .vpad-face .y { background-color: rgba(22, 163, 74, 0.8) !important; border-color: #4ade80 !important; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.5); }
+      body[data-system="snes"] .vpad-face .a { background-color: rgba(220, 38, 38, 0.85) !important; border-color: #ef4444 !important; }
+      body[data-system="snes"] .vpad-face .b { background-color: rgba(202, 138, 4, 0.85) !important; border-color: #facc15 !important; }
+      body[data-system="snes"] .vpad-face .x { background-color: rgba(37, 99, 235, 0.85) !important; border-color: #60a5fa !important; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.4); }
+      body[data-system="snes"] .vpad-face .y { background-color: rgba(22, 163, 74, 0.85) !important; border-color: #4ade80 !important; box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.4); }
 
       /* Save Manager Panel styling */
       .cabinet-save-panel {
@@ -238,8 +364,6 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       }
       
       @media (max-width: 768px) {
-        .vpad-dpad { left: 20px; bottom: 20px; }
-        .vpad-face { right: 20px; bottom: 20px; }
         .cabinet-save-panel {
           width: calc(100vw - 24px);
           max-height: calc(100dvh - 34px);

@@ -1,3 +1,7 @@
+## 2.43.28 - 2026-05-25
+
+- **UX/UI Redesign**: **Ergonomic Virtual Gamepad Redesign** - Redesigned the touch virtual gamepad layout in `player.ts` with premium glassmorphic circular plates for both the D-pad and face buttons. Added a classic center-pivot cap overlay for the D-pad cross. Relocated the L and R trigger buttons to be positioned ergonomically directly above the left and right controller zones to prevent overlaps with the Menu button. Implemented CSS variables and responsive media query scaling so that the layout shrinks from 64px to 46px base button size on screens under 480px, avoiding middle overlap in portrait mode.
+
 ## 2.43.27 - 2026-05-25
 
 - **Fix**: **Mobile game display padding & hidden touch controls** - Added `padding-top: 50px` on mobile layouts to move the game display down and clear the header. Expanded virtual gamepad hiding CSS rules and configured an off-screen dummy button for `EJS_VirtualGamepadSettings` to fully disable the default EmulatorJS touch controls.
