@@ -65,3 +65,33 @@ describe("Core Health & BIOS Validation", () => {
     expect(REQUIRED_BIOS["n64"]).toBeUndefined();
   });
 });
+
+describe("Bootstrap Script Syntax Validation", () => {
+  it("should compile generated bootstrap JS code without syntax errors", async () => {
+    const { renderEmulatorBootstrap } = await import("../routes/player");
+    const { Script } = await import("node:vm");
+    
+    const code = renderEmulatorBootstrap({
+      core: "nes",
+      title: "Test Game",
+      gameId: "nes-test-game",
+      romId: 123,
+      discs: [],
+      romHash: "some-hash",
+      userId: "test-user",
+      userName: "Test User",
+      profileId: "1",
+      biosUrl: null,
+      netplayRole: null,
+      netplayRoom: null,
+      netplaySyncMode: "rollback",
+      controlDefaults: {},
+      gamepadBindings: {},
+      controlDefaultsP2: {},
+      gamepadBindingsP2: {}
+    });
+    
+    // vm.Script will compile the code and throw a SyntaxError if it's invalid.
+    expect(() => new Script(code)).not.toThrow();
+  });
+});
