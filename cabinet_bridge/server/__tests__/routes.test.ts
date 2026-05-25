@@ -26,6 +26,19 @@ vi.mock('../netplay', () => ({
   registerNetplayRoutes: vi.fn()
 }));
 
+// Mock data-dir to ensure it gets the dynamically set TEST_DATA_DIR
+vi.mock('../data-dir', () => {
+  const path = require('node:path');
+  return {
+    getDataDir: () => process.env.CABINET_DATA_DIR || '/tmp',
+    dataPath: (first, ...rest) => {
+      const dir = process.env.CABINET_DATA_DIR || '/tmp';
+      return path.join(dir, first, ...rest);
+    },
+    ensureDir: (dir) => dir,
+  };
+});
+
 import { registerRoutes } from "../routes";
 import { initializeDatabase } from "../storage";
 
@@ -110,7 +123,7 @@ describe("API Routes", () => {
     it("returns an empty array initially", async () => {
       const { status, body } = await api("GET", "/api/roms");
       expect(status).toBe(200);
-      expect(Array.isArray(body)).toBe(true);
+      expect(Array.isArray(body.roms)).toBe(true);
     });
   });
 
