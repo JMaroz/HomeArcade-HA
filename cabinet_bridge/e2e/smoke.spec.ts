@@ -11,6 +11,12 @@ const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:5000';
 const APP_URL  = BASE_URL + '/#';
 
 test.describe('HomeArcade smoke tests', () => {
+  test.beforeEach(async ({ context }) => {
+    await context.addInitScript(() => {
+      window.localStorage.setItem('ha-onboarded-v2', '1');
+    });
+  });
+
   test('health endpoint returns ok', async ({ request }) => {
     const res = await request.get(`${BASE_URL}/api/health`);
     expect(res.ok()).toBeTruthy();
@@ -39,7 +45,8 @@ test.describe('HomeArcade smoke tests', () => {
 
   test('settings page loads and shows theme picker', async ({ page }) => {
     await page.goto(`${BASE_URL}/#/settings`);
-    await expect(page.locator('text=Theme')).toBeVisible();
+    await page.waitForSelector('h2:has-text("Interface")', { timeout: 10000 });
+    await expect(page.locator('text="Theme"')).toBeVisible();
   });
 
   test('all 26 themes appear in settings', async ({ page }) => {

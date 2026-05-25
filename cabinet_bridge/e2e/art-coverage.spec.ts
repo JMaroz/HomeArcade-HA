@@ -36,7 +36,8 @@ interface CoverageSummary {
 async function fetchGameReport(page: Page): Promise<{ games: GameReport[]; summary: CoverageSummary }> {
   const response = await page.request.get(`${BASE_URL}/api/roms`);
   expect(response.ok()).toBeTruthy();
-  const roms = await response.json();
+  const data = await response.json();
+  const roms = Array.isArray(data) ? data : (data.roms || []);
 
   const games: GameReport[] = roms.map((rom: Record<string, unknown>) => ({
     id: String(rom.id),
@@ -83,6 +84,11 @@ function printCoverageTable(games: GameReport[]): void {
 }
 
 test.describe('HomeArcade Art Coverage', () => {
+  test.beforeEach(async ({ context }) => {
+    await context.addInitScript(() => {
+      window.localStorage.setItem('ha-onboarded-v2', '1');
+    });
+  });
 
   test('API: fetch all ROMs and report art coverage', async ({ page }) => {
     const { games, summary } = await fetchGameReport(page);
@@ -164,8 +170,6 @@ test.describe('HomeArcade Art Coverage', () => {
     }
     console.log('');
 
-    expect(summary.total).toBeGreaterThan(0);
-    // Use the summary from the outer scope — redefine to avoid TS error
     const summaryTotal = games.length;
     expect(summaryTotal).toBeGreaterThan(0);
   });
@@ -201,8 +205,8 @@ test.describe('HomeArcade Art Coverage', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
-    const cards = page.locator('[data-testid^="card-game-"]').all();
-    const count = await cards.count();
+    const cards = await page.locator('[data-testid^="card-game-"]').all();
+    const count = cards.length;
 
     if (count === 0) {
       console.log('No game cards found on dashboard — skipping image check');
@@ -241,12 +245,12 @@ test.describe('HomeArcade Art Coverage', () => {
   });
 
   test('UI: recently played games have no visible cover art', async ({ page }) => {
-    await page.goto(`${APP_URL}/`);
+    await page.goto(`${BASE_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
-    const cards = page.locator('[data-testid^="card-game-"]').all();
-    const count = await cards.count();
+    const cards = await page.locator('[data-testid^="card-game-"]').all();
+    const count = cards.length;
 
     if (count === 0) {
       console.log('No recently-played game cards found');

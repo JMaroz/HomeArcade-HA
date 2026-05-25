@@ -74,7 +74,8 @@ export function Sidebar({ onReturnToGrid }: { onReturnToGrid?: () => void }) {
 
   const { data: kiosk } = useQuery<{ enabled: boolean }>({ queryKey: ["/api/kiosk"] });
   const kioskMode = !!kiosk?.enabled;
-  const { data: uploadedRoms = [] } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
+  const { data: romsData } = useQuery<{ roms: UploadedRom[]; total: number; hasMore: boolean }>({ queryKey: ["/api/roms"] });
+  const uploadedRoms = romsData?.roms ?? [];
   const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({ queryKey: ["/api/collections"] });
   const { state, isMobile } = useSidebar();
 

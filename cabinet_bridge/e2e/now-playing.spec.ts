@@ -26,6 +26,11 @@ async function clearNowPlaying(page: Page) {
 }
 
 test.describe('NowPlayingBar', () => {
+  test.beforeEach(async ({ context }) => {
+    await context.addInitScript(() => {
+      window.localStorage.setItem('ha-onboarded-v2', '1');
+    });
+  });
 
   test('is hidden when no game is playing', async ({ page }) => {
     await clearNowPlaying(page);
@@ -56,7 +61,7 @@ test.describe('NowPlayingBar', () => {
 
     // Title should appear
     await expect(page.locator('text=Duck Tales')).toBeVisible();
-    await expect(page.locator('text=nes')).toBeVisible();
+    await expect(bar.locator('text=nes')).toBeVisible();
   });
 
   test('shows "Now Playing" label and pulsing green dot', async ({ page }) => {
@@ -128,7 +133,7 @@ test.describe('NowPlayingBar', () => {
 
     const returnBtn = page.locator('[data-testid="now-playing-return"]');
     await expect(returnBtn).toBeVisible();
-    await expect(returnBtn).toHaveAttribute('href', '/play/42');
+    await expect(returnBtn).toHaveAttribute('href', /#?\/play\/42/);
   });
 
   test('"Exit" button navigates home', async ({ page }) => {
@@ -225,7 +230,7 @@ test.describe('NowPlayingBar', () => {
     await expect(bar).toBeVisible({ timeout: 5000 });
 
     // Navigate to library
-    await page.goto(`${APP_URL}/`);
+    await page.goto(`${BASE_URL}/`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1500);
     await expect(bar).toBeVisible({ timeout: 3000 });

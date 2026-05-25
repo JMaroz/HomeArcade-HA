@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Monitor } from "lucide-react";
 import { Section, Field } from "./SettingsShared";
+import { THEMES } from "@/lib/themes";
 
 const ALL_SYSTEMS = [
   { id: "nes", label: "NES" }, { id: "snes", label: "SNES" },
@@ -29,6 +30,7 @@ export function DisplaySettings() {
       <Section
         title={t("settings.sections.display.title")}
         description={t("settings.sections.display.description")}
+        defaultOpen={true}
       >
         <div className="grid sm:grid-cols-2 gap-6">
           <Field label={t("settings.fields.language.label")} hint={t("settings.fields.language.hint")}>
@@ -42,6 +44,19 @@ export function DisplaySettings() {
                 <SelectItem value="pt">{t("languages.pt")}</SelectItem>
                 <SelectItem value="ja">{t("languages.ja")}</SelectItem>
                 <SelectItem value="zh">{t("languages.zh")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field label="Theme" hint="Select a visual color theme.">
+            <Select value={config.theme ?? "default"} onValueChange={(val) => setConfig({ theme: val })}>
+              <SelectTrigger data-testid="theme-select"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {THEMES.map((theme) => (
+                  <SelectItem key={theme} value={theme}>
+                    <span className="capitalize">{theme.replace("-", " ")}</span>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </Field>

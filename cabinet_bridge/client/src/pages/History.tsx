@@ -45,7 +45,8 @@ export default function History() {
     queryKey: ["/api/sessions"],
   });
 
-  const { data: roms = [] } = useQuery<UploadedRom[]>({ queryKey: ["/api/roms"] });
+  const { data: romsData } = useQuery<{ roms: UploadedRom[]; total: number; hasMore: boolean }>({ queryKey: ["/api/roms"] });
+  const roms = romsData?.roms ?? [];
 
   const romMap = useMemo(() => new Map(roms.map(r => [r.id, r])), [roms]);
 

@@ -43,6 +43,12 @@ async function visibleGameCardCount(page: Page): Promise<number> {
 
 // ── Test Suite ─────────────────────────────────────────────────────────────────
 
+test.beforeEach(async ({ context }) => {
+  await context.addInitScript(() => {
+    window.localStorage.setItem('ha-onboarded-v2', '1');
+  });
+});
+
 test.describe('HomeArcade UX — Navigation & Structure', () => {
 
   test('mobile nav is visible on all main routes', async ({ page }) => {
@@ -163,12 +169,12 @@ test.describe('HomeArcade UX — Game Library (Home Page)', () => {
 
     const initialCards = await visibleGameCardCount(page);
     await searchInput.fill('zzzz-unlikely-game-title-xyz');
-    await page.waitForTimeout(500);
-    const filteredCards = await visibleGameCardCount(page);
-
-    // Either empty state or fewer cards
-    const hasEmpty = await page.locator('[data-testid="state-empty"]').count() > 0;
-    expect(filteredCards < initialCards || hasEmpty).toBeTruthy();
+    
+    if (initialCards > 0) {
+      await expect(page.locator('[data-testid^="card-game-"]')).toHaveCount(0, { timeout: 5000 });
+    } else {
+      await expect(page.locator('text=No matching games').first()).toBeVisible({ timeout: 5000 });
+    }
   });
 
   test('search can be cleared with X button', async ({ page }) => {
@@ -387,7 +393,7 @@ test.describe('HomeArcade UX — Game Detail Dialog', () => {
     }
 
     // Should show some star or number rating
-    const ratingArea = page.locator('[data-testid^="rating"], svg[class*="star"], text=/rating/i').first();
+    const ratingArea = page.locator('[data-testid^="rating"], svg[class*="star"]').first();
     await expect(ratingArea).toBeVisible({ timeout: 3000 });
   });
 
@@ -408,7 +414,7 @@ test.describe('HomeArcade UX — Settings Page', () => {
     await page.waitForTimeout(1500);
 
     // Open theme selector by clicking the uiTheme label/control in the Display section
-    const themeControl = page.locator('[role="combobox"]').first();
+    const themeControl = page.locator('[data-testid="theme-select"]');
     if (await themeControl.count() === 0) {
       test.skip();
       return;
@@ -455,7 +461,7 @@ test.describe('HomeArcade UX — Settings Page', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    const themeControl = page.locator('[data-testid="theme-select"], [role="combobox"], [aria-label*="theme" i]').first();
+    const themeControl = page.locator('[data-testid="theme-select"]');
     if (await themeControl.count() === 0) {
       test.skip();
       return;
