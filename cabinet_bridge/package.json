@@ -1,6 +1,6 @@
 {
     "name":  "rest-express",
-    "version":  "2.43.31",
+    "version":  "2.43.32",
     "license":  "MIT",
     "type":  "module",
     "scripts":  {
