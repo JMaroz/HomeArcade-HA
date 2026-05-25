@@ -4,6 +4,14 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.21] — 2026-05-25
+
+### Fix: Save State Slot ReferenceError
+
+- **Escaped Template Interpolation** — Escaped the client-side `slot.slot` variable template interpolations inside the load and delete save state button handlers. This resolves the server-side crash throwing "Server error: slot is not defined".
+
+---
+
 ## [2.34.121] — 2026-05-23
 
 ### Release: Changelog Sync

@@ -1,3 +1,7 @@
+## 2.43.21 - 2026-05-25
+
+- **Fix**: **Escape slot variables in player.ts** - Escaped `slot.slot` template variable interpolations in the onclick load/delete button handlers inside the renderEmulatorPage template literal. This resolves the server-side "slot is not defined" ReferenceError.
+
 ## 2.43.12 - 2026-05-24
 
 - **Fix**: **cabinetToast Unicode Escape in HTML Attributes** - Replaced unicode escape sequences with actual emoji characters in renderSaveGrid cabinetToast calls. The escape sequences inside HTML onclick attributes were being parsed as literal text, causing JS syntax errors.## 2.43.11 - 2026-05-24
