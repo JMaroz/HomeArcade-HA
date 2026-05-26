@@ -1,19 +1,12 @@
 import React, { useState, useEffect } from "react";
-import type { ButtonState } from "./GamepadRemap";
+import type { ButtonState, MappingEntry } from "./GamepadRemap";
 import { detectControllerType, getButtonLayout } from "./GamepadRemap";
-
-interface MappingEntry {
-  kind: "button" | "axis";
-  buttonIndex?: number;
-  axisIndex?: number;
-  direction?: -1 | 1;
-}
 
 interface Props {
   activeButtons: ButtonState[];
   mapping: Record<string, MappingEntry | undefined>;
   listeningAction: string | null;
-  listenedBtn: number | null;
+  listenedEntry: MappingEntry | null;
   lastPressedLabel: string;
   onRemapAction: (actionId: string) => void;
   onDone: () => void;
@@ -25,7 +18,7 @@ export function ControllerRemapDialog({
   activeButtons,
   mapping,
   listeningAction,
-  listenedBtn,
+  listenedEntry,
   lastPressedLabel,
   onRemapAction,
   onDone,
@@ -55,14 +48,13 @@ export function ControllerRemapDialog({
 
   function getBtnState(idx: number): "active" | "mapped" | "listening" | "idle" {
     if (activeButtons.some(b => b.index === idx)) return "active";
-    if (listeningAction !== null && listenedBtn === idx) return "listening";
+    if (listeningAction !== null && listenedEntry?.kind === "button" && listenedEntry.buttonIndex === idx) return "listening";
     if (Object.values(mapping).some(m => m?.kind === "button" && m.buttonIndex === idx)) return "mapped";
     return "idle";
   }
 
   function getAxisState(axisIdx: number, dir: -1 | 1): "active" | "mapped" | "listening" | "idle" {
-    const encoded = axisIdx * 2 + (dir > 0 ? 1 : 0);
-    if (listeningAction !== null && listenedBtn === encoded) return "listening";
+    if (listeningAction !== null && listenedEntry?.kind === "axis" && listenedEntry.axisIndex === axisIdx && listenedEntry.direction === dir) return "listening";
     if (Object.values(mapping).some(m => m?.kind === "axis" && m.axisIndex === axisIdx && m.direction === dir)) return "mapped";
     return "idle";
   }
@@ -354,7 +346,7 @@ export function ControllerRemapDialog({
                     </span>
                   </div>
                 )}
-                {isListening && listenedBtn !== null && (
+                {isListening && listenedEntry !== null && (
                   <div className="size-8 rounded-full bg-primary flex items-center justify-center animate-pulse">
                     <span className="text-primary-foreground font-black text-sm">{lastPressedLabel}</span>
                   </div>

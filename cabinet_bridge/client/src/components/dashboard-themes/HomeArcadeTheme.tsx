@@ -265,6 +265,7 @@ export default function HomeArcadeTheme() {
     count: view === "system" || searchQuery ? filteredGames.length : systemsWithGames.length,
     gridRef,
     disabled: !!dialogGame,
+    mapping: config.uiGamepadMapping,
     onActivate: (idx) => {
       if (view === "portals" && !searchQuery) {
         const sys = systemsWithGames[idx];

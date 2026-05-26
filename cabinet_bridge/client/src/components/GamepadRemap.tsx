@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-export type ActionId = "select" | "back" | "favorite" | "menu";
+export type ActionId = string;
 
 export type MappingEntry =
   | { kind: "button"; buttonIndex: number }
@@ -253,18 +253,18 @@ export function getPrimaryPressedButton(gp: Gamepad): number | null {
 
 export function useGamepadRemap() {
   const [listeningAction, setListeningAction] = useState<ActionId | null>(null);
-  const [listenedBtn, setListenedBtn] = useState<number | null>(null);
+  const [listenedEntry, setListenedEntry] = useState<MappingEntry | null>(null);
   const [lastPressedLabel, setLastPressedLabel] = useState<string>("");
 
   const startListening = useCallback((action: ActionId) => {
     setListeningAction(action);
-    setListenedBtn(null);
+    setListenedEntry(null);
     setLastPressedLabel("");
   }, []);
 
   const stopListening = useCallback(() => {
     setListeningAction(null);
-    setListenedBtn(null);
+    setListenedEntry(null);
     setLastPressedLabel("");
   }, []);
 
@@ -280,7 +280,7 @@ export function useGamepadRemap() {
         if (!gp) continue;
         const btn = getPrimaryPressedButton(gp);
         if (btn !== null) {
-          setListenedBtn(btn);
+          setListenedEntry({ kind: "button", buttonIndex: btn });
           const type = detectControllerType(gp.id);
           const layout = getButtonLayout(type);
           const info = layout.find(b => b.index === btn);
@@ -292,8 +292,7 @@ export function useGamepadRemap() {
           const val = gp.axes[i];
           if (Math.abs(val) > DEAD_ZONE) {
             const direction: -1 | 1 = val > 0 ? 1 : -1;
-            const encoded = i * 2 + (direction > 0 ? 1 : 0);
-            setListenedBtn(encoded);
+            setListenedEntry({ kind: "axis", axisIndex: i, direction });
             const type = detectControllerType(gp.id);
             setLastPressedLabel(getAxisLabel(i, direction, type));
             break;
@@ -308,7 +307,7 @@ export function useGamepadRemap() {
 
   return {
     listeningAction,
-    listenedBtn,
+    listenedEntry,
     lastPressedLabel,
     startListening,
     stopListening,

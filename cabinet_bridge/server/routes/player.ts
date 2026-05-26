@@ -729,6 +729,7 @@ export function renderEmulatorBootstrap({
 
   return `"use strict";
 window.CABINET_ROM_ID = ${JSON.stringify(romId)};
+window.CABINET_PROFILE_ID = ${JSON.stringify(profileId)};
 function cabinetToast(message) {
   var toast = document.querySelector("#cabinet-toast");
   if (!toast) return;
@@ -1096,18 +1097,137 @@ function cabinetSetupMenu() {
 }
 
 function cabinetSetupGamepad() {
-  var activeGP = null;
-  window.addEventListener("gamepadconnected", function(e) { cabinetToast("🎮 Controller Connected"); activeGP = e.gamepad.index; });
-  var lastStates = {};
-  function poll() {
-    if (activeGP !== null) {
-      var gp = navigator.getGamepads()[activeGP];
-      if (gp) {
-        for (var i = 0; i < gp.buttons.length; i++) {
-          var p = gp.buttons[i].pressed;
-          if (p !== lastStates[i]) { cabinetSimulateInput(i, p); lastStates[i] = p; }
+  var activeGP1 = null;
+  var activeGP2 = null;
+  var bindings1 = {};
+  var bindings2 = {};
+  var profileId = window.CABINET_PROFILE_ID || "1";
+
+  var DEFAULTS = {
+    xbox: { 0: 0, 1: 2, 2: 8, 3: 9, 4: 12, 5: 13, 6: 14, 7: 15, 8: 1, 9: 3, 10: 4, 11: 5, 12: 6, 13: 7, 14: 10, 15: 11 },
+    playstation: { 0: 0, 1: 2, 2: 8, 3: 9, 4: 12, 5: 13, 6: 14, 7: 15, 8: 1, 9: 3, 10: 4, 11: 5, 12: 6, 13: 7, 14: 10, 15: 11 },
+    nintendo: { 0: 1, 1: 3, 2: 8, 3: 9, 4: 12, 5: 13, 6: 14, 7: 15, 8: 0, 9: 2, 10: 4, 11: 5, 12: 6, 13: 7, 14: 10, 15: 11 },
+    generic: { 0: 0, 1: 2, 2: 8, 3: 9, 4: 12, 5: 13, 6: 14, 7: 15, 8: 1, 9: 3, 10: 4, 11: 5, 12: 6, 13: 7, 14: 10, 15: 11 }
+  };
+
+  function getControllerType(id) {
+    var lower = id.toLowerCase();
+    if (lower.indexOf("xbox") !== -1 || lower.indexOf("xinput") !== -1 || lower.indexOf("045e") !== -1) return "xbox";
+    if (lower.indexOf("dualshock") !== -1 || lower.indexOf("dualsense") !== -1 || lower.indexOf("playstation") !== -1 || lower.indexOf("054c") !== -1) return "playstation";
+    if (lower.indexOf("nintendo") !== -1 || lower.indexOf("switch pro") !== -1 || lower.indexOf("joy-con") !== -1 || lower.indexOf("8bitdo") !== -1 || lower.indexOf("057e") !== -1) return "nintendo";
+    return "generic";
+  }
+
+  function fetchBindings(gpId, port, callback) {
+    var portQuery = port === 1 ? "?port=1" : "";
+    fetch(window.CABINET_INGRESS_BASE + "/api/profiles/" + profileId + "/gamepad-bindings/" + encodeURIComponent(gpId) + portQuery)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && Object.keys(data).length > 0) {
+          callback(data);
+        } else {
+          var defId = port === 1 ? "default_p2" : "default";
+          fetch(window.CABINET_INGRESS_BASE + "/api/profiles/" + profileId + "/gamepad-bindings/" + defId)
+            .then(function(r) { return r.json(); })
+            .then(function(defData) {
+              callback(defData || {});
+            }).catch(function() {
+              callback({});
+            });
         }
+      })
+      .catch(function() {
+        callback({});
+      });
+  }
+
+  function updateControllers() {
+    var gps = navigator.getGamepads ? navigator.getGamepads() : [];
+    var connected = [];
+    for (var i = 0; i < gps.length; i++) {
+      if (gps[i] !== null && gps[i] !== undefined) connected.push(gps[i]);
+    }
+    
+    if (connected[0]) {
+      if (activeGP1 !== connected[0].index) {
+        activeGP1 = connected[0].index;
+        cabinetToast("🎮 Player 1: " + connected[0].id.substring(0, 16));
+        fetchBindings(connected[0].id, 0, function(b) { bindings1 = b; });
       }
+    } else {
+      activeGP1 = null;
+    }
+
+    if (connected[1]) {
+      if (activeGP2 !== connected[1].index) {
+        activeGP2 = connected[1].index;
+        cabinetToast("🎮 Player 2: " + connected[1].id.substring(0, 16));
+        fetchBindings(connected[1].id, 1, function(b) { bindings2 = b; });
+      }
+    } else {
+      activeGP2 = null;
+    }
+  }
+
+  window.addEventListener("gamepadconnected", updateControllers);
+  window.addEventListener("gamepaddisconnected", updateControllers);
+  updateControllers();
+
+  var lastStates1 = {};
+  var lastStates2 = {};
+
+  function processGamepad(gpIndex, bindings, lastStates, playerPort) {
+    var gp = navigator.getGamepads()[gpIndex];
+    if (!gp) return;
+
+    var type = getControllerType(gp.id);
+    var defaultMap = DEFAULTS[type] || DEFAULTS.generic;
+
+    for (var k = 0; k < 16; k++) {
+      var binding = bindings[k];
+      var pressed = false;
+
+      if (binding !== undefined && binding !== null) {
+        if (typeof binding === "number") {
+          pressed = gp.buttons[binding] ? gp.buttons[binding].pressed : false;
+        } else if (binding.kind === "button") {
+          var btnIdx = binding.buttonIndex;
+          pressed = gp.buttons[btnIdx] ? gp.buttons[btnIdx].pressed : false;
+        } else if (binding.kind === "axis") {
+          var axisIdx = binding.axisIndex;
+          var dir = binding.direction;
+          if (gp.axes[axisIdx] !== undefined) {
+            pressed = dir > 0 ? (gp.axes[axisIdx] > 0.5) : (gp.axes[axisIdx] < -0.5);
+          }
+        }
+      } else {
+        var defaultBtn = defaultMap[k];
+        if (defaultBtn !== undefined) {
+          pressed = gp.buttons[defaultBtn] ? gp.buttons[defaultBtn].pressed : false;
+        }
+        if (k === 4) pressed = pressed || (gp.axes[1] < -0.4);
+        if (k === 5) pressed = pressed || (gp.axes[1] > 0.4);
+        if (k === 6) pressed = pressed || (gp.axes[0] < -0.4);
+        if (k === 7) pressed = pressed || (gp.axes[0] > 0.4);
+      }
+
+      if (pressed !== lastStates[k]) {
+        var emulator = window.EJS_emulator;
+        var value = pressed ? 1 : 0;
+        if (emulator && emulator.gameManager && typeof emulator.gameManager.simulateInput === "function") {
+          emulator.gameManager.simulateInput(playerPort, k, value);
+        }
+        lastStates[k] = pressed;
+      }
+    }
+  }
+
+  function poll() {
+    if (activeGP1 !== null) {
+      processGamepad(activeGP1, bindings1, lastStates1, 0);
+    }
+    if (activeGP2 !== null) {
+      processGamepad(activeGP2, bindings2, lastStates2, 1);
     }
     requestAnimationFrame(poll);
   }

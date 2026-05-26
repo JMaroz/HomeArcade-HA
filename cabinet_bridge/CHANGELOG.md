@@ -1,3 +1,7 @@
+## 2.43.34 - 2026-05-26
+
+- **Feature**: **Full Bluetooth Controller Button & Axis Remapping** - Integrated `ControllerRemapDialog` into the Input settings section, allowing users to map physical buttons and analog axes. Added support for remapping both Player 1 and Player 2 controllers separately. Enabled the in-browser emulator page to dynamically load gamepad configurations at runtime and translate button presses and axis directions. Passed custom UI navigation mapping configurations to the dashboard grid navigation hook.
+
 ## 2.43.33 - 2026-05-25
 
 - **Fix**: **Netplay Input & State Sync** - Fixed a bug where Netplay room connections succeeded but game sessions failed to synchronize by restoring the missing injection of `EJS_netplayUrl`, `EJS_netplayRole`, and `EJS_netplayRoom` variables in the generated player bootstrap template.

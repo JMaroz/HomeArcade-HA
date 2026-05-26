@@ -1,8 +1,4 @@
-/**
- * ControlsSettings — Input & Calibration tab content for Settings page.
- * Covers gamepad detection, rumble, button mapping, and keyboard shortcuts.
- */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useIntegration } from "@/lib/integration";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
@@ -17,14 +13,30 @@ import {
   getHotkeyCombo,
   RETROPAD_DEFAULTS,
   RETROARCH_HOTKEYS,
+  useGamepadRemap,
   type ControllerType,
+  type MappingEntry,
 } from "@/components/GamepadRemap";
 import {
-  Gamepad2, Activity, Database, Keyboard, Loader2, Zap,
+  Gamepad2, Activity, Database, Keyboard, Loader2, Zap, RotateCcw,
 } from "lucide-react";
 import { Section } from "./SettingsShared";
 import { useProfile } from "@/lib/useProfile";
 import { apiRequest } from "@/lib/queryClient";
+import { ControllerRemapDialog } from "@/components/ControllerRemapDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
 
 // ── UI label helpers ──────────────────────────────────────────────────────────
 
@@ -40,6 +52,32 @@ function getControllerTypeBadge(type: ControllerType): string {
   return "Generic";
 }
 
+const RETROPAD_ACTIONS = [
+  { id: "8", label: "Button A (Confirm / RetroPad A)" },
+  { id: "0", label: "Button B (Cancel / RetroPad B)" },
+  { id: "9", label: "Button X (RetroPad X)" },
+  { id: "1", label: "Button Y (RetroPad Y)" },
+  { id: "2", label: "Select (RetroPad Select)" },
+  { id: "3", label: "Start (RetroPad Start)" },
+  { id: "4", label: "D-Pad Up (RetroPad Up)" },
+  { id: "5", label: "D-Pad Down (RetroPad Down)" },
+  { id: "6", label: "D-Pad Left (RetroPad Left)" },
+  { id: "7", label: "D-Pad Right (RetroPad Right)" },
+  { id: "10", label: "L1 Shoulder (RetroPad L1)" },
+  { id: "11", label: "R1 Shoulder (RetroPad R1)" },
+  { id: "12", label: "L2 Trigger (RetroPad L2)" },
+  { id: "13", label: "R2 Trigger (RetroPad R2)" },
+  { id: "14", label: "L3 Analog Click (RetroPad L3)" },
+  { id: "15", label: "R3 Analog Click (RetroPad R3)" },
+];
+
+const UI_ACTIONS = [
+  { id: "select", label: "Menu Select / Confirm" },
+  { id: "back", label: "Menu Back / Cancel" },
+  { id: "favorite", label: "Menu Toggle Favorite" },
+  { id: "menu", label: "Menu Open Settings" },
+];
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ControlsSettings() {
@@ -50,6 +88,118 @@ export function ControlsSettings() {
   const [gamepads, setGamepads] = useState<Gamepad[]>([]);
   const [pressedButtons, setPressedButtons] = useState<Record<number, number[]>>({});
   const [fetchingAutoconfig, setFetchingAutoconfig] = useState<string | null>(null);
+
+  // ── Remapping Modal State ──────────────────────────────────────────────────
+  const [selectedGamepad, setSelectedGamepad] = useState<Gamepad | null>(null);
+  const [remapPort, setRemapPort] = useState<number>(0);
+  const [remapTab, setRemapTab] = useState<"gameplay" | "navigation">("gameplay");
+  const [mappings, setMappings] = useState<Record<string, MappingEntry | undefined>>({});
+
+  const {
+    listeningAction,
+    listenedEntry,
+    lastPressedLabel,
+    startListening,
+    stopListening,
+  } = useGamepadRemap();
+
+  // Load existing bindings for selected controller
+  useEffect(() => {
+    if (!selectedGamepad) return;
+    const loadMappings = async () => {
+      try {
+        if (remapTab === "navigation") {
+          setMappings((config.uiGamepadMapping || {}) as Record<string, MappingEntry | undefined>);
+        } else {
+          const portQuery = remapPort === 1 ? "?port=1" : "";
+          const res = await fetch(
+            apiUrl(
+              `/api/profiles/${currentProfileId}/gamepad-bindings/${encodeURIComponent(selectedGamepad.id)}${portQuery}`
+            )
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setMappings(data || {});
+          } else {
+            setMappings({});
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load controller bindings:", err);
+      }
+    };
+    loadMappings();
+  }, [selectedGamepad, remapPort, remapTab, currentProfileId, config.uiGamepadMapping]);
+
+  // Commit binding when listenedEntry changes
+  useEffect(() => {
+    if (listeningAction && listenedEntry && selectedGamepad) {
+      const next = { ...mappings, [listeningAction]: listenedEntry };
+      setMappings(next);
+      stopListening();
+
+      if (remapTab === "navigation") {
+        setConfig({ uiGamepadMapping: next as any });
+      } else {
+        const portQuery = remapPort === 1 ? "?port=1" : "";
+        apiRequest(
+          "PUT",
+          `/api/profiles/${currentProfileId}/gamepad-bindings/${encodeURIComponent(selectedGamepad.id)}${portQuery}`,
+          next
+        ).catch((err) => {
+          console.error("Failed to save gameplay bindings:", err);
+        });
+      }
+
+      toast({
+        title: "Binding Updated",
+        description: `Mapped "${lastPressedLabel}" to "${
+          remapTab === "navigation"
+            ? UI_ACTIONS.find(a => a.id === listeningAction)?.label
+            : RETROPAD_ACTIONS.find(a => a.id === listeningAction)?.label
+        }"`,
+      });
+    }
+  }, [
+    listenedEntry,
+    listeningAction,
+    remapTab,
+    mappings,
+    selectedGamepad,
+    remapPort,
+    currentProfileId,
+    stopListening,
+    setConfig,
+    lastPressedLabel,
+    toast,
+  ]);
+
+  const handleReset = async () => {
+    if (!selectedGamepad) return;
+    try {
+      if (remapTab === "navigation") {
+        const defaults = {
+          select:   { kind: "button", buttonIndex: 0 },
+          back:     { kind: "button", buttonIndex: 1 },
+          favorite: { kind: "button", buttonIndex: 3 },
+          menu:     { kind: "button", buttonIndex: 9 },
+        };
+        setConfig({ uiGamepadMapping: defaults as any });
+        setMappings(defaults as any);
+        toast({ title: "Reset Complete", description: "UI navigation mappings reset to defaults." });
+      } else {
+        const portQuery = remapPort === 1 ? "?port=1" : "";
+        await apiRequest(
+          "DELETE",
+          `/api/profiles/${currentProfileId}/gamepad-bindings/${encodeURIComponent(selectedGamepad.id)}${portQuery}`
+        );
+        setMappings({});
+        toast({ title: "Reset Complete", description: "Gameplay bindings reset to default." });
+      }
+    } catch (err) {
+      toast({ variant: "destructive", title: "Reset Failed", description: String(err) });
+    }
+  };
 
   // Detect the type of the first connected controller for label rendering
   const primaryType: ControllerType = gamepads.length > 0
@@ -175,6 +325,20 @@ export function ControlsSettings() {
                       </div>
                     </div>
                     <div className="flex gap-2 flex-wrap">
+                      <Button variant="outline" size="sm" className="h-8 gap-2 font-mono text-[10px] uppercase tracking-wider text-primary border-primary/30 hover:bg-primary/10"
+                        onClick={() => {
+                          setSelectedGamepad(gp);
+                          setRemapPort(0);
+                        }}>
+                        <Gamepad2 className="size-3" /> Remap P1
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-8 gap-2 font-mono text-[10px] uppercase tracking-wider text-primary border-primary/30 hover:bg-primary/10"
+                        onClick={() => {
+                          setSelectedGamepad(gp);
+                          setRemapPort(1);
+                        }}>
+                        <Gamepad2 className="size-3" /> Remap P2
+                      </Button>
                       <Button variant="outline" size="sm" className="h-8 gap-2 font-mono text-[10px] uppercase tracking-wider"
                         onClick={() => {
                           const actuator = (gp as any).vibrationActuator || (gp as any).hapticActuators?.[0];
@@ -310,6 +474,77 @@ export function ControlsSettings() {
           </div>
         </div>
       </Section>
+
+      {/* ── Remapping Modal ─────────────────────────────────────────────────── */}
+      <Dialog open={!!selectedGamepad} onOpenChange={(open) => !open && setSelectedGamepad(null)}>
+        <DialogContent className="sm:max-w-2xl bg-[#0c0c0c] border-white/10 text-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center justify-between">
+              <span>Remap Controller</span>
+              <span className="text-xs font-mono px-2 py-0.5 rounded bg-primary/20 text-primary">
+                Player {remapPort + 1}
+              </span>
+            </DialogTitle>
+            <DialogDescription className="text-white/40">
+              Customize controls for "{selectedGamepad?.id}"
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs value={remapTab} onValueChange={(v) => setRemapTab(v as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-white/5 p-1 rounded-xl">
+              <TabsTrigger value="gameplay" className="rounded-lg text-xs font-bold uppercase tracking-wider">Gameplay Controls</TabsTrigger>
+              <TabsTrigger value="navigation" className="rounded-lg text-xs font-bold uppercase tracking-wider">UI Menu Navigation</TabsTrigger>
+            </TabsList>
+            
+            <div className="mt-4 flex justify-end">
+              <Button variant="outline" size="sm" className="h-8 gap-2 font-mono text-[10px] uppercase tracking-wider text-destructive border-destructive/20 hover:bg-destructive/10 animate-in fade-in"
+                onClick={handleReset}>
+                <RotateCcw className="size-3" /> Reset to Defaults
+              </Button>
+            </div>
+
+            <TabsContent value="gameplay" className="mt-4">
+              {selectedGamepad && (
+                <ControllerRemapDialog
+                  activeButtons={(pressedButtons[selectedGamepad.index] || []).map((idx) => ({
+                    index: idx,
+                    label: `BTN ${idx}`,
+                    pressed: true,
+                  }))}
+                  mapping={mappings}
+                  listeningAction={listeningAction}
+                  listenedEntry={listenedEntry}
+                  lastPressedLabel={lastPressedLabel}
+                  onRemapAction={startListening}
+                  onDone={stopListening}
+                  actions={RETROPAD_ACTIONS}
+                  gamepadId={selectedGamepad.id}
+                />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="navigation" className="mt-4">
+              {selectedGamepad && (
+                <ControllerRemapDialog
+                  activeButtons={(pressedButtons[selectedGamepad.index] || []).map((idx) => ({
+                    index: idx,
+                    label: `BTN ${idx}`,
+                    pressed: true,
+                  }))}
+                  mapping={mappings}
+                  listeningAction={listeningAction}
+                  listenedEntry={listenedEntry}
+                  lastPressedLabel={lastPressedLabel}
+                  onRemapAction={startListening}
+                  onDone={stopListening}
+                  actions={UI_ACTIONS}
+                  gamepadId={selectedGamepad.id}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

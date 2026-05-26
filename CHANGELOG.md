@@ -4,6 +4,17 @@ All notable changes to HomeArcade are documented here.
 
 ---
 
+## [2.43.34] — 2026-05-26
+
+### Feature: Full Bluetooth Controller Button & Axis Remapping
+
+- **Interactive Remap Dialog** — Integrated `ControllerRemapDialog` into the Input settings section, allowing users to map physical buttons and analog axes.
+- **Multiplayer Ports** — Added support for remapping both Player 1 and Player 2 controllers separately.
+- **Dynamic Translation** — Enabled the in-browser emulator page to dynamically load gamepad configurations at runtime and translate button presses and axis directions.
+- **Dashboard Navigation** — Passed custom UI navigation mapping configurations to the dashboard grid navigation hook.
+
+---
+
 ## [2.43.33] — 2026-05-25
 
 ### Fix: Netplay Input & State Synchronization & Automated E2E Server
