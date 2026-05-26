@@ -1198,6 +1198,16 @@ window.EJS_color = "#1a1a2e";
 window.EJS_backgroundColor = "#000000";
 window.EJS_Buttons = { play_pause: false, restart: false, mute: false, settings: false, fullscreen: true, save_state: false, load_state: false, quick_save: false, quick_load: false };
 
+// ── Netplay Configuration ──
+if (${JSON.stringify(netplayRole)} && ${JSON.stringify(netplayRoom)}) {
+  var wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  window.EJS_netplay = true;
+  window.EJS_netplayUrl = wsProtocol + "//" + window.location.host + window.CABINET_INGRESS_BASE + "/api/netplay";
+  window.EJS_netplayRole = ${JSON.stringify(netplayRole)};
+  window.EJS_netplayRoom = ${JSON.stringify(netplayRoom)};
+  window.EJS_netplaySyncMode = ${JSON.stringify(netplaySyncMode)};
+}
+
 var loader = document.createElement("script");
 loader.src = window.EJS_pathtodata + "loader.js";
 document.body.appendChild(loader);
