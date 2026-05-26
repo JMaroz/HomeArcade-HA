@@ -1,3 +1,8 @@
+## 2.43.33 - 2026-05-25
+
+- **Fix**: **Netplay Input & State Sync** - Fixed a bug where Netplay room connections succeeded but game sessions failed to synchronize by restoring the missing injection of `EJS_netplayUrl`, `EJS_netplayRole`, and `EJS_netplayRoom` variables in the generated player bootstrap template.
+- **Improved**: **Automated E2E Server** - Updated `playwright.config.ts` with a `webServer` block to automatically start and stop the development server during E2E test runs.
+
 ## 2.43.32 - 2026-05-25
 
 - **Fix**: **Pause Menu Action Bindings** - Corrected the pause menu actions (Restart, Save, Load, Saves panel, and Warp QR generation) by mapping them to the proper nested `EJS_emulator.gameManager` functions instead of non-existent top-level methods. Fixed the `unpause()` runtime crash by calling `play()`.
