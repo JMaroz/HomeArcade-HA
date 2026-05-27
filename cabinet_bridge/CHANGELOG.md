@@ -1,3 +1,7 @@
+## 2.43.35 - 2026-05-26
+
+- **Feature**: **Symmetrical Pause Menu & 9-Slot Save State Manager** - Moved the Exit Game button into the pause menu grid (completing a clean 3x2 design) and replaced the direct Save/Load buttons with a single "Saves" button. Upgraded the Saves panel to a robust 9-slot Save State Slot Manager, allowing users to load, overwrite/save, or delete from any of the 9 slots with dynamic thumbnails and empty state dashed placeholders.
+
 ## 2.43.34 - 2026-05-26
 
 - **Feature**: **Full Bluetooth Controller Button & Axis Remapping** - Integrated `ControllerRemapDialog` into the Input settings section, allowing users to map physical buttons and analog axes. Added support for remapping both Player 1 and Player 2 controllers separately. Enabled the in-browser emulator page to dynamically load gamepad configurations at runtime and translate button presses and axis directions. Passed custom UI navigation mapping configurations to the dashboard grid navigation hook.
