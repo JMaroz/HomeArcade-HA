@@ -91,6 +91,18 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         background: rgba(236, 72, 153, 0.22); border-color: rgba(236, 72, 153, 0.7);
         box-shadow: 0 12px 30px rgba(236, 72, 153, 0.18), 0 0 15px rgba(236, 72, 153, 0.1);
       }
+      .cabinet-menu-tile.danger {
+        background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.25);
+        color: #fca5a5;
+      }
+      .cabinet-menu-tile.danger:hover {
+        background: rgba(239, 68, 68, 0.18); border-color: rgba(239, 68, 68, 0.5);
+        box-shadow: 0 12px 30px rgba(239, 68, 68, 0.18), 0 0 15px rgba(239, 68, 68, 0.1);
+        color: #fff;
+      }
+      .cabinet-menu-tile.danger:active {
+        background: rgba(239, 68, 68, 0.25); border-color: rgba(239, 68, 68, 0.6);
+      }
 
       .cabinet-menu-tile svg {
         width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2px; stroke-linecap: round; stroke-linejoin: round;
@@ -130,6 +142,11 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         75% { transform: rotate(5deg) scale(1.1); }
       }
       .cabinet-menu-tile:hover svg.icon-pad { animation: icon-shake 0.3s infinite ease-in-out; }
+      @keyframes icon-exit-shift {
+        0%, 100% { transform: translateX(0) scale(1.1); }
+        50% { transform: translateX(3px) scale(1.1); }
+      }
+      .cabinet-menu-tile:hover svg.icon-exit { animation: icon-exit-shift 1s infinite ease-in-out; }
 
       .cabinet-menu-tile span { font: 900 10px ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; }
 
@@ -523,14 +540,6 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
              <svg class="icon-restart" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
              <span>Restart</span>
            </button>
-           <button type="button" class="cabinet-menu-tile" id="cabinet-save">
-             <svg class="icon-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-             <span>Save</span>
-           </button>
-           <button type="button" class="cabinet-menu-tile" id="cabinet-load">
-             <svg class="icon-load" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-             <span>Load</span>
-           </button>
            <button type="button" class="cabinet-menu-tile" id="cabinet-saves">
              <svg class="icon-saves" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><path d="M2 10h20"></path></svg>
              <span>Saves</span>
@@ -542,6 +551,10 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
            <button type="button" class="cabinet-menu-tile" id="cabinet-pad-toggle">
              <svg class="icon-pad" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
              <span>Pad</span>
+           </button>
+           <button type="button" class="cabinet-menu-tile danger" id="cabinet-exit">
+             <svg class="icon-exit" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+             <span>Exit</span>
            </button>
         </div>
 
@@ -563,7 +576,6 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
 
         <div class="cabinet-menu-footer">
            <button type="button" class="cabinet-menu-btn-wide" id="cabinet-filter-cycle">📺 Cycle Visuals</button>
-           <button type="button" class="cabinet-menu-btn-wide danger" id="cabinet-exit">✕ Exit Game</button>
         </div>
       </div>
     </div>
@@ -974,8 +986,6 @@ function cabinetSetupMenu() {
   safeOnClick("cabinet-restart", function() { 
     if (window.EJS_emulator && window.EJS_emulator.gameManager) { window.EJS_emulator.gameManager.restart(); cabinetToast("Restarted ↺"); toggleMenu(false); }
   });
-  safeOnClick("cabinet-save", function() { window.CabinetSaveSaveSlot(1); toggleMenu(false); });
-  safeOnClick("cabinet-load", function() { window.CabinetLoadSaveSlot(1); toggleMenu(false); });
   safeOnClick("cabinet-saves", function() { toggleMenu(false); var panel = document.getElementById("cabinet-save-panel"); if (panel) { panel.classList.add("is-open"); document.getElementById("cabinet-save-user").textContent = userName || "Guest"; window.CabinetRefreshSaveGrid(); } });
   var saveGrid = document.getElementById("cabinet-save-grid");
   window.CabinetGetSaveSlots = function(cb) {
@@ -987,18 +997,37 @@ function cabinetSetupMenu() {
   function renderSaveGrid(slots) {
     if (!saveGrid) return;
     saveGrid.innerHTML = '';
-    if (!slots || slots.length === 0) {
-      saveGrid.innerHTML = '<p style="color:rgba(248,250,252,0.35);font:600 11px ui-monospace,monospace;text-align:center;padding:32px 0;">No saves yet. Use Save to create one.</p>';
-      return;
+    for (var s = 1; s <= 9; s++) {
+      (function(slotNum) {
+        var slot = slots ? slots.find(function(item) { return item.slot === slotNum; }) : null;
+        var div = document.createElement("div");
+        if (slot) {
+          div.style.cssText = "display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,0.04);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);";
+          var img = slot.thumbnail ? '<img src="' + slot.thumbnail + '" style="width:100%;aspect-ratio:16/9;object-fit:contain;background:#000;" />' : '<div style="width:100%;aspect-ratio:16/9;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font:700 20px ui-monospace,monospace;">' + slotNum + '</div>';
+          var date = slot.timestamp ? new Date(slot.timestamp * 1000).toLocaleString() : "No date";
+          div.innerHTML = img + '<div style="padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;">' +
+            '<div style="font:700 10px ui-monospace,monospace;color:rgba(248,250,252,0.5);letter-spacing:0.1em;text-transform:uppercase;">Slot ' + slotNum + '</div>' +
+            '<div style="font:500 10px ui-monospace,monospace;color:rgba(248,250,252,0.3);">' + date + '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:2px;">' +
+              '<button data-action="load" data-slot="' + slotNum + '" style="padding:5px 4px;border-radius:6px;font:700 9px ui-monospace,monospace;letter-spacing:0.08em;background:rgba(99,179,237,0.15);color:#93c5fd;border:1px solid rgba(99,179,237,0.25);cursor:pointer;">Load</button>' +
+              '<button data-action="save" data-slot="' + slotNum + '" style="padding:5px 4px;border-radius:6px;font:700 9px ui-monospace,monospace;letter-spacing:0.08em;background:rgba(236,72,153,0.15);color:#fbcfe8;border:1px solid rgba(236,72,153,0.25);cursor:pointer;">Save</button>' +
+              '<button data-action="delete" data-slot="' + slotNum + '" style="padding:5px 4px;border-radius:6px;font:700 9px ui-monospace,monospace;letter-spacing:0.08em;background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);cursor:pointer;">Delete</button>' +
+            '</div>' +
+          '</div>';
+        } else {
+          div.style.cssText = "display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,0.01);border-radius:12px;overflow:hidden;border:1px dashed rgba(255,255,255,0.1);height:100%;box-sizing:border-box;";
+          div.innerHTML = '<div style="width:100%;aspect-ratio:16/9;background:rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.1);font:700 16px ui-monospace,monospace;">Empty</div>' +
+            '<div style="padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;flex:1;justify-content:space-between;">' +
+              '<div>' +
+                '<div style="font:700 10px ui-monospace,monospace;color:rgba(248,250,252,0.3);letter-spacing:0.1em;text-transform:uppercase;">Slot ' + slotNum + '</div>' +
+                '<div style="font:500 10px ui-monospace,monospace;color:rgba(248,250,252,0.15);margin-top:2px;">No save data</div>' +
+              '</div>' +
+              '<button data-action="save" data-slot="' + slotNum + '" style="padding:6px 8px;border-radius:6px;font:700 9px ui-monospace,monospace;letter-spacing:0.08em;background:rgba(236,72,153,0.12);color:#fbcfe8;border:1px solid rgba(236,72,153,0.2);cursor:pointer;width:100%;margin-top:4px;">+ Save State</button>' +
+            '</div>';
+        }
+        saveGrid.appendChild(div);
+      })(s);
     }
-    slots.forEach(function(slot) {
-      var div = document.createElement("div");
-      div.style.cssText = "display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,0.04);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);";
-      var img = slot.thumbnail ? '<img src="' + slot.thumbnail + '" style="width:100%;aspect-ratio:16/9;object-fit:contain;background:#000;" />' : '<div style="width:100%;aspect-ratio:16/9;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font:700 20px ui-monospace,monospace;">' + (slot.slot ?? "?") + '</div>';
-      var date = slot.timestamp ? new Date(slot.timestamp * 1000).toLocaleString() : "No date";
-      div.innerHTML = img + '<div style="padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;"><div style="font:700 10px ui-monospace,monospace;color:rgba(248,250,252,0.5);letter-spacing:0.1em;text-transform:uppercase;">Slot ' + slot.slot + '</div><div style="font:500 10px ui-monospace,monospace;color:rgba(248,250,252,0.3);">' + date + '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:2px;"><button data-action="load" data-slot="' + slot.slot + '" style="padding:5px 8px;border-radius:6px;font:700 9px ui-monospace,monospace;letter-spacing:0.08em;background:rgba(99,179,237,0.15);color:#93c5fd;border:1px solid rgba(99,179,237,0.25);cursor:pointer;">Load</button><button data-action="delete" data-slot="' + slot.slot + '" style="padding:5px 8px;border-radius:6px;font:700 9px ui-monospace,monospace;letter-spacing:0.08em;background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);cursor:pointer;">Delete</button></div></div></div>';
-      saveGrid.appendChild(div);
-    });
     if (!saveGrid.dataset.listenerAdded) {
       saveGrid.dataset.listenerAdded = 'true';
       saveGrid.onclick = function(e) {
@@ -1008,6 +1037,13 @@ function cabinetSetupMenu() {
         var slotId = Number(btn.getAttribute('data-slot'));
         if (action === 'load') {
           window.CabinetLoadSaveSlot(slotId);
+        } else if (action === 'save') {
+          cabinetToast("Saving state...");
+          window.CabinetSaveSaveSlot(slotId, function(success) {
+            if (success) {
+              cabinetToast("Saved Slot " + slotId + " ✓");
+            }
+          });
         } else if (action === 'delete') {
           window.CabinetDeleteSaveSlot(slotId);
         }
