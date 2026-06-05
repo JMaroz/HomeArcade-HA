@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { ButtonState, MappingEntry } from "./GamepadRemap";
-import { detectControllerType, getButtonLayout } from "./GamepadRemap";
+import { detectControllerType, getButtonLayout, GAMEPAD_TEMPLATES } from "./GamepadRemap";
+import { Keyboard } from "lucide-react";
 
 interface Props {
   activeButtons: ButtonState[];
@@ -12,6 +13,7 @@ interface Props {
   onDone: () => void;
   actions: { id: string; label: string; isAxis?: boolean }[];
   gamepadId?: string;
+  onApplyTemplate?: (template: Record<string, any>) => void;
 }
 
 export function ControllerRemapDialog({
@@ -24,6 +26,7 @@ export function ControllerRemapDialog({
   onDone,
   actions,
   gamepadId = "",
+  onApplyTemplate,
 }: Props) {
   const [axes, setAxes] = useState<Record<number, number>>({});
   const controllerType = detectControllerType(gamepadId);
@@ -63,6 +66,9 @@ export function ControllerRemapDialog({
 
   function entryLabel(entry: MappingEntry | undefined): string {
     if (!entry) return "Not set";
+    if (entry.kind === "key") {
+      return entry.key.toUpperCase();
+    }
     if (entry.kind === "button") {
       const btn = buttons.find(b => b.index === entry.buttonIndex);
       return btn ? btn.displayName : `BTN ${entry.buttonIndex}`;
@@ -106,6 +112,8 @@ export function ControllerRemapDialog({
     );
   }
 
+  const isKeyboard = gamepadId === "keyboard";
+
   return (
     <div className="space-y-6">
       {/* Status bar */}
@@ -113,7 +121,11 @@ export function ControllerRemapDialog({
         <div className="flex items-center gap-3 p-4 rounded-xl border border-primary/40 bg-primary/10">
           <div className="size-3 rounded-full bg-primary animate-pulse" />
           <span className="text-sm font-medium">
-            Press any button on your controller to assign it to{" "}
+            {isKeyboard ? (
+              <>Press any key on your keyboard to assign it to </>
+            ) : (
+              <>Press any button on your controller to assign it to </>
+            )}
             <strong className="text-primary">{actions.find(a => a.id === listeningAction)?.label}</strong>
           </span>
           {lastPressedLabel && (
@@ -124,202 +136,247 @@ export function ControllerRemapDialog({
           </button>
         </div>
       ) : (
-        <div className="text-sm text-muted-foreground">
-          {mappedCount}/{actions.length} mapped — click an action to rebind. Controller type: <span className="font-semibold capitalize">{controllerType}</span>
+        <div className="flex items-center justify-between flex-wrap gap-3 text-sm text-muted-foreground">
+          <div>
+            {mappedCount}/{actions.length} mapped — click an action to rebind. Controller type: <span className="font-semibold capitalize">{controllerType}</span>
+          </div>
+          {onApplyTemplate && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Template:</label>
+              <select
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) {
+                    if (val === "keyboard_default") {
+                      onApplyTemplate(GAMEPAD_TEMPLATES.keyboard_default);
+                    } else if (GAMEPAD_TEMPLATES[val]) {
+                      onApplyTemplate(GAMEPAD_TEMPLATES[val]);
+                    }
+                    e.target.value = ""; // Reset
+                  }
+                }}
+                defaultValue=""
+                className="bg-sidebar border border-white/10 rounded px-2.5 py-1 text-xs font-mono text-white focus:outline-none focus:border-primary/50"
+              >
+                <option value="" disabled>-- Load Template --</option>
+                {isKeyboard ? (
+                  <option value="keyboard_default">Default Keyboard Layout</option>
+                ) : (
+                  <>
+                    <option value="xbox">Xbox Layout</option>
+                    <option value="playstation">PlayStation Layout</option>
+                    <option value="nintendo">Nintendo Switch Layout</option>
+                  </>
+                )}
+              </select>
+            </div>
+          )}
         </div>
       )}
 
-      {/* SVG Controller Diagram */}
-      <div className="relative mx-auto" style={{ width: 520, height: 420 }}>
-        <svg viewBox="0 0 520 420" className="w-full h-full drop-shadow-2xl" aria-label="Gamepad diagram">
-          <defs>
-            <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2a2a2a" /><stop offset="50%" stopColor="#1a1a1a" /><stop offset="100%" stopColor="#141414" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="5" result="coloredBlur" />
-              <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-          </defs>
+      {/* SVG Controller Diagram / Keyboard helper */}
+      {isKeyboard ? (
+        <div className="flex flex-col items-center justify-center p-10 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] text-center gap-4 py-16">
+          <Keyboard className="size-12 text-primary animate-pulse" />
+          <div className="space-y-1">
+            <h4 className="font-display text-base font-black uppercase tracking-wider">Keyboard Remap Mode</h4>
+            <p className="text-xs text-white/40 max-w-sm mx-auto leading-relaxed">
+              Select an action from the list below, then press the desired keyboard key to map it.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="relative mx-auto" style={{ width: 520, height: 420 }}>
+          <svg viewBox="0 0 520 420" className="w-full h-full drop-shadow-2xl" aria-label="Gamepad diagram">
+            <defs>
+              <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#2a2a2a" /><stop offset="50%" stopColor="#1a1a1a" /><stop offset="100%" stopColor="#141414" />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+                <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
 
-          {/* Body */}
-          <rect x="20" y="30" width="480" height="320" rx="80" ry="80" fill="#1a1a1a" stroke="#2e2e2e" strokeWidth="3" />
-          <rect x="20" y="30" width="480" height="320" rx="80" ry="80" fill="url(#bodyGrad)" />
+            {/* Body */}
+            <rect x="20" y="30" width="480" height="320" rx="80" ry="80" fill="#1a1a1a" stroke="#2e2e2e" strokeWidth="3" />
+            <rect x="20" y="30" width="480" height="320" rx="80" ry="80" fill="url(#bodyGrad)" />
 
-          {/* Grips */}
-          <ellipse cx="100" cy="310" rx="50" ry="65" fill="#141414" />
-          <ellipse cx="100" cy="310" rx="40" ry="55" fill="#1e1e1e" stroke="#252525" strokeWidth="2" />
-          <ellipse cx="420" cy="310" rx="50" ry="65" fill="#141414" />
-          <ellipse cx="420" cy="310" rx="40" ry="55" fill="#1e1e1e" stroke="#252525" strokeWidth="2" />
+            {/* Grips */}
+            <ellipse cx="100" cy="310" rx="50" ry="65" fill="#141414" />
+            <ellipse cx="100" cy="310" rx="40" ry="55" fill="#1e1e1e" stroke="#252525" strokeWidth="2" />
+            <ellipse cx="420" cy="310" rx="50" ry="65" fill="#141414" />
+            <ellipse cx="420" cy="310" rx="40" ry="55" fill="#1e1e1e" stroke="#252525" strokeWidth="2" />
 
-          {/* Left stick */}
-          <circle cx="155" cy="190" r="42" fill="#111" stroke="#2a2a2a" strokeWidth="2" />
-          <circle
-            cx="155" cy="190" r="28"
-            fill={getBtnState(8) === "active" || getBtnState(8) === "listening" ? "#b05dfc" : "#1e1e1e"}
-            stroke={getBtnState(8) === "listening" ? "#b05dfc" : "#333"}
-            strokeWidth={getBtnState(8) === "listening" ? 3 : 2}
-            filter={getBtnState(8) === "active" || getBtnState(8) === "listening" ? "url(#glow)" : undefined}
-          />
-          <text x="155" y="194" textAnchor="middle" fill="#555" fontSize="11" fontFamily="sans-serif">L3</text>
+            {/* Left stick */}
+            <circle cx="155" cy="190" r="42" fill="#111" stroke="#2a2a2a" strokeWidth="2" />
+            <circle
+              cx="155" cy="190" r="28"
+              fill={getBtnState(8) === "active" || getBtnState(8) === "listening" ? "#b05dfc" : "#1e1e1e"}
+              stroke={getBtnState(8) === "listening" ? "#b05dfc" : "#333"}
+              strokeWidth={getBtnState(8) === "listening" ? 3 : 2}
+              filter={getBtnState(8) === "active" || getBtnState(8) === "listening" ? "url(#glow)" : undefined}
+            />
+            <text x="155" y="194" textAnchor="middle" fill="#555" fontSize="11" fontFamily="sans-serif">L3</text>
 
-          {/* Right stick */}
-          <circle cx="365" cy="190" r="42" fill="#111" stroke="#2a2a2a" strokeWidth="2" />
-          <circle
-            cx="365" cy="190" r="28"
-            fill={getBtnState(9) === "active" || getBtnState(9) === "listening" ? "#b05dfc" : "#1e1e1e"}
-            stroke={getBtnState(9) === "listening" ? "#b05dfc" : "#333"}
-            strokeWidth={getBtnState(9) === "listening" ? 3 : 2}
-            filter={getBtnState(9) === "active" || getBtnState(9) === "listening" ? "url(#glow)" : undefined}
-          />
-          <text x="365" y="194" textAnchor="middle" fill="#555" fontSize="11" fontFamily="sans-serif">R3</text>
+            {/* Right stick */}
+            <circle cx="365" cy="190" r="42" fill="#111" stroke="#2a2a2a" strokeWidth="2" />
+            <circle
+              cx="365" cy="190" r="28"
+              fill={getBtnState(9) === "active" || getBtnState(9) === "listening" ? "#b05dfc" : "#1e1e1e"}
+              stroke={getBtnState(9) === "listening" ? "#b05dfc" : "#333"}
+              strokeWidth={getBtnState(9) === "listening" ? 3 : 2}
+              filter={getBtnState(9) === "active" || getBtnState(9) === "listening" ? "url(#glow)" : undefined}
+            />
+            <text x="365" y="194" textAnchor="middle" fill="#555" fontSize="11" fontFamily="sans-serif">R3</text>
 
-          {/* D-pad */}
-          {[
-            { idx: 10, dx: 65, dy: 170, arrow: "↑" },
-            { idx: 11, dx: 65, dy: 230, arrow: "↓" },
-            { idx: 12, dx: 35, dy: 200, arrow: "←" },
-            { idx: 13, dx: 95, dy: 200, arrow: "→" },
-          ].map(({ idx, dx, dy, arrow }) => {
-            const state = getBtnState(idx);
-            const isActive = state === "active";
-            const isListening = state === "listening";
-            return (
-              <g key={idx}>
-                <rect x={dx} y={dy} width="30" height="30" rx="4"
-                  fill={isActive || isListening ? "#b05dfc" : "#1c1c1c"}
-                  stroke={isListening ? "#b05dfc" : "#2e2e2e"}
-                  strokeWidth={isListening ? 2 : 1}
-                  filter={isActive || isListening ? "url(#glow)" : undefined}
-                />
-                <text x={dx + 15} y={dy + 20} textAnchor="middle" fill="#555" fontSize="14" fontFamily="sans-serif">{arrow}</text>
-              </g>
-            );
-          })}
-
-          {/* Center buttons */}
-          {[
-            { idx: 7, cx: 220, cy: 220, label: "≡" },
-            { idx: 6, cx: 300, cy: 220, label: "☰" },
-          ].map(({ idx, cx, cy, label }) => {
-            const state = getBtnState(idx);
-            const isActive = state === "active";
-            const isListening = state === "listening";
-            return (
-              <g key={idx}>
-                <circle cx={cx} cy={cy} r="14"
-                  fill={isActive || isListening ? "#b05dfc" : "#1c1c1c"}
-                  stroke={isListening ? "#b05dfc" : "#2e2e2e"}
-                  strokeWidth={isListening ? 2 : 1}
-                  filter={isActive || isListening ? "url(#glow)" : undefined}
-                />
-                <text x={cx} y={cy + 4} textAnchor="middle" fill="#555" fontSize="8" fontFamily="sans-serif">{label}</text>
-              </g>
-            );
-          })}
-
-          {/* Face buttons — uses controller-type-aware labels */}
-          {buttons.slice(0, 4).map(btn => renderFaceButton(btn, btn.displayName))}
-
-          {/* Shoulder buttons */}
-          {[
-            { idx: 4, x: 30, y: 60, w: 90, label: controllerType === "playstation" ? "L1" : "LB" },
-            { idx: 5, x: 400, y: 60, w: 90, label: controllerType === "playstation" ? "R1" : "RB" },
-          ].map(({ idx, x, y, w, label }) => {
-            const state = getBtnState(idx);
-            const isActive = state === "active";
-            const isListening = state === "listening";
-            return (
-              <g key={idx}>
-                <rect x={x} y={y} width={w} height="30" rx="10"
-                  fill={isActive || isListening ? "#b05dfc" : "#1c1c1c"}
-                  stroke={isListening ? "#b05dfc" : "#2e2e2e"}
-                  strokeWidth={isListening ? 2 : 1}
-                  filter={isActive || isListening ? "url(#glow)" : undefined}
-                />
-                <text x={x + w / 2} y={y + 20} textAnchor="middle"
-                  fill={isActive || isListening ? "#fff" : "#555"} fontSize="11" fontFamily="sans-serif">
-                  {label}
-                </text>
-              </g>
-            );
-          })}
-
-          {/* Live axis indicators */}
-          {axes[0] !== undefined && (
-            <text x="155" y="380" textAnchor="middle" fill="#444" fontSize="10" fontFamily="monospace">
-              {axes[0] > 0.5 ? "→" : axes[0] < -0.5 ? "←" : "·"}
-            </text>
-          )}
-          {axes[1] !== undefined && (
-            <text x="180" y="365" textAnchor="middle" fill="#444" fontSize="10" fontFamily="monospace">
-              {axes[1] > 0.5 ? "↓" : axes[1] < -0.5 ? "↑" : "·"}
-            </text>
-          )}
-          {axes[2] !== undefined && (
-            <text x="365" y="380" textAnchor="middle" fill="#444" fontSize="10" fontFamily="monospace">
-              {axes[2] > 0.5 ? "→" : axes[2] < -0.5 ? "←" : "·"}
-            </text>
-          )}
-          {axes[3] !== undefined && (
-            <text x="390" y="365" textAnchor="middle" fill="#444" fontSize="10" fontFamily="monospace">
-              {axes[3] > 0.5 ? "↓" : axes[3] < -0.5 ? "↑" : "·"}
-            </text>
-          )}
-
-          {/* Axis binding hotspots */}
-          {listeningAction && (() => {
-            const HOTSPOTS = [
-              { axisIdx: 0, dir: -1 as -1, label: "L←", x: 20, y: 150, w: 50, h: 36 },
-              { axisIdx: 0, dir:  1 as -1, label: "L→", x: 70, y: 150, w: 50, h: 36 },
-              { axisIdx: 1, dir: -1 as -1, label: "L↑", x: 20, y: 110, w: 50, h: 36 },
-              { axisIdx: 1, dir:  1 as -1, label: "L↓", x: 20, y: 186, w: 50, h: 36 },
-              { axisIdx: 2, dir: -1 as -1, label: "R←", x: 360, y: 150, w: 50, h: 36 },
-              { axisIdx: 2, dir:  1 as -1, label: "R→", x: 410, y: 150, w: 50, h: 36 },
-              { axisIdx: 3, dir: -1 as -1, label: "R↑", x: 360, y: 110, w: 50, h: 36 },
-              { axisIdx: 3, dir:  1 as -1, label: "R↓", x: 360, y: 186, w: 50, h: 36 },
-            ];
-            return HOTSPOTS.map(h => {
-              const state = getAxisState(h.axisIdx, h.dir);
+            {/* D-pad */}
+            {[
+              { idx: 10, dx: 65, dy: 170, arrow: "↑" },
+              { idx: 11, dx: 65, dy: 230, arrow: "↓" },
+              { idx: 12, dx: 35, dy: 200, arrow: "←" },
+              { idx: 13, dx: 95, dy: 200, arrow: "→" },
+            ].map(({ idx, dx, dy, arrow }) => {
+              const state = getBtnState(idx);
               const isActive = state === "active";
               const isListening = state === "listening";
-              const isMapped = state === "mapped";
               return (
-                <g key={`ax-${h.axisIdx}-${h.dir}`}>
-                  <rect x={h.x} y={h.y} width={h.w} height={h.h} rx="6"
-                    fill={isActive ? "#b05dfc" : isListening ? "#7c3aed" : isMapped ? "#2a2a2a" : "#111"}
-                    stroke={isListening ? "#b05dfc" : isMapped ? "#444" : "#2a2a2a"}
+                <g key={idx}>
+                  <rect x={dx} y={dy} width="30" height="30" rx="4"
+                    fill={isActive || isListening ? "#b05dfc" : "#1c1c1c"}
+                    stroke={isListening ? "#b05dfc" : "#2e2e2e"}
                     strokeWidth={isListening ? 2 : 1}
                     filter={isActive || isListening ? "url(#glow)" : undefined}
-                    className="cursor-pointer"
-                    onClick={() => {
-                      // Commit this axis direction immediately
-                      const entry: MappingEntry = { kind: "axis", axisIndex: h.axisIdx, direction: h.dir };
-                      const currentAction = listeningAction;
-                      if (currentAction) {
-                        const updated = { ...(mapping || {}), [currentAction]: entry };
-                        onRemapAction(currentAction);
-                      }
-                    }}
                   />
-                  <text x={h.x + h.w / 2} y={h.y + h.h / 2 + 4} textAnchor="middle"
-                    fill={isActive || isListening ? "#fff" : "#555"} fontSize="9" fontFamily="monospace">
-                    {h.label}
+                  <text x={dx + 15} y={dy + 20} textAnchor="middle" fill="#555" fontSize="14" fontFamily="sans-serif">{arrow}</text>
+                </g>
+              );
+            })}
+
+            {/* Center buttons */}
+            {[
+              { idx: 7, cx: 220, cy: 220, label: "≡" },
+              { idx: 6, cx: 300, cy: 220, label: "☰" },
+            ].map(({ idx, cx, cy, label }) => {
+              const state = getBtnState(idx);
+              const isActive = state === "active";
+              const isListening = state === "listening";
+              return (
+                <g key={idx}>
+                  <circle cx={cx} cy={cy} r="14"
+                    fill={isActive || isListening ? "#b05dfc" : "#1c1c1c"}
+                    stroke={isListening ? "#b05dfc" : "#2e2e2e"}
+                    strokeWidth={isListening ? 2 : 1}
+                    filter={isActive || isListening ? "url(#glow)" : undefined}
+                  />
+                  <text x={cx} y={cy + 4} textAnchor="middle" fill="#555" fontSize="8" fontFamily="sans-serif">{label}</text>
+                </g>
+              );
+            })}
+
+            {/* Face buttons — uses controller-type-aware labels */}
+            {buttons.slice(0, 4).map(btn => renderFaceButton(btn, btn.displayName))}
+
+            {/* Shoulder buttons */}
+            {[
+              { idx: 4, x: 30, y: 60, w: 90, label: controllerType === "playstation" ? "L1" : "LB" },
+              { idx: 5, x: 400, y: 60, w: 90, label: controllerType === "playstation" ? "R1" : "RB" },
+            ].map(({ idx, x, y, w, label }) => {
+              const state = getBtnState(idx);
+              const isActive = state === "active";
+              const isListening = state === "listening";
+              return (
+                <g key={idx}>
+                  <rect x={x} y={y} width={w} height="30" rx="10"
+                    fill={isActive || isListening ? "#b05dfc" : "#1c1c1c"}
+                    stroke={isListening ? "#b05dfc" : "#2e2e2e"}
+                    strokeWidth={isListening ? 2 : 1}
+                    filter={isActive || isListening ? "url(#glow)" : undefined}
+                  />
+                  <text x={x + w / 2} y={y + 20} textAnchor="middle"
+                    fill={isActive || isListening ? "#fff" : "#555"} fontSize="11" fontFamily="sans-serif">
+                    {label}
                   </text>
                 </g>
               );
-            });
-          })()}
+            })}
 
-          {/* Trigger labels */}
-          <text x="75" y="52" textAnchor="middle" fill="#333" fontSize="9" fontFamily="monospace">
-            {controllerType === "playstation" ? "L2" : "LT"}
-          </text>
-          <text x="445" y="52" textAnchor="middle" fill="#333" fontSize="9" fontFamily="monospace">
-            {controllerType === "playstation" ? "R2" : "RT"}
-          </text>
-        </svg>
-      </div>
+            {/* Live axis indicators */}
+            {axes[0] !== undefined && (
+              <text x="155" y="380" textAnchor="middle" fill="#444" fontSize="10" fontFamily="monospace">
+                {axes[0] > 0.5 ? "→" : axes[0] < -0.5 ? "←" : "·"}
+              </text>
+            )}
+            {axes[1] !== undefined && (
+              <text x="180" y="365" textAnchor="middle" fill="#444" fontSize="10" fontFamily="monospace">
+                {axes[1] > 0.5 ? "↓" : axes[1] < -0.5 ? "↑" : "·"}
+              </text>
+            )}
+            {axes[2] !== undefined && (
+              <text x="365" y="380" textAnchor="middle" fill="#444" fontSize="10" fontFamily="monospace">
+                {axes[2] > 0.5 ? "→" : axes[2] < -0.5 ? "←" : "·"}
+              </text>
+            )}
+            {axes[3] !== undefined && (
+              <text x="390" y="365" textAnchor="middle" fill="#444" fontSize="10" fontFamily="monospace">
+                {axes[3] > 0.5 ? "↓" : axes[3] < -0.5 ? "↑" : "·"}
+              </text>
+            )}
+
+            {/* Axis binding hotspots */}
+            {listeningAction && (() => {
+              const HOTSPOTS = [
+                { axisIdx: 0, dir: -1 as -1, label: "L←", x: 20, y: 150, w: 50, h: 36 },
+                { axisIdx: 0, dir:  1 as -1, label: "L→", x: 70, y: 150, w: 50, h: 36 },
+                { axisIdx: 1, dir: -1 as -1, label: "L↑", x: 20, y: 110, w: 50, h: 36 },
+                { axisIdx: 1, dir:  1 as -1, label: "L↓", x: 20, y: 186, w: 50, h: 36 },
+                { axisIdx: 2, dir: -1 as -1, label: "R←", x: 360, y: 150, w: 50, h: 36 },
+                { axisIdx: 2, dir:  1 as -1, label: "R→", x: 410, y: 150, w: 50, h: 36 },
+                { axisIdx: 3, dir: -1 as -1, label: "R↑", x: 360, y: 110, w: 50, h: 36 },
+                { axisIdx: 3, dir:  1 as -1, label: "R↓", x: 360, y: 186, w: 50, h: 36 },
+              ];
+              return HOTSPOTS.map(h => {
+                const state = getAxisState(h.axisIdx, h.dir);
+                const isActive = state === "active";
+                const isListening = state === "listening";
+                const isMapped = state === "mapped";
+                return (
+                  <g key={`ax-${h.axisIdx}-${h.dir}`}>
+                    <rect x={h.x} y={h.y} width={h.w} height={h.h} rx="6"
+                      fill={isActive ? "#b05dfc" : isListening ? "#7c3aed" : isMapped ? "#2a2a2a" : "#111"}
+                      stroke={isListening ? "#b05dfc" : isMapped ? "#444" : "#2a2a2a"}
+                      strokeWidth={isListening ? 2 : 1}
+                      filter={isActive || isListening ? "url(#glow)" : undefined}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        // Commit this axis direction immediately
+                        const entry: MappingEntry = { kind: "axis", axisIndex: h.axisIdx, direction: h.dir };
+                        const currentAction = listeningAction;
+                        if (currentAction) {
+                          const updated = { ...(mapping || {}), [currentAction]: entry };
+                          onRemapAction(currentAction);
+                        }
+                      }}
+                    />
+                    <text x={h.x + h.w / 2} y={h.y + h.h / 2 + 4} textAnchor="middle"
+                      fill={isActive || isListening ? "#fff" : "#555"} fontSize="9" fontFamily="monospace">
+                      {h.label}
+                    </text>
+                  </g>
+                );
+              });
+            })()}
+
+            {/* Trigger labels */}
+            <text x="75" y="52" textAnchor="middle" fill="#333" fontSize="9" fontFamily="monospace">
+              {controllerType === "playstation" ? "L2" : "LT"}
+            </text>
+            <text x="445" y="52" textAnchor="middle" fill="#333" fontSize="9" fontFamily="monospace">
+              {controllerType === "playstation" ? "R2" : "RT"}
+            </text>
+          </svg>
+        </div>
+      )}
 
       {/* Action list */}
       <div className="grid gap-3">
@@ -338,9 +395,11 @@ export function ControllerRemapDialog({
               </div>
               <div className="flex items-center gap-3">
                 {entry && !isListening && (
-                  <div className="size-8 rounded-full bg-primary/20 border border-primary flex items-center justify-center">
-                    <span className="text-primary font-black text-xs">
-                      {entry.kind === "button"
+                  <div className="size-8 rounded-full bg-primary/20 border border-primary flex items-center justify-center px-1">
+                    <span className="text-primary font-black text-[10px] uppercase truncate max-w-[28px]">
+                      {entry.kind === "key"
+                        ? entry.key
+                        : entry.kind === "button"
                         ? (buttons.find(b => b.index === entry.buttonIndex)?.displayName ?? "?")
                         : `A${entry.axisIndex}`}
                     </span>

@@ -2,6 +2,13 @@
 
 All notable changes to HomeArcade are documented here.
 
+## [2.43.36] — 2026-06-05
+
+### Feature: Keyboard Customization & Controller Templates
+
+- **Keyboard Customization** — Integrated keyboard input remapping controls within the settings page, and enabled template layout injection during bootstrap.
+- **Controller Templates** — Added standard templates for Xbox, PlayStation, and Nintendo Switch gamepad layouts to easily apply pre-configured control maps.
+
 ---
 
 ## [2.43.35] — 2026-05-26

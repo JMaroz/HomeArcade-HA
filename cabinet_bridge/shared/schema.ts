@@ -290,6 +290,7 @@ export const gamepadBindingsSchema = z.object({
   bindings: z.record(z.string(), z.union([
     z.number().int(),
     z.object({ kind: z.enum(["button", "axis"]), buttonIndex: z.number().int().optional(), axisIndex: z.number().int().optional(), direction: z.number().int().optional() }),
+    z.object({ kind: z.literal("key"), key: z.string() }),
   ])).default({}),
 });
 

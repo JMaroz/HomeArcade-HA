@@ -1,3 +1,7 @@
+## 2.43.36 - 2026-06-05
+
+- **Feature**: **Keyboard Customization & Controller Templates** - Integrated keyboard input remapping controls within the settings page, and enabled template layout injection during bootstrap. Added standard templates for Xbox, PlayStation, and Nintendo Switch gamepad layouts to easily apply pre-configured control maps.
+
 ## 2.43.35 - 2026-05-26
 
 - **Feature**: **Symmetrical Pause Menu & 9-Slot Save State Manager** - Moved the Exit Game button into the pause menu grid (completing a clean 3x2 design) and replaced the direct Save/Load buttons with a single "Saves" button. Upgraded the Saves panel to a robust 9-slot Save State Slot Manager, allowing users to load, overwrite/save, or delete from any of the 9 slots with dynamic thumbnails and empty state dashed placeholders.

@@ -1,5 +1,20 @@
 import { escapeHtml } from "./utils";
 
+function normalizeKeyForEmulatorJS(key: string): string {
+  const lower = key.toLowerCase();
+  if (lower === "arrowup") return "ArrowUp";
+  if (lower === "arrowdown") return "ArrowDown";
+  if (lower === "arrowleft") return "ArrowLeft";
+  if (lower === "arrowright") return "ArrowRight";
+  if (lower === "enter") return "Enter";
+  if (lower === "shift") return "Shift";
+  if (lower === "control") return "Control";
+  if (lower === "alt") return "Alt";
+  if (lower === "escape") return "Escape";
+  if (lower === "space") return " ";
+  return key;
+}
+
 /**
  * Renders the High-Performance Emulator Page.
  * Uses the stable EmulatorJS engine with a premium Lemuroid-inspired UI.
@@ -733,11 +748,26 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
 }
 
 export function renderEmulatorBootstrap({
-  core, title, gameId, romId, discs, romHash, userId, userName, profileId, biosUrl, netplayRole, netplayRoom, netplaySyncMode, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2
+  core, title, gameId, romId, discs, romHash, userId, userName, profileId, biosUrl, netplayRole, netplayRoom, netplaySyncMode, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2, keyboardBindings
 }: any) {
   const ejsDiscs = discs?.length > 1 
     ? `window.EJS_discs = [${discs.map((d: any) => `{ fileName: window.CABINET_INGRESS_BASE + "/api/roms/${d.id}/file", label: ${JSON.stringify(d.label)} }`).join(", ")}];`
     : `window.EJS_gameUrl = window.CABINET_INGRESS_BASE + "/api/roms/" + ${JSON.stringify(romId)} + "/file";`;
+
+  let ejsDefaultControls = "";
+  if (keyboardBindings && Object.keys(keyboardBindings).length > 0) {
+    const p1Controls: Record<number, { value: string }> = {};
+    for (const [actionId, binding] of Object.entries(keyboardBindings)) {
+      const idx = parseInt(actionId, 10);
+      if (!isNaN(idx) && binding && (binding as any).kind === "key") {
+        const keyName = (binding as any).key;
+        p1Controls[idx] = { value: normalizeKeyForEmulatorJS(keyName) };
+      }
+    }
+    if (Object.keys(p1Controls).length > 0) {
+      ejsDefaultControls = `window.EJS_defaultControls = { 0: ${JSON.stringify(p1Controls)} };`;
+    }
+  }
 
   return `"use strict";
 window.CABINET_ROM_ID = ${JSON.stringify(romId)};
@@ -1342,6 +1372,7 @@ window.EJS_core = ${JSON.stringify(core)};
 window.EJS_gameName = ${JSON.stringify(title)};
 window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
 ${ejsDiscs}
+${ejsDefaultControls}
 
 window.EJS_pathtodata = window.CABINET_INGRESS_BASE + "/api/emulatorjs/";
 window.EJS_startOnLoaded = true;

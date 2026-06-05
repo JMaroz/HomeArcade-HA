@@ -101,7 +101,7 @@ export function ControlsSettings() {
     lastPressedLabel,
     startListening,
     stopListening,
-  } = useGamepadRemap();
+  } = useGamepadRemap(selectedGamepad?.id);
 
   // Load existing bindings for selected controller
   useEffect(() => {
@@ -382,14 +382,27 @@ export function ControlsSettings() {
         <div className="rounded-2xl border border-white/10 bg-black/40 overflow-hidden space-y-0">
 
           {/* Keyboard shortcuts */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5">
-            <div className="size-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Keyboard className="size-4 text-primary" />
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            <div className="flex items-center gap-3">
+              <div className="size-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Keyboard className="size-4 text-primary" />
+              </div>
+              <div>
+                <div className="font-display text-sm font-black uppercase tracking-wider">Keyboard</div>
+                <div className="font-mono text-[10px] text-white/30">Navigation shortcuts</div>
+              </div>
             </div>
-            <div>
-              <div className="font-display text-sm font-black uppercase tracking-wider">Keyboard</div>
-              <div className="font-mono text-[10px] text-white/30">Navigation shortcuts</div>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-2 font-mono text-[10px] uppercase tracking-wider text-primary border-primary/30 hover:bg-primary/10"
+              onClick={() => {
+                setSelectedGamepad({ id: "keyboard", index: -1 } as Gamepad);
+                setRemapPort(0);
+              }}
+            >
+              <Keyboard className="size-3" /> Remap Keyboard
+            </Button>
           </div>
           <div className="px-5 py-4 border-b border-white/5">
             <div className="space-y-2">
@@ -519,6 +532,19 @@ export function ControlsSettings() {
                   onDone={stopListening}
                   actions={RETROPAD_ACTIONS}
                   gamepadId={selectedGamepad.id}
+                  onApplyTemplate={async (template) => {
+                    setMappings(template);
+                    const portQuery = remapPort === 1 ? "?port=1" : "";
+                    await apiRequest(
+                      "PUT",
+                      `/api/profiles/${currentProfileId}/gamepad-bindings/${encodeURIComponent(selectedGamepad.id)}${portQuery}`,
+                      template
+                    );
+                    toast({
+                      title: "Template Applied",
+                      description: "The mapping template has been successfully loaded and saved.",
+                    });
+                  }}
                 />
               )}
             </TabsContent>

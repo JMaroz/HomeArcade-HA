@@ -657,6 +657,9 @@ export function registerRomRoutes(app: Express) {
       gamepadBindings: await (async () => {
         return (await storage.getGamepadBindings(pId, "default")) || {};
       })(),
+      keyboardBindings: await (async () => {
+        return (await storage.getGamepadBindings(pId, "keyboard")) || {};
+      })(),
       controlDefaultsP2: await (async () => {
         return (await storage.getProfileControlBindings(pId, `${core}_p2`)) || {};
       })(),

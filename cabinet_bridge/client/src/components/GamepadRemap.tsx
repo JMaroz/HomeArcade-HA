@@ -4,7 +4,8 @@ export type ActionId = string;
 
 export type MappingEntry =
   | { kind: "button"; buttonIndex: number }
-  | { kind: "axis"; axisIndex: number; direction: -1 | 1 };
+  | { kind: "axis"; axisIndex: number; direction: -1 | 1 }
+  | { kind: "key"; key: string };
 
 export type ActionMapping = Record<string, MappingEntry | undefined>;
 
@@ -151,6 +152,79 @@ export const RETROPAD_DEFAULTS: Record<ControllerType, Record<number, number>> =
   },
 };
 
+export const GAMEPAD_TEMPLATES: Record<string, Record<string, MappingEntry>> = {
+  xbox: {
+    "0": { kind: "button", buttonIndex: 0 },
+    "1": { kind: "button", buttonIndex: 2 },
+    "2": { kind: "button", buttonIndex: 8 },
+    "3": { kind: "button", buttonIndex: 9 },
+    "4": { kind: "button", buttonIndex: 12 },
+    "5": { kind: "button", buttonIndex: 13 },
+    "6": { kind: "button", buttonIndex: 14 },
+    "7": { kind: "button", buttonIndex: 15 },
+    "8": { kind: "button", buttonIndex: 1 },
+    "9": { kind: "button", buttonIndex: 3 },
+    "10": { kind: "button", buttonIndex: 4 },
+    "11": { kind: "button", buttonIndex: 5 },
+    "12": { kind: "button", buttonIndex: 6 },
+    "13": { kind: "button", buttonIndex: 7 },
+    "14": { kind: "button", buttonIndex: 10 },
+    "15": { kind: "button", buttonIndex: 11 },
+  },
+  playstation: {
+    "0": { kind: "button", buttonIndex: 0 },
+    "1": { kind: "button", buttonIndex: 2 },
+    "2": { kind: "button", buttonIndex: 8 },
+    "3": { kind: "button", buttonIndex: 9 },
+    "4": { kind: "button", buttonIndex: 12 },
+    "5": { kind: "button", buttonIndex: 13 },
+    "6": { kind: "button", buttonIndex: 14 },
+    "7": { kind: "button", buttonIndex: 15 },
+    "8": { kind: "button", buttonIndex: 1 },
+    "9": { kind: "button", buttonIndex: 3 },
+    "10": { kind: "button", buttonIndex: 4 },
+    "11": { kind: "button", buttonIndex: 5 },
+    "12": { kind: "button", buttonIndex: 6 },
+    "13": { kind: "button", buttonIndex: 7 },
+    "14": { kind: "button", buttonIndex: 10 },
+    "15": { kind: "button", buttonIndex: 11 },
+  },
+  nintendo: {
+    "0": { kind: "button", buttonIndex: 1 },
+    "1": { kind: "button", buttonIndex: 3 },
+    "2": { kind: "button", buttonIndex: 8 },
+    "3": { kind: "button", buttonIndex: 9 },
+    "4": { kind: "button", buttonIndex: 12 },
+    "5": { kind: "button", buttonIndex: 13 },
+    "6": { kind: "button", buttonIndex: 14 },
+    "7": { kind: "button", buttonIndex: 15 },
+    "8": { kind: "button", buttonIndex: 0 },
+    "9": { kind: "button", buttonIndex: 2 },
+    "10": { kind: "button", buttonIndex: 4 },
+    "11": { kind: "button", buttonIndex: 5 },
+    "12": { kind: "button", buttonIndex: 6 },
+    "13": { kind: "button", buttonIndex: 7 },
+    "14": { kind: "button", buttonIndex: 10 },
+    "15": { kind: "button", buttonIndex: 11 },
+  },
+  keyboard_default: {
+    "0": { kind: "key", key: "x" },
+    "1": { kind: "key", key: "a" },
+    "2": { kind: "key", key: "shift" },
+    "3": { kind: "key", key: "enter" },
+    "4": { kind: "key", key: "arrowup" },
+    "5": { kind: "key", key: "arrowdown" },
+    "6": { kind: "key", key: "arrowleft" },
+    "7": { kind: "key", key: "arrowright" },
+    "8": { kind: "key", key: "z" },
+    "9": { kind: "key", key: "s" },
+    "10": { kind: "key", key: "q" },
+    "11": { kind: "key", key: "w" },
+    "12": { kind: "key", key: "e" },
+    "13": { kind: "key", key: "r" },
+  }
+};
+
 // ── In-game hotkeys (RetroArch standard) ─────────────────────────────────────
 // These are the standard RetroArch hotkey combos shown in the reference tab.
 export interface HotkeyEntry {
@@ -251,10 +325,12 @@ export function getPrimaryPressedButton(gp: Gamepad): number | null {
   return null;
 }
 
-export function useGamepadRemap() {
+export function useGamepadRemap(gamepadId?: string) {
   const [listeningAction, setListeningAction] = useState<ActionId | null>(null);
   const [listenedEntry, setListenedEntry] = useState<MappingEntry | null>(null);
   const [lastPressedLabel, setLastPressedLabel] = useState<string>("");
+
+  const isKeyboard = gamepadId === "keyboard";
 
   const startListening = useCallback((action: ActionId) => {
     setListeningAction(action);
@@ -270,7 +346,7 @@ export function useGamepadRemap() {
 
   // Poll gamepads while listening
   useEffect(() => {
-    if (!listeningAction) return;
+    if (!listeningAction || isKeyboard) return;
 
     let rafId = 0;
     const DEAD_ZONE = 0.5;
@@ -303,7 +379,23 @@ export function useGamepadRemap() {
     };
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [listeningAction]);
+  }, [listeningAction, isKeyboard]);
+
+  // Listen to keyboard while listening (keyboard mode)
+  useEffect(() => {
+    if (!listeningAction || !isKeyboard) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const keyName = e.key;
+      setListenedEntry({ kind: "key", key: keyName });
+      setLastPressedLabel(keyName.toUpperCase());
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [listeningAction, isKeyboard]);
 
   return {
     listeningAction,
