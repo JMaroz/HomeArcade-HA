@@ -81,7 +81,7 @@ export interface ScannerStatus {
   totalScanned: number;
   watching: boolean;
   error: string | null;
-  pathStats: Record<string, { found: number; error: string | null }>;
+  pathStats: Record<string, { found: number; imported: number; lastScanAt: number | null; error: string | null }>;
 }
 
 type AddRomsBulkFn = (roms: any[]) => Promise<void>;
@@ -148,8 +148,9 @@ async function collectRomFilesAsync(dir: string, depth = 0): Promise<string[]> {
         if (ROM_EXTENSIONS.has(ext)) results.push(fullPath);
       }
     }
-  } catch {
-    // skip unreadable
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[Scanner] Unable to read directory ${dir}: ${msg}`);
   }
   return results;
 }
@@ -161,10 +162,11 @@ async function scanPath(
   const newRoms: any[] = [];
   
   if (!fsSync.existsSync(rootPath)) {
-    _status.pathStats[rootPath] = { found: 0, error: `Path not found: ${rootPath}` };
+    _status.pathStats[rootPath] = { found: 0, imported: 0, lastScanAt: Date.now(), error: `Path not found: ${rootPath}` };
     return newRoms;
   }
 
+  console.log(`[Scanner] Scanning ${rootPath}`);
   const romFiles = await collectRomFilesAsync(rootPath);
 
   for (const filePath of romFiles) {
@@ -197,7 +199,8 @@ async function scanPath(
     }
   }
 
-  _status.pathStats[rootPath] = { found: newRoms.length, error: null };
+  _status.pathStats[rootPath] = { found: romFiles.length, imported: newRoms.length, lastScanAt: Date.now(), error: null };
+  console.log(`[Scanner] ${rootPath}: ${romFiles.length} ROM file(s), ${newRoms.length} new import(s).`);
   return newRoms;
 }
 
@@ -220,6 +223,7 @@ async function doScan(): Promise<void> {
       return;
     }
 
+    console.log(`[Scanner] Watch paths: ${allPaths.join(", ")}`);
     _status.watchPaths = allPaths;
     _status.watchDir   = allPaths.join(", ");
     _status.enabled    = true;
