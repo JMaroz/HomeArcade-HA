@@ -19,8 +19,10 @@ import { registerStatsRoutes } from "./stats";
 import { registerAiRoutes } from "./ai";
 import { registerVaultRoutes } from "./vault";
 import { registerFilesystemRoutes } from "./filesystem";
+import { registerSystemRoutes as registerHwSystemRoutes } from "./system";
 
 export async function registerRoutes(_httpServer: Server, app: Express) {
+  registerHwSystemRoutes(app);
   registerRomRoutes(app);
   registerProfileRoutes(app);
   registerCollectionRoutes(app);

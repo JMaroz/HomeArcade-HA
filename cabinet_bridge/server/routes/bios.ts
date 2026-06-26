@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import crypto from "node:crypto";
 import { dataPath, ensureDir } from "../data-dir";
-import { REQUIRED_BIOS } from "@shared/bios-metadata";
+import { REQUIRED_BIOS, CORE_PERFORMANCE_TIERS } from "@shared/bios-metadata";
 
 const BIOS_ROOT = path.resolve(dataPath("bios"));
 
@@ -17,12 +17,22 @@ async function getMd5(filePath: string): Promise<string> {
   }
 }
 
+function detectArch(): "arm64" | "x64" {
+  const arch = process.arch;
+  if (arch === "arm64") return "arm64";
+  return "x64";
+}
+
+// Prevent concurrent downloads of the same file
+const activeDownloads = new Set<string>();
+
 export function registerBiosRoutes(app: Express) {
   ensureDir(BIOS_ROOT);
 
   // Get status of all required BIOS files
   app.get("/api/bios", async (_req, res) => {
-    const status: Record<string, Array<{ filename: string; exists: boolean; verified: boolean; label?: string }>> = {};
+    const arch = detectArch();
+    const status: Record<string, Array<{ filename: string; exists: boolean; verified: boolean; label?: string; sourceUrl?: string }>> = {};
     
     for (const [core, files] of Object.entries(REQUIRED_BIOS)) {
       status[core] = await Promise.all(
@@ -31,23 +41,22 @@ export function registerBiosRoutes(app: Express) {
           try {
             await fs.access(filePath);
             const actualMd5 = await getMd5(filePath);
-            // Allow "Verified" if MD5 matches OR if it's the catch-all
             const isVerified = actualMd5 === meta.md5 || meta.md5 === "00000000000000000000000000000000";
             return { 
               filename: meta.filename, 
               exists: true, 
               verified: isVerified,
               label: meta.label,
-              md5: actualMd5
+              sourceUrl: meta.sourceUrl,
             };
           } catch {
-            return { filename: meta.filename, exists: false, verified: false, label: meta.label };
+            return { filename: meta.filename, exists: false, verified: false, label: meta.label, sourceUrl: meta.sourceUrl };
           }
         })
       );
     }
     
-    res.json(status);
+    res.json({ cores: status, arch });
   });
 
   // Upload a BIOS file
@@ -61,7 +70,6 @@ export function registerBiosRoutes(app: Express) {
         return res.status(400).json({ message: "No filename provided." });
       }
 
-      // Case-insensitive match — find the canonical filename from our allowed list
       const allAllowedFiles = Object.values(REQUIRED_BIOS).flat();
       const matchedMeta = allAllowedFiles.find(
         (m) => m.filename.toLowerCase() === rawFilename.toLowerCase()
@@ -78,11 +86,85 @@ export function registerBiosRoutes(app: Express) {
         return res.status(400).json({ message: "Empty file body." });
       }
 
-      // Always write using the canonical (lowercase) filename
       const filePath = path.join(BIOS_ROOT, canonicalFilename);
       await fs.writeFile(filePath, body);
 
       res.status(201).json({ success: true, filename: canonicalFilename });
+    }
+  );
+
+  // Download a BIOS file from retrobios
+  app.post(
+    "/api/bios/download",
+    express.json(),
+    async (req, res) => {
+      const { filename } = req.body as { filename?: string };
+
+      if (!filename) {
+        return res.status(400).json({ message: "No filename provided." });
+      }
+
+      const allAllowedFiles = Object.values(REQUIRED_BIOS).flat();
+      const matchedMeta = allAllowedFiles.find(
+        (m) => m.filename.toLowerCase() === filename.toLowerCase()
+      );
+
+      if (!matchedMeta) {
+        return res.status(400).json({ message: `Filename '${filename}' is not a recognized BIOS file.` });
+      }
+
+      if (!matchedMeta.sourceUrl) {
+        return res.status(400).json({ message: `'${filename}' is not available for download. Upload it manually.` });
+      }
+
+      if (activeDownloads.has(matchedMeta.filename)) {
+        return res.status(409).json({ message: `Download of '${matchedMeta.filename}' is already in progress.` });
+      }
+
+      const canonicalFilename = matchedMeta.filename;
+      const filePath = path.join(BIOS_ROOT, canonicalFilename);
+      const tmpPath = filePath + ".tmp";
+
+      activeDownloads.add(canonicalFilename);
+
+      try {
+        const response = await fetch(matchedMeta.sourceUrl, {
+          signal: AbortSignal.timeout(60_000),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status} ${response.statusText}`);
+        }
+
+        const buffer = Buffer.from(await response.arrayBuffer());
+
+        if (buffer.length === 0) {
+          throw new Error("Downloaded file is empty.");
+        }
+
+        // Write to temp file first, then rename atomically
+        await fs.writeFile(tmpPath, buffer);
+        await fs.rename(tmpPath, filePath);
+
+        // Verify MD5 (skip catch-all checksum)
+        const isCatchAll = matchedMeta.md5 === "00000000000000000000000000000000";
+        if (!isCatchAll) {
+          const actualMd5 = await getMd5(filePath);
+          if (actualMd5 !== matchedMeta.md5) {
+            await fs.unlink(filePath).catch(() => {});
+            throw new Error(`Checksum mismatch: expected ${matchedMeta.md5}, got ${actualMd5}`);
+          }
+        }
+
+        res.json({ success: true, filename: canonicalFilename, verified: isCatchAll || true });
+      } catch (err) {
+        await fs.unlink(tmpPath).catch(() => {});
+        await fs.unlink(filePath).catch(() => {});
+        const message = err instanceof Error ? err.message : "Download failed";
+        res.status(502).json({ message });
+      } finally {
+        activeDownloads.delete(canonicalFilename);
+      }
     }
   );
 
