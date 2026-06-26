@@ -38,13 +38,9 @@ export interface IntegrationConfig {
   haPublishEntities?: boolean;
   /** Override map for action endpoints by id. */
   endpoints: Record<string, string>;
-  /** ScreenScraper.fr credentials */
-  ssUserId?: string;
-  ssPassword?: string;
   /** RetroAchievements */
   raUsername?: string;
   raToken?: string;
-  tgdbApiKey?: string;
   /** PC status panel */
   pcHostname?: string;
   pcOnlineEntityId?: string;
@@ -127,11 +123,8 @@ interface IntegrationContextValue {
 
 const defaultConfig: IntegrationConfig = {
   haBaseUrl: "https://homeassistant.local:8123",
-  ssUserId: "",
-  ssPassword: "",
   raUsername: "",
   raToken: "",
-  tgdbApiKey: "",
   haToken: "",
   liveMode: false,
   endpoints: {},
@@ -188,11 +181,8 @@ function normalizeConfig(raw: unknown): IntegrationConfig {
     liveMode: typeof source.liveMode === "boolean" ? source.liveMode : defaultConfig.liveMode,
     haPublishEntities: typeof source.haPublishEntities === "boolean" ? source.haPublishEntities : false,
     endpoints,
-    ssUserId: typeof source.ssUserId === "string" ? source.ssUserId : "",
-    ssPassword: typeof source.ssPassword === "string" ? source.ssPassword : "",
     raUsername: typeof source.raUsername === "string" ? source.raUsername : "",
     raToken: typeof source.raToken === "string" ? source.raToken : "",
-    tgdbApiKey: typeof source.tgdbApiKey === "string" ? source.tgdbApiKey : "",
     pcHostname: typeof source.pcHostname === "string" ? source.pcHostname : "ARCADE-PC",
     pcOnlineEntityId: typeof source.pcOnlineEntityId === "string" ? source.pcOnlineEntityId : "",
     pcCpuEntityId: typeof source.pcCpuEntityId === "string" ? source.pcCpuEntityId : "",

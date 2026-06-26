@@ -362,18 +362,6 @@
         "hint": "The only collection visible in Kiosk Mode.",
         "placeholder": "All Games"
       },
-      "tgdbApiKey": {
-        "label": "TheGamesDB API Key",
-        "hint": "Get a free key at thegamesdb.net"
-      },
-      "ssUserId": {
-        "label": "ScreenScraper Username",
-        "hint": "Your ScreenScraper.fr account username."
-      },
-      "ssPassword": {
-        "label": "ScreenScraper Password",
-        "hint": "Your ScreenScraper.fr account password."
-      },
       "raUsername": {
         "label": "RA Username",
         "hint": "Your RetroAchievements.org account username."

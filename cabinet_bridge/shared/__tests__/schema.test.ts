@@ -8,8 +8,6 @@ describe("integrationSettingsSchema", () => {
       haToken: "abc123",
       liveMode: true,
       endpoints: { snes: "https://example.com/webhook" },
-      ssUserId: "user1",
-      ssPassword: "pass1",
       kioskMode: false,
       kioskPin: "1234",
       kioskCollectionId: null,

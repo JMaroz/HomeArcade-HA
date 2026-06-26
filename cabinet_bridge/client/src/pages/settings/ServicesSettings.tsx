@@ -1,6 +1,6 @@
 /**
  * ServicesSettings — Online Services tab content for Settings page.
- * Covers RetroAchievements, TheGamesDB, and ScreenScraper credentials.
+ * Covers RetroAchievements only (art uses free Libretro thumbnails).
  */
 import React from "react";
 import { useIntegration } from "@/lib/integration";
@@ -15,39 +15,6 @@ export function ServicesSettings() {
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
-      {/* ── Scraper credentials ─────────────────────────────────────────── */}
-      <Section title={t("settings.sections.scrapers.title")} description={t("settings.sections.scrapers.description")}>
-        <div className="grid sm:grid-cols-2 gap-6">
-          <Field label={t("settings.fields.tgdbApiKey.label")} hint={t("settings.fields.tgdbApiKey.hint")}>
-            <Input
-              value={config.tgdbApiKey}
-              onChange={(e) => setConfig({ tgdbApiKey: e.target.value })}
-              placeholder="Your API Key"
-              className="font-mono text-sm"
-            />
-          </Field>
-          <div className="grid gap-4">
-            <Field label={t("settings.fields.ssUserId.label")}>
-              <Input
-                value={config.ssUserId}
-                onChange={(e) => setConfig({ ssUserId: e.target.value })}
-                placeholder="Username"
-                className="font-mono text-sm"
-              />
-            </Field>
-            <Field label={t("settings.fields.ssPassword.label")}>
-              <Input
-                type="password"
-                value={config.ssPassword}
-                onChange={(e) => setConfig({ ssPassword: e.target.value })}
-                placeholder="••••••••"
-                className="font-mono text-sm"
-              />
-            </Field>
-          </div>
-        </div>
-      </Section>
-
       {/* ── RetroAchievements ───────────────────────────────────────────── */}
       <Section title={t("settings.sections.retroachievements.title")} description={t("settings.sections.retroachievements.description")}>
         <div className="grid sm:grid-cols-2 gap-6">

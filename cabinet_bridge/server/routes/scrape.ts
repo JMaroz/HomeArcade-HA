@@ -1,260 +1,156 @@
 import { Express } from "express";
 import { storage } from "../storage";
-import { LIBRETRO_PLAYLISTS, SYSTEM_IMAGE_FETCH_HEADERS } from "./shared";
-import { decodeHtml, normalizeSearchTitle, normalizeTitle, numberTokens, significantTokens } from "./utils";
+import { LIBRETRO_PLAYLISTS } from "./shared";
+import { dataPath } from "../data-dir";
+import path from "node:path";
+import fs from "node:fs/promises";
 
-// ── TheGamesDB ────────────────────────────────────────────────────────────────
-const TGDB_PLATFORM_IDS: Record<string, number> = {
-  nes: 7, snes: 6, n64: 3, gba: 5, genesis: 36, ps1: 10, ps2: 11,
-  arcade: 23, dreamcast: 16, gb: 4, gbc: 41, nds: 8, psp: 13,
-  atari2600: 22, saturn: 17, gamegear: 35, sms: 35, pce: 34,
-  sega32x: 33, segacd: 21, neogeo: 24, virtualboy: 79, atari7800: 8051, lynx: 4924,
-};
+const STOP_WORDS = new Set(["the","a","an","and","of","in","to","for","with","by","at","from","is","it","on","or","as","be","but","not","so"]);
 
-interface TGDBMeta {
-  artUrl: string | null;
-  description: string | null;
-  releaseYear: number | null;
-  developer: string | null;
-  publisher: string | null;
-  genre: string | null;
-  players: string | null;
-  scrapeStatus: string;
-  scrapeMessage: string;
-}
+const LISTING_CACHE_TTL = 24 * 60 * 60 * 1000;
 
-export async function fetchTheGamesDBMeta(system: string, title: string, apiKey: string, lang: string = "en"): Promise<TGDBMeta | null> {
-  if (!apiKey) return null;
-  const platformId = TGDB_PLATFORM_IDS[system];
-  if (!platformId) return null;
+type CachedListing = { entries: string[]; fetchedAt: number };
+const listingCache = new Map<string, CachedListing>();
 
-  try {
-    const params = new URLSearchParams({
-      apikey: apiKey,
-      name: title,
-      fields: "overview,genres,developers,publishers,players,rating",
-      include: "boxart",
-      "filter[platform]": String(platformId),
-    });
-    const res = await fetch(`https://api.thegamesdb.net/v1/Games/ByGameName?${params}`, {
-      headers: { "User-Agent": "CabinetBridge/0.6" },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    const json = await res.json() as Record<string, any>;
+async function fetchDirectoryListing(playlist: string): Promise<string[]> {
+  const cached = listingCache.get(playlist);
+  if (cached && Date.now() - cached.fetchedAt < LISTING_CACHE_TTL) {
+    return cached.entries;
+  }
 
-    const games = (json?.data as any)?.games as Array<any> | undefined;
-    if (!Array.isArray(games) || games.length === 0) return null;
-
-    const titleLower = title.toLowerCase();
-    const normalizedTarget = normalizeSearchTitle(title);
-    
-    const game = games.find((g) => String(g.game_title ?? "").toLowerCase() === titleLower) 
-              ?? games.find((g) => normalizeSearchTitle(String(g.game_title ?? "")) === normalizedTarget)
-              ?? games[0];
-
-    const description = String(game.overview ?? "").trim() || null;
-    const players = game.players ? String(game.players) : null;
-
-    let releaseYear: number | null = null;
-    const relDate = game.release_date as string | undefined;
-    if (relDate) {
-      const y = parseInt(relDate.slice(0, 4), 10);
-      if (!isNaN(y)) releaseYear = y;
-    }
-
-    const include = json?.include as any;
-    const genresMap = (include?.genres as any)?.data as Record<string, { name?: string }> | undefined;
-    const gameGenreIds = game.genres as number[] | undefined;
-    let genre: string | null = null;
-    if (genresMap && Array.isArray(gameGenreIds)) {
-      genre = gameGenreIds.slice(0, 2).map((id) => genresMap[id]?.name).filter(Boolean).join(", ") || null;
-    }
-
-    const devsMap = (include?.developers as any)?.data as Record<string, { name?: string }> | undefined;
-    const devIds = game.developers as number[] | undefined;
-    let developer: string | null = null;
-    if (devsMap && Array.isArray(devIds) && devIds.length > 0) {
-      developer = devsMap[devIds[0]]?.name ?? null;
-    }
-
-    const pubsMap = (include?.publishers as any)?.data as Record<string, { name?: string }> | undefined;
-    const pubIds = game.publishers as number[] | undefined;
-    let publisher: string | null = null;
-    if (pubsMap && Array.isArray(pubIds) && pubIds.length > 0) {
-      publisher = pubsMap[pubIds[0]]?.name ?? null;
-    }
-
-    let artUrl: string | null = null;
-    const boxartData = (include?.boxart as any)?.data as Record<string, Array<{ side?: string; filename?: string }>> | undefined;
-    const baseUrl = ((include?.boxart as any)?.base_url as Record<string, string>)?.original ?? "https://cdn.thegamesdb.net/images/original/";
-    const gameId = String(game.id ?? "");
-    const artList = boxartData?.[gameId];
-    if (Array.isArray(artList)) {
-      const front = artList.find((a) => a.side === "front") ?? artList[0];
-      if (front?.filename) artUrl = baseUrl + front.filename;
-    }
-
-    return {
-      artUrl, description, releaseYear, developer, publisher, genre, players,
-      scrapeStatus: "matched",
-      scrapeMessage: `Metadata from TheGamesDB (${lang})`,
-    };
-  } catch { return null; }
-}
-
-// ── ScreenScraper ─────────────────────────────────────────────────────────────
-const SCREENSCRAPER_SYSTEM_IDS: Record<string, number> = {
-  nes: 3, snes: 4, n64: 14, gba: 12, genesis: 1, ps1: 57, ps2: 58,
-  arcade: 75, dreamcast: 23, gb: 9, gbc: 10, nds: 15, psp: 61,
-  atari2600: 26, saturn: 22, gamegear: 21, sms: 2, pce: 31,
-  sega32x: 19, segacd: 20, neogeo: 142, virtualboy: 11, atari7800: 41, lynx: 28,
-};
-
-export interface ScreenScraperMeta {
-  artUrl: string | null;
-  wheelArtUrl: string | null;
-  videoUrl: string | null;
-  communityScore: number | null;
-  description: string | null;
-  releaseYear: number | null;
-  developer: string | null;
-  publisher: string | null;
-  genre: string | null;
-  players: string | null;
-  scrapeStatus: string;
-  scrapeMessage: string;
-}
-
-export async function fetchScreenScraperMeta(
-  system: string, romFileName: string, title: string, ssUserId: string, ssPassword: string, lang: string = "en",
-): Promise<ScreenScraperMeta | null> {
-  const systemId = SCREENSCRAPER_SYSTEM_IDS[system];
-  if (!systemId) return null;
-
-  const params = new URLSearchParams({
-    devid: "cabinet_bridge", devpassword: "cabinet_bridge", softname: "cabinet_bridge",
-    output: "json", systemeid: String(systemId), romtype: "rom", romfilename: romFileName,
+  const url = `https://thumbnails.libretro.com/${encodeURIComponent(playlist)}/Named_Boxarts/`;
+  const res = await fetch(url, {
+    headers: { "User-Agent": "CabinetBridge/0.1" },
+    signal: AbortSignal.timeout(15_000),
   });
-  if (ssUserId) params.set("ssid", ssUserId);
-  if (ssPassword) params.set("sspassword", ssPassword);
+  if (!res.ok) throw new Error(`Libretro listing returned ${res.status}`);
 
-  try {
-    const res = await fetch(`https://www.screenscraper.fr/api2/jeuInfos.php?${params}`, {
-      headers: { "User-Agent": "CabinetBridge/0.1" },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
+  const html = await res.text();
 
-    const json = await res.json() as any;
-    const jeu = (json?.response as any)?.jeu as any;
-    if (!jeu) return null;
+  const entries: string[] = [];
+  const regex = /<a\s+href="([^"]+\.png)">/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(html)) !== null) {
+    const decoded = decodeURIComponent(match[1]);
+    entries.push(decoded);
+  }
 
-    let description: string | null = null;
-    const synopses = jeu.synopsis as Array<{ langue: string; text: string }> | undefined;
-    if (Array.isArray(synopses)) {
-      // Priority: 1. User Preferred, 2. English, 3. First available
-      const pref = synopses.find((s) => s.langue.toLowerCase() === lang.toLowerCase());
-      const en = synopses.find((s) => s.langue.toLowerCase() === "en");
-      description = (pref ?? en ?? synopses[0])?.text ?? null;
-    }
-
-    let releaseYear: number | null = null;
-    const dates = jeu.dates as Array<{ region: string; text: string }> | undefined;
-    if (Array.isArray(dates)) {
-      const preferred = dates.find((d) => ["wor", "us", "eu"].includes(d.region)) ?? dates[0];
-      const y = preferred?.text ? parseInt(preferred.text.slice(0, 4), 10) : NaN;
-      if (!isNaN(y)) releaseYear = y;
-    }
-
-    const developer = (jeu.developpeur as any)?.text ?? null;
-    const publisher = (jeu.editeur as any)?.text ?? null;
-
-    let genre: string | null = null;
-    const genres = jeu.genres as Array<{ noms: Array<{ langue: string; text: string }> }> | undefined;
-    if (Array.isArray(genres) && genres.length > 0) {
-      const names = genres.map((g) => {
-        const pref = (g.noms ?? []).find((n) => n.langue.toLowerCase() === lang.toLowerCase());
-        const en = (g.noms ?? []).find((n) => n.langue.toLowerCase() === "en");
-        return (pref ?? en ?? g.noms?.[0])?.text;
-      }).filter(Boolean) as string[];
-      genre = names.slice(0, 2).join(", ") || null;
-    }
-
-    const players = (jeu.joueurs as any)?.text ?? null;
-
-    let artUrl: string | null = null;
-    let wheelArtUrl: string | null = null;
-    let videoUrl: string | null = null;
-    const medias = jeu.medias as Array<{ type: string; region?: string; url?: string }> | undefined;
-    if (Array.isArray(medias)) {
-      const boxTypes = ["box-2D", "box-2D-side", "mixrbv1"];
-      for (const boxType of boxTypes) {
-        const candidates = medias.filter((m) => m.type === boxType);
-        const best = candidates.find((m) => ["us", "wor", "eu"].includes(m.region ?? "")) ?? candidates[0];
-        if (best?.url) { artUrl = best.url; break; }
-      }
-      const wheelTypes = ["wheel-hd", "wheel", "wheel-carbon"];
-      for (const wt of wheelTypes) {
-        const w = medias.find((m) => m.type === wt);
-        if (w?.url) { wheelArtUrl = w.url; break; }
-      }
-      const videoTypes = ["video-normalized", "video"];
-      for (const vt of videoTypes) {
-        const v = medias.find((m) => m.type === vt);
-        if (v?.url) { videoUrl = v.url; break; }
-      }
-    }
-
-    let communityScore: number | null = null;
-    const noteRaw = (jeu.note as any)?.text;
-    if (noteRaw) {
-      const parsed = parseFloat(noteRaw);
-      if (!isNaN(parsed)) communityScore = parsed;
-    }
-
-    return {
-      artUrl, wheelArtUrl, videoUrl, communityScore, description, releaseYear, developer, publisher, genre, players,
-      scrapeStatus: "matched", scrapeMessage: `Metadata from ScreenScraper.fr (${lang})`,
-    };
-  } catch { return null; }
+  listingCache.set(playlist, { entries, fetchedAt: Date.now() });
+  return entries;
 }
 
-export async function findLibretroBoxArt(system: string, title: string) {
+function stripTags(name: string): string {
+  return name
+    .replace(/\s*\([^)]*\)/g, "")
+    .replace(/\s*\[[^\]]*\]/g, "")
+    .trim();
+}
+
+function normalizeForCompare(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/_/g, " ")
+    .replace(/[^a-z0-9'!\- ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractRegions(name: string): string[] {
+  const regions: string[] = [];
+  const parens = name.match(/\(([^)]+)\)/g);
+  if (parens) {
+    for (const p of parens) {
+      for (const part of p.slice(1, -1).split(",")) {
+        const t = part.trim().toLowerCase();
+        if (t.length >= 2 && !["en","fr","de","es","it","pt","nl","sv","no","da","fi","pl","ru","zh","ko","ja","sgb","gb","rev","v"].includes(t)) {
+          regions.push(t);
+        }
+      }
+    }
+  }
+  return [...new Set(regions)];
+}
+
+function scoreMatch(romBase: string, entryBase: string): { score: number; method: string } {
+  const r = normalizeForCompare(romBase);
+  const e = normalizeForCompare(entryBase);
+
+  if (r === e) return { score: 100, method: "exact" };
+
+  const containsDir = r.includes(e) ? "re" : e.includes(r) ? "er" : null;
+  if (containsDir) {
+    const short = containsDir === "re" ? e : r;
+    const long = containsDir === "re" ? r : e;
+    const ratio = short.length / long.length;
+    if (ratio < 0.45) return { score: Math.round(ratio * 100), method: "contains-fuzzy" };
+    return { score: 80 + Math.round(ratio * 20), method: "contains" };
+  }
+
+  const rt = r.split(/\s+/).filter(Boolean);
+  const et = e.split(/\s+/).filter(Boolean);
+  const rs = rt.filter(t => t.length > 1 && !STOP_WORDS.has(t));
+  const es = et.filter(t => t.length > 1 && !STOP_WORDS.has(t));
+  if (rs.length === 0 || es.length === 0) return { score: 0, method: "none" };
+
+  const overlap = rs.filter(t => es.includes(t));
+  if (overlap.length === 0) return { score: 0, method: "none" };
+
+  const base = Math.round((overlap.length / rs.length + overlap.length / es.length) * 50);
+  const ru = rs.filter(t => !overlap.includes(t));
+  const eu = es.filter(t => !overlap.includes(t));
+
+  let s = base;
+  if (ru.length > 0 && eu.length > 0) s = Math.round(s * 0.6);
+  else if (ru.length > 0 && ru.length >= rs.length * 0.5) s = Math.round(s * 0.6);
+  else if (eu.length > 0 && eu.length >= es.length * 0.5) s = Math.round(s * 0.6);
+
+  if (s < 50) return { score: 0, method: "token-penalty" };
+  return { score: s, method: "tokens" };
+}
+
+export async function findLibretroBoxArt(system: string, title: string): Promise<{ url: string | null; message: string }> {
   const playlist = LIBRETRO_PLAYLISTS[system];
   if (!playlist) return { url: null, message: "No Libretro thumbnail playlist configured." };
 
-  const baseUrl = `https://thumbnails.libretro.com/${encodeURIComponent(playlist)}/Named_Boxarts/`;
+  let entries: string[];
+  try {
+    entries = await fetchDirectoryListing(playlist);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Failed to fetch Libretro listing";
+    return { url: null, message: msg };
+  }
 
-  const cleanTitle = title
-    .replace(/\s*\((USA|US|Europe|EU|Japan|JP|World|En|Fr|De|Es|It|Pt|Nl|Sv|No|Da|Fi|Pl|Ru|Zh|Ko|Ja|As|AU|NZ|Scan|Unl|Rev\s*[A-Z0-9]+|v[0-9.]+|Beta|Proto|Demo|Sample|Disc\s*\d+|Disk\s*\d+)\)/gi, "")
-    .replace(/\s*\[[^\]]*\]/g, "")
-    .replace(/[._]+/g, " ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  if (entries.length === 0) return { url: null, message: `No box art found in Libretro for "${playlist}".` };
 
-  const candidates = [
-    `${cleanTitle} (USA).png`,
-    `${cleanTitle} (USA) (Rev 1).png`,
-    `${cleanTitle} (USA) (Rev A).png`,
-    `${cleanTitle} (World).png`,
-    `${cleanTitle} (Europe).png`,
-    `${cleanTitle} (Japan).png`,
-    `${cleanTitle}.png`,
-  ];
+  const romClean = title.replace(/\.[^.]+$/, "");
+  const romBase = stripTags(romClean);
+  const romRegions = extractRegions(romClean);
 
-  for (const filename of candidates) {
-    const url = baseUrl + encodeURIComponent(filename);
-    try {
-      const probe = await fetch(url, {
-        method: "HEAD",
-        headers: { "User-Agent": "CabinetBridge/0.1" },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (probe.ok) return { url, message: `Matched Libretro Named_Boxarts: ${filename}` };
-    } catch {
-      // network error — try next candidate
+  let best = { score: 0, entry: "", method: "" };
+
+  for (const entry of entries) {
+    const entryClean = entry.replace(/\.png$/i, "");
+    const eBase = stripTags(entryClean);
+    const result = scoreMatch(romBase, eBase);
+    let s = result.score;
+
+    if (s >= 50) {
+      const er = extractRegions(entryClean);
+      if (romRegions.some(r => er.includes(r))) {
+        s += 10;
+      }
     }
+
+    if (s > best.score) {
+      best = { score: s, entry: entryClean, method: result.method };
+    }
+  }
+
+  if (best.score >= 50 && best.entry) {
+    const baseUrl = `https://thumbnails.libretro.com/${encodeURIComponent(playlist)}/Named_Boxarts/`;
+    const url = baseUrl + encodeURIComponent(best.entry + ".png");
+    return { url, message: `Matched Libretro Named_Boxarts: ${best.entry} (score=${best.score})` };
   }
 
   return { url: null, message: `No Libretro box art match found for "${title}".` };
@@ -266,50 +162,19 @@ export function registerScrapeRoutes(app: Express) {
     const rom = await storage.getUploadedRom(id);
     if (!rom) return res.status(404).json({ message: "ROM not found." });
 
-    const settings = await storage.getIntegrationSettings();
-    const lang = settings.language || "en";
-    let meta: any = null;
-
-    // Try ScreenScraper first (most detailed + multilingual)
-    if (settings.ssUserId && settings.ssPassword) {
-      console.log(`[Scrape] Trying ScreenScraper for ${rom.title} in ${lang}...`);
-      meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.ssUserId, settings.ssPassword, lang);
-    }
-
-    // Try TheGamesDB second
-    if (!meta && settings.tgdbApiKey) {
-      console.log(`[Scrape] Trying TheGamesDB for ${rom.title} in ${lang}...`);
-      meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.tgdbApiKey, lang);
-    }
-
-    // Fallback to Libretro (art only)
-    if (!meta) {
-      console.log(`[Scrape] Falling back to Libretro for ${rom.title}...`);
-      const libretro = await findLibretroBoxArt(rom.system, rom.title);
-      if (libretro.url) {
-        meta = { 
-          artUrl: libretro.url, 
-          scrapeStatus: "matched", 
-          scrapeMessage: libretro.message,
-          description: null,
-          releaseYear: null,
-          developer: null,
-          publisher: null,
-          genre: null,
-          players: null
-        };
-      } else {
-        console.log(`[Scrape] No match found for ${rom.title}: ${libretro.message}`);
-        await storage.updateUploadedRomArt(id, { artUrl: null, scrapeStatus: "failed", scrapeMessage: libretro.message });
-        return res.json({ success: false, message: libretro.message });
-      }
-    }
-
-    if (meta) {
+    const libretro = await findLibretroBoxArt(rom.system, rom.title);
+    if (libretro.url) {
+      const meta = {
+        artUrl: libretro.url,
+        scrapeStatus: "matched",
+        scrapeMessage: libretro.message,
+      };
       const updated = await storage.updateUploadedRomMetadata(id, meta);
       return res.json(updated);
     }
-    res.json({ success: false, message: "No match found." });
+
+    await storage.updateUploadedRomArt(id, { artUrl: null, scrapeStatus: "failed", scrapeMessage: libretro.message });
+    return res.json({ success: false, message: libretro.message });
   });
 
   app.post("/api/roms/scrape-all", async (req, res) => {
@@ -326,34 +191,23 @@ export function registerScrapeRoutes(app: Express) {
     const send = (data: any) => res.write(`data: ${JSON.stringify(data)}\n\n`);
     send({ type: "start", total: unscraped.length });
 
-    const settings = await storage.getIntegrationSettings();
-    const lang = settings.language || "en";
     let count = 0;
-
     for (const rom of unscraped) {
       count++;
       send({ type: "progress", current: count, total: unscraped.length, title: rom.title });
 
-      let meta: any = null;
-      if (settings.ssUserId && settings.ssPassword) {
-        meta = await fetchScreenScraperMeta(rom.system, rom.fileName, rom.title, settings.ssUserId, settings.ssPassword, lang);
-      }
-      if (!meta && settings.tgdbApiKey) {
-        meta = await fetchTheGamesDBMeta(rom.system, rom.title, settings.tgdbApiKey, lang);
-      }
-      if (!meta) {
-        const libretro = await findLibretroBoxArt(rom.system, rom.title);
-        if (libretro.url) meta = { artUrl: libretro.url, scrapeStatus: "matched", scrapeMessage: libretro.message };
-      }
-
-      if (meta) {
-        await storage.updateUploadedRomMetadata(rom.id, meta);
+      const libretro = await findLibretroBoxArt(rom.system, rom.title);
+      if (libretro.url) {
+        await storage.updateUploadedRomMetadata(rom.id, {
+          artUrl: libretro.url,
+          scrapeStatus: "matched",
+          scrapeMessage: libretro.message,
+        });
         send({ type: "result", id: rom.id, title: rom.title, status: "success" });
       } else {
-        await storage.updateUploadedRomArt(rom.id, { artUrl: null, scrapeStatus: "failed", scrapeMessage: "No match found during bulk scrape." });
+        await storage.updateUploadedRomArt(rom.id, { artUrl: null, scrapeStatus: "failed", scrapeMessage: libretro.message });
         send({ type: "result", id: rom.id, title: rom.title, status: "failed" });
       }
-      await new Promise((r) => setTimeout(r, 500));
     }
 
     send({ type: "complete" });

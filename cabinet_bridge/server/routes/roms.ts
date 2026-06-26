@@ -17,7 +17,7 @@ import { pipeline } from "node:stream/promises";
 import { z } from "zod";
 import { insertUploadedRomSchema } from "@shared/schema";
 import { extractFirstRomFromZip, titleFromFileName, slugify, getAbsoluteFilePath } from "./utils";
-import { fetchTheGamesDBMeta, fetchScreenScraperMeta, findLibretroBoxArt } from "./scrape";
+import { findLibretroBoxArt } from "./scrape";
 import { getHltbData } from "../hltb";
 import QRCode from "qrcode";
 
@@ -43,10 +43,8 @@ export function registerRomRoutes(app: Express) {
 
     // Sanity-check: only allow known art CDN origins
     const allowedOrigins = [
-      "cdn.thegamesdb.net",
       "thumbnails.libretro.com",
       "mediaspeed.libretro.com",
-      "www.screenscraper.fr",
     ];
     let origin: string | null = null;
     try { origin = new URL(artUrl).host; } catch {}
@@ -181,22 +179,7 @@ export function registerRomRoutes(app: Express) {
       const cleanTitle = discMatch ? title.replace(discMatch[0], "").trim() : title;
       const discGroup = discMatch ? `${system}/${slugify(cleanTitle)}` : null;
 
-      const settings = await storage.getIntegrationSettings();
-      let activeMeta: any = null;
-
-      // Try High-Detail Scrapers first
-      if (settings.ssUserId && settings.ssPassword) {
-        activeMeta = await fetchScreenScraperMeta(system, safeName, cleanTitle, settings.ssUserId, settings.ssPassword);
-      }
-      if (!activeMeta && settings.tgdbApiKey) {
-        activeMeta = await fetchTheGamesDBMeta(system, cleanTitle, settings.tgdbApiKey);
-      }
-
-      // Fallback to Libretro (art only)
-      let libretroArt: { url: string | null; message: string } | null = null;
-      if (!activeMeta) {
-        libretroArt = await findLibretroBoxArt(system, cleanTitle);
-      }
+      const libretroArt = await findLibretroBoxArt(system, cleanTitle);
 
       const rom = insertUploadedRomSchema.parse({
         title: cleanTitle,
@@ -207,18 +190,9 @@ export function registerRomRoutes(app: Express) {
         filePath,
         size: totalSize,
         mimeType: req.header("content-type") ?? "application/octet-stream",
-        artUrl: activeMeta?.artUrl ?? libretroArt?.url ?? null,
-        scrapeStatus: activeMeta?.scrapeStatus ?? (libretroArt?.url ? "matched" : "not_found"),
-        scrapeMessage: activeMeta?.scrapeMessage ?? libretroArt?.message ?? "",
-        description: activeMeta?.description ?? null,
-        releaseYear: activeMeta?.releaseYear ?? null,
-        developer: activeMeta?.developer ?? null,
-        publisher: activeMeta?.publisher ?? null,
-        genre: activeMeta?.genre ?? null,
-        players: activeMeta?.players ?? null,
-        communityScore: (activeMeta as any)?.communityScore ?? null,
-        wheelArtUrl: (activeMeta as any)?.wheelArtUrl ?? null,
-        videoUrl: (activeMeta as any)?.videoUrl ?? null,
+        artUrl: libretroArt.url,
+        scrapeStatus: libretroArt.url ? "matched" : "not_found",
+        scrapeMessage: libretroArt.message ?? "",
         favorite,
         rating: 0,
         lastPlayed: 0,

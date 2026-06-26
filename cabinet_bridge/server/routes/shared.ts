@@ -120,6 +120,7 @@ export const LIBRETRO_PLAYLISTS: Record<string, string> = {
   genesis: "Sega - Mega Drive - Genesis",
   ps1: "Sony - PlayStation",
   ps2: "Sony - PlayStation 2",
+  arcade: "FBNeo - Arcade Games",
   dreamcast: "Sega - Dreamcast",
   gb: "Nintendo - Game Boy",
   gbc: "Nintendo - Game Boy Color",
