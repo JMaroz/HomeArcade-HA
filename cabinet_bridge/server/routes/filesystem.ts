@@ -12,6 +12,12 @@ type DirectoryRoot = {
   available: boolean;
 };
 
+type DirectoryEntry = {
+  name: string;
+  path: string;
+  readable: boolean;
+};
+
 const CANDIDATE_ROOTS: Array<Omit<DirectoryRoot, "available">> = [
   { id: "media", label: "Home Assistant media", path: "/media" },
   { id: "share", label: "Home Assistant share", path: "/share" },
@@ -88,19 +94,28 @@ export function registerFilesystemRoutes(app: Express) {
           : null;
 
       const entries = await fs.readdir(currentPath, { withFileTypes: true });
-      const directories = entries
-        .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
-        .map((entry) => {
-          const fullPath = path.join(currentPath, entry.name);
-          let readable = true;
+      const directories: DirectoryEntry[] = [];
+      for (const entry of entries) {
+        if (entry.name.startsWith(".")) continue;
+        const fullPath = path.join(currentPath, entry.name);
+        let isDir = entry.isDirectory();
+        if (!isDir && entry.isSymbolicLink()) {
           try {
-            fsSync.accessSync(fullPath, fsSync.constants.R_OK);
+            isDir = (await fs.stat(fullPath)).isDirectory();
           } catch {
-            readable = false;
+            isDir = false;
           }
-          return { name: entry.name, path: fullPath, readable };
-        })
-        .sort((a, b) => a.name.localeCompare(b.name));
+        }
+        if (!isDir) continue;
+        let readable = true;
+        try {
+          fsSync.accessSync(fullPath, fsSync.constants.R_OK);
+        } catch {
+          readable = false;
+        }
+        directories.push({ name: entry.name, path: fullPath, readable });
+      }
+      directories.sort((a, b) => a.name.localeCompare(b.name));
 
       res.json({ currentPath, parentPath, roots, directories });
     } catch (err: any) {
