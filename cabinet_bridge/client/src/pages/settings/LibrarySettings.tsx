@@ -118,7 +118,7 @@ function DirectoryPickerDialog({
             Choose ROM directory
           </DialogTitle>
           <DialogDescription className="text-white/45">
-            Browse Home Assistant paths visible inside the HomeArcade add-on. External drives are usually under <code>/media</code>.
+            Browse paths visible inside the HomeArcade add-on. External drives are usually under <code>/media</code> or <code>/mnt</code>. Mounted partitions are auto-detected.
           </DialogDescription>
         </DialogHeader>
 
@@ -203,7 +203,11 @@ function DirectoryPickerDialog({
                     </button>
                   ))
                 ) : (
-                  <div className="flex h-40 items-center justify-center text-xs text-muted-foreground">No subdirectories found.</div>
+                  <div className="flex flex-col h-40 items-center justify-center gap-2 px-6 text-center text-xs text-muted-foreground">
+  <FolderOpen className="size-6 opacity-40" />
+  <span>No subdirectories found.</span>
+  <span className="leading-relaxed text-muted-foreground/60">Mount external storage in <span className="font-semibold text-foreground/70">Settings → System → Storage</span> in Home Assistant, then refresh. Check <code className="bg-white/5 px-1 rounded text-[9px]">/media</code>, <code className="bg-white/5 px-1 rounded text-[9px]">/mnt</code>, or the <strong>Mounted</strong> root buttons above.</span>
+</div>
                 )}
               </div>
             </ScrollArea>

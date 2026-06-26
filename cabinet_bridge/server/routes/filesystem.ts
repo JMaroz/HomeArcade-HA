@@ -18,8 +18,17 @@ type DirectoryEntry = {
   readable: boolean;
 };
 
+const PSEUDO_FS = new Set([
+  "proc", "sysfs", "tmpfs", "devtmpfs", "devpts",
+  "cgroup", "cgroup2", "overlay", "squashfs", "ramfs",
+  "hugetlbfs", "mqueue", "configfs", "debugfs", "tracefs",
+  "securityfs", "efivarfs", "pstore", "autofs", "bpf",
+  "fusectl", "rpc_pipefs",
+]);
+
 const CANDIDATE_ROOTS: Array<Omit<DirectoryRoot, "available">> = [
   { id: "media", label: "Home Assistant media", path: "/media" },
+  { id: "mnt", label: "System mounts (/mnt)", path: "/mnt" },
   { id: "share", label: "Home Assistant share", path: "/share" },
   { id: "backup", label: "Home Assistant backup", path: "/backup" },
   { id: "data", label: "HomeArcade data", path: getDataDir() },
@@ -35,6 +44,48 @@ function pathWithin(candidate: string, root: string): boolean {
   const normalizedCandidate = normalizeForCompare(candidate);
   const normalizedRoot = normalizeForCompare(root);
   return normalizedCandidate === normalizedRoot || normalizedCandidate.startsWith(`${normalizedRoot}${path.sep}`);
+}
+
+function discoverMountPoints(): DirectoryRoot[] {
+  try {
+    const content = fsSync.readFileSync("/proc/mounts", "utf-8");
+    const seen = new Set<string>();
+    const mounts: DirectoryRoot[] = [];
+    for (const line of content.trim().split("\n")) {
+      const parts = line.trim().split(/\s+/);
+      if (parts.length < 3) continue;
+      const [, mountPoint, fsType] = parts;
+      if (PSEUDO_FS.has(fsType)) continue;
+      if (mountPoint === "/") continue;
+
+      const resolved = path.resolve(mountPoint);
+      const key = normalizeForCompare(resolved);
+      if (seen.has(key)) continue;
+
+      const alreadyCovered = CANDIDATE_ROOTS.some((root) => {
+        const normalizedRoot = normalizeForCompare(path.resolve(root.path));
+        return resolved === normalizedRoot || resolved.startsWith(`${normalizedRoot}/`);
+      });
+      if (alreadyCovered) continue;
+
+      seen.add(key);
+      let available = false;
+      try {
+        available = fsSync.statSync(resolved).isDirectory();
+      } catch {
+        available = false;
+      }
+      mounts.push({
+        id: `mnt-${mounts.length}`,
+        label: `Mounted: ${path.basename(resolved)}`,
+        path: resolved,
+        available,
+      });
+    }
+    return mounts;
+  } catch {
+    return [];
+  }
 }
 
 function directoryRoots(): DirectoryRoot[] {
@@ -56,6 +107,12 @@ function directoryRoots(): DirectoryRoot[] {
       path: resolved,
       available,
     });
+  }
+  for (const mount of discoverMountPoints()) {
+    const key = normalizeForCompare(mount.path);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    roots.push(mount);
   }
   return roots;
 }
