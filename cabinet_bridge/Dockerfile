@@ -19,9 +19,9 @@ ENV LANG=C.UTF-8 \
 # Install Node.js + native build deps for better-sqlite3, plus pnpm
 RUN apk add --no-cache \
       --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main \
-      nodejs npm && \
+      "nodejs~20" npm && \
     apk add --no-cache python3 make g++ sqlite-libs libstdc++ && \
-    npm install -g pnpm && \
+    npm install -g pnpm@9 && \
     node --version && npm --version && pnpm --version
 
 WORKDIR /app
