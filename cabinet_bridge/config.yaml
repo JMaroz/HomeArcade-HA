@@ -23,8 +23,12 @@ build_from:
   aarch64: "ghcr.io/home-assistant/aarch64-base:latest"
   amd64: "ghcr.io/home-assistant/amd64-base:latest"
 options:
+  data_dir: "/data"
+  rom_watch_dir: ""
   max_upload_mb: 8192
   steamgriddb_api_key: ""
 schema:
+  data_dir: str?
+  rom_watch_dir: str?
   max_upload_mb: "int(16,16384)"
   steamgriddb_api_key: str?

@@ -18,6 +18,7 @@ import { registerGamepadRoutes } from "./gamepad";
 import { registerStatsRoutes } from "./stats";
 import { registerAiRoutes } from "./ai";
 import { registerVaultRoutes } from "./vault";
+import { registerFilesystemRoutes } from "./filesystem";
 
 export async function registerRoutes(_httpServer: Server, app: Express) {
   registerRomRoutes(app);
@@ -38,4 +39,5 @@ export async function registerRoutes(_httpServer: Server, app: Express) {
   registerStatsRoutes(app);
   registerAiRoutes(app);
   registerVaultRoutes(app);
+  registerFilesystemRoutes(app);
 }
