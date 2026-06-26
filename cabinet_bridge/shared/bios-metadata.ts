@@ -20,20 +20,20 @@ export const REQUIRED_BIOS: Record<string, BiosEntry[]> = {
     { filename: "ps1_rom.bin",  md5: "00000000000000000000000000000000", label: "Custom", sourceUrl: `${RETROBIOS_BASE}/Sony/PlayStation/ps1_rom.bin` },
   ],
   play: [
-    { filename: "scph39001.bin", md5: "f396486008892150394e33458c9f086e", label: "USA v1.60", sourceUrl: `${RETROBIOS_BASE}/Sony/PlayStation%202/SCPH-39001.bin` },
+    { filename: "scph39001.bin", md5: "d5ce2c7d119f563ce04bc04dbc3a323e", label: "USA v1.60", sourceUrl: `${RETROBIOS_BASE}/Sony/PlayStation%202/SCPH-39001.bin` },
     { filename: "scph70008.bin", md5: "9a0a1a5b6c7d8e9f0a1b2c3d4e5f6a7b", label: "Generic v2.0" },
     { filename: "ps2_bios.bin",  md5: "00000000000000000000000000000000", label: "Custom" },
   ],
   segacd: [
-    { filename: "bios_CD_U.bin", md5: "2efd74e3230d924e44c6679a0da0401f", label: "USA", sourceUrl: `${RETROBIOS_BASE}/Sega/Mega%20CD/bios_CD_U.bin` },
-    { filename: "bios_CD_E.bin", md5: "e402bcd0e6f2122602735183884e9334", label: "Europe", sourceUrl: `${RETROBIOS_BASE}/Sega/Mega%20CD/bios_CD_E.bin` },
-    { filename: "bios_CD_J.bin", md5: "278a9397cc3f62834e8b082ae2906b3a", label: "Japan", sourceUrl: `${RETROBIOS_BASE}/Sega/Mega%20CD/bios_CD_J.bin` },
+    { filename: "bios_CD_U.bin", md5: "2efd74e3232ff260e371b99f84024f7f", label: "USA", sourceUrl: `${RETROBIOS_BASE}/Sega/Mega%20CD/bios_CD_U.bin` },
+    { filename: "bios_CD_E.bin", md5: "e66fa1dc5820d254611fdcdba0662372", label: "Europe", sourceUrl: `${RETROBIOS_BASE}/Sega/Mega%20CD/bios_CD_E.bin` },
+    { filename: "bios_CD_J.bin", md5: "278a9397d192149e84e820ac621a8edd", label: "Japan", sourceUrl: `${RETROBIOS_BASE}/Sega/Mega%20CD/bios_CD_J.bin` },
   ],
   mgba: [{ filename: "gba_bios.bin", md5: "a860e8c0b6d573d191e4ec7db1b1e4f6", label: "World", sourceUrl: `${RETROBIOS_BASE}/Nintendo/Game%20Boy%20Advance/gba_bios.bin` }],
   saturn: [{ filename: "saturn_bios.bin", md5: "af5828fdff51384f99b3c4926be27762", label: "World", sourceUrl: `${RETROBIOS_BASE}/Sega/Saturn/sega_100.bin` }],
   flycast: [
     { filename: "dc_boot.bin", md5: "e10c53c2f8b90bab96ead2d368858623", label: "Dreamcast Boot", sourceUrl: `${RETROBIOS_BASE}/Sega/Dreamcast/dc_boot.bin` },
-    { filename: "dc_flash.bin", md5: "0a93fcd066914917646199622d64a852", label: "Dreamcast Flash", sourceUrl: `${RETROBIOS_BASE}/Sega/Dreamcast/dc_flash.bin` },
+    { filename: "dc_flash.bin", md5: "0a93f7940c455905bea6e392dfde92a4", label: "Dreamcast Flash", sourceUrl: `${RETROBIOS_BASE}/Sega/Dreamcast/dc_flash.bin` },
   ],
 };
 
