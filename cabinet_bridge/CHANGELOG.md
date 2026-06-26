@@ -1,3 +1,7 @@
+## 2.44.0 - 2026-06-26
+
+- **Feature**: **ROM Directory Browser & Scanner Diagnostics** - Added an in-app directory picker dialog for browsing and selecting ROM watch paths in the Library settings. Scanner status now tracks per-path found/imported counts and timestamps. Add-on configuration options (`data_dir`, `rom_watch_dir`) are read from `/data/options.json` for Supervisor UI support.
+
 ## 2.43.36 - 2026-06-05
 
 - **Feature**: **Keyboard Customization & Controller Templates** - Integrated keyboard input remapping controls within the settings page, and enabled template layout injection during bootstrap. Added standard templates for Xbox, PlayStation, and Nintendo Switch gamepad layouts to easily apply pre-configured control maps.
