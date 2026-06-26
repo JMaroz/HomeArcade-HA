@@ -19,4 +19,5 @@ data.db-journal
 .DS_Store
 
 # BIOS binary files — downloaded at runtime, not committed
-bios/*.bin
+cabinet_bridge/bios/*.bin
+Modelfile.txt
