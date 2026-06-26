@@ -17,3 +17,6 @@ data.db-journal
 
 *.log
 .DS_Store
+
+# BIOS binary files — downloaded at runtime, not committed
+bios/*.bin
