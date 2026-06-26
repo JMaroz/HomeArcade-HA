@@ -2,6 +2,16 @@
 
 All notable changes to HomeArcade are documented here.
 
+## [2.44.0] — 2026-06-26
+
+### Feature: ROM Directory Browser & Scanner Diagnostics
+
+- **Directory Picker** — Added an in-app `DirectoryPickerDialog` to browse and select ROM watch paths directly from the Library settings page, with a **Browse** button next to the watch directories input.
+- **Scanner Diagnostics** — Per-path scanner stats now report `found`, `imported`, `lastScanAt`, and `error` for easier debugging.
+- **Add-on Config** — Added `data_dir` and `rom_watch_dir` options to the Supervisor add-on config schema; values are read from `/data/options.json` at startup.
+
+---
+
 ## [2.43.36] — 2026-06-05
 
 ### Feature: Keyboard Customization & Controller Templates
