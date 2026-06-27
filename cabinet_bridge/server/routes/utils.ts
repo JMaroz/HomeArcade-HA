@@ -189,10 +189,8 @@ export function detectSystemFromContent(
 
   // ── Magic-byte disambiguation for ambiguous extensions ──────────────
   if (ext === ".bin") {
-    // SEGA at offset 0x100 → Genesis/SegaCD/32X
     const hasSega = magicBytes.length > 0x100 &&
       magicBytes.slice(0x100, 0x104).toString("ascii") === "SEGA";
-    // CD001 anywhere → PS1 data track (usually in .cue, but sometimes raw)
     const hasCd001 = magicBytes.includes("CD001");
 
     if (hasSega) {
@@ -202,7 +200,18 @@ export function detectSystemFromContent(
     } else if (hasCd001) {
       candidates = ["ps1"];
     } else {
-      // Ambiguous .bin — keep all candidates but flag medium
+      // PS1 audio .bin tracks start with CD sync pattern (00 FF FF FF FF FF FF 00)
+      // or contain raw 16-bit PCM data. No reliable magic byte check.
+      // Since PS1 audio bins are far more common in upload scenarios than
+      // Genesis .bin ROMs, prefer ps1 when ambiguous.
+      const firstByte = magicBytes[0];
+      if (firstByte === 0x00) {
+        // CD audio sector sync → almost certainly PS1
+        candidates = ["ps1"];
+      } else {
+        // Still ambiguous — prefer ps1 over genesis for upload use-case
+        candidates = ["ps1", ...candidates.filter((c) => c !== "ps1")];
+      }
     }
   }
 

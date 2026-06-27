@@ -143,7 +143,7 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
       if (!res.ok) throw new Error("Detection request failed");
       const result: DetectResult = await res.json();
       setDetectResult(result);
-      if (result.confidence === "high" && result.candidates.length === 1) {
+      if (result.confidence !== "low" && result.candidates.length >= 1) {
         setPickedSystem(result.candidates[0]);
       }
     } catch (err: any) {
@@ -232,9 +232,10 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
           continue;
         }
 
+        const abortController = new AbortController();
         setFiles((prev) => {
           const next = [...prev];
-          next[i] = { ...next[i], status: "uploading", abort: new AbortController() };
+          next[i] = { ...next[i], status: "uploading", abort: abortController };
           return next;
         });
 
@@ -252,7 +253,7 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
           const rom = await xhrUpload(
             file,
             url,
-            files[i].abort!.signal,
+            abortController.signal,
             (filePct, loadedBytes, totalBytes, speed) => {
               setProgress({
                 fileIndex: i,
@@ -409,10 +410,10 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
               <Sparkles className="size-3.5 animate-pulse shrink-0" />
               Detecting system…
             </div>
-          ) : detectResult && detectResult.confidence === "high" && systemMeta ? (
+          ) : detectResult && systemMeta ? (
             <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-accent/30 bg-accent/5 text-xs text-muted-foreground">
               <Sparkles className="size-3.5 text-accent shrink-0" />
-              <span>Detected: <strong className="text-foreground">{systemMeta.shortName}</strong></span>
+              <span>{detectResult.confidence === "high" ? "Detected:" : "Best guess:"} <strong className="text-foreground">{systemMeta.shortName}</strong></span>
               <button
                 type="button"
                 onClick={() => { setPickedSystem(""); setDetectResult(null); }}
