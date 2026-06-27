@@ -1,3 +1,7 @@
+## 2.46.1 - 2026-06-27
+
+- **Fix**: **Upload Auto-Detect & Crash Fixes** - Fixed `.bin` detection to prefer PS1 over Genesis for ambiguous audio tracks (CD sync byte check). Fixed "cannot read property" runtime crash by moving AbortController creation before the `setFiles` call. Added missing `manualUpload` locale strings. Added console logging for easier debugging.
+
 ## 2.46.0 - 2026-06-27
 
 - **Feature**: **Upload System Overhaul** - Complete rewrite of the upload pipeline with four interdependent enhancements: (1) auto-detection of console system from file extension, magic bytes, and folder context — no more manual system picker for single-file uploads; (2) enhanced upload status with real-time speed/ETA tracking via sliding window, per-file status table (pending/uploading/uploaded/failed/cancelled/skipped), individual Cancel and Cancel All buttons, and error recovery that continues on per-file failure; (3) duplicate ROM detection with an interactive dialog offering Keep Both / Replace / Skip per-file or apply-all; (4) folder upload via `webkitdirectory` with automatic grouping of multi-file games (CUE/BIN PS1 tracks) and folder-name-based system detection.
