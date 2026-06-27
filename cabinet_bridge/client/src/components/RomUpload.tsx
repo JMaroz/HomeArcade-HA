@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { SYSTEMS, type SystemId, formatRomSize } from "@/data/library";
 import { apiRequest, apiUrl, queryClient } from "@/lib/queryClient";
 import type { UploadedRom } from "@shared/schema";
-import { FileArchive, Upload, X, Zap, CheckCircle2, Sparkles } from "lucide-react";
+import { FileArchive, Upload, X, Zap, CheckCircle2, Sparkles, FolderOpen } from "lucide-react";
 import { DuplicateDialog, type DuplicateEntry, type DuplicateAction } from "./DuplicateDialog";
+import { DirectoryPickerDialog } from "./DirectoryPickerDialog";
 
 type UploadLimits = {
   maxUploadMb: number;
@@ -124,6 +125,14 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
   const [pendingActions, setPendingActions] = useState<Map<string, DuplicateAction> | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const folderInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [destPath, setDestPath] = useState<string | null>(null);
+  const [destPickerOpen, setDestPickerOpen] = useState(false);
+
+  const { data: suggestedRoots } = useQuery<{ roots: { id: string; label: string; path: string; available: boolean }[] }>({
+    queryKey: ["/api/filesystem/suggested-roots"],
+    enabled: !fixedSystem,
+  });
 
   const { data: limits } = useQuery<UploadLimits>({
     queryKey: ["/api/upload-limits"],
@@ -250,7 +259,9 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
         if (action === "replace" && entry.duplicateRomId) {
           url = apiUrl(`/api/roms/${entry.duplicateRomId}/replace`);
         } else {
-          url = apiUrl(`/api/roms/upload?system=${encodeURIComponent(system)}&favorite=${favorite ? "1" : "0"}`);
+          let baseUrl = `/api/roms/upload?system=${encodeURIComponent(system)}&favorite=${favorite ? "1" : "0"}`;
+          if (destPath) baseUrl += `&dest=${encodeURIComponent(destPath)}`;
+          url = apiUrl(baseUrl);
         }
 
         try {
@@ -458,6 +469,31 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
           ) : null}
         </div>
       ) : null}
+
+      {/* ── Destination picker ──────────────────────────────────────────────── */}
+      {system ? (
+        <div className="flex items-center gap-2">
+          <FolderOpen className="size-3.5 text-muted-foreground shrink-0" />
+          <span className="text-[10px] font-mono text-muted-foreground truncate">
+            Destination: {destPath || `Default (ROM storage / ${systemMeta?.shortName ?? system})`}
+          </span>
+          <button
+            type="button"
+            onClick={() => setDestPickerOpen(true)}
+            className="ml-auto font-mono text-[10px] uppercase tracking-wider text-accent hover:text-accent/80 shrink-0"
+          >
+            Change
+          </button>
+        </div>
+      ) : null}
+      <DirectoryPickerDialog
+        open={destPickerOpen}
+        onOpenChange={setDestPickerOpen}
+        onSelect={(p) => setDestPath(p)}
+        title="Choose upload destination"
+        description="Pick a directory for the uploaded ROMs, or leave as default."
+        suggestedRoots={suggestedRoots?.roots ?? []}
+      />
 
       {/* ── Hidden inputs: single files + folder ───────────────────────────── */}
       <input

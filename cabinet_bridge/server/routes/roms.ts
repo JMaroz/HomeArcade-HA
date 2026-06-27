@@ -232,8 +232,20 @@ export function registerRomRoutes(app: Express) {
       const uniqueSuffix = Date.now().toString(36);
       const slug = `${system}_${baseSlug}_${uniqueSuffix}`;
       const safeName = `${slug}${extension}`;
-      const systemDir = path.join(ROM_ROOT, system);
+
+      const customDest = req.query.dest ? String(req.query.dest).trim() : "";
+      const systemDir = customDest ? path.resolve(customDest) : path.join(ROM_ROOT, system);
       const filePath = path.join(systemDir, safeName);
+
+      // Validate custom dest is within allowed browse roots
+      if (customDest) {
+        const { resolveRequestedDirectory } = await import("./filesystem");
+        try {
+          resolveRequestedDirectory(customDest);
+        } catch {
+          return res.status(403).json({ message: "Destination directory is not allowed." });
+        }
+      }
 
       await fs.mkdir(systemDir, { recursive: true });
 

@@ -117,7 +117,7 @@ function directoryRoots(): DirectoryRoot[] {
   return roots;
 }
 
-function resolveRequestedDirectory(rawPath: unknown): string {
+export function resolveRequestedDirectory(rawPath: unknown): string {
   const roots = directoryRoots().filter((root) => root.available);
   const requested = typeof rawPath === "string" && rawPath.trim() ? rawPath.trim() : roots[0]?.path;
   if (!requested) throw Object.assign(new Error("No browsable directories are available."), { statusCode: 404 });
@@ -133,6 +133,26 @@ function resolveRequestedDirectory(rawPath: unknown): string {
 export function registerFilesystemRoutes(app: Express) {
   app.get("/api/filesystem/roots", (_req, res) => {
     res.json({ roots: directoryRoots() });
+  });
+
+  app.get("/api/filesystem/suggested-roots", async (_req, res) => {
+    try {
+      const { storage } = await import("../storage");
+      const settings = await storage.getIntegrationSettings();
+      const watchPaths = (settings.libraryWatchPaths ?? "")
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      const suggested = watchPaths.map((p, i) => ({
+        id: `watch-${i}`,
+        label: `Watch: ${path.basename(p)}`,
+        path: p,
+        available: (() => { try { return fsSync.statSync(p).isDirectory(); } catch { return false; } })(),
+      }));
+      res.json({ roots: suggested });
+    } catch {
+      res.json({ roots: [] });
+    }
   });
 
   app.get("/api/filesystem/directories", async (req, res) => {
