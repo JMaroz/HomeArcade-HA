@@ -1,6 +1,8 @@
 import path from "node:path";
 import zlib from "node:zlib";
 import fs from "node:fs";
+import { ROM_EXTENSIONS } from "./shared";
+import { FOLDER_TO_SYSTEM } from "../scanner";
 
 
 /**
@@ -120,6 +122,150 @@ export function normalizeSearchTitle(value: string) {
 export function numberTokens(tokens: string[]) {
   return tokens.filter((token) => /^\d+$/.test(token));
 }
+
+// ── Content-type auto-detection for upload ─────────────────────────────────
+
+const EXT_TO_SYSTEMS: Record<string, string[]> = buildExtToSystems();
+
+function buildExtToSystems(): Record<string, string[]> {
+  // Invert ROM_EXTENSIONS (system → ext[]) to ext → system[],
+  // then merge with additional systems from scanner that aren't in the client.
+  const map: Record<string, Set<string>> = {};
+  for (const [sys, exts] of Object.entries(ROM_EXTENSIONS)) {
+    for (const ext of exts) {
+      if (!map[ext]) map[ext] = new Set();
+      map[ext].add(sys);
+    }
+  }
+  // Additional systems from scanner that aren't in ROM_EXTENSIONS
+  const extra: Record<string, string> = {
+    ".3ds": "3ds",  ".a26": "atari2600",  ".a52": "atari5200",
+    ".lnx": "lynx", ".ngp": "ngp",  ".ngc": "ngp",
+    ".ws": "wonderswan",  ".wsc": "wonderswan",
+    ".pce": "pcengine",
+  };
+  for (const [ext, sys] of Object.entries(extra)) {
+    if (!map[ext]) map[ext] = new Set();
+    map[ext].add(sys);
+  }
+  const result: Record<string, string[]> = {};
+  for (const [ext, sysSet] of Object.entries(map)) {
+    result[ext] = [...sysSet];
+  }
+  return result;
+}
+
+/**
+ * Peek inside a ZIP buffer to read the filename of the first entry.
+ * Returns null if the buffer isn't a valid ZIP or has no entries.
+ */
+function firstZipEntryName(buf: Buffer): string | null {
+  if (buf.length < 30) return null;
+  const sig = buf.readUInt32LE(0);
+  if (sig !== 0x04034b50) return null;
+  const fileNameLength = buf.readUInt16LE(26);
+  const extraLength    = buf.readUInt16LE(28);
+  const nameStart = 30;
+  const nameEnd   = nameStart + fileNameLength;
+  if (nameEnd > buf.length) return null;
+  return buf.subarray(nameStart, nameEnd).toString("utf8");
+}
+
+/**
+ * Detect the most likely system(s) for a given ROM file.
+ *
+ * @param fileName   Original file name (with extension).
+ * @param magicBytes First 64 KB of the file content.
+ * @param folderName Optional folder name (for webkitdirectory context).
+ * @returns          Sorted candidate system IDs and a confidence level.
+ */
+export function detectSystemFromContent(
+  fileName: string,
+  magicBytes: Buffer,
+  folderName?: string,
+): { candidates: string[]; confidence: "high" | "medium" | "low" } {
+  const ext = path.extname(fileName).toLowerCase();
+  let candidates = EXT_TO_SYSTEMS[ext] ?? [];
+
+  // ── Magic-byte disambiguation for ambiguous extensions ──────────────
+  if (ext === ".bin") {
+    // SEGA at offset 0x100 → Genesis/SegaCD/32X
+    const hasSega = magicBytes.length > 0x100 &&
+      magicBytes.slice(0x100, 0x104).toString("ascii") === "SEGA";
+    // CD001 anywhere → PS1 data track (usually in .cue, but sometimes raw)
+    const hasCd001 = magicBytes.includes("CD001");
+
+    if (hasSega) {
+      candidates = candidates.filter((s) =>
+        ["genesis", "segacd", "sega32x", "mastersystem"].includes(s)
+      );
+    } else if (hasCd001) {
+      candidates = ["ps1"];
+    } else {
+      // Ambiguous .bin — keep all candidates but flag medium
+    }
+  }
+
+  if (ext === ".iso") {
+    // Primary volume descriptor at LBA 16 (offset 0x8000) → "CD001"
+    const ps1Match = magicBytes.includes("CD001") ||
+      (magicBytes.length > 0x8001 &&
+       magicBytes.slice(0x8001, 0x8006).toString("ascii") === "CD001");
+    if (ps1Match) {
+      candidates = ["ps1"];
+    }
+    // PS2 ISOs sometimes have "PLAYSTATION" or "PlayStation2" near offset 0
+    const ps2Match = magicBytes.includes("PlayStation2") ||
+      magicBytes.includes("PS2");
+    if (ps2Match && !candidates.includes("ps2")) {
+      candidates.push("ps2");
+    }
+    if (candidates.length > 1) {
+      // Keep multiple ISO candidates but deduplicate
+      candidates = [...new Set(candidates)];
+    }
+  }
+
+  if (ext === ".chd") {
+    // CHD header starts with "MComprHD"
+    const isChd = magicBytes.slice(0, 8).toString("ascii") === "MComprHD";
+    if (!isChd) candidates = [];
+  }
+
+  if (ext === ".zip" || ext === ".7z") {
+    if (ext === ".zip" && magicBytes.readUInt32LE(0) === 0x04034b50) {
+      const innerName = firstZipEntryName(magicBytes);
+      if (innerName) {
+        const innerExt = path.extname(innerName).toLowerCase();
+        const innerCands = EXT_TO_SYSTEMS[innerExt] ?? [];
+        if (innerCands.length > 0) {
+          candidates = innerCands;
+        }
+      }
+    }
+    // If inner extension doesn't narrow it (e.g. nested .zip),
+    // keep the broad list from extension table.
+  }
+
+  // ── Folder name bonus ──────────────────────────────────────────────
+  if (folderName && candidates.length > 1) {
+    const normalizedFolder = folderName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const folderMatch = FOLDER_TO_SYSTEM[normalizedFolder];
+    if (folderMatch && candidates.includes(folderMatch)) {
+      // Boost — move to front
+      candidates = [folderMatch, ...candidates.filter((c) => c !== folderMatch)];
+    }
+  }
+
+  // ── Confidence ─────────────────────────────────────────────────────
+  let confidence: "high" | "medium" | "low" = "low";
+  if (candidates.length === 1) confidence = "high";
+  else if (candidates.length <= 3) confidence = "medium";
+  else confidence = "low";
+
+  return { candidates, confidence };
+}
+
 
 export function getAbsoluteFilePath(
   rom: { filePath: string; system: string; fileName: string },

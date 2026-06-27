@@ -15,8 +15,8 @@ import crypto from "node:crypto";
 import { Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { z } from "zod";
-import { insertUploadedRomSchema } from "@shared/schema";
-import { extractFirstRomFromZip, titleFromFileName, slugify, getAbsoluteFilePath } from "./utils";
+import { insertUploadedRomSchema, type UploadedRom } from "@shared/schema";
+import { extractFirstRomFromZip, titleFromFileName, slugify, getAbsoluteFilePath, detectSystemFromContent } from "./utils";
 import { findLibretroBoxArt } from "./scrape";
 import { getHltbData } from "../hltb";
 import QRCode from "qrcode";
@@ -119,6 +119,96 @@ export function registerRomRoutes(app: Express) {
       maxUploadBytes: MAX_UPLOAD_BYTES,
       allowedExtensions: ROM_EXTENSIONS,
     });
+  });
+
+  app.post("/api/upload/check-duplicates", express.json({ limit: "1mb" }), async (req, res) => {
+    try {
+      const { files: entries } = req.body as { files: { name: string; size: number }[] };
+      if (!Array.isArray(entries)) {
+        return res.status(400).json({ message: "files array required" });
+      }
+      const results: { originalName: string; duplicate: UploadedRom | null; matchBy: string }[] = [];
+      for (const entry of entries) {
+        const byName = await storage.findRomByOriginalName(entry.name);
+        if (byName) {
+          results.push({ originalName: entry.name, duplicate: byName, matchBy: "originalName" });
+        } else {
+          results.push({ originalName: entry.name, duplicate: null, matchBy: "" });
+        }
+      }
+      res.json({ results });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message ?? "Check failed" });
+    }
+  });
+
+  app.post("/api/roms/:id/replace", async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const existing = await storage.getUploadedRom(id);
+      if (!existing) return res.status(404).json({ message: "ROM not found." });
+
+      const originalName = decodeURIComponent(String(req.header("x-rom-filename") ?? existing.originalName));
+      const extension = path.extname(originalName).toLowerCase();
+      const filePath = existing.filePath;
+
+      // Stream new file to disk, replacing the old one
+      const hash = crypto.createHash("md5");
+      let totalSize = 0;
+      try {
+        const sizeAndHashTransform = new Transform({
+          transform(chunk, _encoding, callback) {
+            totalSize += chunk.length;
+            hash.update(chunk);
+            callback(null, chunk);
+          },
+        });
+        const writeStream = fsSync.createWriteStream(filePath);
+        await pipeline(req, sizeAndHashTransform, writeStream);
+      } catch (err: any) {
+        return res.status(500).json({ message: "Replace failed" });
+      }
+
+      const romHash = hash.digest("hex");
+      const title = titleFromFileName(originalName);
+      const discMatch = title.match(/\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i);
+      const cleanTitle = discMatch ? title.replace(discMatch[0], "").trim() : title;
+
+      const updated = await storage.updateUploadedRomFile(id, {
+        title: cleanTitle,
+        originalName,
+        size: totalSize,
+        romHash,
+      });
+
+      await storage.relinkSaveSlotsByHash(id, romHash);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message ?? "Replace failed" });
+    }
+  });
+
+  app.post("/api/upload/detect", async (req, res) => {
+    try {
+      const fileName = String(req.query.filename ?? "");
+      const folderName = String(req.query.folder ?? "").trim() || undefined;
+      if (!fileName) {
+        return res.status(400).json({ message: "filename query param required" });
+      }
+
+      // Read up to 64 KB from the request body
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) {
+        chunks.push(chunk);
+        if (Buffer.concat(chunks).length >= 65536) break;
+      }
+      const magicBytes = Buffer.concat(chunks).slice(0, 65536);
+
+      const result = detectSystemFromContent(fileName, magicBytes, folderName);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message ?? "Detection failed" });
+    }
   });
 
   app.post(

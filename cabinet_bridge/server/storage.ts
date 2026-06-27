@@ -209,6 +209,15 @@ export class DatabaseStorage implements IStorage {
   async getUploadedRom(id: number): Promise<UploadedRom | undefined> { return db.select().from(uploadedRoms).where(eq(uploadedRoms.id, id)).get(); }
   async listRomsByDiscGroup(discGroup: string): Promise<UploadedRom[]> { return db.select().from(uploadedRoms).where(eq(uploadedRoms.discGroup, discGroup)).orderBy(uploadedRoms.discNumber).all(); }
   async createUploadedRom(rom: InsertUploadedRom): Promise<UploadedRom> { return db.insert(uploadedRoms).values(rom).returning().get(); }
+  async findRomByOriginalName(name: string): Promise<UploadedRom | undefined> {
+    return db.select().from(uploadedRoms).where(eq(uploadedRoms.originalName, name)).get();
+  }
+  async findRomByHash(hash: string): Promise<UploadedRom | undefined> {
+    return db.select().from(uploadedRoms).where(eq(uploadedRoms.romHash, hash)).get();
+  }
+  async updateUploadedRomFile(id: number, data: Partial<InsertUploadedRom>): Promise<UploadedRom | undefined> {
+    return db.update(uploadedRoms).set(data).where(eq(uploadedRoms.id, id)).returning().get();
+  }
   async incrementRomMinutesPlayed(id: number, minutes: number): Promise<UploadedRom | undefined> {
     const rom = await this.getUploadedRom(id);
     if (!rom) return undefined;

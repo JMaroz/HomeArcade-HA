@@ -15,7 +15,7 @@ import path from "path";
 // Lookup tables
 // ─────────────────────────────────────────────────────────────────────────────
 
-const EXT_TO_SYSTEM: Record<string, string> = {
+export const EXT_TO_SYSTEM: Record<string, string> = {
   ".nes":  "nes",
   ".smc":  "snes",  ".sfc":  "snes",
   ".md":   "genesis", ".gen": "genesis", ".bin": "genesis",
@@ -39,7 +39,7 @@ const EXT_TO_SYSTEM: Record<string, string> = {
   ".ws":   "wonderswan", ".wsc": "wonderswan",
 };
 
-const FOLDER_TO_SYSTEM: Record<string, string> = {
+export const FOLDER_TO_SYSTEM: Record<string, string> = {
   "nes": "nes", "famicom": "nes",
   "snes": "snes", "supernintendo": "snes",
   "n64": "n64", "nintendo64": "n64",
