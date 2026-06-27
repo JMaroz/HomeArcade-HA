@@ -56,5 +56,5 @@ Short imperative subjects with prefixes: `fix:`, `feat:`, `chore:`, `bump:`, `te
   4. **Folder upload**: `webkitdirectory` support, folder→system detection, discGroup linking for multi-file (CUE/BIN) games
 - **Prior**: Libretro-only art matcher (Feb 27), BIOS MD5 fix (Feb 27), ScreenScraper/TheGamesDB removed
 - **Pre-existing failures**: `release-health.test.ts` (changelog not updated per release); `scale.test.ts` sort benchmark flake
-- **Version**: 2.45.0 (not bumped — user chose to skip)
-- **Pending**: Changelog entry for releases; bump version when ready
+- **Version**: 2.46.0 (bumped and tagged `v2.46.0`)
+- **Pending**: —

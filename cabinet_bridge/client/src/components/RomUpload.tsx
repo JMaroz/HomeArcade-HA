@@ -56,6 +56,7 @@ function xhrUpload(
   signal: AbortSignal,
   onProgress: (pct: number, loadedBytes: number, totalBytes: number, speed: number) => void,
 ): Promise<UploadedRom> {
+  const xhrLog = `[Upload] ${file.name} → ${url}`;
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
@@ -81,17 +82,19 @@ function xhrUpload(
       onProgress(pct, e.loaded, e.total, speed);
     });
     xhr.addEventListener("load", () => {
+      console.debug(xhrLog, "status:", xhr.status);
       if (xhr.status >= 200 && xhr.status < 300) {
         try { resolve(JSON.parse(xhr.responseText) as UploadedRom); }
-        catch { reject(new Error("Invalid server response")); }
+        catch (e) { console.error(xhrLog, "JSON parse error:", e); reject(new Error("Invalid server response")); }
       } else {
         let msg = `Upload failed (${xhr.status})`;
         try { msg = (JSON.parse(xhr.responseText) as { message?: string }).message ?? msg; } catch { /* ignore */ }
+        console.error(xhrLog, msg);
         reject(new Error(msg));
       }
     });
-    xhr.addEventListener("error", () => reject(new Error("Network error during upload")));
-    xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")));
+    xhr.addEventListener("error", () => { console.error(xhrLog, "Network error"); reject(new Error("Network error during upload")); });
+    xhr.addEventListener("abort", () => { console.debug(xhrLog, "Aborted"); reject(new Error("Upload cancelled")); });
     signal.addEventListener("abort", () => xhr.abort(), { once: true });
     xhr.send(file);
   });
@@ -204,6 +207,7 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
 
   const upload = useMutation({
     mutationFn: async () => {
+      console.debug("[Upload] mutationFn start", { system, files: files.length, pendingActions: !!pendingActions });
       if (!system) throw new Error("Choose a console first.");
       if (files.length === 0) throw new Error("Choose one or more ROM files first.");
       const tooBig = rawFiles.find((f) => f.size > maxUploadBytes);
@@ -276,13 +280,14 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
           });
           uploaded.push(rom);
         } catch (err: any) {
-          const wasCancelled = err.message === "Upload cancelled";
+          const wasCancelled = err?.message === "Upload cancelled";
+          console.error("[Upload] File failed:", i, file.name, err);
           setFiles((prev) => {
             const next = [...prev];
             next[i] = {
               ...next[i],
               status: wasCancelled ? "cancelled" : "failed",
-              error: err.message,
+              error: err?.message ?? String(err),
             };
             return next;
           });
@@ -310,10 +315,12 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
 
   // ── Duplicate check before upload ─────────────────────────────────
   const handleUploadClick = async () => {
+    console.debug("[Upload] handleUploadClick", { system: system, files: files.length });
     if (!system || files.length === 0) return;
 
     // Check for duplicates
     try {
+      console.debug("[Upload] Checking duplicates…");
       const res = await fetch(apiUrl("/api/upload/check-duplicates"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -321,6 +328,7 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
           files: files.map((e) => ({ name: e.file.name, size: e.file.size })),
         }),
       });
+      console.debug("[Upload] Duplicate check response:", res.status);
       if (!res.ok) throw new Error("Duplicate check failed");
       const data = await res.json() as {
         results: { originalName: string; duplicate: UploadedRom | null }[];

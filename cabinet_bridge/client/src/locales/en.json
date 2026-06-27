@@ -261,6 +261,10 @@
         "enabledDescription": "Auto-imports new ROM files found in the watched folder every 60 seconds.",
         "disabledDescription": "Auto-import ROMs dropped into a watched folder. Set CABINET_ROM_WATCH_DIR in your HA add-on environment to enable."
       },
+      "manualUpload": {
+        "title": "Manual ROM Upload",
+        "description": "Upload ROM files directly from your browser. Supports drag-and-drop, folder upload, and automatic system detection."
+      },
       "scrapers": {
         "title": "Scraper Services",
         "description": "Enter your credentials for online metadata and artwork providers."
