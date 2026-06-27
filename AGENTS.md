@@ -46,3 +46,15 @@ SQLite via better-sqlite3 + Drizzle. Schema: `shared/schema.ts`. Migrations: `mi
 
 ## Commit Style
 Short imperative subjects with prefixes: `fix:`, `feat:`, `chore:`, `bump:`, `test:`, `ui:`.
+
+## Session State (last active: 2026-06-27)
+- **Latest commit**: `5329133` — overhaul upload system (auto-detect, status/ETA/cancel, duplicates dialog, folder upload)
+- **Upload system overhaul (4 phases)**:
+  1. **Auto-detect**: `detectSystemFromContent()` with extension + magic-byte + folder-name detection; `POST /api/upload/detect` endpoint; client auto-selects with confidence badges
+  2. **Enhanced status**: speed/ETA sliding window, per-file status table (pending/uploading/uploaded/failed/cancelled/skipped), Cancel All, error recovery (continues on per-file failure)
+  3. **Duplicates**: `DuplicateDialog` (Keep Both / Replace / Skip per-file + apply-all), `POST /api/upload/check-duplicates`, `POST /api/roms/:id/replace`, storage `findRomBy*` + `updateUploadedRomFile`
+  4. **Folder upload**: `webkitdirectory` support, folder→system detection, discGroup linking for multi-file (CUE/BIN) games
+- **Prior**: Libretro-only art matcher (Feb 27), BIOS MD5 fix (Feb 27), ScreenScraper/TheGamesDB removed
+- **Pre-existing failures**: `release-health.test.ts` (changelog not updated per release); `scale.test.ts` sort benchmark flake
+- **Version**: 2.45.0 (not bumped — user chose to skip)
+- **Pending**: Changelog entry for releases; bump version when ready
