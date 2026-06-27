@@ -32,11 +32,12 @@ A premium retro gaming frontend built as a Home Assistant Add-on. Manages ROMs, 
 
 | Step | Command |
 | :--- | :--- |
-| Dev server | `npm run dev` (port 5000) |
-| Type check | `npx tsc --noEmit` |
-| Build | `npm run build` |
-| Start production | `NODE_ENV=production node dist/index.cjs` |
-| DB migrations | `npx drizzle-kit push` |
+| Dev server | `pnpm dev` (port 5000) |
+| Type check | `pnpm check` |
+| Build | `pnpm build` |
+| Start production | `pnpm start` |
+| DB migrations | `pnpm db:push` |
+| Test | `pnpm test` |
 
 ---
 
@@ -117,7 +118,7 @@ panel_iframe:
     url: "http://homeassistant.local:8123/api/hassio_ingress/<slug>"
 ```
 
-Or install directly as an add-on from the repository: `https://github.com/GlerschNersch/token`
+Or install directly as an add-on from the repository: `https://github.com/JMaroz/HomeArcade-HA`
 
 ---
 

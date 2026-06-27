@@ -17,6 +17,7 @@ import { Progress } from "@/components/ui/progress";
 import { Sparkles, ScanLine, Loader2, FolderOpen, ImageIcon, RefreshCw, ChevronLeft, HardDrive, Plus, ShieldAlert, Search, FileText, Copy, Link, CheckCircle2, AlertCircle } from "lucide-react";
 import { RomUpload } from "@/components/RomUpload";
 import { DirectoryPickerDialog } from "@/components/DirectoryPickerDialog";
+import { MoveAllRomsDialog } from "@/components/MoveAllRomsDialog";
 import { Section } from "./SettingsShared";
 import { Trash2 } from "lucide-react";
 import type { SmartFilterRules } from "@shared/schema";
@@ -440,6 +441,7 @@ function LibraryHealthSection() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [auditing, setAuditing] = useState(false);
+  const [moveAllOpen, setMoveAllOpen] = useState(false);
 
   const { data: health, refetch: refetchHealth } = useQuery<VaultHealth>({ queryKey: ["/api/vault/health"] });
   const { data: audit, refetch: refetchAudit } = useQuery<VaultAudit>({
@@ -512,6 +514,21 @@ function LibraryHealthSection() {
               Clean Missing Files
             </Button>
           </div>
+          <div className="flex flex-col gap-4 p-5 rounded-xl border border-border bg-sidebar/20">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-full bg-accent/10 flex items-center justify-center">
+                <FolderOpen className="size-5 text-accent" />
+              </div>
+              <div>
+                <div className="font-display font-bold text-sm">Move All ROMs</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Relocate all ROM files to a new directory, organized by system.</div>
+              </div>
+            </div>
+            <Button onClick={() => setMoveAllOpen(true)} variant="outline" className="w-full gap-2 font-black uppercase text-[10px] tracking-widest h-10 border-accent/20 hover:bg-accent/10 hover:text-accent">
+              <FolderOpen className="size-3.5" />
+              Move all ROMs to…
+            </Button>
+          </div>
         </div>
       </Section>
 
@@ -565,6 +582,8 @@ function LibraryHealthSection() {
           )}
         </div>
       </Section>
+
+      <MoveAllRomsDialog open={moveAllOpen} onOpenChange={setMoveAllOpen} />
     </>
   );
 }

@@ -927,6 +927,82 @@ export function registerRomRoutes(app: Express) {
     res.json(updated);
   });
 
+  app.post("/api/roms/move-all", async (req, res) => {
+    try {
+      const parsed = z.object({ dest: z.string().min(1) }).safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: "Missing or invalid 'dest' field." });
+
+      const { resolveRequestedDirectory } = await import("./filesystem");
+      const dest = resolveRequestedDirectory(parsed.data.dest);
+
+      const settings = await storage.getIntegrationSettings();
+      const watchPaths = (settings.libraryWatchPaths ?? "")
+        .split(",")
+        .map((p) => path.resolve(p.trim()))
+        .filter(Boolean);
+
+      const allRoms = await storage.listUploadedRoms();
+      const moved: string[] = [];
+      const skipped: string[] = [];
+      const failed: { id: number; title: string; error: string }[] = [];
+
+      for (const rom of allRoms) {
+        try {
+          const sourcePath = getAbsoluteFilePath(rom, watchPaths);
+          const systemDir = path.join(dest, rom.system);
+          const newPath = path.join(systemDir, rom.fileName);
+
+          if (path.resolve(newPath) === path.resolve(sourcePath)) {
+            skipped.push(rom.title);
+            continue;
+          }
+
+          await fs.mkdir(systemDir, { recursive: true });
+          try { await fs.unlink(newPath); } catch { /* ok */ }
+          await fs.copyFile(sourcePath, newPath);
+          try { await fs.unlink(sourcePath); } catch { /* non-fatal */ }
+          await storage.updateUploadedRomFile(rom.id, { filePath: newPath });
+
+          if (rom.isPlaylist && rom.m3uContent) {
+            const updatedM3u = rom.m3uContent.replace(/^(.+)$/gm, (line) => {
+              const childName = path.basename(line);
+              return path.join(dest, rom.system, childName);
+            });
+            await storage.updateUploadedRomFile(rom.id, { m3uContent: updatedM3u });
+            const children = allRoms.filter((r) => r.parentM3uId === rom.id);
+            for (const child of children) {
+              const childSource = getAbsoluteFilePath(child, watchPaths);
+              const childNew = path.join(systemDir, child.fileName);
+              if (path.resolve(childNew) !== path.resolve(childSource)) {
+                try { await fs.copyFile(childSource, childNew); try { await fs.unlink(childSource); } catch {} } catch {}
+                await storage.updateUploadedRomFile(child.id, { filePath: childNew });
+              }
+            }
+          } else if (rom.discGroup) {
+            const siblings = allRoms.filter((r) => r.discGroup === rom.discGroup && r.id !== rom.id);
+            for (const sibling of siblings) {
+              const sibSource = getAbsoluteFilePath(sibling, watchPaths);
+              const sibNew = path.join(systemDir, sibling.fileName);
+              if (path.resolve(sibNew) !== path.resolve(sibSource)) {
+                try { await fs.copyFile(sibSource, sibNew); try { await fs.unlink(sibSource); } catch {} } catch {}
+                await storage.updateUploadedRomFile(sibling.id, { filePath: sibNew });
+              }
+            }
+          }
+
+          moved.push(rom.title);
+        } catch (err: any) {
+          failed.push({ id: rom.id, title: rom.title, error: err?.message ?? String(err) });
+        }
+      }
+
+      res.json({ moved: moved.length, skipped: skipped.length, failed: failed.length, errors: failed.map((f) => `${f.title}: ${f.error}`) });
+    } catch (err: any) {
+      const status = Number(err?.statusCode) || 500;
+      res.status(status).json({ message: err?.message ?? "Move operation failed." });
+    }
+  });
+
   app.delete("/api/roms", async (req, res) => {
     const settings = await storage.getIntegrationSettings();
     const watchPaths = (settings.libraryWatchPaths ?? "")

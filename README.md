@@ -4,7 +4,7 @@
 
 HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a full retro gaming hub. Manage ROMs, browse systems with rich metadata, launch games in a high-performance in-browser emulator, and sync with your local PC via RetroBat integration.
 
-**Current version: 2.43.33** · [Report a bug](https://github.com/GlerschNersch/HomeArcade-HA/issues/new) · [View source](https://github.com/GlerschNersch/HomeArcade-HA)
+**Current version: 2.48.0** · [Report a bug](https://github.com/JMaroz/HomeArcade-HA/issues/new) · [View source](https://github.com/JMaroz/HomeArcade-HA)
 
 [![Venmo](https://img.shields.io/badge/Venmo-@vincusmalincus-3D95CE?style=for-the-badge&logo=venmo&logoColor=white)](https://venmo.com/vincusmalincus)
 
@@ -18,7 +18,7 @@ HomeArcade is a powerful Home Assistant Add-on that turns your sidebar into a fu
 
  In Home Assistant: **Settings → Apps → Add-ons → ⋮ → Repositories**, paste:
  ```
- https://github.com/GlerschNersch/HomeArcade-HA
+ https://github.com/JMaroz/HomeArcade-HA
  ```
 
 **2. Install and start**
@@ -65,27 +65,38 @@ Systems are listed in release-date order.
 | Sega Master System | smsgg | `.sms` `.zip` |
 | TurboGrafx-16 / PC Engine | pce | `.pce` `.zip` |
 | Genesis / Mega Drive | genesis_plus_gx | `.md` `.bin` `.smd` `.zip` |
-| Game Boy | gambatte | `.gb" ".zip` |
+| Game Boy | gambatte | `.gb` `.zip` |
 | Atari Lynx | mednafen_lynx | `.lnx` `.zip` |
-| Game Gear | smsgg | `.gg" ".zip` |
+| Game Gear | smsgg | `.gg` `.zip` |
 | Neo Geo | fbneo | `.zip` |
-| SNES | snes9x | `.smc" ".sfc" ".zip` |
-| Sega CD | segaCD | `.cue+.bin" ".iso" ".chd" ".zip` |
-| Sega 32X | picodrive | `.32x" ".bin" ".zip` |
-| Saturn | yabause | `.iso" ".bin" ".zip` |
-| PlayStation 1 | pcsx_rearmed | `.cue+.bin" ".iso" ".pbp" ".chd" ".zip` |
-| Virtual Boy | beetle_vb | `.vb" ".zip` |
-| Nintendo 64 | mupen64plus_next | `.n64" ".z64" ".v64" ".zip` |
-| Game Boy Color | gambatte | `.gbc" ".zip` |
-| Dreamcast | reicast | `.cdi" ".gdi" ".chd" ".zip` |
-| PlayStation 2 | pcsx2 | `.iso" ".bin" ".zip` |
-| Game Boy Advance | mgba | `.gba" ".zip` |
-| Nintendo DS | melonds | `.nds" ".zip` |
-| PSP | ppsspp | `.iso" ".cso" ".pbp" ".zip` |
+| SNES | snes9x | `.smc` `.sfc` `.zip` |
+| Sega CD | segaCD | `.cue+.bin` `.iso` `.chd` `.zip` |
+| Sega 32X | picodrive | `.32x` `.bin` `.zip` |
+| Saturn | yabause | `.iso` `.bin` `.zip` |
+| PlayStation 1 | pcsx_rearmed | `.cue+.bin` `.iso` `.pbp` `.chd` `.zip` |
+| Virtual Boy | beetle_vb | `.vb` `.zip` |
+| Nintendo 64 | mupen64plus_next | `.n64` `.z64` `.v64` `.zip` |
+| Game Boy Color | gambatte | `.gbc` `.zip` |
+| Dreamcast | reicast | `.cdi` `.gdi` `.chd` `.zip` |
+| PlayStation 2 | pcsx2 | `.iso` `.bin` `.zip` |
+| Game Boy Advance | mgba | `.gba` `.zip` |
+| Nintendo DS | melonds | `.nds` `.zip` |
+| PSP | ppsspp | `.iso` `.cso` `.pbp` `.zip` |
 
 ---
 
 ## Changelog
+
+### v2.48.0
+- **Move All ROMs** — Bulk relocate all ROMs to a user-selected directory, organized by system subfolder. M3U playlists and disc-group siblings are handled automatically. Button in Library Health → Maintenance Tools.
+
+### v2.47.0
+- **Upload Destination Picker** — Choose custom directories for uploaded ROMs. Scanner watch paths shown as suggested roots.
+
+### v2.46.0
+- **Upload System Overhaul** — Auto-detect console system from file content, real-time speed/ETA, per-file status, duplicate dialog, folder upload with CUE/BIN grouping.
+- **Libretro-Only Art Matcher** — Replaced ScreenScraper with zero-auth art matching from Libretro CDN.
+- **BIOS MD5 Fix** — Corrected 5 incorrect checksums that were deleting downloaded BIOS files.
 
 ### v2.42.0
 - **Foundation Stabilization** — Finalized the transition to the new repository and solidified the stable engine foundation. 
@@ -129,7 +140,7 @@ Systems are listed in release-date order.
 ## Troubleshooting & FAQ
 
 **Box art isn't showing for my games.**
-You need free ScreenScraper credentials. Go to **Settings → Services** and enter your ScreenScraper username and password. Once saved, open any game's detail card and tap **Refresh Art**, or use **Scrape All ROMs** to batch-update your library.
+Open the game's detail card and tap **Refresh Art**, or use **Scrape All ROMs** in Library Settings to batch-update your library. Art is fetched from the Libretro Thumbnail CDN — no account required.
 
 **The emulator shows a blank screen or "Blocked by response" error.**
 This is a browser security header conflict common in some Home Assistant setups. HomeArcade explicitly disables COOP/COEP headers to prevent this. If you still see it, try opening HomeArcade in a standalone browser tab instead of the HA sidebar panel.
@@ -153,10 +164,10 @@ On mobile, the sidebar is a slide-out panel. Tap the hamburger menu button (☰)
 
 ## Links
 
-- [Report a bug](https://github.com/GlerschNersch/HomeArcade-HA)
+- [Report a bug](https://github.com/JMaroz/HomeArcade-HA)
 - [EmulatorJS](https://emulatorjs.org)
 - [RetroAchievements](https://retroachievements.org)
-- [ScreenScraper](https://www.screenscraper.fr)
+- [Libretro Thumbnails](https://thumbnails.libretro.com)
 
 ## Support
 

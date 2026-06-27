@@ -1,3 +1,13 @@
+## 2.48.0 - 2026-06-27
+
+- **Feature**: **Move All ROMs** - Added a "Move All ROMs" button in the Library Health section (Maintenance Tools) that relocates every ROM file to a user-selected destination directory, organized by system subfolder (`{dest}/{system}/{fileName}`). Includes automatic M3U playlist content rewriting, disc-group sibling moves, and file-collision overwrite. Features a three-phase dialog (pick destination → progress → results summary) with scanner watch paths shown as suggested roots.
+
+## 2.47.0 - 2026-06-27
+
+- **Feature**: **Upload Destination Picker** - Choose a custom directory for uploaded ROMs via the "Change" button in the upload panel. The `POST /api/roms/upload` endpoint accepts an optional `dest` query param (validated against allowed browse roots). Scanner watch paths appear as suggested quick-root buttons in the directory picker.
+
+- **Refactor**: **DirectoryPickerDialog (shared)** - Extracted from `LibrarySettings.tsx` into a reusable shared component with optional `suggestedRoots`, `title`, and `description` props. Added `GET /api/filesystem/suggested-roots` endpoint.
+
 ## 2.46.1 - 2026-06-27
 
 - **Fix**: **Upload Auto-Detect & Crash Fixes** - Fixed `.bin` detection to prefer PS1 over Genesis for ambiguous audio tracks (CD sync byte check). Fixed "cannot read property" runtime crash by moving AbortController creation before the `setFiles` call. Added missing `manualUpload` locale strings. Added console logging for easier debugging.

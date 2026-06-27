@@ -4,14 +4,14 @@ Retro gaming frontend that runs inside Home Assistant. ROM uploads, integration
 settings, save-state metadata, and the system-image cache live under `/data` so
 they persist across add-on restarts and updates.
 
-Source and full documentation: <https://github.com/GlerschNersch/token>
+Source and full documentation: <https://github.com/JMaroz/HomeArcade-HA>
 
 ## Install
 
 1. **Settings → Add-ons → Add-on Store → ⋮ → Repositories** and add:
 
    ```
-   https://github.com/GlerschNersch/token
+   https://github.com/JMaroz/HomeArcade-HA
    ```
 
 2. Find **HomeArcade** in the store and click **Install** (the first build
@@ -100,12 +100,12 @@ oversize files before sending them.
 
 The application source lives inside this `cabinet_bridge/` directory so Home
 Assistant Supervisor can build the add-on with this folder as the Docker
-context. Run npm commands from here:
+context. Run pnpm commands from here:
 
 ```bash
 cd cabinet_bridge
-npm install
-CABINET_DATA_DIR=/tmp/cabinet-data npm run dev
+pnpm install
+CABINET_DATA_DIR=/tmp/cabinet-data pnpm dev
 ```
 
 When `CABINET_DATA_DIR` is unset and `/data` is not writable, the project

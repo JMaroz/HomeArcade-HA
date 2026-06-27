@@ -2,6 +2,54 @@
 
 All notable changes to HomeArcade are documented here.
 
+## [2.48.0] — 2026-06-27
+
+### Feature: Move All ROMs
+
+- **Bulk Move Tool** — Added a "Move All ROMs" button in the Library Health section's Maintenance Tools area. Opens a three-phase dialog: pick destination (with scanner watch paths as suggested roots), moving progress, and results summary (moved/skipped/failed). ROMs are organized into system subfolders at the destination.
+- **M3U & Disc Group Support** — Playlist content is rewritten to reflect new child paths; disc-group siblings are moved together.
+
+### API
+
+- `POST /api/roms/move-all` — Accepts `{ dest }`, validates against allowed browse roots, moves every ROM, updates DB paths, and returns `{ moved, skipped, failed, errors }`.
+
+---
+
+## [2.47.0] — 2026-06-27
+
+### Feature: Upload Destination Picker
+
+- **Custom Upload Directory** — Added a "Change" button in the upload panel to choose where uploaded ROMs land. Defaults to ROM storage. Scanner watch paths appear as suggested quick-root buttons.
+- **Shared Directory Picker** — `DirectoryPickerDialog` extracted into a reusable component used by both upload and scanner settings.
+
+### API
+
+- `GET /api/filesystem/suggested-roots` — Returns scanner watch paths for quick-root suggestions.
+- `POST /api/roms/upload` — Now accepts optional `dest` query param (validated against browse roots).
+
+---
+
+## [2.46.1] — 2026-06-27
+
+### Fixes
+
+- **Upload Auto-Detect & Crash Fixes** — Fixed `.bin` detection to prefer PS1 over Genesis for ambiguous audio tracks (CD sync byte check). Fixed runtime crash by moving AbortController creation before `setFiles` call. Added missing `manualUpload` locale strings and console debug logging.
+
+---
+
+## [2.46.0] — 2026-06-27
+
+### Features
+
+- **Upload System Overhaul** — Complete rewrite of the upload pipeline: auto-detection of console system from file extension, magic bytes, and folder context; enhanced upload status with real-time speed/ETA sliding window; per-file status table with individual and Cancel All buttons; error recovery that continues on per-file failure; duplicate ROM detection with interactive Keep/Replace/Skip dialog; folder upload via `webkitdirectory` with CUE/BIN disc grouping.
+- **Libretro-Only Art Matcher** — Replaced ScreenScraper and TheGamesDB with zero-auth art matching from `thumbnails.libretro.com`. Multi-strategy scorer (exact match, fuzzy, token overlap, region bonus) with 24-hour cache.
+
+### Fixes
+
+- **BIOS MD5 Checksums** — Corrected 5 incorrect MD5 checksums that were silently deleting downloaded BIOS files.
+
+---
+
 ## [2.44.0] — 2026-06-26
 
 ### Feature: ROM Directory Browser & Scanner Diagnostics

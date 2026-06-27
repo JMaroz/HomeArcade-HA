@@ -1,8 +1,8 @@
 name: "HomeArcade"
-version: "2.48.0"
+version: "2.49.0"
 slug: "cabinet_bridge"
 description: "The premium retro gaming frontend for Home Assistant. Manage ROMs, browse systems, and launch games from your sidebar or TV."
-url: "https://github.com/GlerschNersch/HomeArcade-HA"
+url: "https://github.com/JMaroz/HomeArcade-HA"
 boot: auto
 arch:
   - "aarch64"
