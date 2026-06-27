@@ -26,7 +26,7 @@ import { ServicesSettings } from "./settings/ServicesSettings";
 import { AutomationsSettings } from "./settings/AutomationsSettings";
 import { PlayStats } from "@/components/PlayStats";
 import { NetplaySettings } from "./settings/NetplaySettings";
-import { VaultSettings } from "./settings/VaultSettings";
+
 import { BiosManager } from "@/components/BiosManager";
 import { Section, Step, Code } from "./settings/SettingsShared";
 
@@ -49,7 +49,6 @@ const GROUPS = [
     icon: Layers,
     tabs: [
       { id: "library", label: "Management", icon: Database },
-      { id: "vault", label: "The Vault", icon: ShieldAlert },
       { id: "health", label: "Firmware", icon: Activity },
     ]
   },
@@ -194,10 +193,9 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground mt-1 max-w-prose">
                   {activeTab === "display" && "Language, Layout, and Visual Shaders."}
                   {activeTab === "controls" && "Input calibration and key remapping."}
-                  {activeTab === "library" && "ROM scanning and collection filters."}
+                  {activeTab === "library" && "ROM scanning, library health, and collection filters."}
                   {activeTab === "health" && "BIOS firmware status and verification."}
-                  {activeTab === "services" && "RetroAchievements and metadata scrapers."}
-                  {activeTab === "vault" && "Dead link pruning and Cloud Save synchronization."}
+                  {activeTab === "services" && "RetroAchievements, metadata scrapers, and cloud sync."}
                   {activeTab === "netplay" && "Nickname and multiplayer hosting options."}
                   {activeTab === "automations" && "Home Assistant entities and game state triggers."}
                   {activeTab === "help" && "Setup guides and integration snippets."}
@@ -216,7 +214,6 @@ export default function Settings() {
                   </Section>
                 </TabsContent>
                 <TabsContent value="services" className="m-0 focus-visible:outline-none"><ServicesSettings /></TabsContent>
-                <TabsContent value="vault" className="m-0 focus-visible:outline-none"><VaultSettings /></TabsContent>
                 <TabsContent value="netplay" className="m-0 focus-visible:outline-none"><NetplaySettings /></TabsContent>
                 <TabsContent value="automations" className="m-0 focus-visible:outline-none"><AutomationsSettings /></TabsContent>
                 <TabsContent value="stats" className="m-0 focus-visible:outline-none p-6 overflow-y-auto flex-1">

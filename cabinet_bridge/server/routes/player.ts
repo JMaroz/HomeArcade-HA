@@ -748,11 +748,17 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
 }
 
 export function renderEmulatorBootstrap({
-  core, title, gameId, romId, discs, romHash, userId, userName, profileId, biosUrl, netplayRole, netplayRoom, netplaySyncMode, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2, keyboardBindings
+  core, title, gameId, romId, discs, romHash, userId, userName, profileId, biosUrl, netplayRole, netplayRoom, netplaySyncMode, controlDefaults, gamepadBindings, controlDefaultsP2, gamepadBindingsP2, keyboardBindings, gameUrlIsArray
 }: any) {
+  let ejsGameUrl: string;
+  if (gameUrlIsArray && discs?.length > 0) {
+    ejsGameUrl = `window.EJS_gameUrl = [${discs.map((d: any) => `window.CABINET_INGRESS_BASE + "/api/roms/${d.id}/file"`).join(", ")}];`;
+  } else {
+    ejsGameUrl = `window.EJS_gameUrl = window.CABINET_INGRESS_BASE + "/api/roms/" + ${JSON.stringify(romId)} + "/file";`;
+  }
   const ejsDiscs = discs?.length > 1 
     ? `window.EJS_discs = [${discs.map((d: any) => `{ fileName: window.CABINET_INGRESS_BASE + "/api/roms/${d.id}/file", label: ${JSON.stringify(d.label)} }`).join(", ")}];`
-    : `window.EJS_gameUrl = window.CABINET_INGRESS_BASE + "/api/roms/" + ${JSON.stringify(romId)} + "/file";`;
+    : "";
 
   let ejsDefaultControls = "";
   if (keyboardBindings && Object.keys(keyboardBindings).length > 0) {
@@ -1371,6 +1377,7 @@ window.EJS_player = "#game";
 window.EJS_core = ${JSON.stringify(core)};
 window.EJS_gameName = ${JSON.stringify(title)};
 window.EJS_gameID = ${JSON.stringify(userId + "_" + gameId)};
+${ejsGameUrl}
 ${ejsDiscs}
 ${ejsDefaultControls}
 

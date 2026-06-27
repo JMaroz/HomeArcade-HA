@@ -263,16 +263,43 @@ export function registerRomRoutes(app: Express) {
       }
 
       const romHash = hash.digest("hex");
-      const title = titleFromFileName(originalName);
-      const discMatch = title.match(/\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i);
-      const discNumber = discMatch ? parseInt(discMatch[1] ?? discMatch[2], 10) : null;
-      const cleanTitle = discMatch ? title.replace(discMatch[0], "").trim() : title;
-      const discGroup = discMatch ? `${system}/${slugify(cleanTitle)}` : null;
+      const isM3u = extension === ".m3u";
 
-      const libretroArt = await findLibretroBoxArt(system, cleanTitle);
+      let m3uContent: string | null = null;
+      let isPlaylist = false;
+      let parentM3uId: number | null = null;
+      let title: string;
+      let discNumber: number | null;
+      let cleanTitle: string;
+      let discGroup: string | null;
+
+      if (isM3u) {
+        isPlaylist = true;
+        m3uContent = await fs.readFile(filePath, "utf8").catch(() => null);
+        title = titleFromFileName(originalName);
+        discNumber = null;
+        cleanTitle = title;
+        discGroup = null;
+      } else {
+        title = titleFromFileName(originalName);
+        const discMatch = title.match(/\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i);
+        discNumber = discMatch ? parseInt(discMatch[1] ?? discMatch[2], 10) : null;
+        cleanTitle = discMatch ? title.replace(discMatch[0], "").trim() : title;
+        discGroup = discMatch ? `${system}/${slugify(cleanTitle)}` : null;
+
+        // Check if a matching M3U already exists in DB for this file
+        if (discGroup) {
+          const existingM3u = await storage.findM3uForDiscGroup(discGroup);
+          if (existingM3u) {
+            parentM3uId = existingM3u.id;
+          }
+        }
+      }
+
+      const libretroArt = await findLibretroBoxArt(system, isM3u ? title : cleanTitle);
 
       const rom = insertUploadedRomSchema.parse({
-        title: cleanTitle,
+        title: isM3u ? title : cleanTitle,
         system,
         slug,
         originalName,
@@ -289,6 +316,9 @@ export function registerRomRoutes(app: Express) {
         playCount: 0,
         discNumber,
         discGroup,
+        isPlaylist,
+        m3uContent,
+        parentM3uId,
         romHash,
         minutesPlayed: 0,
         createdAt: Date.now(),
@@ -297,8 +327,75 @@ export function registerRomRoutes(app: Express) {
       const saved = await storage.createUploadedRom(rom);
 
       // Re-sync progress if this exact ROM file was uploaded before
-      if (romHash) {
+      if (romHash && !isM3u) {
         await storage.relinkSaveSlotsByHash(saved.id, romHash);
+      }
+
+      // If this is an M3U, link any existing disc records via parentM3uId
+      if (isM3u && m3uContent) {
+        const refs = m3uContent.split("\n")
+          .map(l => l.trim())
+          .filter(l => l.length > 0 && !l.startsWith("#"));
+        for (const ref of refs) {
+          const existing = await storage.findRomByOriginalName(ref);
+          if (existing && !existing.isPlaylist && !existing.parentM3uId) {
+            await storage.updateUploadedRomFile(existing.id, { parentM3uId: saved.id });
+          }
+        }
+        // Also check discGroup-based linking: find discs whose clean title matches
+        const baseTitle = slugify(title);
+        const grouped = await storage.listRomsByDiscGroupNoM3u(`${system}/${baseTitle}`);
+        for (const disc of grouped) {
+          if (!disc.parentM3uId) {
+            await storage.updateUploadedRomFile(disc.id, { parentM3uId: saved.id });
+          }
+        }
+      }
+
+      // Auto-generate M3U for discGroup clusters that lack one
+      if (!isM3u && discGroup && !parentM3uId) {
+        const siblings = await storage.listRomsByDiscGroupNoM3u(discGroup);
+        const m3uExists = await storage.findM3uForDiscGroup(discGroup);
+        if (siblings.length >= 2 && !m3uExists) {
+          // Generate M3U content from sibling filenames
+          const m3uLines = siblings
+            .sort((a, b) => (a.discNumber ?? 0) - (b.discNumber ?? 0))
+            .map(s => s.originalName)
+            .join("\n");
+
+          const m3uSlug = `${system}_m3u_${slugify(cleanTitle)}_${Date.now().toString(36)}`;
+          const m3uFilePath = path.join(systemDir, `${m3uSlug}.m3u`);
+          const m3uRom = insertUploadedRomSchema.parse({
+            title: cleanTitle,
+            system,
+            slug: m3uSlug,
+            originalName: `${cleanTitle}.m3u`,
+            fileName: `${m3uSlug}.m3u`,
+            filePath: m3uFilePath,
+            size: Buffer.byteLength(m3uLines, "utf8"),
+            mimeType: "text/plain",
+            artUrl: libretroArt.url,
+            scrapeStatus: libretroArt.url ? "matched" : "not_found",
+            scrapeMessage: libretroArt.message ?? "",
+            favorite,
+            rating: 0,
+            lastPlayed: 0,
+            playCount: 0,
+            discNumber: null,
+            discGroup,
+            isPlaylist: true,
+            m3uContent: m3uLines,
+            parentM3uId: null,
+            romHash: null,
+            minutesPlayed: 0,
+            createdAt: Date.now(),
+          });
+          const m3uRecord = await storage.createUploadedRom(m3uRom);
+          // Link all siblings to the new M3U
+          for (const sib of siblings) {
+            await storage.updateUploadedRomFile(sib.id, { parentM3uId: m3uRecord.id });
+          }
+        }
       }
 
       res.status(201).json(saved);
@@ -323,8 +420,9 @@ export function registerRomRoutes(app: Express) {
   app.get("/api/roms", async (req, res) => {
     const limit = Math.min(500, Math.max(1, parseInt(String(req.query.limit ?? "100"), 10) || 100));
     const offset = Math.max(0, parseInt(String(req.query.offset ?? "0"), 10) || 0);
-    const roms = await storage.listUploadedRomsPaginated(limit, offset);
-    const total = await storage.countUploadedRoms();
+    const excludeChildren = req.query.exclude_children === "true";
+    const roms = await storage.listUploadedRomsPaginated(limit, offset, excludeChildren);
+    const total = await storage.countUploadedRoms(excludeChildren);
     const hasMore = offset + roms.length < total;
     // Trim null/empty fields to shrink payload size for large libraries
     const trimmed = roms.map(rom => {
@@ -345,6 +443,8 @@ export function registerRomRoutes(app: Express) {
       if (rom.romHash) lean.romHash = rom.romHash;
       if (rom.discGroup) lean.discGroup = rom.discGroup;
       if (rom.discNumber) lean.discNumber = rom.discNumber;
+      if (rom.isPlaylist) lean.isPlaylist = true;
+      if (rom.parentM3uId) lean.parentM3uId = rom.parentM3uId;
       return lean;
     });
     res.json({ roms: trimmed, total, hasMore });
@@ -621,6 +721,14 @@ export function registerRomRoutes(app: Express) {
     const id = Number(req.params.id);
     const rom = await storage.getUploadedRom(id);
     if (!rom) return res.status(404).json({ message: "Uploaded ROM not found." });
+    if (rom.isPlaylist) {
+      const children = await storage.listChildrenByM3uId(rom.id);
+      if (children.length > 0) return res.json(children);
+    }
+    if (rom.parentM3uId) {
+      const children = await storage.listChildrenByM3uId(rom.parentM3uId);
+      if (children.length > 0) return res.json(children);
+    }
     if (!rom.discGroup) return res.json([rom]);
     const discs = await storage.listRomsByDiscGroup(rom.discGroup);
     res.json(discs.length > 0 ? discs : [rom]);
@@ -662,10 +770,40 @@ export function registerRomRoutes(app: Express) {
       return res.status(400).send(`document.body.textContent = ${JSON.stringify(`${rom.system.toUpperCase()} is not configured for browser play yet.`)};`);
     }
     let discs: Array<{ id: number; label: string }> = [];
-    if (rom.discGroup) {
+    let gameUrlIsArray = false;
+
+    if (rom.isPlaylist && rom.m3uContent) {
+      // M3U record — resolve each referenced file to a child disc record
+      const refs = rom.m3uContent.split("\n")
+        .map(l => l.trim())
+        .filter(l => l.length > 0 && !l.startsWith("#"));
+      const children = await storage.listChildrenByM3uId(rom.id);
+      if (children.length > 1) {
+        discs = children.map((s) => ({ id: s.id, label: s.discNumber ? `Disc ${s.discNumber}` : s.title }));
+        gameUrlIsArray = true;
+      } else if (refs.length > 0) {
+        // Try to find children by originalName match
+        const resolved: typeof discs = [];
+        for (const ref of refs) {
+          const found = children.find(c => c.originalName === ref) ?? await storage.findRomByOriginalName(ref);
+          if (found) resolved.push({ id: found.id, label: found.discNumber ? `Disc ${found.discNumber}` : found.title });
+        }
+        if (resolved.length > 1) {
+          discs = resolved;
+          gameUrlIsArray = true;
+        }
+      }
+    } else if (rom.discGroup) {
       const siblings = await storage.listRomsByDiscGroup(rom.discGroup);
       if (siblings.length > 1) {
         discs = siblings.map((s) => ({ id: s.id, label: s.discNumber ? `Disc ${s.discNumber}` : s.title, }));
+        gameUrlIsArray = true;
+      }
+    } else if (rom.parentM3uId) {
+      // Child disc — include siblings for disc switching
+      const children = await storage.listChildrenByM3uId(rom.parentM3uId);
+      if (children.length > 1) {
+        discs = children.map((s) => ({ id: s.id, label: s.discNumber ? `Disc ${s.discNumber}` : s.title }));
       }
     }
     const bootstrapSettings = await storage.getIntegrationSettings();
@@ -709,7 +847,7 @@ export function registerRomRoutes(app: Express) {
     }
 
     res.send(renderEmulatorBootstrap({
-      core, title: rom.title, gameId: `${rom.system}-${rom.slug}`, romId: rom.id, discs, romHash: rom.romHash ?? null,
+      core, title: rom.title, gameId: `${rom.system}-${rom.slug}`, romId: rom.id, discs, romHash: rom.romHash ?? null, gameUrlIsArray,
       raUsername: bootstrapSettings.raUsername ?? "", raToken: bootstrapSettings.raToken ?? "",
       controlDefaults: await (async () => {
         const global = (bootstrapSettings.controlDefaults ?? {}) as Record<string, Record<number, string>>;

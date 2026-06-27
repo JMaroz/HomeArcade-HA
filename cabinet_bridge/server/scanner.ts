@@ -11,11 +11,14 @@ import fs from "fs/promises";
 import fsSync from "fs";
 import path from "path";
 
+import { slugify } from "./routes/utils";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Lookup tables
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const EXT_TO_SYSTEM: Record<string, string> = {
+  ".m3u":  "ps1",
   ".nes":  "nes",
   ".smc":  "snes",  ".sfc":  "snes",
   ".md":   "genesis", ".gen": "genesis", ".bin": "genesis",
@@ -182,6 +185,25 @@ async function scanPath(
       + "-" + Date.now().toString(36)
       + Math.random().toString(36).slice(2, 5);
 
+    let isPlaylist = false;
+    let m3uContent: string | null = null;
+    let discNumber: number | null = null;
+    let discGroup: string | null = null;
+
+    if (ext === ".m3u") {
+      isPlaylist = true;
+      try {
+        m3uContent = await fs.readFile(filePath, "utf8");
+      } catch { /* ignore */ }
+    } else {
+      const discMatch = title.match(/\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i);
+      discNumber = discMatch ? parseInt(discMatch[1] ?? discMatch[2], 10) : null;
+      if (discMatch) {
+        const cleanTitle = title.replace(discMatch[0], "").trim();
+        discGroup = `${system}/${slugify(cleanTitle)}`;
+      }
+    }
+
     try {
       const stat = await fs.stat(filePath);
       newRoms.push({
@@ -191,6 +213,10 @@ async function scanPath(
         filePath,
         size: stat.size,
         mimeType: "application/octet-stream",
+        isPlaylist,
+        m3uContent,
+        discNumber,
+        discGroup,
         createdAt: Date.now(),
       });
       existingNames.add(fileName);

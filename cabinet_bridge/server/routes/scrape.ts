@@ -156,6 +156,33 @@ export async function findLibretroBoxArt(system: string, title: string): Promise
   return { url: null, message: `No Libretro box art match found for "${title}".` };
 }
 
+async function scrapeRaMetadata(rom: { id: number; raGameId: number | null }): Promise<Record<string, any> | null> {
+  if (!rom.raGameId) return null;
+
+  const settings = await storage.getIntegrationSettings();
+  if (!settings.raUsername || !settings.raToken) return null;
+
+  try {
+    const url = `https://retroachievements.org/API/API_GetGame.php?z=${settings.raUsername}&y=${settings.raToken}&i=${rom.raGameId}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const result: Record<string, any> = {};
+    if (data.Description) result.description = data.Description;
+    if (data.Developer) result.developer = data.Developer;
+    if (data.Publisher) result.publisher = data.Publisher;
+    if (data.Genre) result.genre = data.Genre;
+    if (data.Released) {
+      const year = parseInt(String(data.Released).slice(0, 4), 10);
+      if (year > 1970 && year < 2100) result.releaseYear = year;
+    }
+    return Object.keys(result).length > 0 ? result : null;
+  } catch {
+    return null;
+  }
+}
+
 export function registerScrapeRoutes(app: Express) {
   app.post("/api/roms/:id/scrape-art", async (req, res) => {
     const id = Number(req.params.id);
@@ -177,6 +204,23 @@ export function registerScrapeRoutes(app: Express) {
     return res.json({ success: false, message: libretro.message });
   });
 
+  app.post("/api/roms/:id/scrape-meta", async (req, res) => {
+    const id = Number(req.params.id);
+    const rom = await storage.getUploadedRom(id);
+    if (!rom) return res.status(404).json({ message: "ROM not found." });
+
+    const settings = await storage.getIntegrationSettings();
+    if (!settings.raUsername || !settings.raToken) {
+      return res.status(400).json({ message: "RetroAchievements not configured." });
+    }
+
+    const meta = await scrapeRaMetadata(rom);
+    if (!meta) return res.json({ success: false, message: "No metadata found." });
+
+    const updated = await storage.updateUploadedRomMetadata(id, meta);
+    res.json({ success: true, ...updated });
+  });
+
   app.post("/api/roms/scrape-all", async (req, res) => {
     const roms = await storage.listUploadedRoms();
     const unscraped = roms.filter((r) => r.scrapeStatus === "not_scraped" || r.scrapeStatus === "failed");
@@ -189,12 +233,16 @@ export function registerScrapeRoutes(app: Express) {
     res.flushHeaders();
 
     const send = (data: any) => res.write(`data: ${JSON.stringify(data)}\n\n`);
-    send({ type: "start", total: unscraped.length });
+    send({ type: "start", phase: "art", total: unscraped.length });
 
+    let artMatched = 0;
+    let artFailed = 0;
     let count = 0;
+
+    // Phase 1: Art scraping
     for (const rom of unscraped) {
       count++;
-      send({ type: "progress", current: count, total: unscraped.length, title: rom.title });
+      send({ type: "progress", phase: "art", current: count, total: unscraped.length, title: rom.title });
 
       const libretro = await findLibretroBoxArt(rom.system, rom.title);
       if (libretro.url) {
@@ -203,14 +251,44 @@ export function registerScrapeRoutes(app: Express) {
           scrapeStatus: "matched",
           scrapeMessage: libretro.message,
         });
-        send({ type: "result", id: rom.id, title: rom.title, status: "success" });
+        artMatched++;
+        send({ type: "result", phase: "art", id: rom.id, title: rom.title, status: "success" });
       } else {
         await storage.updateUploadedRomArt(rom.id, { artUrl: null, scrapeStatus: "failed", scrapeMessage: libretro.message });
-        send({ type: "result", id: rom.id, title: rom.title, status: "failed" });
+        artFailed++;
+        send({ type: "result", phase: "art", id: rom.id, title: rom.title, status: "failed" });
       }
     }
 
-    send({ type: "complete" });
+    // Phase 2: Metadata scraping (if RA configured)
+    const settings = await storage.getIntegrationSettings();
+    const raConfigured = !!(settings.raUsername && settings.raToken);
+    let metaMatched = 0;
+    let metaFailed = 0;
+
+    if (raConfigured) {
+      const needsMeta = roms.filter((r) => r.raGameId && !r.description);
+      if (needsMeta.length > 0) {
+        send({ type: "phase_change", phase: "meta", total: needsMeta.length });
+        count = 0;
+        for (const rom of needsMeta) {
+          count++;
+          send({ type: "progress", phase: "meta", current: count, total: needsMeta.length, title: rom.title });
+
+          const meta = await scrapeRaMetadata(rom);
+          if (meta) {
+            await storage.updateUploadedRomMetadata(rom.id, meta);
+            metaMatched++;
+            send({ type: "result", phase: "meta", id: rom.id, title: rom.title, status: "success" });
+          } else {
+            metaFailed++;
+            send({ type: "result", phase: "meta", id: rom.id, title: rom.title, status: "failed" });
+          }
+        }
+      }
+    }
+
+    send({ type: "complete", artMatched, artFailed, metaMatched, metaFailed });
     res.end();
   });
 }

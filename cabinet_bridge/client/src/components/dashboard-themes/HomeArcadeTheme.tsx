@@ -22,7 +22,6 @@ import {
   Trophy,
   History,
   Folder,
-  Plus,
   Loader2,
   ImagePlus,
   Database,
@@ -151,15 +150,16 @@ export default function HomeArcadeTheme() {
   const [totalGames, setTotalGames] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [allRoms, setAllRoms] = useState<UploadedRom[]>([]);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const {
     data: pageData,
     isLoading: isRomsLoading,
     isFetching,
   } = useQuery<{ roms: UploadedRom[]; total: number; hasMore: boolean }>({
-    queryKey: ["/api/roms", { limit, offset }],
+    queryKey: ["/api/roms", { limit, offset, excludeChildren: true }],
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/roms?limit=${limit}&offset=${offset}`));
+      const res = await fetch(apiUrl(`/api/roms?limit=${limit}&offset=${offset}&exclude_children=true`));
       if (!res.ok) throw new Error("Failed to fetch roms");
       return res.json();
     },
@@ -172,6 +172,21 @@ export default function HomeArcadeTheme() {
     setTotalGames(pageData.total);
     setHasMore(pageData.hasMore);
   }, [pageData, offset]);
+
+  // Infinite scroll via IntersectionObserver
+  useEffect(() => {
+    if (!hasMore || isFetching || !sentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setOffset(prev => prev + limit);
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, isFetching, limit]);
 
   const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({ queryKey: ["/api/collections"] });
 
@@ -454,26 +469,19 @@ export default function HomeArcadeTheme() {
               </motion.div>
             )}
 
-            {/* Load More */}
-              {hasMore && (
-                <div className="flex flex-col items-center pt-8 pb-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setOffset(prev => prev + limit)}
-                    disabled={isFetching}
-                    className="rounded-full px-8 h-12 bg-white/5 border-white/10 hover:bg-white/10 text-white/70 hover:text-white font-bold tracking-widest uppercase text-xs"
-                  >
-                    {isFetching ? (
-                      <><Loader2 className="size-4 mr-2 animate-spin" />Loading…</>
-                    ) : (
-                      <><Plus className="size-4 mr-2" />Load More</>
-                    )}
-                  </Button>
-                  <span className="mt-3 text-[10px] font-mono text-white/20 uppercase tracking-widest">
-                    Showing {allRoms.length} of {totalGames} games
-                  </span>
-                </div>
-              )}
+            {/* Infinite scroll sentinel + counter */}
+              <div className="flex flex-col items-center pt-6 pb-4">
+                {isFetching && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <Loader2 className="size-4 animate-spin text-white/30" />
+                    <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest">Loading more…</span>
+                  </div>
+                )}
+                <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest">
+                  Showing {allRoms.length} of {totalGames} games
+                </span>
+                {hasMore && <div ref={sentinelRef} className="h-4 w-full" />}
+              </div>
             </AnimatePresence>
 
           <GameDetailDialog

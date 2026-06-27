@@ -31,6 +31,8 @@ import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
 import crypto from "node:crypto";
 import { REQUIRED_BIOS } from "@shared/bios-metadata";
+import { slugify } from "./routes/utils";
+import { ROM_ROOT } from "./routes/shared";
 
 export let sqlite: Database.Database;
 export let db: any;
@@ -199,15 +201,55 @@ export class DatabaseStorage implements IStorage {
   async getUserByUsername(username: string): Promise<User | undefined> { return db.select().from(users).where(eq(users.username, username)).get(); }
   async createUser(insertUser: InsertUser): Promise<User> { return db.insert(users).values(insertUser).returning().get(); }
   async listUploadedRoms(): Promise<UploadedRom[]> { return db.select().from(uploadedRoms).orderBy(desc(uploadedRoms.createdAt)).all(); }
-  async listUploadedRomsPaginated(limit: number, offset: number): Promise<UploadedRom[]> {
+  async listUploadedRomsPaginated(limit: number, offset: number, excludeChildren = false): Promise<UploadedRom[]> {
+    if (excludeChildren) {
+      return db.select().from(uploadedRoms)
+        .where(sql`${uploadedRoms.parentM3uId} IS NULL`)
+        .orderBy(desc(uploadedRoms.createdAt)).limit(limit).offset(offset).all();
+    }
     return db.select().from(uploadedRoms).orderBy(desc(uploadedRoms.createdAt)).limit(limit).offset(offset).all();
   }
-  async countUploadedRoms(): Promise<number> {
+  async countUploadedRoms(excludeChildren = false): Promise<number> {
+    if (excludeChildren) {
+      const row = db.select({ count: sql<number>`count(*)` }).from(uploadedRoms)
+        .where(sql`${uploadedRoms.parentM3uId} IS NULL`).get();
+      return row?.count ?? 0;
+    }
     const row = db.select({ count: sql<number>`count(*)` }).from(uploadedRoms).get();
     return row?.count ?? 0;
   }
   async getUploadedRom(id: number): Promise<UploadedRom | undefined> { return db.select().from(uploadedRoms).where(eq(uploadedRoms.id, id)).get(); }
   async listRomsByDiscGroup(discGroup: string): Promise<UploadedRom[]> { return db.select().from(uploadedRoms).where(eq(uploadedRoms.discGroup, discGroup)).orderBy(uploadedRoms.discNumber).all(); }
+  async listDiscGroupsWithCount(minCount = 2): Promise<{ discGroup: string; count: number }[]> {
+    const rows = db.select({
+      discGroup: uploadedRoms.discGroup,
+      count: sql<number>`count(*)`,
+    }).from(uploadedRoms)
+      .where(and(sql`${uploadedRoms.discGroup} IS NOT NULL`, sql`${uploadedRoms.isPlaylist} = 0`, sql`${uploadedRoms.parentM3uId} IS NULL`))
+      .groupBy(uploadedRoms.discGroup)
+      .having(sql`count(*) >= ${minCount}`)
+      .all();
+    return rows as any;
+  }
+  async listRomsByDiscGroupNoM3u(discGroup: string): Promise<UploadedRom[]> {
+    return db.select().from(uploadedRoms)
+      .where(and(
+        eq(uploadedRoms.discGroup, discGroup),
+        eq(uploadedRoms.isPlaylist, false),
+        sql`${uploadedRoms.parentM3uId} IS NULL`,
+      ))
+      .orderBy(uploadedRoms.discNumber).all();
+  }
+  async listChildrenByM3uId(m3uId: number): Promise<UploadedRom[]> {
+    return db.select().from(uploadedRoms)
+      .where(eq(uploadedRoms.parentM3uId, m3uId))
+      .orderBy(uploadedRoms.discNumber).all();
+  }
+  async findM3uForDiscGroup(discGroup: string): Promise<UploadedRom | undefined> {
+    return db.select().from(uploadedRoms)
+      .where(and(eq(uploadedRoms.discGroup, discGroup), eq(uploadedRoms.isPlaylist, true)))
+      .get();
+  }
   async createUploadedRom(rom: InsertUploadedRom): Promise<UploadedRom> { return db.insert(uploadedRoms).values(rom).returning().get(); }
   async findRomByOriginalName(name: string): Promise<UploadedRom | undefined> {
     return db.select().from(uploadedRoms).where(eq(uploadedRoms.originalName, name)).get();
@@ -452,6 +494,64 @@ export class DatabaseStorage implements IStorage {
         tx.insert(uploadedRoms).values(rom).run();
       }
     });
+    // Auto-generate M3U for any complete disc groups found during scan
+    await this.generateM3uForAllDiscGroups();
+  }
+  async generateM3uForAllDiscGroups(): Promise<void> {
+    const groups = await db.select({
+      discGroup: uploadedRoms.discGroup,
+    }).from(uploadedRoms)
+      .where(and(sql`${uploadedRoms.discGroup} IS NOT NULL`, sql`${uploadedRoms.isPlaylist} = 0`, sql`${uploadedRoms.parentM3uId} IS NULL`))
+      .groupBy(uploadedRoms.discGroup)
+      .having(sql`count(*) >= 2`)
+      .all() as { discGroup: string }[];
+
+    for (const { discGroup } of groups) {
+      const existingM3u = await db.select().from(uploadedRoms)
+        .where(and(eq(uploadedRoms.discGroup, discGroup), eq(uploadedRoms.isPlaylist, true)))
+        .get();
+      if (existingM3u) continue;
+
+      const siblings = await db.select().from(uploadedRoms)
+        .where(and(
+          eq(uploadedRoms.discGroup, discGroup),
+          eq(uploadedRoms.isPlaylist, false),
+          sql`${uploadedRoms.parentM3uId} IS NULL`,
+        ))
+        .orderBy(uploadedRoms.discNumber)
+        .all();
+
+      if (siblings.length < 2) continue;
+
+      const system = siblings[0].system;
+      const title = siblings[0].title;
+      const m3uLines = siblings.map((s: UploadedRom) => s.originalName).join("\n");
+      const m3uSlug = `${system}_m3u_${slugify(title)}_${Date.now().toString(36)}`;
+
+      const m3uRecord = db.insert(uploadedRoms).values({
+        title,
+        system,
+        slug: m3uSlug,
+        originalName: `${title}.m3u`,
+        fileName: `${m3uSlug}.m3u`,
+        filePath: `${ROM_ROOT}/${system}/${m3uSlug}.m3u`,
+        size: Buffer.byteLength(m3uLines, "utf8"),
+        mimeType: "text/plain",
+        isPlaylist: true,
+        m3uContent: m3uLines,
+        discNumber: null,
+        discGroup: discGroup,
+        parentM3uId: null,
+        romHash: null,
+        minutesPlayed: 0,
+        createdAt: Date.now(),
+      }).returning().get() as UploadedRom;
+
+      // Link siblings to the new M3U
+      for (const sib of siblings) {
+        db.update(uploadedRoms).set({ parentM3uId: m3uRecord.id }).where(eq(uploadedRoms.id, sib.id)).run();
+      }
+    }
   }
   async listRomFilenames(): Promise<string[]> {
     const rows = db.select({ fileName: uploadedRoms.fileName }).from(uploadedRoms).all();

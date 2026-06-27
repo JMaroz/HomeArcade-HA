@@ -148,6 +148,12 @@ function buildExtToSystems(): Record<string, string[]> {
     if (!map[ext]) map[ext] = new Set();
     map[ext].add(sys);
   }
+  // Manual additions for M3U: disc-based systems not yet in ROM_EXTENSIONS
+  if (map[".m3u"]) {
+    map[".m3u"].add("saturn");
+    map[".m3u"].add("segacd");
+    map[".m3u"].add("pce");
+  }
   const result: Record<string, string[]> = {};
   for (const [ext, sysSet] of Object.entries(map)) {
     result[ext] = [...sysSet];
@@ -239,6 +245,18 @@ export function detectSystemFromContent(
     // CHD header starts with "MComprHD"
     const isChd = magicBytes.slice(0, 8).toString("ascii") === "MComprHD";
     if (!isChd) candidates = [];
+  }
+
+  if (ext === ".m3u") {
+    // Peek at first non-empty line to detect the referenced file's extension
+    const content = magicBytes.toString("utf8").split("\n").map(l => l.trim()).find(l => l.length > 0 && !l.startsWith("#"));
+    if (content) {
+      const refExt = path.extname(content).toLowerCase();
+      const refCands = EXT_TO_SYSTEMS[refExt];
+      if (refCands && refCands.length > 0) {
+        candidates = refCands;
+      }
+    }
   }
 
   if (ext === ".zip" || ext === ".7z") {
