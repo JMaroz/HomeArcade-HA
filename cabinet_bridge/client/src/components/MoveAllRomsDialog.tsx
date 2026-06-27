@@ -5,8 +5,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { apiRequest, apiUrl } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { DirectoryPickerDialog } from "./DirectoryPickerDialog";
-import { Loader2, FolderOpen, CheckCircle2, AlertCircle, ArrowRight, HardDrive, Database, AlertTriangle } from "lucide-react";
+import { Loader2, FolderOpen, CheckCircle2, AlertCircle, ArrowRight, HardDrive, Database, AlertTriangle, Trash2 } from "lucide-react";
 import { SYSTEMS } from "@/data/library";
 
 interface SystemBreakdown {
@@ -45,10 +46,12 @@ function systemLabel(slug: string): string {
 }
 
 export function MoveAllRomsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { toast } = useToast();
   const [phase, setPhase] = useState<Phase>("pick");
   const [destPath, setDestPath] = useState<string | null>(null);
   const [destPickerOpen, setDestPickerOpen] = useState(false);
   const [result, setResult] = useState<MoveAllResult | null>(null);
+  const [cleanupResult, setCleanupResult] = useState<{ removed: number; directories: string[]; errors?: string[] } | null>(null);
 
   const { data: stats, isLoading: statsLoading } = useQuery<MoveStats>({
     queryKey: ["/api/roms/move-stats", destPath],
@@ -78,11 +81,26 @@ export function MoveAllRomsDialog({ open, onOpenChange }: { open: boolean; onOpe
     },
   });
 
+  const cleanupMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/roms/move-cleanup");
+      return res.json() as Promise<{ removed: number; directories: string[]; errors?: string[] }>;
+    },
+    onSuccess: (data) => {
+      setCleanupResult(data);
+      toast({ title: "Cleanup complete", description: `Removed ${data.removed} empty director${data.removed === 1 ? "y" : "ies"}.` });
+    },
+    onError: (err) => {
+      toast({ title: "Cleanup failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   useEffect(() => {
     if (open) {
       setPhase("pick");
       setDestPath(null);
       setResult(null);
+      setCleanupResult(null);
     }
   }, [open]);
 
@@ -269,8 +287,39 @@ export function MoveAllRomsDialog({ open, onOpenChange }: { open: boolean; onOpe
                 ))}
               </div>
             )}
+
+            {result.moved > 0 && result.failed === 0 && !cleanupResult && (
+              <Button
+                type="button"
+                variant="destructive"
+                className="w-full gap-1.5"
+                onClick={() => cleanupMutation.mutate()}
+                disabled={cleanupMutation.isPending}
+              >
+                {cleanupMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                Delete source folder
+              </Button>
+            )}
+
+            {cleanupResult && (
+              <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-green-500 uppercase tracking-wider">
+                  <CheckCircle2 className="size-4" />
+                  Source directory cleaned
+                </div>
+                <p className="text-[10px] font-mono text-green-400/70 mt-1">
+                  Removed {cleanupResult.removed} empty director{cleanupResult.removed === 1 ? "y" : "ies"}.
+                </p>
+                {cleanupResult.errors && cleanupResult.errors.length > 0 && (
+                  <div className="mt-2 text-[10px] font-mono text-destructive">
+                    {cleanupResult.errors.map((e, i) => <div key={i}>{e}</div>)}
+                  </div>
+                )}
+              </div>
+            )}
+
             <Button type="button" className="w-full gap-1.5" onClick={handleClose}>
-              Done
+              {cleanupResult ? "Close" : "Done"}
             </Button>
           </div>
         )}

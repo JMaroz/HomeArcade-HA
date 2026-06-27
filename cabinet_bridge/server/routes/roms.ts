@@ -1028,6 +1028,45 @@ export function registerRomRoutes(app: Express) {
     }
   });
 
+  app.post("/api/roms/move-cleanup", async (_req, res) => {
+    try {
+      // Walk ROM_ROOT and remove empty directories recursively
+      const removed: string[] = [];
+      const errors: string[] = [];
+
+      async function removeEmptyDirs(dir: string): Promise<boolean> {
+        let entries: string[];
+        try { entries = await fs.readdir(dir); } catch { return false; }
+        let allRemoved = true;
+        for (const entry of entries) {
+          const full = path.join(dir, entry);
+          let stat;
+          try { stat = await fs.stat(full); } catch { allRemoved = false; continue; }
+          if (stat.isDirectory()) {
+            const childEmpty = await removeEmptyDirs(full);
+            if (childEmpty) {
+              try { await fs.rmdir(full); removed.push(full); } catch (e: any) { errors.push(`rmdir ${full}: ${e.message}`); }
+            } else {
+              allRemoved = false;
+            }
+          } else {
+            allRemoved = false;
+          }
+        }
+        return allRemoved;
+      }
+
+      const rootEmpty = await removeEmptyDirs(ROM_ROOT);
+      if (rootEmpty) {
+        try { await fs.rmdir(ROM_ROOT); removed.push(ROM_ROOT); } catch (e: any) { errors.push(`rmdir ${ROM_ROOT}: ${e.message}`); }
+      }
+
+      res.json({ removed: removed.length, directories: removed, errors: errors.length ? errors : undefined });
+    } catch (err: any) {
+      res.status(500).json({ message: err?.message ?? "Cleanup failed." });
+    }
+  });
+
   app.delete("/api/roms", async (req, res) => {
     const settings = await storage.getIntegrationSettings();
     const watchPaths = (settings.libraryWatchPaths ?? "")
