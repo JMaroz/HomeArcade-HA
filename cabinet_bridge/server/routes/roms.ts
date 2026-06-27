@@ -9,7 +9,7 @@ import { renderEmulatorPage, renderEmulatorBootstrap, renderPlayerError, renderB
 import { REQUIRED_BIOS } from "@shared/bios-metadata";
 import { dataPath } from "../data-dir";
 import path from "node:path";
-import fs from "node:fs/promises";
+import fs, { statfs } from "node:fs/promises";
 import fsSync from "node:fs";
 import crypto from "node:crypto";
 import { Transform } from "node:stream";
@@ -1000,6 +1000,31 @@ export function registerRomRoutes(app: Express) {
     } catch (err: any) {
       const status = Number(err?.statusCode) || 500;
       res.status(status).json({ message: err?.message ?? "Move operation failed." });
+    }
+  });
+
+  app.get("/api/roms/move-stats", async (_req, res) => {
+    try {
+      const stats = await storage.getRomMoveStats();
+
+      let sourceDisk = null;
+      try {
+        const s = await statfs(ROM_ROOT);
+        sourceDisk = { freeBytes: s.bavail * s.bsize, totalBytes: s.blocks * s.bsize };
+      } catch { /* statfs not available */ }
+
+      const destPath = _req.query.dest ? String(_req.query.dest).trim() : "";
+      let destDisk = null;
+      if (destPath) {
+        try {
+          const s = await statfs(destPath);
+          destDisk = { freeBytes: s.bavail * s.bsize, totalBytes: s.blocks * s.bsize };
+        } catch { /* statfs not available */ }
+      }
+
+      res.json({ ...stats, source: { path: ROM_ROOT, disk: sourceDisk }, dest: destPath ? { path: destPath, disk: destDisk } : null });
+    } catch (err: any) {
+      res.status(500).json({ message: err?.message ?? "Failed to fetch move stats." });
     }
   });
 

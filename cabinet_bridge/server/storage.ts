@@ -137,6 +137,7 @@ export interface IStorage {
   listUploadedRoms(): Promise<UploadedRom[]>;
   listUploadedRomsPaginated(limit: number, offset: number): Promise<UploadedRom[]>;
   countUploadedRoms(): Promise<number>;
+  getRomMoveStats(): Promise<{ total: number; totalSize: number; systems: { system: string; count: number; size: number }[] }>;
   getUploadedRom(id: number): Promise<UploadedRom | undefined>;
   createUploadedRom(rom: InsertUploadedRom): Promise<UploadedRom>;
   deleteUploadedRom(id: number): Promise<UploadedRom | undefined>;
@@ -217,6 +218,21 @@ export class DatabaseStorage implements IStorage {
     }
     const row = db.select({ count: sql<number>`count(*)` }).from(uploadedRoms).get();
     return row?.count ?? 0;
+  }
+  async getRomMoveStats(): Promise<{ total: number; totalSize: number; systems: { system: string; count: number; size: number }[] }> {
+    const totalRow = db.select({
+      count: sql<number>`count(*)`,
+      totalSize: sql<number>`coalesce(sum(${uploadedRoms.size}), 0)`,
+    }).from(uploadedRoms).get();
+    const systems = db.select({
+      system: uploadedRoms.system,
+      count: sql<number>`count(*)`,
+      size: sql<number>`coalesce(sum(${uploadedRoms.size}), 0)`,
+    }).from(uploadedRoms)
+      .groupBy(uploadedRoms.system)
+      .orderBy(uploadedRoms.system)
+      .all();
+    return { total: totalRow?.count ?? 0, totalSize: totalRow?.totalSize ?? 0, systems: systems as any };
   }
   async getUploadedRom(id: number): Promise<UploadedRom | undefined> { return db.select().from(uploadedRoms).where(eq(uploadedRoms.id, id)).get(); }
   async listRomsByDiscGroup(discGroup: string): Promise<UploadedRom[]> { return db.select().from(uploadedRoms).where(eq(uploadedRoms.discGroup, discGroup)).orderBy(uploadedRoms.discNumber).all(); }

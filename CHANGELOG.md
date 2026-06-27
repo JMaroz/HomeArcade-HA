@@ -2,6 +2,19 @@
 
 All notable changes to HomeArcade are documented here.
 
+## [2.49.0] — 2026-06-27
+
+### Feature: Move All ROMs (enhanced)
+
+- **Rich Move Dialog** — The Move All ROMs dialog now displays total ROM count, total file size, per-system breakdown, source directory disk usage, and destination disk usage with low-space warnings before the move starts.
+- **Move Stats API** — New `GET /api/roms/move-stats` endpoint returns all library statistics and filesystem information needed to inform the user.
+
+### API
+
+- `GET /api/roms/move-stats` — Returns `{ total, totalSize, systems[], source: { path, disk }, dest: { path, disk } }`. Accepts optional `?dest=` to include destination disk info.
+
+---
+
 ## [2.48.0] — 2026-06-27
 
 ### Feature: Move All ROMs

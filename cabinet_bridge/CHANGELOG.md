@@ -1,6 +1,14 @@
+## 2.49.0 - 2026-06-27
+
+- **Feature**: **Move All ROMs** - Added a "Move All ROMs" button in the Library Health section (Maintenance Tools) that relocates every ROM file to a user-selected destination directory, organized by system subfolder (`{dest}/{system}/{fileName}`). Includes automatic M3U playlist content rewriting, disc-group sibling moves, and file-collision overwrite. Features a three-phase dialog (pick destination → progress → results summary) with scanner watch paths shown as suggested roots. Dialog now shows total ROM count, total size, per-system breakdown, and source/destination disk usage with low-space warnings.
+
+- **Feature**: **Move Stats API** - Added `GET /api/roms/move-stats` returning total ROM count, total file size, per-system breakdown, and disk usage for both source and destination paths.
+
 ## 2.48.0 - 2026-06-27
 
-- **Feature**: **Move All ROMs** - Added a "Move All ROMs" button in the Library Health section (Maintenance Tools) that relocates every ROM file to a user-selected destination directory, organized by system subfolder (`{dest}/{system}/{fileName}`). Includes automatic M3U playlist content rewriting, disc-group sibling moves, and file-collision overwrite. Features a three-phase dialog (pick destination → progress → results summary) with scanner watch paths shown as suggested roots.
+- **Feature**: **Upload Destination Picker** - Choose a custom directory for uploaded ROMs via the "Change" button in the upload panel. The `POST /api/roms/upload` endpoint accepts an optional `dest` query param (validated against allowed browse roots). Scanner watch paths appear as suggested quick-root buttons in the directory picker.
+
+- **Refactor**: **DirectoryPickerDialog (shared)** - Extracted from `LibrarySettings.tsx` into a reusable shared component with optional `suggestedRoots`, `title`, and `description` props. Added `GET /api/filesystem/suggested-roots` endpoint.
 
 ## 2.47.0 - 2026-06-27
 
