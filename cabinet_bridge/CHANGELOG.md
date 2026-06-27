@@ -1,3 +1,11 @@
+## 2.46.0 - 2026-06-27
+
+- **Feature**: **Upload System Overhaul** - Complete rewrite of the upload pipeline with four interdependent enhancements: (1) auto-detection of console system from file extension, magic bytes, and folder context — no more manual system picker for single-file uploads; (2) enhanced upload status with real-time speed/ETA tracking via sliding window, per-file status table (pending/uploading/uploaded/failed/cancelled/skipped), individual Cancel and Cancel All buttons, and error recovery that continues on per-file failure; (3) duplicate ROM detection with an interactive dialog offering Keep Both / Replace / Skip per-file or apply-all; (4) folder upload via `webkitdirectory` with automatic grouping of multi-file games (CUE/BIN PS1 tracks) and folder-name-based system detection.
+
+- **Feature**: **Libretro-Only Art Matcher** - Replaced ScreenScraper (requires account) and TheGamesDB (requires API key) with a new zero-auth art matching system that scrapes `thumbnails.libretro.com` directory listings. Uses a multi-strategy scorer (exact match, contains fuzzy, token overlap, region bonus) with 24-hour caching. Removed associated `ssUserId`, `ssPassword`, and `tgdbApiKey` fields from schema, settings UI, and locale. Deleted the dead `scraperHelpers.ts` duplicate.
+
+- **Fix**: **BIOS MD5 Checksums** - Corrected 5 incorrect MD5 checksums in `bios-metadata.ts` (SCPH-39001.bin, bios_CD_{U,E,J}.bin, dc_flash.bin) that were silently deleting downloaded BIOS files after mismatch detection.
+
 ## 2.44.0 - 2026-06-26
 
 - **Feature**: **ROM Directory Browser & Scanner Diagnostics** - Added an in-app directory picker dialog for browsing and selecting ROM watch paths in the Library settings. Scanner status now tracks per-path found/imported counts and timestamps. Add-on configuration options (`data_dir`, `rom_watch_dir`) are read from `/data/options.json` for Supervisor UI support.
