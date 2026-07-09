@@ -6,7 +6,7 @@ import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { ensureDriveFolder, uploadToDrive, downloadFromDrive } from "../google-drive";
 import { SAVE_BACKUP_DIR } from "./shared";
-import { getAbsoluteFilePath } from "../utils";
+import { getAbsoluteFilePath } from "./utils";
 
 export function registerVaultRoutes(app: Express) {
   /**

@@ -27,10 +27,10 @@ import Database from "better-sqlite3";
 import { and, desc, eq, sql, sum, count } from "drizzle-orm";
 import { dataPath, ensureDir, getDataDir } from "./data-dir";
 import { log } from "./log";
-import { getAbsoluteFilePath } from "./utils";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import crypto from "node:crypto";
 import { REQUIRED_BIOS } from "@shared/bios-metadata";
 import { slugify } from "./routes/utils";
@@ -208,6 +208,32 @@ export interface IStorage {
 }
 
 const INTEGRATION_SETTINGS_KEY = "integration";
+
+function getAbsoluteFilePath(
+  rom: { filePath: string; system: string; fileName: string },
+  watchPaths: string[]
+): string {
+  const directPath = path.resolve(rom.filePath);
+  if (existsSync(directPath)) {
+    return directPath;
+  }
+
+  const normalisedPath = rom.filePath.replace(/\\/g, "/");
+  const sysSegment = `/${rom.system.toLowerCase()}/`;
+  const sysIdx = normalisedPath.toLowerCase().indexOf(sysSegment);
+
+  if (sysIdx !== -1) {
+    const relativePath = normalisedPath.slice(sysIdx + 1);
+    for (const wp of watchPaths) {
+      const localPath = path.resolve(wp, relativePath);
+      if (existsSync(localPath)) {
+        return localPath;
+      }
+    }
+  }
+
+  return directPath;
+}
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> { return db.select().from(users).where(eq(users.id, id)).get(); }
