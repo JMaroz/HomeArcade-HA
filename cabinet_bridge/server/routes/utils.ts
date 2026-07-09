@@ -1,6 +1,7 @@
 import path from "node:path";
 import zlib from "node:zlib";
 import { getAbsoluteFilePath } from "../utils";
+export { getAbsoluteFilePath };
 import { ROM_EXTENSIONS } from "./shared";
 import { FOLDER_TO_SYSTEM } from "../scanner";
 
