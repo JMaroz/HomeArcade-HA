@@ -18,6 +18,7 @@ import { Sparkles, ScanLine, Loader2, FolderOpen, ImageIcon, RefreshCw, ChevronL
 import { RomUpload } from "@/components/RomUpload";
 import { DirectoryPickerDialog } from "@/components/DirectoryPickerDialog";
 import { MoveAllRomsDialog } from "@/components/MoveAllRomsDialog";
+import { StorageOverview } from "@/components/StorageOverview";
 import { Section } from "./SettingsShared";
 import { Trash2 } from "lucide-react";
 import type { SmartFilterRules } from "@shared/schema";
@@ -46,6 +47,8 @@ interface VaultHealth {
   missingYear: number;
   missingGenre: number;
   failedScrapes: number;
+  unplayed: number;
+  duplicateGroups: number;
 }
 
 interface VaultAudit {
@@ -497,6 +500,9 @@ function LibraryHealthSection() {
       </Section>
 
       <Separator className="bg-border/60" />
+      <StorageOverview />
+
+      <Separator className="bg-border/60" />
       <Section title="Maintenance Tools" description="Automated workflows to repair and optimize your library.">
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-4 p-5 rounded-xl border border-border bg-sidebar/20">
@@ -527,6 +533,63 @@ function LibraryHealthSection() {
             <Button onClick={() => setMoveAllOpen(true)} variant="outline" className="w-full gap-2 font-black uppercase text-[10px] tracking-widest h-10 border-accent/20 hover:bg-accent/10 hover:text-accent">
               <FolderOpen className="size-3.5" />
               Move all ROMs to…
+            </Button>
+          </div>
+          <div className="flex flex-col gap-4 p-5 rounded-xl border border-border bg-sidebar/20">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <Copy className="size-5 text-amber-500" />
+              </div>
+              <div>
+                <div className="font-display font-bold text-sm">Remove Duplicates</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Remove duplicate database entries for ROMs with identical hashes.</div>
+              </div>
+            </div>
+            <Button onClick={async () => {
+              if (!confirm(`Delete ${health?.duplicateGroups ?? 0} duplicate groups? The first entry per hash will be kept.`)) return;
+              await apiRequest("POST", "/api/vault/dedup");
+              void refetchHealth();
+            }} variant="outline" disabled={!health?.duplicateGroups} className="w-full gap-2 font-black uppercase text-[10px] tracking-widest h-10 border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-500">
+              <Copy className="size-3.5" />
+              {health?.duplicateGroups ? `Remove ${health.duplicateGroups} Duplicate Groups` : "No Duplicates Found"}
+            </Button>
+          </div>
+          <div className="flex flex-col gap-4 p-5 rounded-xl border border-border bg-sidebar/20">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <FileText className="size-5 text-blue-500" />
+              </div>
+              <div>
+                <div className="font-display font-bold text-sm">Clean Unplayed ROMs</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Remove ROMs that have never been played (files + database entries).</div>
+              </div>
+            </div>
+            <Button onClick={async () => {
+              if (!confirm(`Delete ${health?.unplayed ?? 0} unplayed ROMs? This removes files and database entries.`)) return;
+              await apiRequest("POST", "/api/vault/delete-unplayed");
+              void refetchHealth();
+            }} variant="outline" disabled={!health?.unplayed} className="w-full gap-2 font-black uppercase text-[10px] tracking-widest h-10 border-blue-500/20 hover:bg-blue-500/10 hover:text-blue-500">
+              <FileText className="size-3.5" />
+              {health?.unplayed ? `Remove ${health.unplayed} Unplayed ROMs` : "All ROMs Played"}
+            </Button>
+          </div>
+          <div className="flex flex-col gap-4 p-5 rounded-xl border border-border bg-sidebar/20">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="size-5 text-destructive" />
+              </div>
+              <div>
+                <div className="font-display font-bold text-sm">Clear Failed Scrapes</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Remove ROMs that failed to scrape (files + database entries).</div>
+              </div>
+            </div>
+            <Button onClick={async () => {
+              if (!confirm(`Delete ${health?.failedScrapes ?? 0} failed scrape ROMs? This removes files and database entries.`)) return;
+              await apiRequest("POST", "/api/vault/delete-failed");
+              void refetchHealth();
+            }} variant="outline" disabled={!health?.failedScrapes} className="w-full gap-2 font-black uppercase text-[10px] tracking-widest h-10 border-destructive/20 hover:bg-destructive/10 hover:text-destructive">
+              <AlertCircle className="size-3.5" />
+              {health?.failedScrapes ? `Remove ${health.failedScrapes} Failed Scrapes` : "No Failed Scrapes"}
             </Button>
           </div>
         </div>

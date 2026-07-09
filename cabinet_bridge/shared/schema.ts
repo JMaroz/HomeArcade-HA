@@ -119,6 +119,15 @@ export type GameCollectionWithItems = GameCollection & {
   smartFilter?: SmartFilterRules;
 };
 
+export interface StorageSnapshot {
+  totalRoms: number;
+  totalSize: number;
+  bySystem: { system: string; count: number; size: number }[];
+  romStorage: { path: string; usedBytes: number; disk: { freeBytes: number; totalBytes: number } | null };
+  watchPaths: { path: string; count: number; size: number; imported: number }[];
+  systemImageCache: { path: string; size: number };
+}
+
 export const appSettings = sqliteTable("app_settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),

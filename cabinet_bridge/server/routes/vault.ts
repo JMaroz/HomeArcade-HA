@@ -17,6 +17,11 @@ export function registerVaultRoutes(app: Express) {
     try {
       const roms = await storage.listUploadedRoms();
       const bios = await storage.getBiosStatus();
+      const [unplayed, duplicateGroups, failedScrapes] = await Promise.all([
+        storage.countUnplayedRoms(),
+        storage.getDuplicateGroups(),
+        storage.countFailedScrapes(),
+      ]);
       
       const summary = {
         total: roms.length,
@@ -24,13 +29,123 @@ export function registerVaultRoutes(app: Express) {
         missingDescription: roms.filter(r => !r.description).length,
         missingYear: roms.filter(r => !r.releaseYear).length,
         missingGenre: roms.filter(r => !r.genre).length,
-        failedScrapes: roms.filter(r => r.scrapeStatus === "failed").length,
+        failedScrapes,
+        unplayed,
+        duplicateGroups: duplicateGroups.length,
         bios,
       };
 
+      log(`Vault health: ${summary.total} ROMs, ${summary.failedScrapes} failed, ${summary.unplayed} unplayed, ${summary.duplicateGroups} dup groups`, "vault");
       res.json(summary);
     } catch (err: any) {
       log(`Vault health failed: ${err.message}`, "vault");
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  /**
+   * Storage Snapshot
+   * Returns a complete overview of ROM storage: total size, per-system
+   * breakdown, disk usage, watch-path file counts, and cache sizes.
+   */
+  app.get("/api/vault/storage-snapshot", async (_req, res) => {
+    try {
+      const snapshot = await storage.getStorageSnapshot();
+      res.json(snapshot);
+    } catch (err: any) {
+      log(`Storage snapshot failed: ${err.message}`, "vault");
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  /**
+   * Batch Deduplicate
+   * Removes duplicate database entries (keeps the first entry per hash).
+   * Does not delete the actual file on disk.
+   */
+  app.post("/api/vault/dedup", async (_req, res) => {
+    try {
+      const result = await storage.deleteDuplicateRoms();
+      log(`Vault dedup: removed ${result.deletedCount} entries, kept ${result.keptCount} groups`, "vault");
+      res.json({ success: true, ...result });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  /**
+   * Batch Delete Unplayed
+   * Removes ROM files and database entries for unplayed games.
+   * Optional query param ?system= to scope to one system.
+   */
+  app.post("/api/vault/delete-unplayed", async (req, res) => {
+    try {
+      const system = req.query.system ? String(req.query.system) : undefined;
+      const roms = await storage.listUploadedRoms();
+      const toDelete = roms.filter(r => {
+        const isUnplayed = r.minutesPlayed == null || r.minutesPlayed === 0;
+        return system ? isUnplayed && r.system === system : isUnplayed;
+      });
+
+      let deletedCount = 0;
+      for (const rom of toDelete) {
+        const removed = await storage.deleteUploadedRomWithFile(rom.id);
+        if (removed) deletedCount++;
+      }
+
+      log(`Vault delete-unplayed: removed ${deletedCount} entries (system: ${system ?? "all"})`, "vault");
+      res.json({ success: true, deletedCount });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  /**
+   * Batch Delete Failed Scrapes
+   * Removes ROM files and database entries where scraping failed.
+   */
+  app.post("/api/vault/delete-failed", async (_req, res) => {
+    try {
+      const roms = await storage.listUploadedRoms();
+      const failed = roms.filter(r => r.scrapeStatus === "failed");
+
+      let deletedCount = 0;
+      for (const rom of failed) {
+        const removed = await storage.deleteUploadedRomWithFile(rom.id);
+        if (removed) deletedCount++;
+      }
+
+      log(`Vault delete-failed: removed ${deletedCount} entries`, "vault");
+      res.json({ success: true, deletedCount });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  /**
+   * Batch Delete by System
+   * Removes all ROM files and database entries for a given system.
+   */
+  app.post("/api/vault/delete-system", async (req, res) => {
+    try {
+      const system = req.body?.system as string | undefined;
+      if (!system) {
+        res.status(400).json({ message: "Missing system in request body." });
+        return;
+      }
+
+      const roms = await storage.listUploadedRoms();
+      const toDelete = roms.filter(r => r.system === system);
+
+      let deletedCount = 0;
+      for (const rom of toDelete) {
+        const removed = await storage.deleteUploadedRomWithFile(rom.id);
+        if (removed) deletedCount++;
+      }
+
+      log(`Vault delete-system: removed ${deletedCount} entries for system ${system}`, "vault");
+      res.json({ success: true, system, deletedCount });
+    } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
   });

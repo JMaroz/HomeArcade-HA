@@ -47,14 +47,16 @@ SQLite via better-sqlite3 + Drizzle. Schema: `shared/schema.ts`. Migrations: `mi
 ## Commit Style
 Short imperative subjects with prefixes: `fix:`, `feat:`, `chore:`, `bump:`, `test:`, `ui:`.
 
-## Session State (last active: 2026-06-27)
-- **Latest commit**: `5329133` — overhaul upload system (auto-detect, status/ETA/cancel, duplicates dialog, folder upload)
-- **Upload system overhaul (4 phases)**:
-  1. **Auto-detect**: `detectSystemFromContent()` with extension + magic-byte + folder-name detection; `POST /api/upload/detect` endpoint; client auto-selects with confidence badges
-  2. **Enhanced status**: speed/ETA sliding window, per-file status table (pending/uploading/uploaded/failed/cancelled/skipped), Cancel All, error recovery (continues on per-file failure)
-  3. **Duplicates**: `DuplicateDialog` (Keep Both / Replace / Skip per-file + apply-all), `POST /api/upload/check-duplicates`, `POST /api/roms/:id/replace`, storage `findRomBy*` + `updateUploadedRomFile`
-  4. **Folder upload**: `webkitdirectory` support, folder→system detection, discGroup linking for multi-file (CUE/BIN) games
-- **Prior**: Libretro-only art matcher (Feb 27), BIOS MD5 fix (Feb 27), ScreenScraper/TheGamesDB removed
+## Session State (last active: 2026-07-09)
+- **Latest commit**: `da4b304` — move stats endpoint and rich dialog with ROM/disk info
+- **Move All ROMs (enhanced)**: Rich dialog with ROM count, size, per-system breakdown, source/dest disk usage, low-space warnings. `GET /api/roms/move-stats` endpoint.
+- **Bulk Cleanup Tools (new)**: Three new maintenance cards in Library Health → Maintenance Tools:
+  - **Remove Duplicates** — `POST /api/vault/dedup` (DB-only dedup, keeps first entry per hash)
+  - **Clean Unplayed ROMs** — `POST /api/vault/delete-unplayed` (removes files + DB entries)
+  - **Clear Failed Scrapes** — `POST /api/vault/delete-failed` (removes files + DB entries)
+  - Health endpoint extended with `unplayed` and `duplicateGroups` counts
+- **Storage layer**: `IStorage` interface extended with `getDuplicateGroups`, `countUnplayedRoms`, `countFailedScrapes`, `deleteDuplicateRoms`, `deleteUnplayedRoms`, `deleteFailedScrapes`, `deleteUploadedRomWithFile`
+- **Prior**: Multi-disc M3U support, vault merge, RA descriptions, infinite scroll; upload destination picker; upload overhaul (auto-detect, status, duplicates, folder upload)
 - **Pre-existing failures**: `release-health.test.ts` (changelog not updated per release); `scale.test.ts` sort benchmark flake
-- **Version**: 2.46.0 (bumped and tagged `v2.46.0`)
+- **Version**: 2.49.0
 - **Pending**: —

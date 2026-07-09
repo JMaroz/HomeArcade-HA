@@ -18,6 +18,7 @@ import type {
   InsertUser,
   SmartFilterRules,
   UserProfile,
+  StorageSnapshot,
 } from '@shared/schema';
 import { DEFAULT_INTEGRATION_SETTINGS, integrationSettingsSchema } from '@shared/schema';
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -193,6 +194,16 @@ export interface IStorage {
   listActivityLog(limit?: number): Promise<any[]>;
   addActivityLogEntry(entry: any): Promise<any>;
   clearActivityLog(): Promise<void>;
+
+  // Bulk cleanup methods
+  getDuplicateGroups(): Promise<{ romHash: string; ids: number[]; count: number }[]>;
+  countUnplayedRoms(system?: string): Promise<number>;
+  countFailedScrapes(): Promise<number>;
+  deleteDuplicateRoms(): Promise<{ deletedCount: number; keptCount: number }>;
+  deleteUnplayedRoms(system?: string): Promise<{ deletedCount: number }>;
+  deleteFailedScrapes(): Promise<{ deletedCount: number }>;
+  deleteUploadedRomWithFile(id: number): Promise<UploadedRom | undefined>;
+  getStorageSnapshot(): Promise<StorageSnapshot>;
 }
 
 const INTEGRATION_SETTINGS_KEY = "integration";
@@ -289,6 +300,27 @@ export class DatabaseStorage implements IStorage {
     db.delete(romSaveSlots).where(eq(romSaveSlots.romId, id)).run();
     db.delete(uploadedRoms).where(eq(uploadedRoms.id, id)).run();
     return rom;
+  }
+
+  async deleteUploadedRomWithFile(id: number): Promise<UploadedRom | undefined> {
+    const rom = await this.getUploadedRom(id);
+    if (!rom) return undefined;
+
+    const settings = await this.getIntegrationSettings();
+    const watchPaths = (settings.libraryWatchPaths ?? "")
+      .split(",")
+      .map((p) => path.resolve(p.trim()))
+      .filter(Boolean);
+    const resolvedPath = getAbsoluteFilePath(rom, watchPaths);
+
+    try {
+      await fs.unlink(resolvedPath);
+      log(`Deleted file: ${resolvedPath}`, "storage");
+    } catch {
+      log(`File not found (skipping unlink): ${resolvedPath}`, "storage");
+    }
+
+    return this.deleteUploadedRom(id);
   }
   async updateUploadedRomArt(id: number, art: any): Promise<UploadedRom | undefined> { return db.update(uploadedRoms).set(art).where(eq(uploadedRoms.id, id)).returning().get(); }
   async updateUploadedRomPlayStatus(id: number, status: string): Promise<UploadedRom | undefined> { return db.update(uploadedRoms).set({ playStatus: status }).where(eq(uploadedRoms.id, id)).returning().get(); }
@@ -626,6 +658,317 @@ export class DatabaseStorage implements IStorage {
       );
     }
     return status;
+  }
+
+  // Phase 1: Storage Snapshot and Bulk Cleanup Methods
+
+  async getDuplicateGroups(): Promise<{ romHash: string; ids: number[]; count: number }[]> {
+    const groups = db.select({
+      romHash: uploadedRoms.romHash,
+      ids: sql`group_concat(${uploadedRoms.id})`,
+      count: sql`count(*)`,
+    }).from(uploadedRoms)
+      .where(sql`${uploadedRoms.romHash} IS NOT NULL`)
+      .groupBy(uploadedRoms.romHash)
+      .having(sql`count(*) > 1`)
+      .all();
+
+    return groups.map(g => ({
+      romHash: g.romHash,
+      ids: g.ids ? g.ids.split(",").map(Number) : [],
+      count: g.count
+    })) as any;
+  }
+
+  async countUnplayedRoms(system?: string): Promise<number> {
+    const query = db.select({ count: sql<number>`count(*)` }).from(uploadedRoms)
+      .where(sql`(${uploadedRoms.minutesPlayed} IS NULL OR ${uploadedRoms.minutesPlayed} = 0)`);
+
+    if (system) {
+      query.where(and(eq(uploadedRoms.system, system), sql`(${uploadedRoms.minutesPlayed} IS NULL OR ${uploadedRoms.minutesPlayed} = 0)`));
+    }
+
+    const row = query.get();
+    return row?.count ?? 0;
+  }
+
+  async countFailedScrapes(): Promise<number> {
+    const row = db.select({ count: sql<number>`count(*)` }).from(uploadedRoms)
+      .where(eq(uploadedRoms.scrapeStatus, "failed"))
+      .get();
+    return row?.count ?? 0;
+  }
+
+  async deleteRomsBySystem(system: string): Promise<{ deletedCount: number }> {
+    const roms = await this.listRomsBySystem(system);
+    const deletedCount = roms.length;
+
+    for (const rom of roms) {
+      await this.deleteUploadedRom(rom.id);
+    }
+
+    return { deletedCount };
+  }
+
+  async deleteDuplicateRoms(): Promise<{ deletedCount: number; keptCount: number }> {
+    const groups = await this.getDuplicateGroups();
+    let deletedCount = 0;
+    let keptCount = 0;
+
+    for (const group of groups) {
+      if (group.ids.length <= 1) continue;
+      const [idToKeep] = group.ids;
+      for (let i = 1; i < group.ids.length; i++) {
+        const idToDelete = group.ids[i];
+        await this.deleteUploadedRom(idToDelete);
+        deletedCount++;
+      }
+      keptCount++;
+    }
+
+    return { deletedCount, keptCount };
+  }
+
+  async deleteUnplayedRoms(system?: string): Promise<{ deletedCount: number }> {
+    const roms = await this.listUploadedRoms();
+    const toDelete = roms.filter(rom => {
+      const isUnplayed = rom.minutesPlayed == null || rom.minutesPlayed === 0;
+      return system ? isUnplayed && rom.system === system : isUnplayed;
+    });
+
+    for (const rom of toDelete) {
+      await this.deleteUploadedRom(rom.id);
+    }
+
+    return { deletedCount: toDelete.length };
+  }
+
+  async deleteFailedScrapes(): Promise<{ deletedCount: number }> {
+    const roms = await this.listUploadedRoms();
+    const toDelete = roms.filter(rom => rom.scrapeStatus === "failed");
+
+    for (const rom of toDelete) {
+      await this.deleteUploadedRom(rom.id);
+    }
+
+    return { deletedCount: toDelete.length };
+  }
+
+  async listRomsBySystem(system: string): Promise<UploadedRom[]> {
+    return db.select().from(uploadedRoms).where(eq(uploadedRoms.system, system)).all();
+  }
+
+  async getStorageSnapshot(): Promise<StorageSnapshot> {
+    const roms = await this.listUploadedRoms();
+    log(`Storage snapshot: processing ${roms.length} ROMs`, "storage");
+    const settings = await this.getIntegrationSettings();
+    const watchPaths = (settings.libraryWatchPaths ?? "")
+      .split(",")
+      .map((p) => path.resolve(p.trim()))
+      .filter(Boolean);
+    log(`Storage snapshot: ${watchPaths.length} watch paths`, "storage");
+
+    let romStorageSize = 0;
+    const bySystem = await this.getRomMoveStats().then(stats => stats.systems);
+
+    let statErrors = 0;
+    for (const rom of roms) {
+      const absPath = getAbsoluteFilePath(rom, watchPaths);
+      try {
+        const stat = await fs.stat(absPath);
+        romStorageSize += stat.size;
+      } catch {
+        statErrors++;
+      }
+    }
+    if (statErrors > 0) log(`Storage snapshot: ${statErrors} ROMs had no file on disk`, "storage");
+
+    const romStorage: StorageSnapshot["romStorage"] = {
+      path: ROM_ROOT,
+      usedBytes: romStorageSize,
+      disk: null,
+    };
+
+    const watchPathsSnapshot: StorageSnapshot["watchPaths"] = await Promise.all(
+      watchPaths.map(async (watchPath) => {
+        let count = 0;
+        let size = 0;
+
+        try {
+          const entries = await fs.readdir(watchPath, { withFileTypes: true });
+          for (const entry of entries) {
+            const fullPath = path.join(watchPath, entry.name);
+            if (entry.isDirectory()) {
+              const subEntries = await fs.readdir(fullPath, { withFileTypes: true });
+              count += subEntries.length;
+              size += await this.getDirectorySize(fullPath);
+            } else {
+              count++;
+              size += entry.stat ? entry.stat.size : await fs.stat(fullPath).then(s => s.size);
+            }
+          }
+        } catch {
+          log(`Storage snapshot: could not read watch path ${watchPath}`, "storage");
+        }
+
+        return { path: watchPath, count, size, imported: 0 };
+      })
+    );
+
+    const cachePath = path.join(SAVE_BACKUP_DIR, "system-image-cache");
+    let cacheSize = 0;
+    try {
+      cacheSize = await this.getDirectorySize(cachePath);
+    } catch {
+      log(`Storage snapshot: could not read cache path ${cachePath}`, "storage");
+    }
+
+    const systemImageCache: StorageSnapshot["systemImageCache"] = {
+      path: cachePath,
+      size: cacheSize
+    };
+
+    log(`Storage snapshot: totalSize=${romStorageSize} bytes, ${bySystem.length} systems, ${watchPathsSnapshot.length} watch paths, cache=${cacheSize} bytes`, "storage");
+
+    return {
+      totalRoms: roms.length,
+      totalSize: bySystem.reduce((acc, sys) => acc + sys.size, 0),
+      bySystem,
+      romStorage,
+      watchPaths: watchPathsSnapshot,
+      systemImageCache,
+    };
+  }
+
+  async getDirectorySize(dirPath: string): Promise<number> {
+    let size = 0;
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+
+      if (entry.isDirectory()) {
+        const subDirSize = await this.getDirectorySize(fullPath);
+        size += subDirSize;
+      } else if (entry.isFile()) {
+        try {
+          const stat = await fs.stat(fullPath);
+          size += stat.size;
+        } catch {}
+      }
+    }
+
+    return size;
+  }
+
+  async deleteRomFilesBySystem(system: string): Promise<{ deleted: number; failed: number }> {
+    const settings = await this.getIntegrationSettings();
+    const watchPaths = (settings.libraryWatchPaths ?? "")
+      .split(",")
+      .map((p) => path.resolve(p.trim()))
+      .filter(Boolean);
+
+    const roms = await this.listRomsBySystem(system);
+    let deleted = 0;
+    let failed = 0;
+
+    for (const rom of roms) {
+      const resolvedPath = getAbsoluteFilePath(rom, watchPaths);
+      try {
+        await fs.unlink(resolvedPath);
+        deleted++;
+      } catch {
+        failed++;
+      }
+    }
+
+    return { deleted, failed };
+  }
+
+  async deleteDuplicateFiles(): Promise<{ deleted: number; failed: number }> {
+    const groups = await this.getDuplicateGroups();
+    let deleted = 0;
+    let failed = 0;
+
+    for (const group of groups) {
+      if (group.ids.length <= 1) continue;
+
+      for (let i = 1; i < group.ids.length; i++) {
+        const rom = await this.getUploadedRom(group.ids[i]);
+        if (!rom) continue;
+
+        const settings = await this.getIntegrationSettings();
+        const watchPaths = (settings.libraryWatchPaths ?? "")
+          .split(",")
+          .map((p) => path.resolve(p.trim()))
+          .filter(Boolean);
+        const resolvedPath = getAbsoluteFilePath(rom, watchPaths);
+
+        try {
+          await fs.unlink(resolvedPath);
+          deleted++;
+        } catch {
+          failed++;
+        }
+      }
+    }
+
+    return { deleted, failed };
+  }
+
+  async deleteUnplayedFiles(system?: string): Promise<{ deleted: number; failed: number }> {
+    const settings = await this.getIntegrationSettings();
+    const watchPaths = (settings.libraryWatchPaths ?? "")
+      .split(",")
+      .map((p) => path.resolve(p.trim()))
+      .filter(Boolean);
+
+    const roms = await this.listUploadedRoms();
+    const toDelete = roms.filter(rom => {
+      const isUnplayed = rom.minutesPlayed == null || rom.minutesPlayed === 0;
+      return system ? isUnplayed && rom.system === system : isUnplayed;
+    });
+
+    let deleted = 0;
+    let failed = 0;
+
+    for (const rom of toDelete) {
+      const resolvedPath = getAbsoluteFilePath(rom, watchPaths);
+      try {
+        await fs.unlink(resolvedPath);
+        deleted++;
+      } catch {
+        failed++;
+      }
+    }
+
+    return { deleted, failed };
+  }
+
+  async deleteFailedFiles(): Promise<{ deleted: number; failed: number }> {
+    const settings = await this.getIntegrationSettings();
+    const watchPaths = (settings.libraryWatchPaths ?? "")
+      .split(",")
+      .map((p) => path.resolve(p.trim()))
+      .filter(Boolean);
+
+    const roms = await this.listUploadedRoms();
+    const failedRoms = roms.filter(rom => rom.scrapeStatus === "failed");
+
+    let deleted = 0;
+    let failed = 0;
+
+    for (const rom of failedRoms) {
+      const resolvedPath = getAbsoluteFilePath(rom, watchPaths);
+      try {
+        await fs.unlink(resolvedPath);
+        deleted++;
+      } catch {
+        failed++;
+      }
+    }
+
+    return { deleted, failed };
   }
 }
 
