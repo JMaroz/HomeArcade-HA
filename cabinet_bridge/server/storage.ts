@@ -34,7 +34,7 @@ import { existsSync } from "node:fs";
 import crypto from "node:crypto";
 import { REQUIRED_BIOS } from "@shared/bios-metadata";
 import { slugify } from "./routes/utils";
-import { ROM_ROOT } from "./routes/shared";
+import { ROM_ROOT, SAVE_BACKUP_DIR } from "./routes/shared";
 
 export let sqlite: Database.Database;
 export let db: any;

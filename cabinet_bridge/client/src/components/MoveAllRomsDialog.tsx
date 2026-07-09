@@ -153,7 +153,7 @@ export function MoveAllRomsDialog({ open, onOpenChange }: { open: boolean; onOpe
                 <>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 rounded-lg border border-white/5 bg-white/[0.02]">
-                      <div className="text-lg font-black text-foreground">{stats.total.toLocaleString()}</div>
+                      <div className="text-lg font-black text-foreground">{(stats.total ?? 0).toLocaleString()}</div>
                       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Total ROMs</div>
                     </div>
                     <div className="p-3 rounded-lg border border-white/5 bg-white/[0.02]">
