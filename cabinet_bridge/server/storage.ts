@@ -27,6 +27,7 @@ import Database from "better-sqlite3";
 import { and, desc, eq, sql, sum, count } from "drizzle-orm";
 import { dataPath, ensureDir, getDataDir } from "./data-dir";
 import { log } from "./log";
+import { getAbsoluteFilePath } from "./utils";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
