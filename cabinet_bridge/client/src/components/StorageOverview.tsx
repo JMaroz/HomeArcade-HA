@@ -91,7 +91,7 @@ export function StorageOverview() {
 
   if (!data) return null;
 
-  const diskPct = data.romStorage.disk
+  const diskPct = data.romStorage?.disk
     ? ((data.romStorage.disk.totalBytes - data.romStorage.disk.freeBytes) / data.romStorage.disk.totalBytes * 100).toFixed(0)
     : null;
 
@@ -109,28 +109,28 @@ export function StorageOverview() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={<Database className="size-3.5" />} label="Total ROMs" value={data.totalRoms.toLocaleString()} sub={`${data.bySystem.length} systems`} />
-        <StatCard icon={<HardDrive className="size-3.5" />} label="Total Size" value={fmtBytes(data.totalSize)} sub="Across all ROMs" />
+        <StatCard icon={<Database className="size-3.5" />} label="Total ROMs" value={(data.totalRoms ?? 0).toLocaleString()} sub={`${(data.bySystem ?? []).length} systems`} />
+        <StatCard icon={<HardDrive className="size-3.5" />} label="Total Size" value={fmtBytes(data.totalSize ?? 0)} sub="Across all ROMs" />
         <StatCard
           icon={<FolderOpen className="size-3.5" />}
           label="ROM Storage"
-          value={fmtBytes(data.romStorage.usedBytes)}
-          sub={diskPct !== null ? `${diskPct}% used of ${fmtBytes(data.romStorage.disk!.totalBytes)}` : data.romStorage.path}
+          value={fmtBytes(data.romStorage?.usedBytes ?? 0)}
+          sub={diskPct !== null ? `${diskPct}% used of ${fmtBytes(data.romStorage?.disk!.totalBytes ?? 0)}` : data.romStorage?.path ?? ""}
         />
         <StatCard
           icon={<ImageIcon className="size-3.5" />}
           label="Image Cache"
-          value={fmtBytes(data.systemImageCache.size)}
-          sub={data.systemImageCache.path}
+          value={fmtBytes(data.systemImageCache?.size ?? 0)}
+          sub={data.systemImageCache?.path ?? ""}
         />
       </div>
 
-      {data.bySystem.length > 0 && (
+      {(data.bySystem ?? []).length > 0 && (
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
           <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Breakdown by System</div>
           <ScrollArea className="max-h-56">
             <div className="space-y-0.5">
-              {data.bySystem.map((sys) => (
+              {(data.bySystem ?? []).map((sys) => (
                 <div key={sys.system} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-white/[0.02] group">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="size-1.5 rounded-full bg-accent shrink-0" />
@@ -158,11 +158,11 @@ export function StorageOverview() {
         </div>
       )}
 
-      {data.watchPaths.length > 0 && (
+      {(data.watchPaths ?? []).length > 0 && (
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
           <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Watch Paths</div>
           <div className="space-y-2">
-            {data.watchPaths.map((wp) => (
+            {(data.watchPaths ?? []).map((wp) => (
               <div key={wp.path} className="flex items-center justify-between py-2 px-3 rounded-lg border border-white/5 bg-white/[0.01]">
                 <div className="min-w-0 flex-1">
                   <p className="font-mono text-[11px] text-foreground truncate">{wp.path}</p>
@@ -178,7 +178,7 @@ export function StorageOverview() {
 
       <Separator className="bg-white/5" />
 
-      {data.romStorage.disk && (
+      {data.romStorage?.disk && (
         <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground justify-center">
           <HardDrive className="size-3" />
           {data.romStorage.path} — {fmtBytes(data.romStorage.disk.freeBytes)} free / {fmtBytes(data.romStorage.disk.totalBytes)} total
