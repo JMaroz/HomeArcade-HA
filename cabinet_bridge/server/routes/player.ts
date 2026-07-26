@@ -55,8 +55,9 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
         appearance: none; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px;
         background: rgba(5, 5, 7, 0.65); color: #f8fafc; cursor: pointer; font: 800 11px ui-monospace, monospace;
         letter-spacing: 0.14em; min-height: 46px; padding: 0 18px; text-transform: uppercase;
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.42); backdrop-filter: blur(12px); transition: all 180ms ease;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.42); backdrop-filter: blur(12px); transition: opacity 300ms ease, transform 180ms ease, background 180ms ease, border-color 180ms ease;
       }
+      .cabinet-menu-button.is-hidden { opacity: 0 !important; pointer-events: none !important; }
       .cabinet-menu-button:hover, .cabinet-menu-button[aria-expanded="true"] {
         background: rgba(236, 72, 153, 0.36); border-color: rgba(236, 72, 153, 0.78); outline: none;
       }
@@ -180,6 +181,7 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
       .cabinet-menu-btn-wide { appearance: none; width: 100%; height: 48px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.8); cursor: pointer; font: 900 10px ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.1em; transition: all 150ms ease; }
       .cabinet-menu-btn-wide:hover { background: rgba(255, 255, 255, 0.08); color: #fff; border-color: rgba(255, 255, 255, 0.18); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
       .cabinet-menu-btn-wide.danger:hover { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border-color: rgba(239, 68, 68, 0.35); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12); }
+      .cabinet-menu-tile:focus-visible, .cabinet-menu-btn-wide:focus-visible, .cabinet-menu-button:focus-visible { outline: 3px solid #ec4899 !important; outline-offset: 3px !important; box-shadow: 0 0 0 6px rgba(236, 72, 153, 0.25), 0 12px 30px rgba(0, 0, 0, 0.4) !important; transform: translateY(-2px) scale(1.03); }
 
       /* Forced Menu Hide for Default EmulatorJS */
       #emulator-parent > div[style*="z-index: 1001"], .ejs-menu, .ejs-overlay, div[class*="overlay-menu"] {
@@ -587,6 +589,10 @@ export function renderEmulatorPage({ title, returnTo, romHash, queryString, syst
               <span class="cabinet-setting-label">HD Mode (Upscale)</span>
               <input type="checkbox" class="cabinet-toggle" id="cabinet-set-hd" />
            </div>
+           <div class="cabinet-setting-row">
+              <span class="cabinet-setting-label">Force Pad</span>
+              <input type="checkbox" class="cabinet-toggle" id="cabinet-set-force-pad" />
+           </div>
         </div>
 
         <div class="cabinet-menu-footer">
@@ -839,13 +845,21 @@ function cabinetSetupVirtualPad() {
   var sizeSlider = document.getElementById("cabinet-set-vpad-scale");
   var opacitySlider = document.getElementById("cabinet-set-vpad-opacity");
   if (!pad || !toggle) return;
-  var visible = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  var hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  var forcePad = localStorage.getItem("cabinet_force_pad") === "true";
+  var visible = (hasTouch && !window.__gamepadConnected) || forcePad;
 
   function setPadVisible(v) {
     visible = v;
     pad.classList.toggle("is-visible", v);
     toggle.setAttribute("aria-pressed", v ? "true" : "false");
   }
+
+  window.__onGamepadChange = function(connected) {
+    var fp = localStorage.getItem("cabinet_force_pad") === "true";
+    var ht = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    setPadVisible(fp || (ht && !connected));
+  };
 
   var savedScale = localStorage.getItem("cabinet_vpad_scale") || "1";
   var savedOpacity = localStorage.getItem("cabinet_vpad_opacity") || "1";
@@ -863,6 +877,17 @@ function cabinetSetupVirtualPad() {
     document.documentElement.style.setProperty("--vpad-opacity", opacitySlider.value);
     localStorage.setItem("cabinet_vpad_opacity", opacitySlider.value);
   };
+
+  var forcePadToggle = document.getElementById("cabinet-set-force-pad");
+  if (forcePadToggle) {
+    forcePadToggle.checked = localStorage.getItem("cabinet_force_pad") === "true";
+    forcePadToggle.onchange = function() {
+      localStorage.setItem("cabinet_force_pad", forcePadToggle.checked);
+      if (typeof window.__onGamepadChange === "function") {
+        window.__onGamepadChange(window.__gamepadConnected);
+      }
+    };
+  }
 
   pad.querySelectorAll("button").forEach(function(btn) {
     btn.onpointerdown = function(e) {
@@ -1166,6 +1191,53 @@ function cabinetSetupMenu() {
     hdToggle.checked = localStorage.getItem("cabinet_hd_mode") === "true";
     hdToggle.onchange = function() { localStorage.setItem("cabinet_hd_mode", hdToggle.checked); cabinetToast("HD Mode Updated"); };
   }
+
+  // ── Auto-hide menu button after 3s inactivity (TV-friendly) ──
+  var menuBtn = document.getElementById("cabinet-menu-toggle");
+  var menuHideTimer = null;
+  function resetMenuBtnTimer() {
+    if (menuBtn) { menuBtn.classList.remove("is-hidden"); }
+    clearTimeout(menuHideTimer);
+    menuHideTimer = setTimeout(function() {
+      if (menuBtn && !panel.classList.contains("is-open")) {
+        menuBtn.classList.add("is-hidden");
+      }
+    }, 3000);
+  }
+  function showMenuBtn() {
+    if (menuBtn) { menuBtn.classList.remove("is-hidden"); }
+    resetMenuBtnTimer();
+  }
+  showMenuBtn();
+  document.addEventListener("mousemove", showMenuBtn);
+  document.addEventListener("keydown", showMenuBtn);
+  document.addEventListener("touchstart", showMenuBtn);
+
+  // ── D-pad / TV Remote Navigation ──
+  function getMenuItems() {
+    return Array.from(document.querySelectorAll(".cabinet-menu-tile, .cabinet-menu-btn-wide, #cabinet-menu-toggle"));
+  }
+  function focusNext(e) {
+    var items = getMenuItems();
+    var current = document.activeElement;
+    var idx = items.indexOf(current);
+    var dir = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
+    var next = idx + dir;
+    if (next < 0) next = items.length - 1;
+    if (next >= items.length) next = 0;
+    if (items[next]) items[next].focus();
+    e.preventDefault();
+  }
+  document.addEventListener("keydown", function(e) {
+    if (!panel.classList.contains("is-open")) return;
+    if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      focusNext(e);
+    }
+    if (e.key === "Enter" || e.key === " ") {
+      var active = document.activeElement;
+      if (active && active.click) { active.click(); e.preventDefault(); }
+    }
+  });
 }
 
 function cabinetSetupGamepad() {
@@ -1174,6 +1246,7 @@ function cabinetSetupGamepad() {
   var bindings1 = {};
   var bindings2 = {};
   var profileId = window.CABINET_PROFILE_ID || "1";
+  window.__gamepadConnected = false;
 
   var DEFAULTS = {
     xbox: { 0: 0, 1: 2, 2: 8, 3: 9, 4: 12, 5: 13, 6: 14, 7: 15, 8: 1, 9: 3, 10: 4, 11: 5, 12: 6, 13: 7, 14: 10, 15: 11 },
@@ -1218,6 +1291,12 @@ function cabinetSetupGamepad() {
     var connected = [];
     for (var i = 0; i < gps.length; i++) {
       if (gps[i] !== null && gps[i] !== undefined) connected.push(gps[i]);
+    }
+    
+    var hadController = window.__gamepadConnected;
+    window.__gamepadConnected = connected.length > 0;
+    if (window.__gamepadConnected !== hadController && typeof window.__onGamepadChange === "function") {
+      window.__onGamepadChange(window.__gamepadConnected);
     }
     
     if (connected[0]) {
