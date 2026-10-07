@@ -59,4 +59,4 @@ Short imperative subjects with prefixes: `fix:`, `feat:`, `chore:`, `bump:`, `te
 - **Prior**: Multi-disc M3U support, vault merge, RA descriptions, infinite scroll; upload destination picker; upload overhaul (auto-detect, status, duplicates, folder upload)
 - **Pre-existing failures**: Resolved (release-health changelog/URL sync; scale.test.ts sort benchmark threshold; netplay IPv4 explicit binding).
 - **Version**: 2.51.0
-- **Pending**: Phase 2 (React 19 & Tailwind v4 upgrade)
+- **Phase 2 Complete**: Upgraded frontend stack to React 19.3 & Tailwind CSS v4.3 with `@tailwindcss/vite`, CSS-first tokens (`@theme inline`), `tw-animate-css`, Vite 8.3, Drizzle ORM 0.45.3, Wouter 3.13.

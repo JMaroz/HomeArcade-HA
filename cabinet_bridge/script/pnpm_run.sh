@@ -1,3 +1,3 @@
 #!/bin/bash
-export PATH="/usr/local/opt/node/bin:$PATH"
+export PATH="/usr/local/opt/node@20/bin:$PATH"
 exec pnpm "$@"

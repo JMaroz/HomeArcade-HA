@@ -31,10 +31,10 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN NODE_ENV=development pnpm install --no-frozen-lockfile
 
 # Cache-bust arg — increment this to force a full source re-copy and rebuild.
-ARG CACHE_BUST=5
+ARG CACHE_BUST=6
 
 # Copy all source (cache busted by ARG above)
-COPY tsconfig.json vite.config.ts tailwind.config.ts postcss.config.js components.json drizzle.config.ts ./
+COPY tsconfig.json vite.config.ts components.json drizzle.config.ts ./
 COPY shared   ./shared
 COPY server   ./server
 COPY client   ./client
