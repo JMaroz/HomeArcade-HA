@@ -170,8 +170,12 @@ export function registerBiosRoutes(app: Express) {
 
   // Serve BIOS file for the emulator
   app.get("/api/bios/file/:filename", async (req, res) => {
-    const filename = req.params.filename;
-    const filePath = path.join(BIOS_ROOT, filename);
+    const rawFilename = req.params.filename;
+    const safeFilename = path.basename(rawFilename);
+    if (!safeFilename || safeFilename === "." || safeFilename === ".." || rawFilename.includes("..")) {
+      return res.status(400).json({ message: "Invalid BIOS filename." });
+    }
+    const filePath = path.join(BIOS_ROOT, safeFilename);
 
     try {
       await fs.access(filePath);

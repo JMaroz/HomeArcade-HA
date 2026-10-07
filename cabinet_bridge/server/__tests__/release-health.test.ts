@@ -36,13 +36,13 @@ describe("Release & Manifest Health Validation", () => {
     const repoContent = fs.readFileSync(repoYamlPath, "utf8");
     const repoUrlMatch = repoContent.match(/^url:\s*["']?([^"'\s]+)["']?/m);
     expect(repoUrlMatch).not.toBeNull();
-    expect(repoUrlMatch![1]).toBe("https://github.com/GlerschNersch/HomeArcade-HA");
+    expect(repoUrlMatch![1]).toBe("https://github.com/JMaroz/HomeArcade-HA");
 
     // Check config.yaml URL
     const cfgContent = fs.readFileSync(cfgPath, "utf8");
     const cfgUrlMatch = cfgContent.match(/^url:\s*["']?([^"'\s]+)["']?/m);
     expect(cfgUrlMatch).not.toBeNull();
-    expect(cfgUrlMatch![1]).toBe("https://github.com/GlerschNersch/HomeArcade-HA");
+    expect(cfgUrlMatch![1]).toBe("https://github.com/JMaroz/HomeArcade-HA");
   });
 
   it("should document the active version in both root and local changelogs", () => {

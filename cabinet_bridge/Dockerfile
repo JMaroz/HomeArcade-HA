@@ -40,6 +40,7 @@ COPY server   ./server
 COPY client   ./client
 COPY script   ./script
 COPY migrations ./migrations
+COPY ejs_cache_essential ./ejs_cache_essential
 
 # Build client (Vite) + server (esbuild -> dist/index.cjs)
 RUN NODE_ENV=production pnpm run build

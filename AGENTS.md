@@ -57,6 +57,6 @@ Short imperative subjects with prefixes: `fix:`, `feat:`, `chore:`, `bump:`, `te
   - Health endpoint extended with `unplayed` and `duplicateGroups` counts
 - **Storage layer**: `IStorage` interface extended with `getDuplicateGroups`, `countUnplayedRoms`, `countFailedScrapes`, `deleteDuplicateRoms`, `deleteUnplayedRoms`, `deleteFailedScrapes`, `deleteUploadedRomWithFile`
 - **Prior**: Multi-disc M3U support, vault merge, RA descriptions, infinite scroll; upload destination picker; upload overhaul (auto-detect, status, duplicates, folder upload)
-- **Pre-existing failures**: `release-health.test.ts` (changelog not updated per release); `scale.test.ts` sort benchmark flake
-- **Version**: 2.49.0
-- **Pending**: —
+- **Pre-existing failures**: Resolved (release-health changelog/URL sync; scale.test.ts sort benchmark threshold; netplay IPv4 explicit binding).
+- **Version**: 2.51.0
+- **Pending**: Phase 2 (React 19 & Tailwind v4 upgrade)

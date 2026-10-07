@@ -77,13 +77,14 @@ export function registerCollectionRoutes(app: Express) {
   });
 
   app.patch("/api/collections/smart/:id", express.json(), async (req, res) => {
-    const id = Number(req.params.id);
-    const { name, rules } = req.body;
-    // Note: storage.ts doesn't have updateSmartFilter, we'll use a placeholder or add it if needed.
-    // Monolith logic was actually using createCollection and delete? No, it used a custom update.
-    // For now, let's just rename if name is provided.
-    if (name) await storage.renameCollection(id, name);
-    // TODO: support updating rules in storage.ts
-    res.json({ ok: true });
+    try {
+      const id = Number(req.params.id);
+      const { name, rules } = req.body;
+      const updated = await storage.updateSmartFilter(id, { name, rules });
+      if (!updated) return res.status(404).json({ message: "Collection not found." });
+      res.json({ ok: true, collection: updated });
+    } catch (err) {
+      res.status(400).json({ message: String(err) });
+    }
   });
 }

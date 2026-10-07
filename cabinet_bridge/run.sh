@@ -19,7 +19,7 @@ export CABINET_STEAMGRIDDB_KEY="${CABINET_STEAMGRIDDB_KEY:-${ADDON_STEAMGRIDDB_K
 mkdir -p "$CABINET_DATA_DIR"
 cd /app
 
-echo "[boot] HomeArcade 1.8.1 starting on port $PORT"
+echo "[boot] HomeArcade starting on port $PORT"
 echo "[boot] Data: $CABINET_DATA_DIR | Max upload: ${CABINET_MAX_UPLOAD_MB}MB"
 
 exec node dist/index.cjs

@@ -35,5 +35,9 @@ export function applyTheme(theme: AppTheme) {
   } else {
     document.documentElement.setAttribute("data-theme", theme);
   }
-  localStorage.setItem("ha-theme", theme);
+  try {
+    if (typeof localStorage !== "undefined" && localStorage.setItem) {
+      localStorage.setItem("ha-theme", theme);
+    }
+  } catch {}
 }

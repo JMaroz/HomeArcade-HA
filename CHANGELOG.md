@@ -2,6 +2,14 @@
 
 All notable changes to HomeArcade are documented here.
 
+## [2.51.0] — 2026-10-07
+
+### Feature: Engine Offline-First & Hardening
+- **Engine Offline-First Architecture** — Integrated essential 8/16-bit and PS1 WASM emulation cores directly into the add-on Docker container (`/app/ejs_cache_essential`). Added a 3-tier fallback resolution system (`/data/ejs_cache` -> bundled essential -> CDN upstream) ensuring instant zero-internet game launch.
+- **ROM Scanner System Alignment** — Fixed mapping for PC Engine (`.pce`), Sega Master System (`sms`), Sega 32X, Atari 7800 (`.a78`), and Sega CD folder names.
+- **Security & Integrity** — Sanitized BIOS download endpoint against path traversal attacks. Added persistence for Smart Collection filter rules. Mitigated GitHub API rate limits for controller autoconfig with local caching.
+- **Repository & Test Suite Alignment** — Aligned official manifest and repository URLs to `JMaroz/HomeArcade-HA` and stabilized test suites.
+
 ## [2.49.0] — 2026-06-27
 
 ### Feature: Move All ROMs (enhanced)

@@ -13,7 +13,7 @@ describe("Netplay Relay Server", () => {
     server = createServer(app);
     attachNetplayServer(server);
     return new Promise<void>((resolve) => {
-      server.listen(0, () => {
+      server.listen(0, "127.0.0.1", () => {
         port = (server.address() as any).port;
         resolve();
       });
@@ -24,7 +24,7 @@ describe("Netplay Relay Server", () => {
     server.close();
   });
 
-  const getWsUrl = () => `ws://localhost:${port}/api/netplay`;
+  const getWsUrl = () => `ws://127.0.0.1:${port}/api/netplay`;
 
   it("should allow a host to create a room", () => {
     return new Promise<void>((resolve, reject) => {

@@ -24,6 +24,10 @@ const KNOWN_CONTROLLERS: Record<string, {
   },
 };
 
+// ── Cached GitHub autoconfig file index ───────────────────────────────────────
+const driverCache = new Map<string, { files: { name: string; path: string }[]; cachedAt: number }>();
+const DRIVER_CACHE_TTL = 24 * 60 * 60 * 1000;
+
 export function registerGamepadRoutes(app: Express) {
   /**
    * Search for a gamepad autoconfig file based on the browser's Gamepad ID.
@@ -48,8 +52,9 @@ export function registerGamepadRoutes(app: Express) {
           const rawUrl = `https://raw.githubusercontent.com/libretro/retroarch-joypad-autoconfig/master/${info.configPath}`;
           const rawRes = await fetch(rawUrl, {
             headers: { "User-Agent": "HomeArcade/1.0", "Accept": "application/vnd.github+json" },
-          });
-          if (rawRes.ok) {
+            signal: AbortSignal.timeout(6000),
+          }).catch(() => null);
+          if (rawRes && rawRes.ok) {
             const text = await rawRes.text();
             const config: Record<string, string> = {};
             text.split("\n").forEach((line) => {
@@ -67,13 +72,25 @@ export function registerGamepadRoutes(app: Express) {
       const searchName = cleanName.toLowerCase();
 
       for (const driver of drivers) {
-        const indexUrl = `https://api.github.com/repos/libretro/retroarch-joypad-autoconfig/contents/${driver}?ref=master`;
-        const response = await fetch(indexUrl, {
-          headers: { "Accept": "application/vnd.github+json", "User-Agent": "HomeArcade/1.0" },
-        });
-        if (!response.ok) continue;
-
-        const files = await response.json() as { name: string; path: string }[];
+        let files: { name: string; path: string }[] = [];
+        const cached = driverCache.get(driver);
+        if (cached && Date.now() - cached.cachedAt < DRIVER_CACHE_TTL) {
+          files = cached.files;
+        } else {
+          const indexUrl = `https://api.github.com/repos/libretro/retroarch-joypad-autoconfig/contents/${driver}?ref=master`;
+          try {
+            const response = await fetch(indexUrl, {
+              headers: { "Accept": "application/vnd.github+json", "User-Agent": "HomeArcade/1.0" },
+              signal: AbortSignal.timeout(6000),
+            });
+            if (response.ok) {
+              files = await response.json() as { name: string; path: string }[];
+              driverCache.set(driver, { files, cachedAt: Date.now() });
+            }
+          } catch {
+            // Network or rate-limit error, continue to next driver
+          }
+        }
 
         for (const file of files) {
           if (!file.name.endsWith(".cfg")) continue;
@@ -100,6 +117,7 @@ export function registerGamepadRoutes(app: Express) {
       const rawUrl = `https://raw.githubusercontent.com/libretro/retroarch-joypad-autoconfig/master/${bestMatch.path}`;
       const rawRes = await fetch(rawUrl, {
         headers: { "User-Agent": "HomeArcade/1.0", "Accept": "application/vnd.github+json" },
+        signal: AbortSignal.timeout(6000),
       });
       if (!rawRes.ok) return res.status(500).json({ message: "Failed to download config file." });
 

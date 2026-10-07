@@ -25,6 +25,8 @@ import QRCode from "qrcode";
 // Caches CDN assets on disk so repeated visits (or different users launching
 // the same core) don't re-fetch the same WASM / JS from the internet.
 const EJS_CACHE_DIR = dataPath("ejs_cache");
+const ESSENTIAL_CACHE_DIR = path.resolve(process.cwd(), "ejs_cache_essential");
+const BUNDLED_CACHE_DIR = path.resolve(process.cwd(), "ejs_cache");
 let ejsCacheDirReady = false;
 async function ensureEjsCacheDir() {
   if (ejsCacheDirReady) return;
@@ -614,35 +616,49 @@ export function registerRomRoutes(app: Express) {
     const cacheKey = filePath.replace(/[\/\\]/g, "__");
     const cachePath = path.join(EJS_CACHE_DIR, cacheKey);
 
-    // Serve from disk cache if available
-    try {
-      const stat = await fs.stat(cachePath);
-      if (stat.isFile() && stat.size > 0) {
-        res.setHeader("Content-Type", contentType);
-        res.setHeader("Content-Length", String(stat.size));
-        res.setHeader("Cache-Control", "public, max-age=604800, immutable");
-        res.setHeader("X-Cache", "HIT");
-        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-        // Support Range requests so browsers can stream large WASM files
-        const rangeHeader = req.headers.range;
-        if (rangeHeader) {
-          const parts = rangeHeader.replace(/bytes=/, "").split("-");
-          const start = parseInt(parts[0], 10);
-          const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
-          const chunkSize = end - start + 1;
-          res.setHeader("Accept-Ranges", "bytes");
-          res.setHeader("Content-Range", `bytes ${start}-${end}/${stat.size}`);
-          res.setHeader("Content-Length", String(chunkSize));
-          res.status(206);
-          fsSync.createReadStream(cachePath, { start, end }).pipe(res);
-        } else {
-          res.setHeader("Accept-Ranges", "bytes");
-          fsSync.createReadStream(cachePath).pipe(res);
+    // ── 3-Tier Resolution: User Cache -> Bundled Essential -> Repo Cache -> CDN Upstream
+    const candidatePaths = [
+      cachePath,
+      path.join(ESSENTIAL_CACHE_DIR, cacheKey),
+      path.join(BUNDLED_CACHE_DIR, cacheKey),
+    ];
+
+    let foundPath: string | null = null;
+    let foundSize = 0;
+    for (const cand of candidatePaths) {
+      try {
+        const stat = await fs.stat(cand);
+        if (stat.isFile() && stat.size > 0) {
+          foundPath = cand;
+          foundSize = stat.size;
+          break;
         }
-        return;
+      } catch {}
+    }
+
+    if (foundPath) {
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Content-Length", String(foundSize));
+      res.setHeader("Cache-Control", "public, max-age=604800, immutable");
+      res.setHeader("X-Cache", foundPath === cachePath ? "HIT" : "BUNDLED");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      // Support Range requests so browsers can stream large WASM files
+      const rangeHeader = req.headers.range;
+      if (rangeHeader) {
+        const parts = rangeHeader.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : foundSize - 1;
+        const chunkSize = end - start + 1;
+        res.setHeader("Accept-Ranges", "bytes");
+        res.setHeader("Content-Range", `bytes ${start}-${end}/${foundSize}`);
+        res.setHeader("Content-Length", String(chunkSize));
+        res.status(206);
+        fsSync.createReadStream(foundPath, { start, end }).pipe(res);
+      } else {
+        res.setHeader("Accept-Ranges", "bytes");
+        fsSync.createReadStream(foundPath).pipe(res);
       }
-    } catch {
-      // not cached yet — fall through to CDN fetch
+      return;
     }
 
     // Fetch from CDN and simultaneously write to disk cache + stream to client

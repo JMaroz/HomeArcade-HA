@@ -160,6 +160,7 @@ export interface IStorage {
   createCollection(collection: InsertGameCollection): Promise<GameCollection>;
   deleteCollection(id: number): Promise<boolean>;
   renameCollection(id: number, name: string): Promise<GameCollection | undefined>;
+  updateSmartFilter(id: number, update: { name?: string; rules?: any }): Promise<GameCollection | undefined>;
   addRomToCollection(collectionId: number, romId: number): Promise<GameCollectionWithItems | undefined>;
   removeRomFromCollection(collectionId: number, romId: number): Promise<GameCollectionWithItems | undefined>;
   listRomSaveSlots(romId: number, userId: string): Promise<RomSaveSlot[]>;
@@ -374,6 +375,15 @@ export class DatabaseStorage implements IStorage {
     return result.changes > 0;
   }
   async renameCollection(id: number, name: string): Promise<GameCollection | undefined> { return db.update(gameCollections).set({ name }).where(eq(gameCollections.id, id)).returning().get(); }
+  async updateSmartFilter(id: number, update: { name?: string; rules?: any }): Promise<GameCollection | undefined> {
+    const setPayload: Record<string, any> = {};
+    if (update.name !== undefined) setPayload.name = update.name;
+    if (update.rules !== undefined) setPayload.smartFilter = JSON.stringify(update.rules);
+    if (Object.keys(setPayload).length === 0) {
+      return (await this.listCollections()).find(c => c.id === id);
+    }
+    return db.update(gameCollections).set(setPayload).where(eq(gameCollections.id, id)).returning().get();
+  }
   async addRomToCollection(collectionId: number, romId: number): Promise<GameCollectionWithItems | undefined> {
     db.insert(collectionItems).values({ collectionId, romId, createdAt: Date.now() }).onConflictDoNothing().run();
     const collections = await this.listCollections();
@@ -700,7 +710,7 @@ export class DatabaseStorage implements IStorage {
       .having(sql`count(*) > 1`)
       .all();
 
-    return groups.map(g => ({
+    return groups.map((g: any) => ({
       romHash: g.romHash,
       ids: g.ids ? g.ids.split(",").map(Number) : [],
       count: g.count
@@ -831,7 +841,8 @@ export class DatabaseStorage implements IStorage {
               size += await this.getDirectorySize(fullPath);
             } else {
               count++;
-              size += entry.stat ? entry.stat.size : await fs.stat(fullPath).then(s => s.size);
+              const entryStat = (entry as any).stat;
+              size += entryStat ? entryStat.size : await fs.stat(fullPath).then(s => s.size);
             }
           }
         } catch {

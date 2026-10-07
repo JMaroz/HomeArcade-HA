@@ -1,3 +1,10 @@
+## 2.51.0 - 2026-10-07
+
+- **Feature**: **Engine Offline-First Architecture** - Integrated essential 8/16-bit and PS1 WASM emulation cores directly into the add-on Docker container (`/app/ejs_cache_essential`). Added a 3-tier fallback resolution system (`/data/ejs_cache` -> bundled essential -> CDN upstream) ensuring instant zero-internet game launch.
+- **Fix**: **ROM Scanner System Alignment** - Fixed mapping for PC Engine (`.pce`), Sega Master System (`sms`), Sega 32X, Atari 7800 (`.a78`), and Sega CD folder names.
+- **Fix**: **Security & Integrity** - Sanitized BIOS download endpoint against path traversal attacks. Added persistence for Smart Collection filter rules. Mitigated GitHub API rate limits for controller autoconfig with local caching.
+- **Maintenance**: **Repository & Test Suite Alignment** - Aligned official manifest and repository URLs to `JMaroz/HomeArcade-HA` and stabilized test suites (Netplay IPv4 binding, benchmark thresholds).
+
 ## 2.49.0 - 2026-06-27
 
 - **Feature**: **Move All ROMs** - Added a "Move All ROMs" button in the Library Health section (Maintenance Tools) that relocates every ROM file to a user-selected destination directory, organized by system subfolder (`{dest}/{system}/{fileName}`). Includes automatic M3U playlist content rewriting, disc-group sibling moves, and file-collision overwrite. Features a three-phase dialog (pick destination → progress → results summary) with scanner watch paths shown as suggested roots. Dialog now shows total ROM count, total size, per-system breakdown, and source/destination disk usage with low-space warnings.
