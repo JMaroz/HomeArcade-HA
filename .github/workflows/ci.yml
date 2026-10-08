@@ -1,3 +1,4 @@
+---
 name: CI
 
 on:
@@ -5,6 +6,13 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -27,8 +35,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
-          cache-dependency-path: 'cabinet_bridge/pnpm-lock.yaml'
+          cache: "pnpm"
+          cache-dependency-path: "cabinet_bridge/pnpm-lock.yaml"
 
       - name: Install dependencies
         run: pnpm install
@@ -38,9 +46,6 @@ jobs:
 
       - name: Run unit tests
         run: pnpm test
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
 
       - name: Lint s6 service directories
         run: |
@@ -61,7 +66,7 @@ jobs:
           done
           exit $failed
 
-      - name: Build Docker image
+      - name: Build Docker image (smoke test)
         run: |
           cd ..
           docker build \

@@ -18,9 +18,9 @@ pnpm (not npm). Lockfile: `cabinet_bridge/pnpm-lock.yaml`. Install: `pnpm instal
 | `pnpm test:watch` | Vitest watch mode |
 | `pnpm test:e2e` | Playwright tests (E2E server auto-started by config) |
 | `pnpm db:push` | Push Drizzle ORM schema changes to SQLite |
-| `pnpm bump` | Bump version. **Manually edit both** `package.json` **and** `config.yaml`. |
+| `pnpm bump` | (Legacy manual bump) Ora automatizzato da Release Please su merge delle Release PR. |
 
-No dedicated lint script. TypeScript + tests are the quality gates.
+No dedicated lint script in cabinet_bridge; TypeScript (`pnpm check`) + Vitest (`pnpm test`) are the app gates, while GitHub Actions runs `yamllint`, Home Assistant Add-on Linter (`frenck/action-addon-linter`), and PR semantic lint.
 
 ## Architecture
 - **Home Assistant add-on** served on port 5000 via Ingress proxy (`config.yaml` is the add-on manifest).
@@ -28,7 +28,7 @@ No dedicated lint script. TypeScript + tests are the quality gates.
 - **Triple layout**: `client/src/` (React), `server/` (Express routes), `shared/` (DB schema + types). Tests in `__tests__/` per layer, E2E in `e2e/`.
 - **Hash routing required** (`#/` prefix) so the app works inside a sandboxed HA iframe. Emulator player is a standalone HTML page served at `/api/roms/:id/player` — not a React route.
 - **HA ingress prefix stripping** runs as the very first Express middleware in `server/index.ts:33`.
-- **Version must stay in sync** between `package.json` and `config.yaml`.
+- **Version management**: Automatizzata tramite Google Release Please (`release-please-config.json`, `.release-please-manifest.json`). Al merge della PR di rilascio su `main`, sincronizza atomica `package.json`, `config.yaml`, `CHANGELOG.md` e genera il tag `vX.Y.Z`.
 
 ## DB
 SQLite via better-sqlite3 + Drizzle. Schema: `shared/schema.ts`. Migrations: `migrations/`. Run `pnpm db:push` after schema changes.
@@ -37,8 +37,8 @@ SQLite via better-sqlite3 + Drizzle. Schema: `shared/schema.ts`. Migrations: `mi
 - ESM modules, 2-space indent, PascalCase components (`GameCard.tsx`), camelCase hooks (`useGridNav`).
 - Critical deps pinned to exact versions (react, vite, drizzle-orm, express, framer-motion, wouter).
 - Persistent state → `/data` at runtime; set `CABINET_DATA_DIR` locally to override.
-- CI pipeline (root `.github/workflows/ci.yml`): `pnpm check` → `pnpm test` → Playwright chromium install → s6 dir lint → Docker build.
-- Build & publish to `ghcr.io` for `amd64` + `aarch64` on push to main or semver tag.
+- CI pipeline (`.github/workflows/ci.yml` + `lint.yml`): yamllint + HA addon-linter + PR semantic check + `pnpm check` + `pnpm test` + s6 dir lint + Docker smoke build.
+- Build & publish (`.github/workflows/build.yml`): build multi-arch per `amd64` + `aarch64` e push su `ghcr.io` scatenato esclusivamente su tag di rilascio `v*` e release pubblicate.
 
 ## Reference Documents
 - `HANDOFF.md` — detailed navigation architecture, routing, component tree.
