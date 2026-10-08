@@ -2,6 +2,14 @@
 
 All notable changes to HomeArcade are documented here.
 
+## [2.52.0](https://github.com/JMaroz/HomeArcade-HA/compare/v2.51.0...v2.52.0) (2026-10-08)
+
+
+### Features
+
+* offline engine bundling, scanner bug fixes, and 2.51.0 release alignment ([5a3ade4](https://github.com/JMaroz/HomeArcade-HA/commit/5a3ade4c152b40ced71ef59f00aa1e8e4e09d9ba))
+* upgrade frontend stack to React 19 and Tailwind CSS v4 ([635347d](https://github.com/JMaroz/HomeArcade-HA/commit/635347d80c5d7b3c9c7ba599b6ff39bd750cde79))
+
 ## [2.51.0] — 2026-10-07
 
 ### Feature: Engine Offline-First & Hardening

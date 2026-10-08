@@ -1,289 +1,530 @@
-## 2.51.0 - 2026-10-07
+# Changelog
 
-- **Feature**: **Engine Offline-First Architecture** - Integrated essential 8/16-bit and PS1 WASM emulation cores directly into the add-on Docker container (`/app/ejs_cache_essential`). Added a 3-tier fallback resolution system (`/data/ejs_cache` -> bundled essential -> CDN upstream) ensuring instant zero-internet game launch.
-- **Fix**: **ROM Scanner System Alignment** - Fixed mapping for PC Engine (`.pce`), Sega Master System (`sms`), Sega 32X, Atari 7800 (`.a78`), and Sega CD folder names.
-- **Fix**: **Security & Integrity** - Sanitized BIOS download endpoint against path traversal attacks. Added persistence for Smart Collection filter rules. Mitigated GitHub API rate limits for controller autoconfig with local caching.
-- **Maintenance**: **Repository & Test Suite Alignment** - Aligned official manifest and repository URLs to `JMaroz/HomeArcade-HA` and stabilized test suites (Netplay IPv4 binding, benchmark thresholds).
+All notable changes to HomeArcade are documented here.
 
-## 2.49.0 - 2026-06-27
+## [2.52.0](https://github.com/JMaroz/HomeArcade-HA/compare/v2.51.0...v2.52.0) (2026-10-08)
 
-- **Feature**: **Move All ROMs** - Added a "Move All ROMs" button in the Library Health section (Maintenance Tools) that relocates every ROM file to a user-selected destination directory, organized by system subfolder (`{dest}/{system}/{fileName}`). Includes automatic M3U playlist content rewriting, disc-group sibling moves, and file-collision overwrite. Features a three-phase dialog (pick destination → progress → results summary) with scanner watch paths shown as suggested roots. Dialog now shows total ROM count, total size, per-system breakdown, and source/destination disk usage with low-space warnings.
 
-- **Feature**: **Move Stats API** - Added `GET /api/roms/move-stats` returning total ROM count, total file size, per-system breakdown, and disk usage for both source and destination paths.
+### Features
 
-## 2.48.0 - 2026-06-27
+* offline engine bundling, scanner bug fixes, and 2.51.0 release alignment ([5a3ade4](https://github.com/JMaroz/HomeArcade-HA/commit/5a3ade4c152b40ced71ef59f00aa1e8e4e09d9ba))
+* upgrade frontend stack to React 19 and Tailwind CSS v4 ([635347d](https://github.com/JMaroz/HomeArcade-HA/commit/635347d80c5d7b3c9c7ba599b6ff39bd750cde79))
 
-- **Feature**: **Upload Destination Picker** - Choose a custom directory for uploaded ROMs via the "Change" button in the upload panel. The `POST /api/roms/upload` endpoint accepts an optional `dest` query param (validated against allowed browse roots). Scanner watch paths appear as suggested quick-root buttons in the directory picker.
+## [2.51.0] — 2026-10-07
 
-- **Refactor**: **DirectoryPickerDialog (shared)** - Extracted from `LibrarySettings.tsx` into a reusable shared component with optional `suggestedRoots`, `title`, and `description` props. Added `GET /api/filesystem/suggested-roots` endpoint.
+### Feature: Engine Offline-First & Hardening
+- **Engine Offline-First Architecture** — Integrated essential 8/16-bit and PS1 WASM emulation cores directly into the add-on Docker container (`/app/ejs_cache_essential`). Added a 3-tier fallback resolution system (`/data/ejs_cache` -> bundled essential -> CDN upstream) ensuring instant zero-internet game launch.
+- **ROM Scanner System Alignment** — Fixed mapping for PC Engine (`.pce`), Sega Master System (`sms`), Sega 32X, Atari 7800 (`.a78`), and Sega CD folder names.
+- **Security & Integrity** — Sanitized BIOS download endpoint against path traversal attacks. Added persistence for Smart Collection filter rules. Mitigated GitHub API rate limits for controller autoconfig with local caching.
+- **Repository & Test Suite Alignment** — Aligned official manifest and repository URLs to `JMaroz/HomeArcade-HA` and stabilized test suites.
 
-## 2.47.0 - 2026-06-27
+## [2.49.0] — 2026-06-27
 
-- **Feature**: **Upload Destination Picker** - Choose a custom directory for uploaded ROMs via the "Change" button in the upload panel. The `POST /api/roms/upload` endpoint accepts an optional `dest` query param (validated against allowed browse roots). Scanner watch paths appear as suggested quick-root buttons in the directory picker.
+### Feature: Move All ROMs (enhanced)
 
-- **Refactor**: **DirectoryPickerDialog (shared)** - Extracted from `LibrarySettings.tsx` into a reusable shared component with optional `suggestedRoots`, `title`, and `description` props. Added `GET /api/filesystem/suggested-roots` endpoint.
+- **Rich Move Dialog** — The Move All ROMs dialog now displays total ROM count, total file size, per-system breakdown, source directory disk usage, and destination disk usage with low-space warnings before the move starts.
+- **Move Stats API** — New `GET /api/roms/move-stats` endpoint returns all library statistics and filesystem information needed to inform the user.
 
-## 2.46.1 - 2026-06-27
+### API
 
-- **Fix**: **Upload Auto-Detect & Crash Fixes** - Fixed `.bin` detection to prefer PS1 over Genesis for ambiguous audio tracks (CD sync byte check). Fixed "cannot read property" runtime crash by moving AbortController creation before the `setFiles` call. Added missing `manualUpload` locale strings. Added console logging for easier debugging.
+- `GET /api/roms/move-stats` — Returns `{ total, totalSize, systems[], source: { path, disk }, dest: { path, disk } }`. Accepts optional `?dest=` to include destination disk info.
 
-## 2.46.0 - 2026-06-27
+---
 
-- **Feature**: **Upload System Overhaul** - Complete rewrite of the upload pipeline with four interdependent enhancements: (1) auto-detection of console system from file extension, magic bytes, and folder context — no more manual system picker for single-file uploads; (2) enhanced upload status with real-time speed/ETA tracking via sliding window, per-file status table (pending/uploading/uploaded/failed/cancelled/skipped), individual Cancel and Cancel All buttons, and error recovery that continues on per-file failure; (3) duplicate ROM detection with an interactive dialog offering Keep Both / Replace / Skip per-file or apply-all; (4) folder upload via `webkitdirectory` with automatic grouping of multi-file games (CUE/BIN PS1 tracks) and folder-name-based system detection.
+## [2.48.0] — 2026-06-27
 
-- **Feature**: **Libretro-Only Art Matcher** - Replaced ScreenScraper (requires account) and TheGamesDB (requires API key) with a new zero-auth art matching system that scrapes `thumbnails.libretro.com` directory listings. Uses a multi-strategy scorer (exact match, contains fuzzy, token overlap, region bonus) with 24-hour caching. Removed associated `ssUserId`, `ssPassword`, and `tgdbApiKey` fields from schema, settings UI, and locale. Deleted the dead `scraperHelpers.ts` duplicate.
+### Feature: Move All ROMs
 
-- **Fix**: **BIOS MD5 Checksums** - Corrected 5 incorrect MD5 checksums in `bios-metadata.ts` (SCPH-39001.bin, bios_CD_{U,E,J}.bin, dc_flash.bin) that were silently deleting downloaded BIOS files after mismatch detection.
+- **Bulk Move Tool** — Added a "Move All ROMs" button in the Library Health section's Maintenance Tools area. Opens a three-phase dialog: pick destination (with scanner watch paths as suggested roots), moving progress, and results summary (moved/skipped/failed). ROMs are organized into system subfolders at the destination.
+- **M3U & Disc Group Support** — Playlist content is rewritten to reflect new child paths; disc-group siblings are moved together.
 
-## 2.44.0 - 2026-06-26
+### API
 
-- **Feature**: **ROM Directory Browser & Scanner Diagnostics** - Added an in-app directory picker dialog for browsing and selecting ROM watch paths in the Library settings. Scanner status now tracks per-path found/imported counts and timestamps. Add-on configuration options (`data_dir`, `rom_watch_dir`) are read from `/data/options.json` for Supervisor UI support.
+- `POST /api/roms/move-all` — Accepts `{ dest }`, validates against allowed browse roots, moves every ROM, updates DB paths, and returns `{ moved, skipped, failed, errors }`.
 
-## 2.43.36 - 2026-06-05
+---
 
-- **Feature**: **Keyboard Customization & Controller Templates** - Integrated keyboard input remapping controls within the settings page, and enabled template layout injection during bootstrap. Added standard templates for Xbox, PlayStation, and Nintendo Switch gamepad layouts to easily apply pre-configured control maps.
+## [2.47.0] — 2026-06-27
 
-## 2.43.35 - 2026-05-26
+### Feature: Upload Destination Picker
 
-- **Feature**: **Symmetrical Pause Menu & 9-Slot Save State Manager** - Moved the Exit Game button into the pause menu grid (completing a clean 3x2 design) and replaced the direct Save/Load buttons with a single "Saves" button. Upgraded the Saves panel to a robust 9-slot Save State Slot Manager, allowing users to load, overwrite/save, or delete from any of the 9 slots with dynamic thumbnails and empty state dashed placeholders.
+- **Custom Upload Directory** — Added a "Change" button in the upload panel to choose where uploaded ROMs land. Defaults to ROM storage. Scanner watch paths appear as suggested quick-root buttons.
+- **Shared Directory Picker** — `DirectoryPickerDialog` extracted into a reusable component used by both upload and scanner settings.
 
-## 2.43.34 - 2026-05-26
+### API
 
-- **Feature**: **Full Bluetooth Controller Button & Axis Remapping** - Integrated `ControllerRemapDialog` into the Input settings section, allowing users to map physical buttons and analog axes. Added support for remapping both Player 1 and Player 2 controllers separately. Enabled the in-browser emulator page to dynamically load gamepad configurations at runtime and translate button presses and axis directions. Passed custom UI navigation mapping configurations to the dashboard grid navigation hook.
+- `GET /api/filesystem/suggested-roots` — Returns scanner watch paths for quick-root suggestions.
+- `POST /api/roms/upload` — Now accepts optional `dest` query param (validated against browse roots).
 
-## 2.43.33 - 2026-05-25
+---
 
-- **Fix**: **Netplay Input & State Sync** - Fixed a bug where Netplay room connections succeeded but game sessions failed to synchronize by restoring the missing injection of `EJS_netplayUrl`, `EJS_netplayRole`, and `EJS_netplayRoom` variables in the generated player bootstrap template.
-- **Improved**: **Automated E2E Server** - Updated `playwright.config.ts` with a `webServer` block to automatically start and stop the development server during E2E test runs.
+## [2.46.1] — 2026-06-27
 
-## 2.43.32 - 2026-05-25
+### Fixes
 
-- **Fix**: **Pause Menu Action Bindings** - Corrected the pause menu actions (Restart, Save, Load, Saves panel, and Warp QR generation) by mapping them to the proper nested `EJS_emulator.gameManager` functions instead of non-existent top-level methods. Fixed the `unpause()` runtime crash by calling `play()`.
+- **Upload Auto-Detect & Crash Fixes** — Fixed `.bin` detection to prefer PS1 over Genesis for ambiguous audio tracks (CD sync byte check). Fixed runtime crash by moving AbortController creation before `setFiles` call. Added missing `manualUpload` locale strings and console debug logging.
 
-## 2.43.31 - 2026-05-25
+---
 
+## [2.46.0] — 2026-06-27
 
-- **Fix**: **Home Assistant Repository Sync** - Corrected the repository URL in `repository.yaml` to ensure the Supervisor Add-on Store discovers new updates cleanly.
+### Features
 
-## 2.43.30 - 2026-05-25
+- **Upload System Overhaul** — Complete rewrite of the upload pipeline: auto-detection of console system from file extension, magic bytes, and folder context; enhanced upload status with real-time speed/ETA sliding window; per-file status table with individual and Cancel All buttons; error recovery that continues on per-file failure; duplicate ROM detection with interactive Keep/Replace/Skip dialog; folder upload via `webkitdirectory` with CUE/BIN disc grouping.
+- **Libretro-Only Art Matcher** — Replaced ScreenScraper and TheGamesDB with zero-auth art matching from `thumbnails.libretro.com`. Multi-strategy scorer (exact match, fuzzy, token overlap, region bonus) with 24-hour cache.
 
+### Fixes
 
-- **UX/UI Redesign**: **Pause Menu Glassmorphism Redesign & Warp Play** - Redesigned the pause menu layout with glassmorphic cards and buttons. Replaced raw emojis with animated inline SVG icons. Implemented a fully functional Warp QR code panel that uploads session states to the server in real-time and enables users to scan the QR code to auto-resume play on another device. Fixed sync-from-server to download binary save backups.
+- **BIOS MD5 Checksums** — Corrected 5 incorrect MD5 checksums that were silently deleting downloaded BIOS files.
 
-## 2.43.29 - 2026-05-25
+---
 
-- **Fix**: **Interface accordion visibility & E2E spec selectors** - Configured Interface settings section to be defaultOpen so controls are visible to automated test scripts. Corrected theme label E2E selectors to prevent strict-mode violations, and updated Sidebar/History to map paginated ROM query responses.
+## [2.44.0] — 2026-06-26
 
-## 2.43.28 - 2026-05-25
+### Feature: ROM Directory Browser & Scanner Diagnostics
 
-- **UX/UI Redesign**: **Ergonomic Virtual Gamepad Redesign** - Redesigned the touch virtual gamepad layout in `player.ts` with premium glassmorphic circular plates for both the D-pad and face buttons. Added a classic center-pivot cap overlay for the D-pad cross. Relocated the L and R trigger buttons to be positioned ergonomically directly above the left and right controller zones to prevent overlaps with the Menu button. Implemented CSS variables and responsive media query scaling so that the layout shrinks from 64px to 46px base button size on screens under 480px, avoiding middle overlap in portrait mode.
+- **Directory Picker** — Added an in-app `DirectoryPickerDialog` to browse and select ROM watch paths directly from the Library settings page, with a **Browse** button next to the watch directories input.
+- **Scanner Diagnostics** — Per-path scanner stats now report `found`, `imported`, `lastScanAt`, and `error` for easier debugging.
+- **Add-on Config** — Added `data_dir` and `rom_watch_dir` options to the Supervisor add-on config schema; values are read from `/data/options.json` at startup.
 
-## 2.43.27 - 2026-05-25
+---
 
-- **Fix**: **Mobile game display padding & hidden touch controls** - Added `padding-top: 50px` on mobile layouts to move the game display down and clear the header. Expanded virtual gamepad hiding CSS rules and configured an off-screen dummy button for `EJS_VirtualGamepadSettings` to fully disable the default EmulatorJS touch controls.
+## [2.43.36] — 2026-06-05
 
-## 2.43.26 - 2026-05-25
+### Feature: Keyboard Customization & Controller Templates
 
-- **Fix**: **Duplicate mobile virtual gamepads** - Set `window.EJS_VirtualGamepadSettings = []` and corrected the casing of `window.EJS_Buttons` to prevent EmulatorJS's default virtual controller overlay from appearing on mobile devices alongside HomeArcade's custom virtual gamepad.
+- **Keyboard Customization** — Integrated keyboard input remapping controls within the settings page, and enabled template layout injection during bootstrap.
+- **Controller Templates** — Added standard templates for Xbox, PlayStation, and Nintendo Switch gamepad layouts to easily apply pre-configured control maps.
 
-## 2.43.25 - 2026-05-25
+---
 
-- **Feature**: **Expose Port 5000 Config Mapping** - Added `ports` configuration mapping in `config.yaml` for port `5000/tcp` to enable direct network access via the Home Assistant host, bypassing the Supervisor Ingress proxy.
+## [2.43.35] — 2026-05-26
 
-## 2.43.24 - 2026-05-25
+### Feature: Symmetrical Pause Menu & 9-Slot Save State Manager
 
-- **Fix**: **Missing closing brace on cabinetSetupMenu** - Added the missing closing curly brace `}` for the `cabinetSetupMenu` function that was accidentally cut during clean-ups. This resolves the `Uncaught SyntaxError: Unexpected end of input` crash at game load.
+- **Symmetrical Pause Grid** — Moved the Exit Game button into the pause menu grid (completing a clean 3x2 design) and replaced the direct Save/Load buttons with a single "Saves" button.
+- **Save State Manager** — Upgraded the Saves panel to a robust 9-slot Save State Slot Manager, allowing users to load, overwrite/save, or delete from any of the 9 slots with dynamic thumbnails and empty state dashed placeholders.
 
-## 2.43.23 - 2026-05-25
+---
 
-- **Refactor**: **Clean event delegation for Save grid** - Refactored `renderSaveGrid` to use HTML5 data attributes (`data-action`, `data-slot`) and container-level event delegation instead of complex nested inline `onclick` string attributes. This cleanly separates markup from JS logic, makes the code easier to read, and prevents any escaping/nesting bugs.
+## [2.43.34] — 2026-05-26
 
-## 2.43.22 - 2026-05-25
+### Feature: Full Bluetooth Controller Button & Axis Remapping
 
-- **Fix**: **Wired missing Save manager HTML and secured onclick registrations** - Added the missing `cabinet-save-panel` HTML structure and CSS styling inside `renderEmulatorPage` so that the saves panel displays correctly. Additionally, introduced a `safeOnClick` guard for all pause menu elements in `cabinetSetupMenu` to prevent `Uncaught TypeError: Cannot set properties of null (setting 'onclick')` crashes when any optional menu controls/panels are absent in the DOM.
+- **Interactive Remap Dialog** — Integrated `ControllerRemapDialog` into the Input settings section, allowing users to map physical buttons and analog axes.
+- **Multiplayer Ports** — Added support for remapping both Player 1 and Player 2 controllers separately.
+- **Dynamic Translation** — Enabled the in-browser emulator page to dynamically load gamepad configurations at runtime and translate button presses and axis directions.
+- **Dashboard Navigation** — Passed custom UI navigation mapping configurations to the dashboard grid navigation hook.
 
-## 2.43.21 - 2026-05-25
+---
 
-- **Fix**: **Escape slot variables in player.ts** - Escaped `slot.slot` template variable interpolations in the onclick load/delete button handlers inside the renderEmulatorPage template literal. This resolves the server-side "slot is not defined" ReferenceError.
+## [2.43.33] — 2026-05-25
 
-## 2.43.12 - 2026-05-24
+### Fix: Netplay Input & State Synchronization & Automated E2E Server
 
-- **Fix**: **cabinetToast Unicode Escape in HTML Attributes** - Replaced unicode escape sequences with actual emoji characters in renderSaveGrid cabinetToast calls. The escape sequences inside HTML onclick attributes were being parsed as literal text, causing JS syntax errors.## 2.43.11 - 2026-05-24
+- **Netplay Sync** — Fixed a bug where Netplay room connections succeeded but game sessions failed to synchronize by restoring the missing injection of `EJS_netplayUrl`, `EJS_netplayRole`, and `EJS_netplayRoom` variables in the generated player bootstrap template.
+- **Automated E2E Server** — Updated `playwright.config.ts` with a `webServer` block to automatically start and stop the development server during E2E test runs.
 
-- **Fix**: **Save Grid Template Literal Escaping** - Fixed `SyntaxError: Unexpected identifier 'color'` on game launch caused by HTML attributes with unescaped double quotes inside the outer template literal in `renderSaveGrid`. All HTML attribute values in save/load buttons now use single-quoted strings, eliminating the escape sequence issue.
+---
 
-## 2.42.15 - 2026-05-23
+## [2.43.32] — 2026-05-25
 
-- **Fix**: **Player Page Regex Syntax Error** - Fixed the regex `/api/roms/` inside the template literal for `renderEmulatorPage`. The forward slashes in the regex were being stripped during template evaluation, producing invalid JS like `path.match(//api/roms/(d+)//)` instead of `path.match(/\/api\/roms\/(\d+)\/)/`. This caused "Unexpected token 'var'" on all system pages.
+### Fix: Pause Menu Action Bindings
 
-## 2.42.15 - 2026-05-23
+- **Emulator Actions** — Re-routed pause menu action buttons (Restart, Save, Load, Saves panel, and Warp QR generation) to access correct nested `EJS_emulator.gameManager` endpoints.
+- **Unpause Crash** — Replaced the invalid call to `unpause()` with `play()`, fixing a runtime crash when closing the pause menu.
 
-- **Fix**: **Player Page Regex Syntax Error** - Fixed the regex `/api/roms/` inside the template literal for `renderEmulatorPage`. The forward slashes in the regex were being stripped during template evaluation, producing invalid JS like `path.match(//api/roms/(d+)//)` instead of `path.match(/\/api\/roms\/(\d+)\/)/`. This caused "Unexpected token 'var'" on all system pages.
+---
 
-## 2.42.12 - 2026-05-23
+## [2.43.31] — 2026-05-25
 
-- **Fix**: **ROM Range Download Path** - Fixed the Range-response branch in `/api/roms/:id/file` that was using a forward-slash-normalized string path instead of the OS-native path for `fsSync.createReadStream`. On Windows, streaming a ROM with a forward-slash path returns empty content, causing games to fail to load with a silent black screen.
+### Fix: Home Assistant Repository Sync
 
-## 2.42.0 - 2026-05-23
+- **Repository URL** — Corrected the repository URL in `repository.yaml` to ensure the Supervisor Add-on Store discovers new updates cleanly.
 
-- **Stabilization**: **Foundation Finalized** - Verified all build manifests and synchronized versions across the new repository for definitive Home Assistant deployment.
+---
 
-## 2.40.0 - 2026-05-23
+## [2.43.30] — 2026-05-25
 
-- **Stabilization**: **Build System Established** - Core infrastructure for HomeArcade ready for deployment.
+### UX/UI Redesign: Pause Menu Glassmorphism Redesign & Warp Play
 
-## 2.38.0 - 2026-05-23
+- **Pause Menu Glassmorphism** — Redesigned the pause menu layout with glassmorphic cards and buttons.
+- **Animated Inline SVG Icons** — Replaced raw emojis with custom-tailored animated inline SVG icons.
+- **Warp Play QR Code** — Implemented a fully functional Warp QR code portal that uploads session states to the server in real-time and enables users to scan the QR code to auto-resume play on another device.
+- **Binary Sync** — Fixed sync-from-server to download binary save backups rather than metadata templates.
 
-- **Stabilization**: **Dependencies Updated** - Dependencies updated and pinned for stability.
+---
 
-## 2.37.0 - 2026-05-23
+## [2.43.29] — 2026-05-25
 
-- **Feature**: **Core Functionality Complete** - All core features for HomeArcade up and running.
+### Fix: Interface Accordion Visibility & E2E Spec Selectors
 
-## 2.36.0 - 2026-05-23
+- **Interface accordion visibility** — Configured Interface settings section to be defaultOpen so controls are visible to automated test scripts.
+- **E2E Spec Selectors** — Corrected theme label E2E selectors to prevent strict-mode violations.
+- **ROM queries** — Updated Sidebar/History to map paginated ROM query responses correctly.
 
-- **Refactor**: **Emulator Bridge Foundation** - Built out core emulator bridge infrastructure for Home Assistant integration.
+---
 
-## 2.35.0 - 2026-05-23
+## [2.43.28] — 2026-05-25
 
-- **Stabilization**: **Foundational Improvements** - Core HomeArcade systems initialized and stabilized.
+### UX/UI Redesign: Ergonomic Virtual Gamepad Redesign
 
-## 2.34.0 - 2026-05-23
+- **Premium Plates** — Redesigned the touch virtual gamepad layout in `player.ts` with premium glassmorphic circular plates for both the D-pad and face buttons.
+- **D-pad Cap Overlay** — Added a classic center-pivot cap overlay for the D-pad cross.
+- **Trigger Relocation** — Relocated the L and R trigger buttons to be positioned ergonomically directly above the left and right controller zones to prevent overlaps with the Menu button.
+- **Responsive Layout** — Implemented CSS variables and responsive media query scaling so that the layout shrinks from 64px to 46px base button size on screens under 480px, avoiding middle overlap in portrait mode.
 
-- **Fix**: **API Routes Corrected** - Corrected API route handlers for better stability.
+---
 
-## 2.33.0 - 2026-05-23
+## [2.43.27] — 2026-05-25
 
-- **Feature**: **Emulator Core Stabilized** - Emulator core systems stabilized with proper configuration.
 
-## 2.32.0 - 2026-05-23
+### Fix: Mobile Game Display Placement & Virtual Controls Overlay
 
-- **Feature**: **UI Overlay Complete** - Overlay UI system for the emulator with loading states, menu navigation, and controller bindings established.
+- **Repositioned Mobile Game Canvas** — Added `padding-top: 50px` for screen sizes smaller than `768px` in [player.ts](file:///C:/Users/matt/.gemini/antigravity/scratch/HomeArcade-HA/cabinet_bridge/server/routes/player.ts) to push the game display down on mobile screens, clearing it from the Home Assistant Lovelace / Ingress header bar and preventing top-edge clipping.
+- **Robust Virtual Gamepad Hidden Styles** — Configured `window.EJS_VirtualGamepadSettings` with an off-screen dummy button to bypass EmulatorJS's default controls fallback logic.
+- **Expanded CSS Hiding Selectors** — Expanded the CSS hiding rules to target all underscore-based (`.ejs_virtualGamepad`, `.ejs_vpad`) and camelCase class/ID selectors used internally by the emulator.
 
-## 2.31.0 - 2026-05-23
+---
 
-- **Fix**: **HD Mode Toggle** - HD Mode toggle with aspect ratio selection.
+## [2.43.26] — 2026-05-25
 
-## 2.30.0 - 2026-05-23
+### Fix: Duplicate Mobile Virtual Gamepads
 
-- **Feature**: **State Management** - Save slot management, state saving, loading, and deletion implemented.
+- **Disabled Default EmulatorJS Touch Controls** — Configured `window.EJS_VirtualGamepadSettings = []` and corrected capitalization of `window.EJS_Buttons` to prevent EmulatorJS from rendering its default virtual controller overlay alongside HomeArcade's custom virtual gamepad.
 
-## 2.29.0 - 2026-05-22
+---
 
-- **Feature**: **Save Management** - Save management with cabinet UI.
+## [2.43.25] — 2026-05-25
 
-## 2.28.0 - 2026-05-22
+### Feature: Expose Port 5000 Config Mapping
 
-- **Feature**: **Emulator Bootstrap** - Bootstrap and launch emulators with library game selection.
+- **Added Ports Exposing Configuration** — Added standard port `5000/tcp` mapping setting in `config.yaml` to allow exposing the add-on directly to the local network via Home Assistant.
 
-## 2.27.0 - 2026-05-22
+---
 
-- **Feature**: **Emulator Loading** - Emulator loading with HD mode support.
+## [2.43.24] — 2026-05-25
 
-## 2.26.0 - 2026-05-22
+### Fix: Bootstrap Syntax Error
 
-- **Feature**: **State Management** - Save/load game state with cabinet UI feedback.
+- **Added Missing Closing Curly Brace** — Re-inserted the missing closing curly brace `}` for the `cabinetSetupMenu` function. This resolves the `Uncaught SyntaxError: Unexpected end of input` crash that was introduced during cleanup.
 
-## 2.25.0 - 2026-05-22
+---
 
-- **Feature**: **Art Download** - Art and cover image downloading with fallback.
+## [2.43.23] — 2026-05-25
 
-## 2.24.0 - 2026-05-22
+### Refactor: Clean Event Delegation for Save Grid
 
-- **Feature**: **Art Fetching** - Art fetching and caching with CDN URL generation.
+- **Replaced Inline Handlers** — Refactored the Save manager's slot list rendering in `player.ts` to use data attributes instead of inline `onclick` string templates.
+- **Event Delegation** — Added a single click handler to the grid container that catches clicks from action buttons and maps them dynamically. This completely removes the multi-layer nesting/escaping difficulty.
 
-## 2.23.0 - 2026-05-22
+---
 
-- **Feature**: **ROM Library** - ROM library with metadata and search.
+## [2.43.22] — 2026-05-25
 
-## 2.22.0 - 2026-05-22
+### Fix: Pause Menu Element Null Reference Crashes
 
-- **Feature**: **Library Browser** - Game library browser with filtering.
+- **Wired Missing Save Manager HTML and Styles** — Embedded the missing `cabinet-save-panel` HTML section and CSS styles inside `renderEmulatorPage` so that the Saves panel loads and opens correctly.
+- **Implemented Null-Safe Button Bindings** — Secured the event listener setup by introducing a `safeOnClick` helper for setting element `.onclick` handlers. This prevents any `TypeError: Cannot set properties of null` crashes if certain controls (e.g. sync buttons) are not present in the DOM.
 
-## 2.21.0 - 2026-05-22
+---
 
-- **Feature**: **Game Scanner** - Scanner with game detection and auto-import.
+## [2.43.21] — 2026-05-25
 
-## 2.20.0 - 2026-05-22
+### Fix: Save State Slot ReferenceError
 
-- **Feature**: **System Scanner** - System and game scanner with artwork.
+- **Escaped Template Interpolation** — Escaped the client-side `slot.slot` variable template interpolations inside the load and delete save state button handlers. This resolves the server-side crash throwing "Server error: slot is not defined".
 
-## 2.19.0 - 2026-05-22
+---
 
-- **Feature**: **Game Detection** - Game detection and system identification.
+## [2.34.121] — 2026-05-23
 
-## 2.18.0 - 2026-05-22
+### Release: Changelog Sync
 
-- **Feature**: **System Detection** - System detection with emulator identification.
+- **Changelog Synchronization** — Updated the official Home Assistant add-on changelog (`CHANGELOG.md`) to include all recent development history. This ensures that users can see the full list of improvements, including the RetroArch migration and performance optimizations, directly within the Home Assistant UI.
 
-## 2.17.0 - 2026-05-22
+---
 
-- **Feature**: **Rom Import** - ROM import with multi-file support.
+## [2.34.120] — 2026-05-23
 
-## 2.16.0 - 2026-05-22
+### Fix: RetroArch CDN Fallback & Cross-Origin Isolation
 
-- **Feature**: **File Verification** - File verification and import confirmation.
+- **Implemented RetroArch CDN Fallback** — Added a fallback mechanism that automatically loads engine assets from the official Libretro CDN if local assets are missing.
+- **Enforced Cross-Origin Isolation** — Enforced strict `COOP` and `COEP` headers on the server to resolve MIME type and script execution errors in modern browsers.
+- **Improved Engine Boot Sequence** — Refined the `Module` initialization to correctly handle asynchronous WebAssembly loading and virtual filesystem mounting.
 
-## 2.15.0 - 2026-05-22
+---
 
-- **Feature**: **Upload Processing** - Upload processing and file management.
+## [2.34.119] — 2026-05-23
 
-## 2.14.0 - 2026-05-22
+### Major: Pure Libretro Migration
 
-- **Feature**: **Upload Management** - Upload management with duplicate detection.
+- **Transitioned to RetroArch Web** — Replaced the EmulatorJS wrapper with the official RetroArch Web (WASM) engine for professional-grade stability and advanced feature support.
+- **Enabled Official RetroArch Menu** — Re-enabled the classic RGUI interface, giving users full control over shaders, cheats, and core settings directly within the browser.
 
-## 2.13.0 - 2026-05-22
+---
 
-- **Feature**: **Upload API** - Upload API with size validation.
+## [2.34.118] — 2026-05-23
 
-## 2.12.0 - 2026-05-22
+### Fix: Definitive Client-Side Path Resolution
 
-- **Feature**: **File Upload** - File upload handling with metadata.
+- **Migrated Path Resolution to Browser** — Moved 100% of the asset routing logic to the browser, eliminating "Unexpected token '<'" errors by ensuring absolute Ingress URLs are always used.
+- **Synchronized Asset Loader** — Re-aligned the initialization sequence to ensure all configuration flags are set before the engine boots.
 
-## 2.11.0 - 2026-05-22
+---
 
-- **Feature**: **ROM Upload** - ROM upload and import system.
+## [2.34.117] — 2026-05-23
 
-## 2.10.0 - 2026-05-22
+### Major: Fresh Asset Implementation
 
-- **Feature**: **File Management** - File management and deletion.
+- **Overhauled Emulator Asset Management** — Moved all engine assets into the static `public` directory, ensuring they are correctly bundled and reliably served through standard routes.
 
-## 2.9.0 - 2026-05-22
+---
 
-- **Feature**: **ROM Deletion** - ROM deletion with cascade cleanup.
+## [2.34.116] — 2026-05-22
 
-## 2.8.0 - 2026-05-22
+### Fix: Asset Routing & Ingress Path Detection
 
-- **Feature**: **ROM Management** - ROM management API routes.
+- **Implemented Robust Path Detection** — Added a foolproof way for the browser to find the Home Assistant Ingress root, ensuring all emulator assets are requested using verified absolute paths.
 
-## 2.7.0 - 2026-05-22
+---
 
-- **Feature**: **Art Management** - Art management with URL extraction.
+## [2.34.115] — 2026-05-22
 
-## 2.6.0 - 2026-05-22
+### Fix: 90% Loading Hang & Stable Core Mapping
 
-- **Feature**: **System Management** - System management with artwork.
+- **Resolved Loading Hang** — Corrected absolute pathing errors and reverted all core identifiers to their most compatible standard aliases (`nes`, `snes`, `gba`, `segaMD`, `fba`) to ensure perfect CDN matching.
 
-## 2.5.0 - 2026-05-22
+---
 
-- **Feature**: **Metadata API** - Metadata API with search and filtering.
+## [2.34.114] — 2026-05-22
 
-## 2.4.0 - 2026-05-22
+### Fix: Loading Restoration & Dynamic Ingress Detection
 
-- **Feature**: **Database Schema** - Database schema with relationships.
+- **Restored System-Wide Loading** — Resolved a major regression where all systems were failing to load by implementing dynamic `ingressBase` detection.
 
-## 2.3.0 - 2026-05-22
+---
 
-- **Feature**: **Data Models** - Data models for systems, ROMs, and metadata.
+## [2.34.113] — 2026-05-22
 
-## 2.2.0 - 2026-05-22
+### Fix: System-Wide Mobile Compatibility
 
-- **Feature**: **Database Layer** - Database layer with query optimization.
+- **Optimized Mobile Playback** — Switched to stable core identifiers and absolute paths to ensure reliable playback on phones and tablets.
 
-## 2.1.0 - 2026-05-22
+---
 
-- **Feature**: **Storage System** - Storage system with file organization.
+## [2.34.112] — 2026-05-22
 
-## 2.0.0 - 2026-05-22
+### Major: Definitive Core Realignment
 
-- **Initial Release**: **HomeArcade Foundation** - Foundation for HomeArcade, a Home Assistant add-on for retro gaming.
+- **Restored Standard Identifiers** — Restored standard system identifiers for all consoles to ensure perfect compatibility with the EmulatorJS WASM catalog, resolving loading failures for NES and Arcade games.
+
+---
+
+## [2.34.111] — 2026-05-22
+
+### Fix: N64 Core Stability & Enhanced Health Checks
+
+- **Fine-tuned N64 Playback** — Optimized the N64 configuration for perfect playback across all devices.
+- **Expanded Test Coverage** — Added specific health checks for N64 to prevent regressions.
+
+---
+
+## [2.34.110] — 2026-05-22
+
+### Feature: Automated Core Health Checks
+
+- **Introduced Automated Safety Suite** — Created `core-health.test.ts` to systematically verify every system's core mapping and BIOS requirements before release.
+
+---
+
+## [2.34.109] — 2026-05-22
+
+### Fix: Conditional Sega BIOS Logic
+
+- **Smart BIOS Validation** — Standard Genesis and Master System games now correctly bypass BIOS requirements, while Sega CD titles correctly retain the prompt.
+
+---
+
+## [2.34.108] — 2026-05-22
+
+### Fix: Ultra-Aggressive UI Hiding
+
+- **Eliminated Double Buttons** — Implemented multi-layered CSS and JS overrides to permanently resolve the "2 sets of buttons" issue.
+
+---
+
+## [2.34.107] — 2026-05-22
+
+### Fix: Game Boy & GBC Loading Restoration
+
+- **Restored Handheld Mapping** — Reverted Game Boy and GBC cores to their standard aliases to resolve 90% progress hangs.
+
+---
+
+## [2.34.106] — 2026-05-22
+
+### Fix: NES & Arcade Core Mapping
+
+- **Aligned CDN Core Names** — Updated NES and Arcade mappings to use specific Libretro identifiers (`fceumm`, `mame2003`) to match the CDN WASM catalog.
+
+---
+
+## [2.34.105] — 2026-05-22
+
+### Fix: 90% Progress Hang Recovery
+
+- **Restored Core Naming** — Reverted core naming to standard system aliases to ensure correct asset discovery across all consoles.
+
+---
+
+## [2.34.104] — 2026-05-22
+
+### Fix: Audio Engine Initialization Stability
+
+- **Resolved OpenAL Crash** — Added a default volume guard (`EJS_volume`) to prevent a critical `TypeError` during early audio engine boot.
+
+---
+
+## [2.34.103] — 2026-05-22
+
+### Fix: Ingress Header & 403 Forbidden Errors
+
+- **Exposed Critical Headers** — Explicitly exposed `Content-Length` and `Accept-Ranges` to allow the emulator to download large assets through the HA proxy.
+- **Refined CORS Policy** — Resolved 403 Forbidden errors for cross-origin assets.
+
+---
+
+## [2.34.102] — 2026-05-22
+
+### Fix: N64 Core Compatibility
+
+- **Restored N64 System Alias** — Reverted N64 core to its generic alias to allow for dynamic, device-specific core selection.
+
+---
+
+## [2.34.101] — 2026-05-22
+
+### Fix: Gamepad Input Bridge Reliability
+
+- **Manual Input Injection** — Implemented a robust input relay that bypasses browser-specific Gamepad API quirks, ensuring physical controllers work reliably.
+
+---
+
+## [2.34.100] — 2026-05-22
+
+### Feature: Auto-Gamepad Detection & Mapping
+
+- **Plug-and-Play Controller Support** — Implemented automatic detection and standardized Retropad mapping for Xbox, PlayStation, and Nintendo controllers.
+
+---
+
+## [2.34.99] — 2026-05-22
+
+### Feature: Netplay Diagnostic Engine & Handshake Stability
+
+- **Added Netplay Logging** — Implemented server-side logging to track peer connections and message routing for advanced debugging.
+- **Improved Connection Resiliency** — Refined the signaling handshake to handle rapid re-joins and unexpected socket closures.
+
+---
+
+## [2.34.98] — 2026-05-22
+
+### Performance: ROMs API Payload Trimming
+
+- **Accelerated Dashboard Loading** — Optimized the `/api/roms` endpoint to omit null fields, reducing the JSON payload size by ~40% for large libraries.
+
+---
+
+## [2.34.97] — 2026-05-22
+
+### Performance: PS1/PS2 Optimization & Menu Fix
+
+- **Faster PlayStation Loading** — Optimized asset pre-fetching and core initialization sequence.
+- **Fixed Menu Freezing** — Implemented an asynchronous pause/resume cycle for the in-game menu.
+
+---
+
+## [2.34.96] — 2026-05-22
+
+### Feature: Customizable Touch Controls & HD Mode
+
+- **Personalized Handheld Experience** — Added real-time sliders for button size and opacity in the in-game menu.
+- **Internal Upscaling** — Introduced an "HD Mode" toggle to enable high-resolution rendering for 3D consoles.
+
+---
+
+## [2.34.95] — 2026-05-22
+
+### Major: Lemuroid-Style Menu Overhaul
+
+- **Redesigned In-Game Interface** — Replaced the default overlay with a premium centered glass card and large action tiles.
+- **Forced UI Isolation** — Implemented aggressive overrides to ensure only our custom menu is visible.
+
+---
+
+## [2.34.94] — 2026-05-22
+
+### Fix: Netplay Synchronization Engine
+
+- **Forced Sync State** — Explicitly enabled the internal netplay flag to ensure joined sessions correctly synchronize game state and inputs.
+
+---
+
+## [2.34.93] — 2026-05-22
+
+### Fix: PS1/PS2 Startup BIOS Hang
+
+- **Aligned Core Naming** — Corrected a mismatch that prevented BIOS files from being detected, resolving the hang at the "Finalizing" stage.
+
+---
+
+## [2.34.92] — 2026-05-22
+
+### Fix: Definitive Double Virtual Control Hiding
+
+- **Resolved UI Overlap** — Force-disabled EmulatorJS's internal mobile detection and added strict CSS overrides to kill duplicate grey buttons.
+
+---
+
+## [2.34.91] — 2026-05-22
+
+### Major: Netplay Pro Lobby & WebRTC Stability
+
+- **Overhauled Multiplayer UI** — New high-fidelity Netplay lobby with real-time status and compatibility checks.
+- **Reduced Connection Lag** — Integrated Google STUN servers and optimized the relay for lower-latency signaling.
+
+---
+
+## [2.34.90] — 2026-05-22
+
+### Fix: Virtual Pad Aesthetics
+
+- **Resolved Button Rendering** — Fixed an issue where buttons were stacking and added 3D bulb highlights for a physical feel.
+
+---
+
+## [2.34.88] — 2026-05-22
+
+### Feature: Auto-Resume & Core Engine Upgrades
+
+- **Implemented "Pick Up and Play"** — The app now automatically quick-saves on exit and quick-loads on launch.
+- **Upgraded WASM Cores** — Switched default cores to modern, high-performance versions from the Lemuroid ecosystem.
+
+---
+
+## [2.34.40] — 2026-05-21
+
+### Fix: Netplay Synchronization & Core Bootstrapping
+
+- **Implemented Netplay Configuration** — Fixed an issue where netplay signaling succeeded but games failed to sync. The EmulatorJS bootstrap now correctly receives and initializes `EJS_netplayUrl`, `EJS_netplayRole`, and `EJS_netplayRoom`.
+- **Automatic Server Detection** — Added logic to dynamically detect the correct WebSocket protocol (ws/wss) and host, ensuring compatibility with Home Assistant Ingress.
+
+---
+
+## [2.34.39] — 2026-05-21
+
+### Fix: Home Assistant Ingress Stability & Bulk Scrape UI
+
+- **Optimized Middleware Order** — Moved Home Assistant ingress prefix stripping to the top of the middleware stack. This ensures consistent routing and fixes issues with streaming Server-Sent Events (SSE).
+- **Improved Scrape Feedback** — Added clear UI notifications when attempting to scrape an already-completed library, preventing user confusion when "nothing happens."
