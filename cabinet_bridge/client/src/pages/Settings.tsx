@@ -17,7 +17,7 @@ import {
 import {
   Check, RotateCcw, ShieldAlert, Loader2,
   Palette, Gamepad2, Database, Activity, Wifi, HelpCircle, Zap,
-  Layers, Sparkles, Link2, Settings2, Cpu, BarChart3, ArrowLeft
+  Layers, Sparkles, Link2, Settings2, Cpu, BarChart3
 } from "lucide-react";
 import { DisplaySettings } from "./settings/DisplaySettings";
 import { ControlsSettings } from "./settings/ControlsSettings";
@@ -94,15 +94,10 @@ export default function Settings() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col md:flex-row w-full h-full overflow-hidden">
         
         {/* ── Left Sidebar (Desktop Only) ─────────────────────────────────── */}
-        <aside className="hidden md:flex flex-col w-64 border-r border-white/5 bg-[#0b0b10] shrink-0 p-6 overflow-y-auto">
-          <Link href="/" className="flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-white mb-6 group transition-colors">
-            <ArrowLeft className="size-3.5 group-hover:-translate-x-1 transition-transform" />
-            <span>Torna alla Home</span>
-          </Link>
-
+        <aside className="hidden md:flex flex-col w-64 border-r border-white/5 bg-[#0f0f14] shrink-0 p-6 overflow-y-auto">
           <div className="flex flex-col gap-1 mb-8 px-2">
-            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary/80">Pannello di Controllo</div>
-            <h1 className="font-display text-2xl font-black tracking-tight text-foreground">Impostazioni</h1>
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary/80">Control Panel</div>
+            <h1 className="font-display text-2xl font-black tracking-tight text-foreground">Settings</h1>
           </div>
 
           <nav className="flex-1 space-y-8">
@@ -149,14 +144,10 @@ export default function Settings() {
         <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-background/20 relative">
           
           {/* Mobile Category Dropdown (Sticky Top) */}
-          <header className="md:hidden flex flex-col shrink-0 p-4 border-b border-white/5 bg-[#0b0b10]/90 backdrop-blur-md sticky top-0 z-20 gap-3">
+          <header className="md:hidden flex flex-col shrink-0 p-4 border-b border-white/5 bg-[#0f0f14]/80 backdrop-blur-md sticky top-0 z-20 gap-4">
             <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground hover:text-white">
-                <ArrowLeft className="size-3.5" />
-                <span>Home</span>
-              </Link>
-              <h1 className="font-display text-lg font-black tracking-tight">Impostazioni</h1>
-              {saveStatus === "saving" ? <Loader2 className="size-4 animate-spin text-primary" /> : <div className="w-8" />}
+               <h1 className="font-display text-xl font-black tracking-tight">Settings</h1>
+               {saveStatus === "saving" && <Loader2 className="size-4 animate-spin text-primary" />}
             </div>
             
             <Select value={activeTab} onValueChange={setActiveTab}>

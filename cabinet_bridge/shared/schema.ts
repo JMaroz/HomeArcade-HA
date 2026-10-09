@@ -29,7 +29,7 @@ export const uploadedRoms = sqliteTable("uploaded_roms", {
   artUrl: text("art_url"),
   scrapeStatus: text("scrape_status").notNull().default("not_scraped"),
   scrapeMessage: text("scrape_message"),
-  favorite: integer("favorite", { mode: "boolean" }).notNull().default(true),
+  favorite: integer("favorite", { mode: "boolean" }).notNull().default(false),
   rating: integer("rating").notNull().default(0),
   lastPlayed: integer("last_played").notNull().default(0),
   playCount: integer("play_count").notNull().default(0),

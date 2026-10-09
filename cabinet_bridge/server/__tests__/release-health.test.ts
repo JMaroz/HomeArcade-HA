@@ -56,8 +56,8 @@ describe("Release & Manifest Health Validation", () => {
     // Check local changelog
     expect(fs.existsSync(localChangelogPath)).toBe(true);
     const localChangelog = fs.readFileSync(localChangelogPath, "utf8");
-    // Matches "## 2.43.31" or similar
-    const localVersionRegex = new RegExp(`##\\s*${version.replace(/\./g, '\\.')}`);
+    // Matches "## 2.43.31" or "## [2.52.0]" (Release Please format)
+    const localVersionRegex = new RegExp(`##\\s*\\[?${version.replace(/\\./g, '\\.')}`);
     expect(localChangelog).toMatch(localVersionRegex);
 
     // Check root changelog

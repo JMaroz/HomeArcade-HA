@@ -1,6 +1,5 @@
 /**
  * DisplaySettings — Interface & Layout tab content for Settings page.
- * Enhanced with Visual Theme Gallery (26 themes with real color swatches).
  */
 import React from "react";
 import { useIntegration } from "@/lib/integration";
@@ -8,9 +7,9 @@ import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Monitor, Check, Sparkles } from "lucide-react";
+import { Monitor } from "lucide-react";
 import { Section, Field } from "./SettingsShared";
-import { THEMES, THEME_METADATA, type AppTheme } from "@/lib/themes";
+import { THEMES } from "@/lib/themes";
 
 const ALL_SYSTEMS = [
   { id: "nes", label: "NES" }, { id: "snes", label: "SNES" },
@@ -25,94 +24,9 @@ const ALL_SYSTEMS = [
 export function DisplaySettings() {
   const { config, setConfig } = useIntegration();
   const { t } = useTranslation();
-  const currentTheme = config.theme ?? "default";
 
   return (
     <div className="space-y-10">
-      {/* ── VISUAL THEME GALLERY ────────────────────────────────────────── */}
-      <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-display text-lg font-black tracking-tight text-white flex items-center gap-2">
-              <Sparkles className="size-4 text-primary" />
-              Theme Gallery (26 Temi Globali)
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Seleziona la palette visiva per la Home generale, Impostazioni, Medaglie e Storico.
-            </p>
-          </div>
-          <span className="text-[10px] font-mono text-primary font-bold uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-            {THEME_METADATA[currentTheme as AppTheme]?.label || currentTheme}
-          </span>
-        </div>
-
-        {/* Hidden/Accessible Select for backward compatibility and testids */}
-        <div className="sr-only">
-          <Select value={currentTheme} onValueChange={(val) => setConfig({ theme: val })}>
-            <SelectTrigger data-testid="theme-select"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {THEMES.map((theme) => (
-                <SelectItem key={theme} value={theme}>
-                  <span className="capitalize">{theme.replace("-", " ")}</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Visual Swatch Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto pr-1 scrollbar-none">
-          {THEMES.map((themeKey) => {
-            const meta = THEME_METADATA[themeKey];
-            const isSelected = currentTheme === themeKey;
-            return (
-              <button
-                key={themeKey}
-                type="button"
-                onClick={() => setConfig({ theme: themeKey })}
-                className={`text-left p-3.5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-3 focus:outline-none ${
-                  isSelected
-                    ? "bg-primary/15 border-primary shadow-[0_0_20px_rgba(var(--primary),0.25)] ring-1 ring-primary"
-                    : "glass-card hover:border-white/20 hover:bg-white/[0.04]"
-                }`}
-              >
-                {/* 3 Color Swatch Pills */}
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="size-3.5 rounded-full shadow-sm border border-white/20"
-                      style={{ backgroundColor: meta?.primaryColor || "#fff" }}
-                      title="Colore Primario"
-                    />
-                    <span
-                      className="size-3.5 rounded-full shadow-sm border border-white/20"
-                      style={{ backgroundColor: meta?.accentColor || "#ccc" }}
-                      title="Colore Accento"
-                    />
-                    <span
-                      className="size-3.5 rounded-full shadow-sm border border-white/30"
-                      style={{ backgroundColor: meta?.bgColor || "#000" }}
-                      title="Colore Sfondo"
-                    />
-                  </div>
-                  {isSelected && <Check className="size-3.5 text-primary stroke-[3]" />}
-                </div>
-
-                <div>
-                  <div className="font-bold text-xs text-white leading-tight">
-                    {meta?.label || themeKey}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground/80 line-clamp-1 mt-0.5">
-                    {meta?.description || themeKey}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── GENERAL DISPLAY SETTINGS ────────────────────────────────────── */}
       <Section
         title={t("settings.sections.display.title")}
         description={t("settings.sections.display.description")}
@@ -134,12 +48,27 @@ export function DisplaySettings() {
             </Select>
           </Field>
 
+          <Field label="Theme" hint="Select a visual color theme.">
+            <Select value={config.theme ?? "default"} onValueChange={(val) => setConfig({ theme: val })}>
+              <SelectTrigger data-testid="theme-select"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {THEMES.map((theme) => (
+                  <SelectItem key={theme} value={theme}>
+                    <span className="capitalize">{theme.replace("-", " ")}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
           <Field label={t("settings.fields.systemLabels.label")} hint={t("settings.fields.systemLabels.hint")}>
             <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-sidebar/40 h-10 mt-1">
               <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">{t("settings.fields.systemLabels.show")}</span>
               <Switch checked={config.showSystemLabels} onCheckedChange={(v) => setConfig({ showSystemLabels: v })} />
             </div>
           </Field>
+
+
 
           <Field label={t("settings.fields.aspectRatio.label")} hint={t("settings.fields.aspectRatio.hint")}>
             <Select value={config.globalAspectRatio || "auto"} onValueChange={(v) => setConfig({ globalAspectRatio: v })}>
@@ -171,7 +100,6 @@ export function DisplaySettings() {
         </div>
       </Section>
 
-      {/* ── PER-SYSTEM OVERRIDES ────────────────────────────────────────── */}
       <Section
         title={t("settings.sections.overrides.title")}
         description={t("settings.sections.overrides.description")}
@@ -185,7 +113,7 @@ export function DisplaySettings() {
               setConfig({ systemDisplay: next });
             };
             return (
-              <div key={system.id} className="p-4 rounded-xl border border-border bg-sidebar/20 space-y-4">
+              <div key={system.id} className="p-4 rounded-lg border border-border bg-sidebar/20 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="font-display font-bold uppercase tracking-wider text-sm flex items-center gap-2">
                     <Monitor className="size-3.5 text-primary" />

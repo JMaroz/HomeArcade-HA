@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/banner.png" alt="HomeArcade Banner" width="100%" />
+</p>
+
 # HomeArcade
 
 > The premium retro gaming frontend for Home Assistant.

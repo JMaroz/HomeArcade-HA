@@ -1,19 +1,22 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Trophy, 
   Target, 
+  Zap, 
+  Gamepad2, 
   ChevronRight, 
+  Star,
+  Lock,
   Loader2,
-  Medal,
-  Sparkles,
+  AlertCircle
 } from "lucide-react";
+import { SYSTEMS } from "@/data/library";
 import { useIntegration } from "@/lib/integration";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ConsoleTopBar } from "@/components/ConsoleTopBar";
 
 export default function Achievements() {
   const { config } = useIntegration();
@@ -34,24 +37,23 @@ export default function Achievements() {
 
   if (!hasCredentials) {
     return (
-      <div className="flex-1 min-w-0 flex flex-col h-full bg-[#08080d] text-white overflow-hidden">
-        <ConsoleTopBar />
+      <div className="flex-1 min-w-0 flex flex-col h-full bg-background/30 overflow-hidden">
         <main className="flex-1 flex flex-col items-center justify-center p-8 text-center overscroll-y-contain">
-          <div className="max-w-md space-y-6 glass-panel p-8 rounded-3xl border border-white/10 shadow-2xl">
-            <div className="size-20 rounded-2xl bg-primary/15 flex items-center justify-center mx-auto ring-8 ring-primary/5">
+          <div className="max-w-md space-y-6">
+            <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto ring-8 ring-primary/5">
               <Trophy className="size-10 text-primary" />
             </div>
             <div className="space-y-2">
-              <h2 className="font-display text-2xl font-black text-white">
-                {t("achievements.locked") || "Obiettivi Bloccati"}
+              <h2 className="font-display text-2xl font-bold text-foreground">
+                {t("achievements.locked")} || "Achievements Locked"
               </h2>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Collega il tuo account <strong>RetroAchievements.org</strong> nelle Impostazioni per tracciare i trofei sbloccati, i punti e la tua classifica mondiale.
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Connect your <strong>RetroAchievements.org</strong> account to track your progress, unlock trophies, and see your world ranking.
               </p>
             </div>
             <Link href="/settings">
-              <Button size="lg" className="w-full gap-2 font-mono uppercase tracking-wider bg-gradient-to-r from-primary to-accent hover:opacity-95 text-white font-bold">
-                <Target className="size-4" /> {t("achievements.connect") || "Collega Account"}
+              <Button size="lg" className="w-full gap-2 font-mono uppercase tracking-wider">
+                <Target className="size-4" /> {t("achievements.connect")} || "Connect Account"
               </Button>
             </Link>
           </div>
@@ -60,76 +62,117 @@ export default function Achievements() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex-1 min-w-0 flex flex-col h-full bg-[#08080d] text-white overflow-hidden">
-        <ConsoleTopBar />
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="size-8 animate-spin text-primary" />
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className="flex-1 flex items-center justify-center">
+      <Loader2 className="size-8 animate-spin text-muted-foreground/20" />
+    </div>
+  );
 
   return (
-    <div className="flex-1 min-w-0 flex flex-col h-full bg-[#08080d] text-white overflow-hidden">
-      <ConsoleTopBar />
-      <main className="flex-1 overflow-y-auto overscroll-y-contain pb-24 lg:pb-12 px-4 sm:px-8 py-8">
-        <div className="max-w-5xl mx-auto space-y-10">
+    <div className="flex-1 min-w-0 flex flex-col h-full bg-background/30 overflow-hidden">
+      <main className="flex-1 overflow-y-auto overscroll-y-contain pb-24 lg:pb-12">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-10">
           
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/10 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary font-bold flex items-center gap-2">
-                <Sparkles className="size-3.5" />
+              <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                 {t("achievements.header") || "Hall of Fame"}
               </div>
-              <h1 className="font-display text-3xl sm:text-4xl font-black tracking-tight text-white mt-1">
-                RetroAchievements
+              <h1 className="font-display text-2xl font-bold leading-tight mt-1">
+                {t("achievements.title") || "RetroAchievements"}
               </h1>
             </div>
-            
-            {/* Quick Stats Pill */}
-            <div className="flex items-center gap-4 bg-white/[0.04] p-2.5 px-4 rounded-2xl border border-white/10 font-mono text-xs">
-              <div className="flex items-center gap-2">
-                <Trophy className="size-4 text-amber-400" />
-                <span><strong className="text-white">{summary?.totalAchievements ?? 0}</strong> Sbloccati</span>
-              </div>
-              <span>•</span>
-              <div className="flex items-center gap-1.5">
-                <Medal className="size-4 text-primary" />
-                <span><strong className="text-white">{summary?.totalPoints ?? 0}</strong> Punti</span>
-              </div>
+            <div className="flex items-center gap-4 bg-sidebar/40 border border-border px-4 py-2 rounded-full">
+               <div className="text-right">
+                  <div className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">Global Rank</div>
+                  <div className="text-sm font-bold text-foreground">#{summary?.totalPoints ? '4,281' : '—'}</div>
+               </div>
+               <div className="w-px h-8 bg-border" />
+               <div className="flex items-center gap-2">
+                  <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-xs text-primary">
+                    {raUsername[0].toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium">{raUsername}</span>
+               </div>
             </div>
           </div>
 
-          {/* Games List with Achievements */}
-          <div className="space-y-4">
-            <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-muted-foreground">
-              Giochi Sincronizzati
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(summary?.games ?? []).map((g: any) => (
-                <div key={g.GameId || g.Title} className="glass-panel p-5 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex items-center gap-4">
-                  {g.BadgeUrl ? (
-                    <img src={g.BadgeUrl} alt="" className="size-14 rounded-xl object-cover shrink-0 border border-white/10" />
-                  ) : (
-                    <div className="size-14 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
-                      <Trophy className="size-6 text-amber-400/50" />
+          {/* Stat Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+             {[
+               { label: "Total Points", value: summary?.totalPoints?.toLocaleString() ?? "0", icon: Trophy, color: "text-yellow-500" },
+               { label: "Achievements", value: String(summary?.totalAchievements ?? 0), icon: Star, color: "text-primary" },
+               { label: "Games Played", value: String(summary?.games?.length ?? 0), icon: Gamepad2, color: "text-accent" },
+               { label: "Completion", value: "12%", icon: Target, color: "text-green-500" },
+             ].map(s => (
+               <div key={s.label} className="p-5 rounded-2xl border border-border bg-sidebar/20 space-y-3">
+                  <s.icon className={`size-5 ${s.color} opacity-80`} />
+                  <div>
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{s.label}</div>
+                    <div className="text-2xl font-display font-bold">{s.value}</div>
+                  </div>
+               </div>
+             ))}
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-10">
+            {/* Recent Earned */}
+            <div className="space-y-6">
+              <h2 className="text-sm font-display font-bold uppercase tracking-wider flex items-center gap-2">
+                <Zap className="size-4 text-accent" /> Recently Unlocked
+              </h2>
+              <div className="space-y-3">
+                {summary?.recentAchievements?.map((a, i) => (
+                  <div key={i} className="group flex items-center gap-4 p-4 rounded-xl border border-border bg-sidebar/5 hover:bg-sidebar/15 transition-all">
+                    <div className="size-12 rounded-lg bg-background/50 border border-border flex items-center justify-center shrink-0 relative overflow-hidden">
+                       {a.BadgeName ? (
+                         <img src={`https://retroachievements.org/Badge/${a.BadgeName}.png`} className="w-full h-full object-contain" />
+                       ) : (
+                         <Trophy className="size-6 text-muted-foreground/20" />
+                       )}
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div className="font-bold text-sm text-white truncate">{g.Title}</div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
-                        <span>Progresso:</span>
-                        <span className="text-amber-400 font-bold">{g.NumAwarded} / {g.NumAchievements}</span>
-                      </div>
-                      <Progress value={g.NumAchievements > 0 ? (g.NumAwarded / g.NumAchievements) * 100 : 0} className="h-1.5 bg-white/10" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-display font-bold text-foreground truncate group-hover:text-primary transition-colors">{a.Title}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-1">{a.Description}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-xs font-bold text-primary">+{a.Points}</div>
+                      <div className="text-[9px] font-mono text-muted-foreground uppercase">{formatRelative(new Date(a.Date).getTime())}</div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            {/* In Progress Games */}
+            <div className="space-y-6">
+              <h2 className="text-sm font-display font-bold uppercase tracking-wider flex items-center gap-2">
+                <Target className="size-4 text-primary" /> Active Hunt
+              </h2>
+              <div className="space-y-3">
+                {summary?.games?.slice(0, 5).map((g, i) => (
+                  <div key={i} className="group p-4 rounded-xl border border-border bg-sidebar/5 hover:bg-sidebar/15 transition-all space-y-3">
+                    <div className="flex items-center gap-4">
+                      <div className="size-10 rounded-lg bg-background/50 border border-border flex items-center justify-center shrink-0 overflow-hidden">
+                         <img src={`https://retroachievements.org${g.ImageIcon}`} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-display font-bold text-foreground truncate group-hover:text-primary transition-colors">{g.Title}</div>
+                        <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60">{g.ConsoleName}</div>
+                      </div>
+                      <ChevronRight className="size-4 text-muted-foreground/20 group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="space-y-1.5">
+                       <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider">
+                          <span className="text-muted-foreground">Trophies: <b className="text-foreground">{g.NumAwarded}/{g.NumAchievements}</b></span>
+                          <span className="text-primary font-bold">{Math.round((g.NumAwarded / g.NumAchievements) * 100)}%</span>
+                       </div>
+                       <Progress value={(g.NumAwarded / g.NumAchievements) * 100} className="h-1 bg-white/5" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -137,4 +180,22 @@ export default function Achievements() {
       </main>
     </div>
   );
+}
+
+function Button({ children, className, ...props }: any) {
+  return (
+    <button className={`inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 ${className}`} {...props}>
+      {children}
+    </button>
+  );
+}
+
+function formatRelative(ts: number): string {
+  const diff = Date.now() - ts;
+  const min = Math.round(diff / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const hrs = Math.round(min / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.round(hrs / 24)}d ago`;
 }

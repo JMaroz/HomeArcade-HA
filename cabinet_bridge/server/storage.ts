@@ -122,6 +122,19 @@ export function initializeDatabase() {
       log(`Failed to create default profile: ${err.message}`, "db");
     }
 
+    // Migration: Reset erroneously auto-favorited ROMs from legacy default(true)
+    try {
+      sqlite.prepare("CREATE TABLE IF NOT EXISTS _system_meta (key TEXT PRIMARY KEY, value TEXT)").run();
+      const prefCheck = sqlite.prepare("SELECT value FROM _system_meta WHERE key = 'favorite_default_reset'").get() as any;
+      if (!prefCheck) {
+        sqlite.prepare("UPDATE uploaded_roms SET favorite = 0").run();
+        sqlite.prepare("INSERT OR REPLACE INTO _system_meta (key, value) VALUES ('favorite_default_reset', 'done')").run();
+        log("Reset legacy auto-favorited ROMs (favorite = 0)", "db");
+      }
+    } catch (err: any) {
+      log(`Favorite reset check: ${err.message}`, "db");
+    }
+
     log("Database ready", "db");
   } catch (err) {
     log("CRITICAL: Database failure!", "db");
