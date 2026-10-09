@@ -221,28 +221,29 @@ export function registerScrapeRoutes(app: Express) {
     res.json({ success: true, ...updated });
   });
 
-  app.post("/api/roms/scrape-all", async (req, res) => {
-    const roms = await storage.listUploadedRoms();
-    const unscraped = roms.filter((r) => r.scrapeStatus === "not_scraped" || r.scrapeStatus === "failed");
-    if (unscraped.length === 0) return res.json({ message: "All ROMs already scraped." });
-
+  async function streamScrapeRoms(targetRoms: any[], res: any) {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
     res.setHeader("X-Accel-Buffering", "no");
     res.flushHeaders();
 
-    const send = (data: any) => res.write(`data: ${JSON.stringify(data)}\n\n`);
-    send({ type: "start", phase: "art", total: unscraped.length });
+    const send = (data: any) => {
+      try {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      } catch {}
+    };
 
     let artMatched = 0;
     let artFailed = 0;
     let count = 0;
 
-    // Phase 1: Art scraping
-    for (const rom of unscraped) {
+    const needArt = targetRoms.filter((r) => !r.artUrl);
+    send({ type: "start", phase: "art", total: needArt.length });
+
+    for (const rom of needArt) {
       count++;
-      send({ type: "progress", phase: "art", current: count, total: unscraped.length, title: rom.title });
+      send({ type: "progress", phase: "art", current: count, total: needArt.length, title: rom.title });
 
       const libretro = await findLibretroBoxArt(rom.system, rom.title);
       if (libretro.url) {
@@ -260,14 +261,13 @@ export function registerScrapeRoutes(app: Express) {
       }
     }
 
-    // Phase 2: Metadata scraping (if RA configured)
     const settings = await storage.getIntegrationSettings();
     const raConfigured = !!(settings.raUsername && settings.raToken);
     let metaMatched = 0;
     let metaFailed = 0;
 
     if (raConfigured) {
-      const needsMeta = roms.filter((r) => r.raGameId && !r.description);
+      const needsMeta = targetRoms.filter((r) => r.raGameId && !r.description);
       if (needsMeta.length > 0) {
         send({ type: "phase_change", phase: "meta", total: needsMeta.length });
         count = 0;
@@ -290,5 +290,21 @@ export function registerScrapeRoutes(app: Express) {
 
     send({ type: "complete", artMatched, artFailed, metaMatched, metaFailed });
     res.end();
+  }
+
+  app.post("/api/roms/scrape-all", async (req, res) => {
+    const roms = await storage.listUploadedRoms();
+    const unscraped = roms.filter((r) => r.scrapeStatus === "not_scraped" || r.scrapeStatus === "failed");
+    if (unscraped.length === 0) return res.json({ message: "All ROMs already scraped." });
+
+    await streamScrapeRoms(unscraped, res);
+  });
+
+  app.post("/api/roms/scrape-missing", async (req, res) => {
+    const roms = await storage.listUploadedRoms();
+    const missing = roms.filter((r) => !r.artUrl || !r.description);
+    if (missing.length === 0) return res.json({ message: "No ROMs are missing metadata or artwork." });
+
+    await streamScrapeRoms(missing, res);
   });
 }

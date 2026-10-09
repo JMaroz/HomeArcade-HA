@@ -153,9 +153,26 @@ async function initApp() {
     async () => {
       const s = await storage.getIntegrationSettings();
       return s.libraryWatchPaths.split(",").map(p => p.trim()).filter(Boolean);
+    },
+    async () => {
+      const roms = await storage.listUploadedRoms();
+      return roms.map((r) => ({
+        id: r.id,
+        title: r.title,
+        filePath: r.filePath,
+        fileName: r.fileName,
+        romHash: r.romHash,
+      }));
+    },
+    async (id: number) => {
+      const removed = await storage.deleteUploadedRom(id);
+      return !!removed;
+    },
+    async (id: number, hash: string) => {
+      await storage.updateUploadedRomMetadata(id, { romHash: hash });
     }
   );
-  log("ROM scanner initialized", "boot");
+  log("ROM scanner initialized with auto-reconciliation and hashing", "boot");
 
   // Error handler must be registered after all routes
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

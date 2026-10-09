@@ -10,6 +10,7 @@
 import fs from "fs/promises";
 import fsSync from "fs";
 import path from "path";
+import crypto from "node:crypto";
 
 import { slugify } from "./routes/utils";
 
@@ -90,9 +91,34 @@ export interface ScannerStatus {
   pathStats: Record<string, { found: number; imported: number; lastScanAt: number | null; error: string | null }>;
 }
 
-type AddRomsBulkFn = (roms: any[]) => Promise<void>;
-type ListFilenamesFn = () => Promise<string[]>;
-type GetNasPathsFn = () => Promise<string[]>;
+export type ScannerEvent =
+  | { type: "start"; watchPaths: string[] }
+  | { type: "discover"; path: string; found: number }
+  | { type: "processing"; current: number; total: number; fileName: string; system: string }
+  | { type: "imported"; fileName: string; system: string; title: string; romHash: string }
+  | { type: "pruned"; id: number; title: string; path: string }
+  | { type: "complete"; totalFound: number; totalImported: number; totalPruned: number; durationMs: number }
+  | { type: "error"; message: string };
+
+export type ScannerEventListener = (event: ScannerEvent) => void;
+
+export type AddRomsBulkFn = (roms: any[]) => Promise<void>;
+export type ListFilenamesFn = () => Promise<string[]>;
+export type GetNasPathsFn = () => Promise<string[]>;
+export type ListWatchRomsFn = () => Promise<Array<{ id: number; title: string; filePath: string; fileName: string; romHash?: string | null }>>;
+export type DeleteRomFn = (id: number) => Promise<boolean>;
+export type UpdateRomHashFn = (id: number, hash: string) => Promise<void>;
+
+/** Compute MD5 hash using standard streaming pipeline */
+export async function computeFileHash(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash("md5");
+    const stream = fsSync.createReadStream(filePath, { highWaterMark: 1024 * 1024 });
+    stream.on("data", (chunk) => hash.update(chunk));
+    stream.on("end", () => resolve(hash.digest("hex")));
+    stream.on("error", (err) => reject(err));
+  });
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // State
@@ -104,9 +130,31 @@ const MAX_DEPTH = 10;
 let _addRomsBulk: AddRomsBulkFn | null = null;
 let _listFilenames: ListFilenamesFn | null = null;
 let _getNasPaths: GetNasPathsFn | null = null;
+let _listWatchRoms: ListWatchRomsFn | null = null;
+let _deleteRom: DeleteRomFn | null = null;
+let _updateRomHash: UpdateRomHashFn | null = null;
 let _pollTimer: ReturnType<typeof setInterval> | null = null;
 let _envPaths: string[] = [];
 let _isScanning = false;
+
+const _eventListeners = new Set<ScannerEventListener>();
+
+export function subscribeScannerEvents(listener: ScannerEventListener): () => void {
+  _eventListeners.add(listener);
+  return () => {
+    _eventListeners.delete(listener);
+  };
+}
+
+function emitEvent(event: ScannerEvent): void {
+  for (const listener of _eventListeners) {
+    try {
+      listener(event);
+    } catch (err) {
+      console.warn("[Scanner] Event listener threw error:", err);
+    }
+  }
+}
 
 let _status: ScannerStatus = {
   enabled:       false,
@@ -174,8 +222,11 @@ async function scanPath(
 
   console.log(`[Scanner] Scanning ${rootPath}`);
   const romFiles = await collectRomFilesAsync(rootPath);
+  emitEvent({ type: "discover", path: rootPath, found: romFiles.length });
 
+  let fileIndex = 0;
   for (const filePath of romFiles) {
+    fileIndex++;
     const fileName = path.basename(filePath);
     if (existingNames.has(fileName)) continue;
 
@@ -193,6 +244,14 @@ async function scanPath(
     let discNumber: number | null = null;
     let discGroup: string | null = null;
 
+    emitEvent({
+      type: "processing",
+      current: fileIndex,
+      total: romFiles.length,
+      fileName,
+      system,
+    });
+
     if (ext === ".m3u") {
       isPlaylist = true;
       try {
@@ -209,6 +268,8 @@ async function scanPath(
 
     try {
       const stat = await fs.stat(filePath);
+      const romHash = await computeFileHash(filePath).catch(() => null);
+
       newRoms.push({
         title, system, slug,
         originalName: fileName,
@@ -220,9 +281,18 @@ async function scanPath(
         m3uContent,
         discNumber,
         discGroup,
+        romHash,
         createdAt: Date.now(),
       });
       existingNames.add(fileName);
+
+      emitEvent({
+        type: "imported",
+        fileName,
+        system,
+        title,
+        romHash: romHash ?? "",
+      });
     } catch {
       // skip individual errors
     }
@@ -237,52 +307,105 @@ async function scanPath(
 // Main scan loop
 // ─────────────────────────────────────────────────────────────────────────────
 
+let _activeScanPromise: Promise<void> | null = null;
+
 async function doScan(): Promise<void> {
-  if (_isScanning || !_addRomsBulk || !_listFilenames) return;
-  _isScanning = true;
-
-  try {
-    const nasPaths = _getNasPaths ? (await _getNasPaths().catch(() => [])) : [];
-    const allPaths = Array.from(new Set([..._envPaths, ...nasPaths].filter(Boolean)));
-
-    if (allPaths.length === 0) {
-      _status.watchPaths = [];
-      _status.watchDir = null;
-      _isScanning = false;
-      return;
-    }
-
-    console.log(`[Scanner] Watch paths: ${allPaths.join(", ")}`);
-    _status.watchPaths = allPaths;
-    _status.watchDir   = allPaths.join(", ");
-    _status.enabled    = true;
-    _status.watching   = true;
-
-    const existingNames = new Set(await _listFilenames());
-    let allNewRoms: any[] = [];
-
-    for (const p of allPaths) {
-      const newRoms = await scanPath(p, existingNames);
-      allNewRoms.push(...newRoms);
-    }
-
-    if (allNewRoms.length > 0) {
-      console.log(`[Scanner] Found ${allNewRoms.length} new ROM(s). Inserting...`);
-      await _addRomsBulk(allNewRoms);
-      console.log(`[Scanner] Successfully imported ${allNewRoms.length} games.`);
-    }
-
-    _status.lastScanAt    = Date.now();
-    _status.lastScanFound = allNewRoms.length;
-    _status.totalScanned += allNewRoms.length;
-    _status.error         = null;
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    _status.error = msg;
-    console.error("[Scanner] scan error:", msg);
-  } finally {
-    _isScanning = false;
+  if (_activeScanPromise) {
+    return _activeScanPromise;
   }
+  if (!_addRomsBulk || !_listFilenames) return;
+
+  _activeScanPromise = (async () => {
+    _isScanning = true;
+    const startTime = Date.now();
+
+    try {
+      const nasPaths = _getNasPaths ? (await _getNasPaths().catch(() => [])) : [];
+      const allPaths = Array.from(new Set([..._envPaths, ...nasPaths].filter(Boolean)));
+
+      if (allPaths.length === 0) {
+        _status.watchPaths = [];
+        _status.watchDir = null;
+        return;
+      }
+
+      console.log(`[Scanner] Watch paths: ${allPaths.join(", ")}`);
+      _status.watchPaths = allPaths;
+      _status.watchDir   = allPaths.join(", ");
+      _status.enabled    = true;
+      _status.watching   = true;
+
+      emitEvent({ type: "start", watchPaths: allPaths });
+
+      // ── Auto-reconciliation of deleted / moved files ─────────────────────────
+      let totalPruned = 0;
+      if (_listWatchRoms && _deleteRom) {
+        try {
+          const existingRoms = await _listWatchRoms();
+          for (const r of existingRoms) {
+            const isWatched = allPaths.some((wp) => {
+              const resolvedWp = path.resolve(wp);
+              const resolvedFp = path.resolve(r.filePath);
+              return resolvedFp === resolvedWp || resolvedFp.startsWith(resolvedWp + path.sep);
+            });
+            if (isWatched && !fsSync.existsSync(r.filePath)) {
+              console.log(`[Scanner] Reconciliation: pruned missing file ${r.title} (${r.filePath})`);
+              await _deleteRom(r.id);
+              totalPruned++;
+              emitEvent({ type: "pruned", id: r.id, title: r.title, path: r.filePath });
+            } else if (isWatched && _updateRomHash && !r.romHash && fsSync.existsSync(r.filePath)) {
+              // Backfill hash if missing
+              try {
+                const h = await computeFileHash(r.filePath);
+                await _updateRomHash(r.id, h);
+              } catch { /* ignore */ }
+            }
+          }
+        } catch (recErr) {
+          console.warn("[Scanner] Reconciliation check warning:", recErr);
+        }
+      }
+
+      const existingNames = new Set(await _listFilenames());
+      let allNewRoms: any[] = [];
+      let totalDiscovered = 0;
+
+      for (const p of allPaths) {
+        const newRoms = await scanPath(p, existingNames);
+        totalDiscovered += (_status.pathStats[p]?.found ?? 0);
+        allNewRoms.push(...newRoms);
+      }
+
+      if (allNewRoms.length > 0) {
+        console.log(`[Scanner] Found ${allNewRoms.length} new ROM(s). Inserting...`);
+        await _addRomsBulk(allNewRoms);
+        console.log(`[Scanner] Successfully imported ${allNewRoms.length} games.`);
+      }
+
+      _status.lastScanAt    = Date.now();
+      _status.lastScanFound = allNewRoms.length;
+      _status.totalScanned += allNewRoms.length;
+      _status.error         = null;
+
+      emitEvent({
+        type: "complete",
+        totalFound: totalDiscovered,
+        totalImported: allNewRoms.length,
+        totalPruned,
+        durationMs: Date.now() - startTime,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      _status.error = msg;
+      emitEvent({ type: "error", message: msg });
+      console.error("[Scanner] scan error:", msg);
+    } finally {
+      _isScanning = false;
+      _activeScanPromise = null;
+    }
+  })();
+
+  return _activeScanPromise;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -294,27 +417,53 @@ export function initScanner(
   addRomsBulk: AddRomsBulkFn,
   listFilenames: ListFilenamesFn,
   getNasPaths?: GetNasPathsFn,
+  listWatchRoms?: ListWatchRomsFn,
+  deleteRom?: DeleteRomFn,
+  updateRomHash?: UpdateRomHashFn,
+  autoStart = true,
 ): () => Promise<void> {
   _addRomsBulk   = addRomsBulk;
   _listFilenames = listFilenames;
   _getNasPaths   = getNasPaths ?? null;
+  _listWatchRoms = listWatchRoms ?? null;
+  _deleteRom     = deleteRom ?? null;
+  _updateRomHash = updateRomHash ?? null;
 
   _envPaths = watchDir.split(",").map((p) => p.trim()).filter(Boolean);
 
   if (_pollTimer) clearInterval(_pollTimer);
   _pollTimer = setInterval(doScan, POLL_INTERVAL_MS);
 
-  // Background the initial scan so boot isn't blocked
-  void doScan();
+  if (autoStart) {
+    // Background the initial scan so boot isn't blocked
+    void doScan();
+  }
   return doScan;
+}
+
+export function stopScanner(): void {
+  if (_pollTimer) {
+    clearInterval(_pollTimer);
+    _pollTimer = null;
+  }
 }
 
 export function refreshNasPaths(getNasPaths: GetNasPathsFn): void {
   _getNasPaths = getNasPaths;
 }
 
-export function scanNow(): Promise<void> {
-  return doScan();
+export async function scanNow(onEvent?: ScannerEventListener): Promise<ScannerStatus> {
+  if (onEvent) {
+    const unsub = subscribeScannerEvents(onEvent);
+    try {
+      await doScan();
+    } finally {
+      unsub();
+    }
+  } else {
+    await doScan();
+  }
+  return getStatus();
 }
 
 export function getStatus(): ScannerStatus {

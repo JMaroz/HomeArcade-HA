@@ -1,37 +1,67 @@
-# Handoff Sessione: GitHub Actions CI/CD & Automated Release Pipeline
+# Handoff Sessione: Revisione Impostazioni, Scansione, Trasferimento e Sincronizzazione ROM
 
-**Data**: 2026-10-08  
-**Ultimo Commit di Riferimento**: Pre-commit per pipeline CI/CD e Release Please
+**Data**: 2026-10-09  
+**Stato**: Intervista `/grill-me` completata — Piano approvato, pronto per Fase 1  
+**Piano di Riferimento**: `docs/plans/2026-10-09_rom_management_and_settings_overhaul.md`  
 
 ---
 
 ## 1. Stato Corrente
-- **Obiettivo Raggiunto**: Allineata ed evoluta l'infrastruttura GitHub Actions di `HomeArcade-HA` ispirandosi a `streaming-hub-ha` con le seguenti migliorie:
-  1. **Linting e Validazione**: Creato `.yamllint` e `.github/workflows/lint.yml` con esecuzione parallela di `yamllint`, Home Assistant Add-on Linter (`frenck/action-addon-linter`) e verifica automatica della conformità Conventional Commits per i titoli delle PR (`amannn/action-semantic-pull-request`).
-  2. **Automazione dei Rilasci (Release Please)**: Aggiunta configurazione completa `release-please-config.json` e `.release-please-manifest.json` (baseline versione 2.51.0). Creato `.github/workflows/release-please.yml` che automatizza la PR di release su `main`, il version bumping multi-file (`cabinet_bridge/config.yaml`, `cabinet_bridge/package.json`), l'aggiornamento di `CHANGELOG.md` e la sincronizzazione automatica in `cabinet_bridge/CHANGELOG.md`.
-  3. **CI Ottimizzata**: In `.github/workflows/ci.yml` è stata introdotta la cancellazione delle esecuzioni concorrenti (`cancel-in-progress: true`) ed è stato rimosso il download superfluo di Chromium via Playwright, velocizzando il runner.
-  4. **Build & Publish Disaccoppiata**: In `.github/workflows/build.yml` la costosa compilazione multi-arch QEMU (`amd64` + `aarch64`) e push su GHCR è stata confinata esclusivamente agli eventi di release ufficiale (tag `v*`), evitando sprechi di risorse su normali push a `main`.
+- **Analisi di Mercato & Benchmark Eseguita**:
+  - Confrontato lo stack attuale di HomeArcade-HA con progetti di riferimento (es. **RomM**, RetroArch, ecosistema Home Assistant add-on).
+  - Punti critici identificati:
+    1. *Scansione*: Polling cieco a 60 secondi con I/O continuo su disco, assenza di streaming del progresso, assenza di hash dei file importati via cartella e mancata riconciliazione automatica dei file cancellati su disco.
+    2. *Upload*: Singolo stream HTTP vulnerabile a timeout e reset del proxy Home Assistant Ingress/Nginx su file grandi (CD/DVD per PS1/PS2). Mancanza di chunked upload con retry.
+    3. *Sincronizzazione*: Dipendenza esclusiva da Google Drive con macchinosa configurazione OAuth (Client ID/Secret/Refresh Token via OAuth Playground) e salvataggio limitato agli stati (`.state`), trascurando i salvataggi nativi in-game (`.srm`/`.sav`) e protocolli standard come WebDAV.
+    4. *UI Impostazioni*: Tab "Library" sovraffollata e monolitica con strumenti eterogenei privi di divisione logica chiara.
+- **Decisioni di Design Condivise (Intervista /grill-me)**:
+  - **Layout Impostazioni**: Tab "Gestione Libreria" riorganizzata con sezioni tematiche/accordion ad alto contrasto (*Cartelle & Scansione*, *Trasferimento ROM*, *Salute & Manutenzione*, *Backup & Sincronizzazione*, *Collezioni Smart*).
+  - **Motore di Scansione**: Scansione on-demand con streaming SSE del progresso in tempo reale, calcolo hash (CRC32/MD5) e auto-riconciliazione dei file rimossi/spostati.
+  - **Trasferimento ROM**: Chunked Upload a blocchi (16/32MB con retry e ripresa) per superare i limiti di HA Ingress + guida e rilevamento per cartelle dirette di rete (SMB/media).
+  - **Sincronizzazione**: Supporto WebDAV (Nextcloud, Synology, NAS con URL/user/pwd) + Esportazione e Ripristino ZIP dei salvataggi (in-game `.srm`/`.sav` e stati), mantenendo Google Drive come fallback.
+  - **Hashing & Scraping**: Hashing in background per identificazione certa + opzione di scraping mirato per i soli giochi privi di artwork/metadati.
+  - **Strategia di Esecuzione**: Sviluppo incrementale in 4 fasi atomiche e testate singolarmente.
 
 ---
 
 ## 2. File Rilevanti
 
-- `.yamllint`: Regole di validazione YAML allineate allo standard Home Assistant add-on.
-- `release-please-config.json`: Configurazione Google Release Please con tipo `simple`, `extra-files` e sezioni changelog.
-- `.release-please-manifest.json`: Tracciamento semver della versione attiva (`2.51.0`).
-- `.github/workflows/lint.yml`: Workflow per yamllint, HA add-on linter e PR semantic linter.
-- `.github/workflows/ci.yml`: Workflow CI snello con concurrency group, typecheck, vitest, s6 lint e docker smoke build.
-- `.github/workflows/release-please.yml`: Workflow per la gestione automatica delle release e del changelog.
-- `.github/workflows/build.yml`: Workflow di build e push multi-arch per GHCR ristretto ai tag `v*` e release ufficiali.
-- `AGENTS.md`: Documentazione aggiornata sulle pipeline e sull'automazione delle release.
-- `docs/plans/2026-10-08_github_actions_release_system.md`: Piano di lavoro strutturato completo con checklist spuntata.
+- [2026-10-09_rom_management_and_settings_overhaul.md](file:///Users/andrea/Repository/HomeArcade-HA/docs/plans/2026-10-09_rom_management_and_settings_overhaul.md): Piano di lavoro dettagliato con checklist per le 4 fasi.
+- [scanner.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/scanner.ts): Modulo di scansione cartelle da arricchire con hashing e SSE.
+- [routes/scanner.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/routes/scanner.ts): Route HTTP e SSE per la scansione.
+- [routes/roms.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/routes/roms.ts): Route di upload e gestione ROM.
+- [routes/vault.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/routes/vault.ts): Route di salute, pulizia e sincronizzazione.
+- [RomUpload.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/components/RomUpload.tsx): Componente frontend di upload da potenziare con chunking.
+- [LibrarySettings.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/pages/settings/LibrarySettings.tsx): UI impostazioni da riorganizzare modularmente.
+
+---
+
+- **Fase 1 Completata (Motore di Scansione Avanzato)**:
+  - Implementato `computeFileHash` con MD5 streaming stdlib nativo (`node:crypto` + streams).
+  - Aggiunto supporto Server-Sent Events (SSE) a `scanner.ts` e `/api/scanner/scan-stream` con eventi progressivi (`start`, `discover`, `processing`, `imported`, `pruned`, `complete`, `error`).
+  - Implementata auto-riconciliazione in `doScan`: identificazione e potatura atomica (`pruned`) delle ROM eliminate da disco nelle cartelle monitorate, con backfill degli hash mancanti.
+  - Aggiunto endpoint `/api/roms/scrape-missing` in `routes/scrape.ts` per scrape mirato via SSE sui soli titoli privi di artwork o descrizione.
+  - Creato test di unità `server/__tests__/scanner.test.ts` (4 test su 4 superati). Suite unit test: 78/78 test verdi.
+  - Verifica statica TypeScript: 0 errori (`pnpm check`).
+
+---
+
+## 2. File Rilevanti
+
+- [2026-10-09_rom_management_and_settings_overhaul.md](file:///Users/andrea/Repository/HomeArcade-HA/docs/plans/2026-10-09_rom_management_and_settings_overhaul.md): Piano di lavoro strutturato aggiornato (Fase 1 completata).
+- [scanner.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/scanner.ts): Motore di scansione con hash MD5 streaming, streaming eventi e auto-riconciliazione.
+- [routes/scanner.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/routes/scanner.ts): Endpoint SSE `/api/scanner/scan-stream`.
+- [routes/scrape.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/routes/scrape.ts): Endpoint SSE `/api/roms/scrape-missing`.
+- [scanner.test.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/__tests__/scanner.test.ts): Test di unità dedicati al motore di scansione.
 
 ---
 
 ## 3. Prossimi Passi (Next Steps)
-1. **Commit e Push**: Creare un commit atomico convenzionale (es. `feat(ci): implement automated release pipeline and validation workflows`) e inviare al remote.
-2. **Abilitazione Permessi Repository GitHub**: Assicurarsi nelle impostazioni del repository GitHub (`Settings -> Actions -> General -> Workflow permissions`) che sia attiva l'opzione *"Read and write permissions"* e *"Allow GitHub Actions to create and approve pull requests"*, necessarie per l'apertura automatica delle Release PR da parte di Release Please.
-3. **Test PR su GitHub**: Aprire una PR di prova o effettuare un commit con prefisso convenzionale (`feat:` o `fix:`) su `main` per verificare l'apertura della Release PR `chore(main): release 2.52.0`.
+1. **Avvio Fase 2: Chunked Upload Resiliente**:
+   - Creare le route backend `/api/roms/upload/init`, `/api/roms/upload/chunk`, `/api/roms/upload/complete` e `/api/roms/upload/cancel` in `routes/roms.ts`.
+   - Gestire lo staging dei blocchi su disco (`dataPath("upload-chunks")`) e l'assemblaggio con stream pipeline.
+   - Aggiornare `RomUpload.tsx` per supportare chunked upload a blocchi di 16/32MB con retry e ripresa automatica.
+   - Test di unità per il chunked upload.
 
 ---
 
@@ -41,9 +71,9 @@
 # Typecheck TypeScript (dal folder cabinet_bridge)
 ./script/pnpm_run.sh check
 
-# Esecuzione unit test Vitest
+# Esecuzione test suite Vitest
 ./script/pnpm_run.sh test
 
-# Verifica stato Git
-git status
+# Avvio server di sviluppo locale (porta 5001 per evitare AirPlay su macOS)
+PORT=5001 ./script/pnpm_run.sh dev
 ```
