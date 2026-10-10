@@ -2,6 +2,21 @@
 
 All notable changes to HomeArcade are documented here.
 
+## [2.53.0](https://github.com/JMaroz/HomeArcade-HA/compare/v2.52.0...v2.53.0) (2026-10-10)
+
+
+### Features
+
+* **roms:** add chunked upload with stream assembly and retry for large ISOs ([9a20661](https://github.com/JMaroz/HomeArcade-HA/commit/9a20661a750a78c82dd06a8ac61b6d5075681347))
+* **scanner:** add streaming hash, SSE progress events, auto-reconciliation and targeted scraping ([2d27437](https://github.com/JMaroz/HomeArcade-HA/commit/2d27437112684504fcf4474cf122372f6bda026d))
+* **ui:** reorganize library settings into modular sub-tabs with live SSE monitor ([4f62c77](https://github.com/JMaroz/HomeArcade-HA/commit/4f62c77b0e35b7f33599d6add007c119d7a92505))
+* **vault:** add native WebDAV save sync and ZIP backup export/import ([e03bec1](https://github.com/JMaroz/HomeArcade-HA/commit/e03bec17c978f50b98b1c58cd3f716a928b03dc6))
+
+
+### Bug Fixes
+
+* **ui:** restore stable layout, fix scroll and dialog centering, reset favorite defaults ([dda2c38](https://github.com/JMaroz/HomeArcade-HA/commit/dda2c3857f460d11d09d9d8f6cb2b9997d5df1e2))
+
 ## [2.52.0](https://github.com/JMaroz/HomeArcade-HA/compare/v2.51.0...v2.52.0) (2026-10-08)
 
 
