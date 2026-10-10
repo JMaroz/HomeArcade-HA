@@ -89,6 +89,16 @@ export interface IntegrationConfig {
   googleDriveRefreshToken?: string;
   /** Google Drive folder ID for saves */
   googleDriveFolderId?: string;
+  /** WebDAV Server URL */
+  webdavUrl?: string;
+  /** WebDAV Username */
+  webdavUsername?: string;
+  /** WebDAV Password */
+  webdavPassword?: string;
+  /** Enable WebDAV Save sync */
+  webdavSyncEnabled?: boolean;
+  /** WebDAV last sync timestamp */
+  webdavLastSync?: number | null;
 }
 
 export type IntegrationSaveStatus = "idle" | "loading" | "saving" | "saved" | "error";
@@ -146,6 +156,11 @@ const defaultConfig: IntegrationConfig = {
   netplayNickname: "HomeArcadePlayer",
   netplayPort: 55435,
   netplaySyncMode: "rollback",
+  webdavUrl: "",
+  webdavUsername: "",
+  webdavPassword: "",
+  webdavSyncEnabled: false,
+  webdavLastSync: null,
 };
 
 const defaultPc: PcStatus = {
