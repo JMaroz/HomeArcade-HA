@@ -101,6 +101,159 @@ function xhrUpload(
   });
 }
 
+const CHUNK_SIZE = 16 * 1024 * 1024; // 16 MB chunks
+
+/** Upload a large file via chunked HTTP stream with retry and speed tracking. */
+async function chunkedUpload(
+  file: File,
+  system: string,
+  favorite: boolean,
+  destPath: string | null,
+  signal: AbortSignal,
+  onProgress: (pct: number, loadedBytes: number, totalBytes: number, speed: number) => void,
+): Promise<UploadedRom> {
+  const totalSize = file.size;
+  const chunkSize = CHUNK_SIZE;
+  const totalChunks = Math.ceil(totalSize / chunkSize);
+
+  const initRes = await fetch(apiUrl("/api/roms/upload/init"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fileName: file.name,
+      fileSize: totalSize,
+      system,
+      favorite,
+      dest: destPath,
+      totalChunks,
+      chunkSize,
+    }),
+    signal,
+  });
+
+  if (!initRes.ok) {
+    let msg = `Init failed (${initRes.status})`;
+    try {
+      const data = await initRes.json();
+      if (data?.message) msg = data.message;
+    } catch {}
+    throw new Error(msg);
+  }
+
+  const { uploadId } = (await initRes.json()) as { uploadId: string };
+
+  let uploadedBytes = 0;
+  const speedSamples: { time: number; loaded: number }[] = [];
+  function computeSpeed(loaded: number): number {
+    const now = performance.now();
+    speedSamples.push({ time: now, loaded });
+    while (speedSamples.length > 1 && now - speedSamples[0].time > 3000) speedSamples.shift();
+    if (speedSamples.length < 2) return 0;
+    const dt = (now - speedSamples[0].time) / 1000;
+    const dl = loaded - speedSamples[0].loaded;
+    return dt > 0 ? dl / dt : 0;
+  }
+
+  try {
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+      if (signal.aborted) throw new Error("Upload cancelled");
+
+      const start = chunkIndex * chunkSize;
+      const end = Math.min(start + chunkSize, totalSize);
+      const chunkBlob = file.slice(start, end);
+      const chunkLen = end - start;
+
+      let attempts = 0;
+      let success = false;
+      let lastErr: any = null;
+
+      while (attempts < 3 && !success) {
+        if (signal.aborted) throw new Error("Upload cancelled");
+        attempts++;
+        try {
+          await new Promise<void>((resolveChunk, rejectChunk) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open(
+              "PUT",
+              apiUrl(`/api/roms/upload/chunk?uploadId=${encodeURIComponent(uploadId)}&chunkIndex=${chunkIndex}`),
+            );
+            xhr.setRequestHeader("Content-Type", "application/octet-stream");
+
+            xhr.upload.addEventListener("progress", (e) => {
+              if (!e.lengthComputable) return;
+              const currentTotalLoaded = uploadedBytes + e.loaded;
+              const pct = Math.round((currentTotalLoaded / totalSize) * 100);
+              const speed = computeSpeed(currentTotalLoaded);
+              onProgress(pct, currentTotalLoaded, totalSize, speed);
+            });
+
+            xhr.addEventListener("load", () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolveChunk();
+              } else {
+                let msg = `Chunk ${chunkIndex} failed (${xhr.status})`;
+                try {
+                  const data = JSON.parse(xhr.responseText);
+                  if (data?.message) msg = data.message;
+                } catch {}
+                rejectChunk(new Error(msg));
+              }
+            });
+
+            xhr.addEventListener("error", () => rejectChunk(new Error(`Network error on chunk ${chunkIndex}`)));
+            xhr.addEventListener("abort", () => rejectChunk(new Error("Upload cancelled")));
+
+            const abortHandler = () => xhr.abort();
+            signal.addEventListener("abort", abortHandler, { once: true });
+            xhr.send(chunkBlob);
+          });
+          success = true;
+        } catch (err: any) {
+          lastErr = err;
+          if (signal.aborted || err?.message === "Upload cancelled") throw err;
+          if (attempts < 3) {
+            await new Promise((r) => setTimeout(r, 1000));
+          }
+        }
+      }
+
+      if (!success) {
+        throw lastErr || new Error(`Failed to upload chunk ${chunkIndex}`);
+      }
+
+      uploadedBytes += chunkLen;
+      const currentPct = Math.round((uploadedBytes / totalSize) * 100);
+      onProgress(currentPct, uploadedBytes, totalSize, computeSpeed(uploadedBytes));
+    }
+
+    const completeRes = await fetch(apiUrl("/api/roms/upload/complete"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uploadId }),
+      signal,
+    });
+
+    if (!completeRes.ok) {
+      let msg = `Complete failed (${completeRes.status})`;
+      try {
+        const data = await completeRes.json();
+        if (data?.message) msg = data.message;
+      } catch {}
+      throw new Error(msg);
+    }
+
+    const savedRom = (await completeRes.json()) as UploadedRom;
+    return savedRom;
+  } catch (err: any) {
+    fetch(apiUrl("/api/roms/upload/cancel"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uploadId }),
+    }).catch(() => {});
+    throw err;
+  }
+}
+
 type DetectResult = {
   candidates: string[];
   confidence: "high" | "medium" | "low";
@@ -265,24 +418,47 @@ export function RomUpload({ system: fixedSystem, variant = "card" }: RomUploadPr
         }
 
         try {
-          const rom = await xhrUpload(
-            file,
-            url,
-            abortController.signal,
-            (filePct, loadedBytes, totalBytes, speed) => {
-              setProgress({
-                fileIndex: i,
-                total,
-                fileName: file.name,
-                filePct,
-                overallPct: Math.round(basePct + (filePct / total)),
-                speedBytesPerSec: speed,
-                etaSeconds: speed > 0 ? Math.round((totalBytes - loadedBytes) / speed) : 0,
-                currentFileBytes: loadedBytes,
-                currentFileTotal: totalBytes,
-              });
-            },
-          );
+          const CHUNKED_THRESHOLD = CHUNK_SIZE;
+          const rom =
+            action !== "replace" && file.size > CHUNKED_THRESHOLD
+              ? await chunkedUpload(
+                  file,
+                  system,
+                  favorite,
+                  destPath,
+                  abortController.signal,
+                  (filePct, loadedBytes, totalBytes, speed) => {
+                    setProgress({
+                      fileIndex: i,
+                      total,
+                      fileName: file.name,
+                      filePct,
+                      overallPct: Math.round(basePct + filePct / total),
+                      speedBytesPerSec: speed,
+                      etaSeconds: speed > 0 ? Math.round((totalBytes - loadedBytes) / speed) : 0,
+                      currentFileBytes: loadedBytes,
+                      currentFileTotal: totalBytes,
+                    });
+                  },
+                )
+              : await xhrUpload(
+                  file,
+                  url,
+                  abortController.signal,
+                  (filePct, loadedBytes, totalBytes, speed) => {
+                    setProgress({
+                      fileIndex: i,
+                      total,
+                      fileName: file.name,
+                      filePct,
+                      overallPct: Math.round(basePct + filePct / total),
+                      speedBytesPerSec: speed,
+                      etaSeconds: speed > 0 ? Math.round((totalBytes - loadedBytes) / speed) : 0,
+                      currentFileBytes: loadedBytes,
+                      currentFileTotal: totalBytes,
+                    });
+                  },
+                );
 
           setFiles((prev) => {
             const next = [...prev];

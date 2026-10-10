@@ -213,6 +213,167 @@ export function registerRomRoutes(app: Express) {
     }
   });
 
+  interface ProcessRomOptions {
+    system: string;
+    originalName: string;
+    safeName: string;
+    slug: string;
+    systemDir: string;
+    filePath: string;
+    totalSize: number;
+    romHash: string | null;
+    mimeType: string;
+    favorite: boolean;
+  }
+
+  async function processAndSaveRom(opts: ProcessRomOptions) {
+    const {
+      system,
+      originalName,
+      safeName,
+      slug,
+      systemDir,
+      filePath,
+      totalSize,
+      romHash,
+      mimeType,
+      favorite,
+    } = opts;
+
+    const extension = path.extname(originalName).toLowerCase();
+    const isM3u = extension === ".m3u";
+
+    let m3uContent: string | null = null;
+    let isPlaylist = false;
+    let parentM3uId: number | null = null;
+    let title: string;
+    let discNumber: number | null = null;
+    let cleanTitle: string;
+    let discGroup: string | null = null;
+
+    if (isM3u) {
+      isPlaylist = true;
+      m3uContent = await fs.readFile(filePath, "utf8").catch(() => null);
+      title = titleFromFileName(originalName);
+      cleanTitle = title;
+    } else {
+      title = titleFromFileName(originalName);
+      const discMatch = title.match(/\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i);
+      discNumber = discMatch ? parseInt(discMatch[1] ?? discMatch[2], 10) : null;
+      cleanTitle = discMatch ? title.replace(discMatch[0], "").trim() : title;
+      discGroup = discMatch ? `${system}/${slugify(cleanTitle)}` : null;
+
+      if (discGroup) {
+        const existingM3u = await storage.findM3uForDiscGroup(discGroup);
+        if (existingM3u) {
+          parentM3uId = existingM3u.id;
+        }
+      }
+    }
+
+    const libretroArt = await findLibretroBoxArt(system, isM3u ? title : cleanTitle);
+
+    const rom = insertUploadedRomSchema.parse({
+      title: isM3u ? title : cleanTitle,
+      system,
+      slug,
+      originalName,
+      fileName: safeName,
+      filePath,
+      size: totalSize,
+      mimeType,
+      artUrl: libretroArt.url,
+      scrapeStatus: libretroArt.url ? "matched" : "not_found",
+      scrapeMessage: libretroArt.message ?? "",
+      favorite,
+      rating: 0,
+      lastPlayed: 0,
+      playCount: 0,
+      discNumber,
+      discGroup,
+      isPlaylist,
+      m3uContent,
+      parentM3uId,
+      romHash,
+      minutesPlayed: 0,
+      createdAt: Date.now(),
+    });
+
+    const saved = await storage.createUploadedRom(rom);
+
+    // Re-sync progress if this exact ROM file was uploaded before
+    if (romHash && !isM3u) {
+      await storage.relinkSaveSlotsByHash(saved.id, romHash);
+    }
+
+    // If this is an M3U, link any existing disc records via parentM3uId
+    if (isM3u && m3uContent) {
+      const refs = m3uContent
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0 && !l.startsWith("#"));
+      for (const ref of refs) {
+        const existing = await storage.findRomByOriginalName(ref);
+        if (existing && !existing.isPlaylist && !existing.parentM3uId) {
+          await storage.updateUploadedRomFile(existing.id, { parentM3uId: saved.id });
+        }
+      }
+      const baseTitle = slugify(title);
+      const grouped = await storage.listRomsByDiscGroupNoM3u(`${system}/${baseTitle}`);
+      for (const disc of grouped) {
+        if (!disc.parentM3uId) {
+          await storage.updateUploadedRomFile(disc.id, { parentM3uId: saved.id });
+        }
+      }
+    }
+
+    // Auto-generate M3U for discGroup clusters that lack one
+    if (!isM3u && discGroup && !parentM3uId) {
+      const siblings = await storage.listRomsByDiscGroupNoM3u(discGroup);
+      const m3uExists = await storage.findM3uForDiscGroup(discGroup);
+      if (siblings.length >= 2 && !m3uExists) {
+        const m3uLines = siblings
+          .sort((a, b) => (a.discNumber ?? 0) - (b.discNumber ?? 0))
+          .map((s) => s.originalName)
+          .join("\n");
+
+        const m3uSlug = `${system}_m3u_${slugify(cleanTitle)}_${Date.now().toString(36)}`;
+        const m3uFilePath = path.join(systemDir, `${m3uSlug}.m3u`);
+        const m3uRom = insertUploadedRomSchema.parse({
+          title: cleanTitle,
+          system,
+          slug: m3uSlug,
+          originalName: `${cleanTitle}.m3u`,
+          fileName: `${m3uSlug}.m3u`,
+          filePath: m3uFilePath,
+          size: Buffer.byteLength(m3uLines, "utf8"),
+          mimeType: "text/plain",
+          artUrl: libretroArt.url,
+          scrapeStatus: libretroArt.url ? "matched" : "not_found",
+          scrapeMessage: libretroArt.message ?? "",
+          favorite,
+          rating: 0,
+          lastPlayed: 0,
+          playCount: 0,
+          discNumber: null,
+          discGroup,
+          isPlaylist: true,
+          m3uContent: m3uLines,
+          parentM3uId: null,
+          romHash: null,
+          minutesPlayed: 0,
+          createdAt: Date.now(),
+        });
+        const m3uRecord = await storage.createUploadedRom(m3uRom);
+        for (const sib of siblings) {
+          await storage.updateUploadedRomFile(sib.id, { parentM3uId: m3uRecord.id });
+        }
+      }
+    }
+
+    return saved;
+  }
+
   app.post(
     "/api/roms/upload",
     async (req, res) => {
@@ -277,144 +438,204 @@ export function registerRomRoutes(app: Express) {
       }
 
       const romHash = hash.digest("hex");
-      const isM3u = extension === ".m3u";
-
-      let m3uContent: string | null = null;
-      let isPlaylist = false;
-      let parentM3uId: number | null = null;
-      let title: string;
-      let discNumber: number | null;
-      let cleanTitle: string;
-      let discGroup: string | null;
-
-      if (isM3u) {
-        isPlaylist = true;
-        m3uContent = await fs.readFile(filePath, "utf8").catch(() => null);
-        title = titleFromFileName(originalName);
-        discNumber = null;
-        cleanTitle = title;
-        discGroup = null;
-      } else {
-        title = titleFromFileName(originalName);
-        const discMatch = title.match(/\s*[\(\[](?:disc|disk|cd)\s*(\d+)[\)\]]|\s+(?:disc|disk|cd)\s*(\d+)/i);
-        discNumber = discMatch ? parseInt(discMatch[1] ?? discMatch[2], 10) : null;
-        cleanTitle = discMatch ? title.replace(discMatch[0], "").trim() : title;
-        discGroup = discMatch ? `${system}/${slugify(cleanTitle)}` : null;
-
-        // Check if a matching M3U already exists in DB for this file
-        if (discGroup) {
-          const existingM3u = await storage.findM3uForDiscGroup(discGroup);
-          if (existingM3u) {
-            parentM3uId = existingM3u.id;
-          }
-        }
-      }
-
-      const libretroArt = await findLibretroBoxArt(system, isM3u ? title : cleanTitle);
-
-      const rom = insertUploadedRomSchema.parse({
-        title: isM3u ? title : cleanTitle,
+      const saved = await processAndSaveRom({
         system,
-        slug,
         originalName,
-        fileName: safeName,
+        safeName,
+        slug,
+        systemDir,
         filePath,
-        size: totalSize,
-        mimeType: req.header("content-type") ?? "application/octet-stream",
-        artUrl: libretroArt.url,
-        scrapeStatus: libretroArt.url ? "matched" : "not_found",
-        scrapeMessage: libretroArt.message ?? "",
-        favorite,
-        rating: 0,
-        lastPlayed: 0,
-        playCount: 0,
-        discNumber,
-        discGroup,
-        isPlaylist,
-        m3uContent,
-        parentM3uId,
+        totalSize,
         romHash,
-        minutesPlayed: 0,
-        createdAt: Date.now(),
+        mimeType: req.header("content-type") ?? "application/octet-stream",
+        favorite,
       });
-
-      const saved = await storage.createUploadedRom(rom);
-
-      // Re-sync progress if this exact ROM file was uploaded before
-      if (romHash && !isM3u) {
-        await storage.relinkSaveSlotsByHash(saved.id, romHash);
-      }
-
-      // If this is an M3U, link any existing disc records via parentM3uId
-      if (isM3u && m3uContent) {
-        const refs = m3uContent.split("\n")
-          .map(l => l.trim())
-          .filter(l => l.length > 0 && !l.startsWith("#"));
-        for (const ref of refs) {
-          const existing = await storage.findRomByOriginalName(ref);
-          if (existing && !existing.isPlaylist && !existing.parentM3uId) {
-            await storage.updateUploadedRomFile(existing.id, { parentM3uId: saved.id });
-          }
-        }
-        // Also check discGroup-based linking: find discs whose clean title matches
-        const baseTitle = slugify(title);
-        const grouped = await storage.listRomsByDiscGroupNoM3u(`${system}/${baseTitle}`);
-        for (const disc of grouped) {
-          if (!disc.parentM3uId) {
-            await storage.updateUploadedRomFile(disc.id, { parentM3uId: saved.id });
-          }
-        }
-      }
-
-      // Auto-generate M3U for discGroup clusters that lack one
-      if (!isM3u && discGroup && !parentM3uId) {
-        const siblings = await storage.listRomsByDiscGroupNoM3u(discGroup);
-        const m3uExists = await storage.findM3uForDiscGroup(discGroup);
-        if (siblings.length >= 2 && !m3uExists) {
-          // Generate M3U content from sibling filenames
-          const m3uLines = siblings
-            .sort((a, b) => (a.discNumber ?? 0) - (b.discNumber ?? 0))
-            .map(s => s.originalName)
-            .join("\n");
-
-          const m3uSlug = `${system}_m3u_${slugify(cleanTitle)}_${Date.now().toString(36)}`;
-          const m3uFilePath = path.join(systemDir, `${m3uSlug}.m3u`);
-          const m3uRom = insertUploadedRomSchema.parse({
-            title: cleanTitle,
-            system,
-            slug: m3uSlug,
-            originalName: `${cleanTitle}.m3u`,
-            fileName: `${m3uSlug}.m3u`,
-            filePath: m3uFilePath,
-            size: Buffer.byteLength(m3uLines, "utf8"),
-            mimeType: "text/plain",
-            artUrl: libretroArt.url,
-            scrapeStatus: libretroArt.url ? "matched" : "not_found",
-            scrapeMessage: libretroArt.message ?? "",
-            favorite,
-            rating: 0,
-            lastPlayed: 0,
-            playCount: 0,
-            discNumber: null,
-            discGroup,
-            isPlaylist: true,
-            m3uContent: m3uLines,
-            parentM3uId: null,
-            romHash: null,
-            minutesPlayed: 0,
-            createdAt: Date.now(),
-          });
-          const m3uRecord = await storage.createUploadedRom(m3uRom);
-          // Link all siblings to the new M3U
-          for (const sib of siblings) {
-            await storage.updateUploadedRomFile(sib.id, { parentM3uId: m3uRecord.id });
-          }
-        }
-      }
 
       res.status(201).json(saved);
     },
   );
+
+  // ── Chunked Upload (for large ISOs/ROMs behind reverse proxies) ─────────────
+  interface ChunkUploadSession {
+    uploadId: string;
+    originalName: string;
+    system: string;
+    favorite: boolean;
+    systemDir: string;
+    totalSize: number;
+    totalChunks: number;
+    chunkSize: number;
+    receivedChunks: Set<number>;
+    createdAt: number;
+  }
+
+  const activeChunkSessions = new Map<string, ChunkUploadSession>();
+  const CHUNKS_DIR = dataPath("upload-chunks");
+
+  async function cleanupStaleChunkSessions() {
+    const now = Date.now();
+    for (const [id, session] of activeChunkSessions.entries()) {
+      if (now - session.createdAt > 2 * 60 * 60 * 1000) {
+        activeChunkSessions.delete(id);
+        await fs.rm(path.join(CHUNKS_DIR, id), { recursive: true, force: true }).catch(() => {});
+      }
+    }
+  }
+
+  app.post("/api/roms/upload/init", express.json(), async (req, res) => {
+    try {
+      await cleanupStaleChunkSessions();
+      const { fileName, fileSize, system, favorite = true, dest, totalChunks, chunkSize } = req.body;
+      if (!system) return res.status(400).json({ message: "Choose a supported console." });
+      const allowedExtensions = ROM_EXTENSIONS[system];
+      if (!allowedExtensions) return res.status(400).json({ message: `Unsupported console: ${system}` });
+
+      const originalName = String(fileName || "").trim();
+      const extension = path.extname(originalName).toLowerCase();
+      if (allowedExtensions.length > 0 && !allowedExtensions.includes(extension)) {
+        return res.status(400).json({ message: `Unsupported file type for ${system}. Allowed: ${allowedExtensions.join(", ")}` });
+      }
+
+      const customDest = dest ? String(dest).trim() : "";
+      const systemDir = customDest ? path.resolve(customDest) : path.join(ROM_ROOT, system);
+      if (customDest) {
+        const { resolveRequestedDirectory } = await import("./filesystem");
+        try { resolveRequestedDirectory(customDest); } catch { return res.status(403).json({ message: "Destination directory is not allowed." }); }
+      }
+      await fs.mkdir(systemDir, { recursive: true });
+
+      const uploadId = crypto.randomUUID();
+      const sessionDir = path.join(CHUNKS_DIR, uploadId);
+      await fs.mkdir(sessionDir, { recursive: true });
+
+      const session: ChunkUploadSession = {
+        uploadId,
+        originalName,
+        system,
+        favorite: Boolean(favorite),
+        systemDir,
+        totalSize: Number(fileSize),
+        totalChunks: Number(totalChunks),
+        chunkSize: Number(chunkSize),
+        receivedChunks: new Set<number>(),
+        createdAt: Date.now(),
+      };
+      activeChunkSessions.set(uploadId, session);
+
+      res.json({
+        uploadId,
+        chunkSize: session.chunkSize,
+        totalChunks: session.totalChunks,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err?.message || "Failed to init chunk upload" });
+    }
+  });
+
+  const handleChunkUpload = async (req: express.Request, res: express.Response) => {
+    try {
+      const uploadId = String(req.query.uploadId || req.header("x-upload-id") || "");
+      const chunkIndex = Number(req.query.chunkIndex ?? req.header("x-chunk-index"));
+      if (!uploadId || isNaN(chunkIndex)) {
+        return res.status(400).json({ message: "Missing uploadId or chunkIndex" });
+      }
+      const session = activeChunkSessions.get(uploadId);
+      if (!session) {
+        return res.status(404).json({ message: "Upload session not found or expired" });
+      }
+
+      const chunkPath = path.join(CHUNKS_DIR, uploadId, String(chunkIndex));
+      const writeStream = fsSync.createWriteStream(chunkPath);
+      await pipeline(req, writeStream);
+
+      session.receivedChunks.add(chunkIndex);
+      res.json({
+        ok: true,
+        chunkIndex,
+        receivedCount: session.receivedChunks.size,
+        totalChunks: session.totalChunks,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err?.message || "Failed to save chunk" });
+    }
+  };
+
+  app.put("/api/roms/upload/chunk", handleChunkUpload);
+  app.post("/api/roms/upload/chunk", handleChunkUpload);
+
+  app.post("/api/roms/upload/complete", express.json(), async (req, res) => {
+    try {
+      const { uploadId } = req.body;
+      const session = activeChunkSessions.get(uploadId);
+      if (!session) {
+        return res.status(404).json({ message: "Upload session not found" });
+      }
+
+      if (session.receivedChunks.size !== session.totalChunks) {
+        return res.status(400).json({
+          message: `Incomplete upload: received ${session.receivedChunks.size}/${session.totalChunks} chunks`,
+        });
+      }
+
+      const extension = path.extname(session.originalName).toLowerCase();
+      const baseSlug = slugify(titleFromFileName(session.originalName));
+      const uniqueSuffix = Date.now().toString(36);
+      const slug = `${session.system}_${baseSlug}_${uniqueSuffix}`;
+      const safeName = `${slug}${extension}`;
+      const filePath = path.join(session.systemDir, safeName);
+
+      // Assemble chunks sequentially into destination file
+      const hash = crypto.createHash("md5");
+      let assembledSize = 0;
+      const finalWriteStream = fsSync.createWriteStream(filePath);
+
+      for (let i = 0; i < session.totalChunks; i++) {
+        const chunkPath = path.join(CHUNKS_DIR, uploadId, String(i));
+        const chunkBuffer = await fs.readFile(chunkPath);
+        assembledSize += chunkBuffer.length;
+        hash.update(chunkBuffer);
+        finalWriteStream.write(chunkBuffer);
+      }
+      await new Promise<void>((resolve, reject) => {
+        finalWriteStream.end((err: any) => err ? reject(err) : resolve());
+      });
+
+      // Clean up temporary chunks folder
+      await fs.rm(path.join(CHUNKS_DIR, uploadId), { recursive: true, force: true }).catch(() => {});
+      activeChunkSessions.delete(uploadId);
+
+      const romHash = hash.digest("hex");
+      const saved = await processAndSaveRom({
+        system: session.system,
+        originalName: session.originalName,
+        safeName,
+        slug,
+        systemDir: session.systemDir,
+        filePath,
+        totalSize: assembledSize,
+        romHash,
+        mimeType: "application/octet-stream",
+        favorite: session.favorite,
+      });
+
+      res.status(201).json(saved);
+    } catch (err: any) {
+      res.status(500).json({ message: err?.message || "Failed to complete chunk upload" });
+    }
+  });
+
+  app.post("/api/roms/upload/cancel", express.json(), async (req, res) => {
+    try {
+      const { uploadId } = req.body;
+      if (uploadId) {
+        activeChunkSessions.delete(uploadId);
+        await fs.rm(path.join(CHUNKS_DIR, uploadId), { recursive: true, force: true }).catch(() => {});
+      }
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err?.message || "Cancel failed" });
+    }
+  });
 
   app.get("/api/roms/:id/hltb", async (req, res) => {
     try {
