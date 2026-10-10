@@ -653,12 +653,21 @@ export function registerRomRoutes(app: Express) {
   });
 
   app.get("/api/roms", async (req, res) => {
-    const limit = Math.min(500, Math.max(1, parseInt(String(req.query.limit ?? "100"), 10) || 100));
-    const offset = Math.max(0, parseInt(String(req.query.offset ?? "0"), 10) || 0);
     const excludeChildren = req.query.exclude_children === "true";
-    const roms = await storage.listUploadedRomsPaginated(limit, offset, excludeChildren);
+    const hasLimit = req.query.limit !== undefined && req.query.limit !== "all";
+    const offset = Math.max(0, parseInt(String(req.query.offset ?? "0"), 10) || 0);
     const total = await storage.countUploadedRoms(excludeChildren);
-    const hasMore = offset + roms.length < total;
+
+    let roms: UploadedRom[];
+    let hasMore = false;
+    if (hasLimit) {
+      const limit = Math.max(1, parseInt(String(req.query.limit), 10) || 100);
+      roms = await storage.listUploadedRomsPaginated(limit, offset, excludeChildren);
+      hasMore = offset + roms.length < total;
+    } else {
+      roms = await storage.listUploadedRoms(excludeChildren);
+      hasMore = false;
+    }
     // Trim null/empty fields to shrink payload size for large libraries
     const trimmed = roms.map(rom => {
       const lean: any = {

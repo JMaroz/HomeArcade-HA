@@ -202,7 +202,7 @@
   --chart-5: 264 80% 60%;
 
   --font-sans:    Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-display: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, Menlo, monospace;
 
   --crt-opacity: 0.3;
@@ -292,6 +292,9 @@
   * {
     border-color: hsl(var(--border));
     outline-color: hsl(var(--ring) / 0.5);
+  }
+  html, body, #root {
+    height: 100%;
   }
   body {
     font-family: var(--font-sans);

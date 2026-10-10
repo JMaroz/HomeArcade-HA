@@ -72,7 +72,7 @@ function PageTransition({ children }: { children: React.ReactNode }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -4 }}
         transition={{ duration: 0.18, ease: "easeOut" }}
-        className="flex-1 flex flex-col min-h-0 overflow-hidden"
+        className="flex-1 flex flex-col min-h-0 overflow-hidden h-full"
       >
         {children}
       </motion.div>
@@ -144,8 +144,8 @@ function App() {
               <Toaster />
               <Router hook={useHashLocation}>
                 <ErrorBoundary>
-                  <div className="h-dvh min-h-dvh flex w-full overflow-hidden bg-background">
-                    <main className="flex-1 flex flex-col min-h-full overflow-hidden relative">
+                  <div className="h-full min-h-0 flex w-full overflow-hidden bg-background">
+                    <main className="flex-1 flex flex-col min-h-0 h-full overflow-hidden relative">
                       <PageTransition>
                         <AppRouter />
                       </PageTransition>

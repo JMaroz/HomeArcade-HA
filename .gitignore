@@ -21,3 +21,7 @@ data.db-journal
 # BIOS binary files — downloaded at runtime, not committed
 cabinet_bridge/bios/*.bin
 Modelfile.txt
+
+# Package manager cache
+.pnpm-store/
+.pnpm-store

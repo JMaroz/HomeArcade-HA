@@ -1,84 +1,61 @@
-# Handoff Sessione: Revisione Impostazioni, Scansione, Trasferimento e Sincronizzazione ROM
+# Handoff Sessione: Risoluzione Criticità UI, Scroll, Font e Caricamento Sistemi
 
 **Data**: 2026-10-10  
-**Stato**: Tutte le 4 Fasi completate con successo (DoD validata)  
-**Piano di Riferimento**: `docs/plans/2026-10-09_rom_management_and_settings_overhaul.md`  
+**Stato**: Tutte le criticità risolte, typecheck TypeScript e build Vite/esbuild verificati con successo.  
+**Piano di Riferimento**: `docs/plans/2026-10-10_ui_and_system_fixes.md`  
 
 ---
 
-## 1. Stato Corrente & Obiettivi Raggiunti
+## 1. Stato Corrente & Problemi Risolti
 
-Tutte le 4 fasi del piano di revisione architetturale sono state implementate, verificate con test automatici e validate:
+Tutte le 5 problematiche segnalate dall'utente sono state identificate alla causa radice e risolte:
 
-1. **Fase 1: Motore di Scansione Avanzato**:
-   - Streaming hash MD5 con `computeFileHash` (`node:crypto` + streams nativi).
-   - Server-Sent Events (SSE) su `/api/scanner/scan-stream` con streaming eventi (`start`, `scanning_path`, `rom_found`, `pruned`, `progress`, `complete`, `error`).
-   - Auto-riconciliazione dei file rimossi o spostati su disco da cartelle monitorate con potatura atomica dal DB e backfilling degli hash mancanti.
-   - Endpoint `/api/roms/scrape-missing` con SSE per scrape mirato dei titoli privi di cover o metadati.
-   - Test unitari dedicati in `server/__tests__/scanner.test.ts` (4/4 passati).
+1. **Caricamento di tutti i sistemi in Home (risolto blocco "solo PS1")**:
+   - `server/routes/roms.ts`: `GET /api/roms` ora restituisce tutte le ROM quando `limit` non è presente (o `limit=all`), preservando la paginazione opzionale solo se esplicitamente richiesta con `?limit=N`.
+   - `server/storage.ts`: `listUploadedRoms` supporta ora il parametro `excludeChildren` per escludere i file disco figli di playlist `.m3u`.
+   - `HomeArcadeTheme.tsx`: eliminata la complessità della sincronizzazione a blocchi via `IntersectionObserver`. Tutte le ROM vengono caricate all'avvio in un'unica query leggera (~60KB); tutti i sistemi (PS1, GBA, PS2, SNES, ecc.) e i rispettivi conteggi appaiono immediatamente all'apertura dell'app.
+   - Rimossa la dicitura artefatta "Showing 200 of 528 games" dalla vista portali.
 
-2. **Fase 2: Chunked Upload Resiliente per File di Grandi Dimensioni**:
-   - Nuovi endpoint in `server/routes/roms.ts`: `/api/roms/upload/init`, `/api/roms/upload/chunk`, `/api/roms/upload/complete`, `/api/roms/upload/cancel`.
-   - Staging temporaneo in `dataPath("upload-chunks")` con assemblaggio sequenziale via stream pipeline e pulizia automatica di sessioni orfane o annullate.
-   - Aggiornato `client/src/components/RomUpload.tsx` per instradare automaticamente i file > 16MB su `chunkedUpload` (chunk da 16MB, fino a 3 tentativi di retry per blocco in caso di micro-disconnessioni, tracciamento velocità e progresso in byte).
-   - Test di unità in `server/__tests__/chunk_upload.test.ts` (4/4 passati).
+2. **Transizione scheda di dettaglio (`GameDetailDialog`)**:
+   - `dialog.tsx` e `alert-dialog.tsx`: rimosse le classi di slide-in (`slide-in-from-left-1/2`, `slide-in-from-top-[48%]`) che in Tailwind CSS v4 causavano il volo della finestra modale dall'angolo in alto a sinistra verso il centro dello schermo.
+   - Durata ridotta a `duration-150` con sola animazione di fade-in e leggero zoom (`zoom-in-95`), rendendo l'apertura istantanea, stabile e fluida senza blocchi UI.
 
-3. **Fase 3: Sincronizzazione WebDAV & Backup ZIP dei Salvataggi**:
-   - Client WebDAV nativo zero-dipendenze (`server/webdav.ts`) basato su standard `fetch` (test connessione, `ensureDirectory` via `MKCOL`, `uploadFile` via `PUT`, `downloadFile` via `GET`, sincronizzazione directory).
-   - Modulo ZIP nativo (`server/zip.ts`) con `node:zlib` (`deflateRaw`, `inflateRaw`, `crc32`) e protezione robusta contro Zip Slip.
-   - Endpoint in `server/routes/vault.ts`:
-     - `GET /api/vault/saves-export`: download archivio ZIP di tutti i salvataggi in-game (`.srm`/`.sav`), savestate (`.state`) e thumbnail.
-     - `POST /api/vault/saves-import`: caricamento e auto-estrazione sicura di archivi ZIP con ripristino cartelle.
-     - `POST /api/vault/webdav-test`: test credenziali server WebDAV.
-     - `POST /api/vault/webdav-sync`: sincronizzazione su cartella remota `/HomeArcade/saves/`.
-   - Campi WebDAV aggiunti a `shared/schema.ts` e `client/src/lib/integration.tsx`.
-   - Test di unità in `server/__tests__/vault_sync.test.ts` (5/5 passati).
+3. **Unificazione Design System e Font**:
+   - `index.html`: rimossi i fogli di stile esterni non autorizzati `nes.css` e Google Font `Press Start 2P` che forzavano globalmente font pixelati e dimensioni giganti su pulsanti, select, input e titoli.
+   - `index.css`: unificata la variabile `--font-display` su `Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif` per allineare tutti i titoli della schermata Settings al design system moderno della Home.
+   - `Settings.tsx`, `History.tsx`, `Achievements.tsx`: applicata esplicitamente la classe `font-sans` e normalizzati i titoli a `text-2xl font-black`.
 
-4. **Fase 4: Riorganizzazione UI Impostazioni Libreria**:
-   - `client/src/pages/settings/LibrarySettings.tsx` ristrutturato con sub-navigazione a pillole:
-     - **Cartelle & Scansione**: monitor SSE con barra animata e contatori live, browse directory, bottoni per scansione live, scrape mirato, re-scrape totale e diagnostica.
-     - **Trasferimento ROM**: upload drag-and-drop chunked integrato e guida per cartelle dirette di rete (Samba / SMB / `/media`).
-     - **Salute & Manutenzione**: card di integrità metadati, storage overview, strumenti di pulizia (dedup, clean unplayed, clear failed, prune dead links) e Move All ROMs.
-     - **Backup & Sync**: esportazione e ripristino ZIP one-click, modulo di configurazione e sincronizzazione WebDAV.
-     - **Collezioni Smart**: creazione guidata di filtri dinamici.
+4. **Rimozione icona duplicata delle Impostazioni**:
+   - `HomeArcadeTheme.tsx`: rimosso il pulsante link `<Link href="/settings">` dall'header accanto alla barra di ricerca. L'accesso ai Settings resta affidato esclusivamente all'icona nella barra di navigazione inferiore (`AppBottomNav`).
+
+5. **Risoluzione definitiva dello scroll nei Settings e Home Assistant Ingress**:
+   - `index.css`: reinserita la regola `@layer base { html, body, #root { height: 100%; } }` per garantire l'altezza corretta all'interno degli `iframe` di Home Assistant Ingress.
+   - `App.tsx`: garantita la catena flexbox con `h-full min-h-0` in `PageTransition` e nel layout root.
+   - `Settings.tsx`: aggiunti `min-h-0` su tutti i wrapper flex intermedi, rimosso `overscroll-contain` che bloccava il trackpad/touch, e impostato `pb-36` per assicurare che nessun elemento in fondo ai tab venga coperto dalla bottom bar.
+   - Applicate medesime migliorie di layout a `History.tsx` e `Achievements.tsx`.
 
 ---
 
 ## 2. File Rilevanti
 
-- [2026-10-09_rom_management_and_settings_overhaul.md](file:///Users/andrea/Repository/HomeArcade-HA/docs/plans/2026-10-09_rom_management_and_settings_overhaul.md): Piano di lavoro con tutte le 4 fasi spuntate.
-- [scanner.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/scanner.ts): Motore di scansione con hash streaming, streaming eventi e riconciliazione.
-- [routes/roms.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/routes/roms.ts): Endpoint chunked upload e helper `processAndSaveRom`.
-- [routes/vault.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/routes/vault.ts): Endpoint export/import ZIP e WebDAV test/sync.
-- [webdav.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/webdav.ts): Client WebDAV nativo.
-- [zip.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/zip.ts): Utility compressione/estrazione ZIP nativa con Zip-Slip protection.
-- [RomUpload.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/components/RomUpload.tsx): Upload a blocchi da 16MB con retry e speed tracking.
-- [LibrarySettings.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/pages/settings/LibrarySettings.tsx): UI modulare a sub-tab con monitor live SSE e pannello WebDAV/ZIP.
-- [schema.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/shared/schema.ts) & [integration.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/lib/integration.tsx): Schemi di configurazione WebDAV.
+- [HomeArcadeTheme.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/components/dashboard-themes/HomeArcadeTheme.tsx): Caricamento all-roms immediato, calcolo istantaneo di tutti i sistemi, rimozione ingranaggio duplicato.
+- [dialog.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/components/ui/dialog.tsx): Fade-in centrato pulito senza slide-in da coordinate errate.
+- [alert-dialog.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/components/ui/alert-dialog.tsx): Fade-in centrato ottimizzato.
+- [index.html](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/index.html): Rimozione di `nes.css` e `Press Start 2P`.
+- [index.css](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/index.css): Unificazione `--font-display`, altezza 100% per `#root`.
+- [Settings.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/pages/Settings.tsx): Flex chain `min-h-0`, font-sans, padding `pb-36`.
+- [App.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/App.tsx): Propagazione altezza completa `h-full min-h-0` in `PageTransition`.
+- [Sidebar.tsx](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/client/src/components/Sidebar.tsx): Query ROM senza limit artificiale a 100.
+- [routes/roms.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/routes/roms.ts): Gestione `hasLimit` per restituire tutte le ROM senza paginazione forzata.
+- [storage.ts](file:///Users/andrea/Repository/HomeArcade-HA/cabinet_bridge/server/storage.ts): Parametro `excludeChildren` in `listUploadedRoms`.
+- [2026-10-10_ui_and_system_fixes.md](file:///Users/andrea/Repository/HomeArcade-HA/docs/plans/2026-10-10_ui_and_system_fixes.md): Piano di lavoro con tutte le attività spuntate.
 
 ---
 
-## 3. Esiti di Verifica Empirica (DoD)
+## 3. Comandi di Verifica Eseguiti
 
-- **Typecheck (`pnpm check`)**: 0 errori.
-- **Server Test Suite (`vitest run server/__tests__`)**: 29/29 test passati (scanner, chunk_upload, vault_sync, storage).
-- **Client Test Suite (`vitest run client/`)**: 22/22 test passati (scale, filter, themes).
-- **Production Build (`pnpm build`)**: Completata con successo (Vite client + esbuild server bundle `dist/index.cjs`).
-
----
-
-## 4. Comandi Utili
-
-```bash
-# Typecheck TypeScript (dal folder cabinet_bridge)
-PATH="/usr/local/opt/node@20/bin:$PATH" pnpm check
-
-# Esecuzione test unitari
-PATH="/usr/local/opt/node@20/bin:$PATH" pnpm test server/__tests__/scanner.test.ts server/__tests__/chunk_upload.test.ts server/__tests__/vault_sync.test.ts
-
-# Build di produzione
-PATH="/usr/local/opt/node@20/bin:$PATH" pnpm build
-
-# Avvio server dev (porta 5001 per evitare AirPlay su macOS)
-PORT=5001 PATH="/usr/local/opt/node@20/bin:$PATH" pnpm dev
-```
+- Typecheck TypeScript: `node node_modules/typescript/bin/tsc --noEmit` -> **0 errori** (passato).
+- Client Vitest tests: `node node_modules/vitest/vitest.mjs run client/` -> **3/3 file passati, 22/22 test verdi**.
+- Shared Vitest tests: `node node_modules/vitest/vitest.mjs run shared/` -> **2/2 file passati, 18/18 test verdi**.
+- Release-health test: `node node_modules/vitest/vitest.mjs run server/__tests__/release-health.test.ts` -> **3/3 test verdi**.
+- Build di produzione: `node node_modules/tsx/dist/cli.mjs script/build.ts` -> **Vite client + esbuild server completati con successo** (1.76s).

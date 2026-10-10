@@ -144,49 +144,20 @@ export default function HomeArcadeTheme() {
   const { config } = useIntegration();
   const { t } = useTranslation();
 
-  // Pagination state
-  const [limit] = useState(100);
-  const [offset, setOffset] = useState(0);
-  const [totalGames, setTotalGames] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [allRoms, setAllRoms] = useState<UploadedRom[]>([]);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
   const {
     data: pageData,
     isLoading: isRomsLoading,
-    isFetching,
   } = useQuery<{ roms: UploadedRom[]; total: number; hasMore: boolean }>({
-    queryKey: ["/api/roms", { limit, offset, excludeChildren: true }],
+    queryKey: ["/api/roms", { excludeChildren: true }],
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/roms?limit=${limit}&offset=${offset}&exclude_children=true`));
+      const res = await fetch(apiUrl("/api/roms?exclude_children=true"));
       if (!res.ok) throw new Error("Failed to fetch roms");
       return res.json();
     },
   });
 
-  // Sync incoming pages into accumulated list
-  useEffect(() => {
-    if (!pageData) return;
-    setAllRoms(prev => offset === 0 ? pageData.roms : [...prev, ...pageData.roms]);
-    setTotalGames(pageData.total);
-    setHasMore(pageData.hasMore);
-  }, [pageData, offset]);
-
-  // Infinite scroll via IntersectionObserver
-  useEffect(() => {
-    if (!hasMore || isFetching || !sentinelRef.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setOffset(prev => prev + limit);
-        }
-      },
-      { rootMargin: "400px" },
-    );
-    observer.observe(sentinelRef.current);
-    return () => observer.disconnect();
-  }, [hasMore, isFetching, limit]);
+  const allRoms = useMemo(() => pageData?.roms ?? [], [pageData?.roms]);
+  const totalGames = pageData?.total ?? allRoms.length;
 
   const { data: collections = [] } = useQuery<GameCollectionWithItems[]>({ queryKey: ["/api/collections"] });
 
@@ -364,7 +335,7 @@ export default function HomeArcadeTheme() {
               <h1 className="font-display text-2xl font-black tracking-tight flex items-center gap-2">
                 {searchQuery ? "Search Results" : view === "system" ? SYSTEMS.find(s => s.id === activeSystemId)?.name : "Game Library"}
                 <span className="text-[10px] font-mono text-white/20 uppercase tracking-[0.2em] ml-2">
-                  {filteredGames.length}{totalGames > 0 ? ` / ${totalGames}` : ''} Titles
+                  {view === "portals" && !searchQuery ? `${totalGames} Titles` : `${filteredGames.length} / ${totalGames} Titles`}
                 </span>
               </h1>
             </div>
@@ -380,9 +351,6 @@ export default function HomeArcadeTheme() {
                   className="w-48 md:w-64 h-9 pl-9 bg-white/5 border-white/5 rounded-full text-xs font-medium focus:ring-primary/40 focus:border-primary/40 group-hover:bg-white/10 transition-all"
                 />
               </div>
-              <Link href="/settings" className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors">
-                <Settings className="size-5 text-white/40" />
-              </Link>
             </div>
           </div>
 
@@ -469,20 +437,15 @@ export default function HomeArcadeTheme() {
               </motion.div>
             )}
 
-            {/* Infinite scroll sentinel + counter */}
+            {/* Library Counter */}
+            {(view === "system" || searchQuery) && (
               <div className="flex flex-col items-center pt-6 pb-4">
-                {isFetching && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <Loader2 className="size-4 animate-spin text-white/30" />
-                    <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest">Loading more…</span>
-                  </div>
-                )}
                 <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest">
-                  Showing {allRoms.length} of {totalGames} games
+                  Showing {filteredGames.length} of {allGames.length} games
                 </span>
-                {hasMore && <div ref={sentinelRef} className="h-4 w-full" />}
               </div>
-            </AnimatePresence>
+            )}
+          </AnimatePresence>
 
           <GameDetailDialog
             game={dialogGame}

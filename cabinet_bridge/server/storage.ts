@@ -149,9 +149,9 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  listUploadedRoms(): Promise<UploadedRom[]>;
-  listUploadedRomsPaginated(limit: number, offset: number): Promise<UploadedRom[]>;
-  countUploadedRoms(): Promise<number>;
+  listUploadedRoms(excludeChildren?: boolean): Promise<UploadedRom[]>;
+  listUploadedRomsPaginated(limit: number, offset: number, excludeChildren?: boolean): Promise<UploadedRom[]>;
+  countUploadedRoms(excludeChildren?: boolean): Promise<number>;
   getRomMoveStats(): Promise<{ total: number; totalSize: number; systems: { system: string; count: number; size: number }[] }>;
   getUploadedRom(id: number): Promise<UploadedRom | undefined>;
   createUploadedRom(rom: InsertUploadedRom): Promise<UploadedRom>;
@@ -253,7 +253,14 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> { return db.select().from(users).where(eq(users.id, id)).get(); }
   async getUserByUsername(username: string): Promise<User | undefined> { return db.select().from(users).where(eq(users.username, username)).get(); }
   async createUser(insertUser: InsertUser): Promise<User> { return db.insert(users).values(insertUser).returning().get(); }
-  async listUploadedRoms(): Promise<UploadedRom[]> { return db.select().from(uploadedRoms).orderBy(desc(uploadedRoms.createdAt)).all(); }
+  async listUploadedRoms(excludeChildren = false): Promise<UploadedRom[]> {
+    if (excludeChildren) {
+      return db.select().from(uploadedRoms)
+        .where(sql`${uploadedRoms.parentM3uId} IS NULL`)
+        .orderBy(desc(uploadedRoms.createdAt)).all();
+    }
+    return db.select().from(uploadedRoms).orderBy(desc(uploadedRoms.createdAt)).all();
+  }
   async listUploadedRomsPaginated(limit: number, offset: number, excludeChildren = false): Promise<UploadedRom[]> {
     if (excludeChildren) {
       return db.select().from(uploadedRoms)

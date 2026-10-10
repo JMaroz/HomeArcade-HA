@@ -90,11 +90,11 @@ export default function Settings() {
   const currentTab = ALL_TABS.find(t => t.id === activeTab) || ALL_TABS[0];
 
   return (
-    <div className="flex flex-col md:flex-row h-full overflow-hidden bg-[#0a0a0f]">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col md:flex-row w-full h-full overflow-hidden">
+    <div className="flex-1 flex flex-col md:flex-row h-full min-h-0 overflow-hidden bg-[#0a0a0f] font-sans">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col md:flex-row w-full h-full min-h-0 overflow-hidden">
         
         {/* ── Left Sidebar (Desktop Only) ─────────────────────────────────── */}
-        <aside className="hidden md:flex flex-col w-64 border-r border-white/5 bg-[#0f0f14] shrink-0 p-6 overflow-y-auto">
+        <aside className="hidden md:flex flex-col w-64 border-r border-white/5 bg-[#0f0f14] shrink-0 p-6 overflow-y-auto min-h-0">
           <div className="flex flex-col gap-1 mb-8 px-2">
             <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary/80">Control Panel</div>
             <h1 className="font-display text-2xl font-black tracking-tight text-foreground">Settings</h1>
@@ -141,7 +141,7 @@ export default function Settings() {
         </aside>
 
         {/* ── Main Content Area ────────────────────────────────────────────── */}
-        <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-background/20 relative">
+        <main className="flex-1 flex flex-col min-w-0 h-full min-h-0 overflow-hidden bg-background/20 relative">
           
           {/* Mobile Category Dropdown (Sticky Top) */}
           <header className="md:hidden flex flex-col shrink-0 p-4 border-b border-white/5 bg-[#0f0f14]/80 backdrop-blur-md sticky top-0 z-20 gap-4">
@@ -181,15 +181,15 @@ export default function Settings() {
             </Select>
           </header>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-8 py-8 md:py-12">
-            <div className="max-w-3xl mx-auto w-full space-y-12 pb-24 md:pb-12">
+          <div className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-8 py-8 md:py-12">
+            <div className="max-w-3xl mx-auto w-full space-y-10 pb-36">
               
               {/* Header Title (Shows on both Mobile/Desktop inside scroll area) */}
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                 <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary mb-1">
                    {GROUPS.find(g => g.tabs.some(t => t.id === activeTab))?.label || "General"}
                 </div>
-                <h2 className="font-display text-3xl font-black tracking-tight">{currentTab.label}</h2>
+                <h2 className="font-display text-2xl font-black tracking-tight">{currentTab.label}</h2>
                 <p className="text-xs text-muted-foreground mt-1 max-w-prose">
                   {activeTab === "display" && "Language, Layout, and Visual Shaders."}
                   {activeTab === "controls" && "Input calibration and key remapping."}
