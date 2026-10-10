@@ -2,6 +2,13 @@
 
 All notable changes to HomeArcade are documented here.
 
+## [2.53.1](https://github.com/JMaroz/HomeArcade-HA/compare/v2.53.0...v2.53.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* **ui:** load all systems in home, restore dialog animation and settings scroll, unify fonts ([212753e](https://github.com/JMaroz/HomeArcade-HA/commit/212753e1c9d20f88c338c620bed21fd85a84b7cc))
+
 ## [2.53.0](https://github.com/JMaroz/HomeArcade-HA/compare/v2.52.0...v2.53.0) (2026-10-10)
 
 
