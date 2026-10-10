@@ -55,23 +55,23 @@ Rivedere e modernizzare in profondità la gestione complessiva delle ROM in Home
 - [x] Test di unità per il nuovo scanner e route correlate (`server/__tests__/scanner.test.ts`).
 
 ### Fase 2: Chunked Upload Resiliente per File di Grandi Dimensioni
-- [ ] Creare route backend per chunked upload (`init`, `chunk`, `complete`, `cancel`) in `cabinet_bridge/server/routes/roms.ts`.
-- [ ] Gestire assemblaggio e memorizzazione temporanea in `dataPath("upload-chunks")` con pulizia orfani.
-- [ ] Aggiornare `cabinet_bridge/client/src/components/RomUpload.tsx` per supportare upload a blocchi da 16/32MB con barra di avanzamento e retry automatico.
-- [ ] Test di upload a blocchi (unit test / integration test).
+- [x] Creare route backend per chunked upload (`init`, `chunk`, `complete`, `cancel`) in `cabinet_bridge/server/routes/roms.ts`.
+- [x] Gestire assemblaggio e memorizzazione temporanea in `dataPath("upload-chunks")` con pulizia orfani.
+- [x] Aggiornare `cabinet_bridge/client/src/components/RomUpload.tsx` per supportare upload a blocchi da 16/32MB con barra di avanzamento e retry automatico.
+- [x] Test di upload a blocchi (unit test / integration test: `server/__tests__/chunk_upload.test.ts`).
 
 ### Fase 3: Sincronizzazione WebDAV & Backup ZIP dei Salvataggi
-- [ ] Implementare client WebDAV nativo in `cabinet_bridge/server/webdav.ts` (test connessione, upload, download salvataggi).
-- [ ] Implementare esportazione e importazione archivio ZIP dei salvataggi (in-game `.srm`/`.sav` e savestates) in `cabinet_bridge/server/routes/vault.ts`.
-- [ ] Aggiungere campi di configurazione WebDAV a `shared/schema.ts` e memorizzazione in `integrationSettings`.
-- [ ] Test di unità per WebDAV e gestione salvataggi.
+- [x] Implementare client WebDAV nativo in `cabinet_bridge/server/webdav.ts` (test connessione, upload, download salvataggi).
+- [x] Implementare esportazione e importazione archivio ZIP dei salvataggi (in-game `.srm`/`.sav` e savestates) in `cabinet_bridge/server/routes/vault.ts`.
+- [x] Aggiungere campi di configurazione WebDAV a `shared/schema.ts` e memorizzazione in `integrationSettings`.
+- [x] Test di unità per WebDAV e gestione salvataggi (`server/__tests__/vault_sync.test.ts`).
 
 ### Fase 4: Riorganizzazione UI Impostazioni Libreria
-- [ ] Ristrutturare `cabinet_bridge/client/src/pages/settings/LibrarySettings.tsx`:
-  - Sotto-navigazione o sezioni tematiche chiare: *Cartelle & Scansione*, *Trasferimento ROM*, *Salute & Manutenzione*, *Collezioni Smart*.
-- [ ] Integrare pannello WebDAV e pulsanti di Backup/Ripristino ZIP in `cabinet_bridge/client/src/pages/settings/ServicesSettings.tsx` (o tab integrata).
-- [ ] Integrare monitor di progresso SSE in tempo reale per la scansione.
-- [ ] Validazione visiva e test su responsive / mobile.
+- [x] Ristrutturare `cabinet_bridge/client/src/pages/settings/LibrarySettings.tsx`:
+  - Sotto-navigazione con sezioni tematiche chiare: *Cartelle & Scansione*, *Trasferimento ROM*, *Salute & Manutenzione*, *Backup & Sync*, *Collezioni Smart*.
+- [x] Integrare pannello WebDAV e pulsanti di Backup/Ripristino ZIP nella sezione *Backup & Sync*.
+- [x] Integrare monitor di progresso SSE in tempo reale per la scansione e targeted scrape.
+- [x] Validazione visiva, build di produzione (`pnpm build`) e test su responsive / mobile.
 
 ---
 
